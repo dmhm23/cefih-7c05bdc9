@@ -1,20 +1,46 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
+// Credenciales de prueba (emulación)
+const DEMO_CREDENTIALS = {
+  email: "admin@safa.com",
+  password: "admin123",
+};
 
 const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [email, setEmail] = useState(DEMO_CREDENTIALS.email);
+  const [password, setPassword] = useState(DEMO_CREDENTIALS.password);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1500);
+
+    // Simular autenticación
+    setTimeout(() => {
+      if (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) {
+        toast({
+          title: "¡Bienvenido!",
+          description: "Has iniciado sesión como Administrador",
+        });
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Error de autenticación",
+          description: "Credenciales inválidas",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }, 800);
   };
 
   return (

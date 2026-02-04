@@ -14,16 +14,16 @@ export const personaService = {
     return mockPersonas.find(p => p.id === id) || null;
   },
 
-  async getByCedula(cedula: string): Promise<Persona | null> {
+  async getByDocumento(numeroDocumento: string): Promise<Persona | null> {
     await delay(500);
-    return mockPersonas.find(p => p.cedula === cedula) || null;
+    return mockPersonas.find(p => p.numeroDocumento === numeroDocumento) || null;
   },
 
   async search(query: string): Promise<Persona[]> {
     await delay(600);
     const lowerQuery = query.toLowerCase();
     return mockPersonas.filter(p => 
-      p.cedula.includes(query) ||
+      p.numeroDocumento.includes(query) ||
       p.nombres.toLowerCase().includes(lowerQuery) ||
       p.apellidos.toLowerCase().includes(lowerQuery) ||
       p.email.toLowerCase().includes(lowerQuery)
@@ -33,10 +33,10 @@ export const personaService = {
   async create(data: PersonaFormData): Promise<Persona> {
     await delay(1000);
     
-    // Validar unicidad de cédula
-    const exists = mockPersonas.find(p => p.cedula === data.cedula);
+    // Validar unicidad de documento
+    const exists = mockPersonas.find(p => p.numeroDocumento === data.numeroDocumento);
     if (exists) {
-      throw new ApiError('Ya existe una persona con esta cédula', 400, 'CEDULA_DUPLICADA');
+      throw new ApiError('Ya existe una persona con este documento', 400, 'DOCUMENTO_DUPLICADO');
     }
 
     const now = new Date().toISOString();

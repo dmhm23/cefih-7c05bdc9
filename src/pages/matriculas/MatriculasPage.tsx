@@ -33,9 +33,9 @@ export default function MatriculasPage() {
     return persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   };
 
-  const getPersonaCedula = (personaId: string) => {
+  const getPersonaDocumento = (personaId: string) => {
     const persona = personas.find((p) => p.id === personaId);
-    return persona?.cedula || "N/A";
+    return persona?.numeroDocumento || "N/A";
   };
 
   const getCursoNombre = (cursoId: string) => {
@@ -47,7 +47,7 @@ export default function MatriculasPage() {
     const persona = personas.find((p) => p.id === m.personaId);
     const matchesSearch =
       !searchQuery ||
-      persona?.cedula.includes(searchQuery) ||
+      persona?.numeroDocumento.includes(searchQuery) ||
       persona?.nombres.toLowerCase().includes(searchQuery.toLowerCase()) ||
       persona?.apellidos.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -58,9 +58,9 @@ export default function MatriculasPage() {
 
   const columns = [
     {
-      key: "cedula",
-      header: "Cédula",
-      render: (m: Matricula) => getPersonaCedula(m.personaId),
+      key: "documento",
+      header: "Documento",
+      render: (m: Matricula) => getPersonaDocumento(m.personaId),
     },
     {
       key: "persona",

@@ -210,7 +210,7 @@ export default function CursoDetallePage() {
                               {persona?.nombres} {persona?.apellidos}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {persona?.cedula}
+                              {persona?.tipoDocumento}: {persona?.numeroDocumento}
                             </p>
                           </div>
                         </div>

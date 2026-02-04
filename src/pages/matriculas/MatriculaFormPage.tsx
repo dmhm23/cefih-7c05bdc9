@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePersonas, usePersonaByCedula } from "@/hooks/usePersonas";
+import { usePersonas, usePersonaByDocumento } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useCreateMatricula } from "@/hooks/useMatriculas";
 import { useToast } from "@/hooks/use-toast";
@@ -42,10 +42,10 @@ export default function MatriculaFormPage() {
   const { toast } = useToast();
   const preselectedPersonaId = searchParams.get("personaId");
 
-  const [cedulaSearch, setCedulaSearch] = useState("");
+  const [documentoSearch, setDocumentoSearch] = useState("");
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
-  const { data: personaByCedula } = usePersonaByCedula(cedulaSearch);
+  const { data: personaByDocumento } = usePersonaByDocumento(documentoSearch);
   const createMatricula = useCreateMatricula();
 
   const form = useForm<MatriculaFormData>({
@@ -57,12 +57,12 @@ export default function MatriculaFormPage() {
     },
   });
 
-  // Auto-select persona when found by cedula
+  // Auto-select persona when found by documento
   useEffect(() => {
-    if (personaByCedula) {
-      form.setValue("personaId", personaByCedula.id);
+    if (personaByDocumento) {
+      form.setValue("personaId", personaByDocumento.id);
     }
-  }, [personaByCedula, form]);
+  }, [personaByDocumento, form]);
 
   const cursosAbiertos = cursos.filter((c) => c.estado !== "cerrado");
   const selectedPersona = personas.find((p) => p.id === form.watch("personaId"));
@@ -111,12 +111,12 @@ export default function MatriculaFormPage() {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Ingresa la cédula para buscar al estudiante
+                  Ingresa el número de documento para buscar al estudiante
                 </p>
                 <SearchInput
-                  placeholder="Buscar por cédula..."
-                  value={cedulaSearch}
-                  onChange={setCedulaSearch}
+                  placeholder="Buscar por documento..."
+                  value={documentoSearch}
+                  onChange={setDocumentoSearch}
                   className="max-w-sm"
                 />
               </div>
@@ -125,14 +125,14 @@ export default function MatriculaFormPage() {
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <p className="text-sm text-muted-foreground">Estudiante seleccionado:</p>
                   <p className="font-semibold">{selectedPersona.nombres} {selectedPersona.apellidos}</p>
-                  <p className="text-sm text-muted-foreground">Cédula: {selectedPersona.cedula}</p>
+                  <p className="text-sm text-muted-foreground">{selectedPersona.tipoDocumento}: {selectedPersona.numeroDocumento}</p>
                 </div>
               )}
 
-              {cedulaSearch.length >= 6 && !personaByCedula && (
+              {documentoSearch.length >= 6 && !personaByDocumento && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-amber-700">
-                    No se encontró persona con esta cédula.{" "}
+                    No se encontró persona con este documento.{" "}
                     <Button
                       variant="link"
                       className="p-0 h-auto text-amber-700 underline"
@@ -159,7 +159,7 @@ export default function MatriculaFormPage() {
                       <SelectContent>
                         {personas.map((p) => (
                           <SelectItem key={p.id} value={p.id}>
-                            {p.cedula} - {p.nombres} {p.apellidos}
+                            {p.numeroDocumento} - {p.nombres} {p.apellidos}
                           </SelectItem>
                         ))}
                       </SelectContent>

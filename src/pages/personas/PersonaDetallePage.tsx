@@ -45,7 +45,7 @@ export default function PersonaDetallePage() {
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">{persona.nombres} {persona.apellidos}</h1>
-          <p className="text-muted-foreground">Cédula: {persona.cedula}</p>
+          <p className="text-muted-foreground">{persona.tipoDocumento}: {persona.numeroDocumento}</p>
         </div>
         <Button onClick={() => navigate(`/personas/${id}/editar`)}>
           <Edit className="h-4 w-4 mr-2" />

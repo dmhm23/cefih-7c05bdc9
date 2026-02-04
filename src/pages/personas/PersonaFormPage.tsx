@@ -14,26 +14,59 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { usePersona, useCreatePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import {
+  TIPOS_DOCUMENTO,
+  GENEROS,
+  PAISES,
+  NIVELES_EDUCATIVOS,
+  AREAS_TRABAJO,
+  SECTORES_ECONOMICOS,
+} from "@/data/formOptions";
 
 const personaSchema = z.object({
-  cedula: z.string().min(6, "La cédula debe tener al menos 6 caracteres"),
+  // Identificación
+  tipoDocumento: z.enum(['CC', 'CE', 'PA', 'PE', 'PP'], { required_error: "Seleccione el tipo" }),
+  numeroDocumento: z.string().min(6, "Mínimo 6 caracteres"),
+  
+  // Datos personales
   nombres: z.string().min(2, "Ingrese el nombre"),
   apellidos: z.string().min(2, "Ingrese los apellidos"),
+  genero: z.enum(['M', 'F'], { required_error: "Seleccione el género" }),
+  paisNacimiento: z.string().min(1, "Seleccione el país"),
+  fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
+  
+  // Datos laborales/educativos
+  nivelEducativo: z.string().min(1, "Seleccione el nivel"),
+  areaTrabajo: z.enum(['administrativo', 'operativa'], { required_error: "Seleccione el área" }),
+  sectorEconomico: z.string().min(1, "Seleccione el sector"),
+  
+  // Contacto
   email: z.string().email("Email inválido"),
   telefono: z.string().min(7, "Teléfono inválido"),
-  fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
   direccion: z.string().min(5, "Ingrese la dirección"),
+  
+  // Seguridad social
   eps: z.string().min(2, "Ingrese la EPS"),
   arl: z.string().min(2, "Ingrese la ARL"),
+  
+  // Contacto de emergencia
   contactoEmergenciaNombre: z.string().min(2, "Ingrese el nombre"),
   contactoEmergenciaTelefono: z.string().min(7, "Teléfono inválido"),
   contactoEmergenciaParentesco: z.string().min(2, "Ingrese el parentesco"),
 });
 
-type PersonaFormData = z.infer<typeof personaSchema>;
+type PersonaFormDataSchema = z.infer<typeof personaSchema>;
 
 export default function PersonaFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,15 +78,21 @@ export default function PersonaFormPage() {
   const createPersona = useCreatePersona();
   const updatePersona = useUpdatePersona();
 
-  const form = useForm<PersonaFormData>({
+  const form = useForm<PersonaFormDataSchema>({
     resolver: zodResolver(personaSchema),
     defaultValues: {
-      cedula: "",
+      tipoDocumento: 'CC',
+      numeroDocumento: "",
       nombres: "",
       apellidos: "",
+      genero: 'M',
+      paisNacimiento: "CO",
+      fechaNacimiento: "",
+      nivelEducativo: "",
+      areaTrabajo: 'operativa',
+      sectorEconomico: "",
       email: "",
       telefono: "",
-      fechaNacimiento: "",
       direccion: "",
       eps: "",
       arl: "",
@@ -66,12 +105,18 @@ export default function PersonaFormPage() {
   useEffect(() => {
     if (persona) {
       form.reset({
-        cedula: persona.cedula,
+        tipoDocumento: persona.tipoDocumento,
+        numeroDocumento: persona.numeroDocumento,
         nombres: persona.nombres,
         apellidos: persona.apellidos,
+        genero: persona.genero,
+        paisNacimiento: persona.paisNacimiento,
+        fechaNacimiento: persona.fechaNacimiento,
+        nivelEducativo: persona.nivelEducativo,
+        areaTrabajo: persona.areaTrabajo,
+        sectorEconomico: persona.sectorEconomico,
         email: persona.email,
         telefono: persona.telefono,
-        fechaNacimiento: persona.fechaNacimiento,
         direccion: persona.direccion,
         eps: persona.eps,
         arl: persona.arl,
@@ -82,15 +127,21 @@ export default function PersonaFormPage() {
     }
   }, [persona, form]);
 
-  const onSubmit = async (data: PersonaFormData) => {
+  const onSubmit = async (data: PersonaFormDataSchema) => {
     try {
       const personaData = {
-        cedula: data.cedula,
+        tipoDocumento: data.tipoDocumento,
+        numeroDocumento: data.numeroDocumento,
         nombres: data.nombres,
         apellidos: data.apellidos,
+        genero: data.genero,
+        paisNacimiento: data.paisNacimiento,
+        fechaNacimiento: data.fechaNacimiento,
+        nivelEducativo: data.nivelEducativo as any,
+        areaTrabajo: data.areaTrabajo,
+        sectorEconomico: data.sectorEconomico,
         email: data.email,
         telefono: data.telefono,
-        fechaNacimiento: data.fechaNacimiento,
         direccion: data.direccion,
         eps: data.eps,
         arl: data.arl,
@@ -142,17 +193,45 @@ export default function PersonaFormPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Datos Personales */}
           <Card>
             <CardHeader>
               <CardTitle>Datos Personales</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Tipo de Documento */}
               <FormField
                 control={form.control}
-                name="cedula"
+                name="tipoDocumento"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cédula *</FormLabel>
+                    <FormLabel>Tipo de Documento *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={isEditing}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TIPOS_DOCUMENTO.map((tipo) => (
+                          <SelectItem key={tipo.value} value={tipo.value}>
+                            {tipo.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Número de Documento */}
+              <FormField
+                control={form.control}
+                name="numeroDocumento"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>No. Documento *</FormLabel>
                     <FormControl>
                       <Input {...field} disabled={isEditing} placeholder="1234567890" />
                     </FormControl>
@@ -160,19 +239,8 @@ export default function PersonaFormPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="fechaNacimiento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Nacimiento *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
+              {/* Nombres */}
               <FormField
                 control={form.control}
                 name="nombres"
@@ -186,6 +254,8 @@ export default function PersonaFormPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Apellidos */}
               <FormField
                 control={form.control}
                 name="apellidos"
@@ -199,6 +269,148 @@ export default function PersonaFormPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Género */}
+              <FormField
+                control={form.control}
+                name="genero"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Género *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {GENEROS.map((g) => (
+                          <SelectItem key={g.value} value={g.value}>
+                            {g.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* País de Nacimiento */}
+              <FormField
+                control={form.control}
+                name="paisNacimiento"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>País de Nacimiento *</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={PAISES}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Seleccionar país..."
+                        searchPlaceholder="Buscar país..."
+                        emptyMessage="País no encontrado"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Fecha de Nacimiento */}
+              <FormField
+                control={form.control}
+                name="fechaNacimiento"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fecha de Nacimiento *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Nivel Educativo */}
+              <FormField
+                control={form.control}
+                name="nivelEducativo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nivel Educativo *</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={NIVELES_EDUCATIVOS}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Seleccionar nivel..."
+                        searchPlaceholder="Buscar nivel..."
+                        emptyMessage="Nivel no encontrado"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Área de Trabajo */}
+              <FormField
+                control={form.control}
+                name="areaTrabajo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Área de Trabajo *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {AREAS_TRABAJO.map((area) => (
+                          <SelectItem key={area.value} value={area.value}>
+                            {area.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Sector Económico */}
+              <FormField
+                control={form.control}
+                name="sectorEconomico"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sector Económico *</FormLabel>
+                    <FormControl>
+                      <Combobox
+                        options={SECTORES_ECONOMICOS}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Seleccionar sector..."
+                        searchPlaceholder="Buscar sector..."
+                        emptyMessage="Sector no encontrado"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Datos de Contacto */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Datos de Contacto</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -241,6 +453,7 @@ export default function PersonaFormPage() {
             </CardContent>
           </Card>
 
+          {/* Seguridad Social */}
           <Card>
             <CardHeader>
               <CardTitle>Seguridad Social</CardTitle>
@@ -275,6 +488,7 @@ export default function PersonaFormPage() {
             </CardContent>
           </Card>
 
+          {/* Contacto de Emergencia */}
           <Card>
             <CardHeader>
               <CardTitle>Contacto de Emergencia</CardTitle>

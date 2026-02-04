@@ -17,11 +17,11 @@ export const usePersona = (id: string) => {
   });
 };
 
-export const usePersonaByCedula = (cedula: string) => {
+export const usePersonaByDocumento = (numeroDocumento: string) => {
   return useQuery({
-    queryKey: ['persona', 'cedula', cedula],
-    queryFn: () => personaService.getByCedula(cedula),
-    enabled: !!cedula && cedula.length >= 6,
+    queryKey: ['persona', 'documento', numeroDocumento],
+    queryFn: () => personaService.getByDocumento(numeroDocumento),
+    enabled: !!numeroDocumento && numeroDocumento.length >= 6,
   });
 };
 

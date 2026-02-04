@@ -163,7 +163,7 @@ export default function MatriculaDetallePage() {
             <StatusBadge status={matricula.estado} />
           </div>
           <p className="text-muted-foreground">
-            {persona?.nombres} {persona?.apellidos} - {persona?.cedula}
+            {persona?.nombres} {persona?.apellidos} - {persona?.tipoDocumento}: {persona?.numeroDocumento}
           </p>
         </div>
       </div>
@@ -182,7 +182,7 @@ export default function MatriculaDetallePage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Estudiante</p>
                     <p className="font-semibold">{persona?.nombres} {persona?.apellidos}</p>
-                    <p className="text-sm text-muted-foreground">{persona?.cedula}</p>
+                    <p className="text-sm text-muted-foreground">{persona?.tipoDocumento}: {persona?.numeroDocumento}</p>
                   </div>
                 </div>
               </CardContent>

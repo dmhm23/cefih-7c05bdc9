@@ -22,7 +22,7 @@ export default function PersonasPage() {
   const filteredPersonas = personas.filter((p) => {
     const query = searchQuery.toLowerCase();
     return (
-      p.cedula.includes(searchQuery) ||
+      p.numeroDocumento.includes(searchQuery) ||
       p.nombres.toLowerCase().includes(query) ||
       p.apellidos.toLowerCase().includes(query) ||
       p.email.toLowerCase().includes(query)
@@ -41,7 +41,7 @@ export default function PersonasPage() {
   };
 
   const columns = [
-    { key: "cedula", header: "Cédula" },
+    { key: "numeroDocumento", header: "Documento" },
     {
       key: "nombre",
       header: "Nombre Completo",

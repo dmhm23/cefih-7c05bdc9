@@ -54,7 +54,7 @@ const personaSchema = z.object({
   sectorEconomico: z.string().min(1, "Seleccione el sector"),
   
   // Contacto
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Email inválido").optional().or(z.literal("")),
   telefono: z.string().min(7, "Teléfono inválido"),
   
   // Contacto de emergencia
@@ -433,7 +433,7 @@ export default function PersonaFormPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email *</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} placeholder="correo@email.com" />
                     </FormControl>

@@ -14,6 +14,7 @@ export const GENEROS = [
 ] as const;
 
 export const NIVELES_EDUCATIVOS = [
+  { value: 'analfabeta', label: 'Analfabeta' },
   { value: 'primaria', label: 'Primaria' },
   { value: 'secundaria', label: 'Secundaria' },
   { value: 'bachiller', label: 'Bachiller' },
@@ -23,6 +24,17 @@ export const NIVELES_EDUCATIVOS = [
   { value: 'especializacion', label: 'Especialización' },
   { value: 'maestria', label: 'Maestría' },
   { value: 'doctorado', label: 'Doctorado' },
+] as const;
+
+export const GRUPOS_SANGUINEOS = [
+  { value: 'O+', label: 'O+' },
+  { value: 'O-', label: 'O-' },
+  { value: 'A+', label: 'A+' },
+  { value: 'A-', label: 'A-' },
+  { value: 'B+', label: 'B+' },
+  { value: 'B-', label: 'B-' },
+  { value: 'AB+', label: 'AB+' },
+  { value: 'AB-', label: 'AB-' },
 ] as const;
 
 export const AREAS_TRABAJO = [
@@ -124,3 +136,4 @@ export type NivelEducativoOption = typeof NIVELES_EDUCATIVOS[number];
 export type AreaTrabajoOption = typeof AREAS_TRABAJO[number];
 export type SectorEconomicoOption = typeof SECTORES_ECONOMICOS[number];
 export type PaisOption = typeof PAISES[number];
+export type GrupoSanguineoOption = typeof GRUPOS_SANGUINEOS[number];

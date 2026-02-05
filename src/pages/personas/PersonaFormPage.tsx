@@ -32,6 +32,7 @@ import {
   NIVELES_EDUCATIVOS,
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
+  GRUPOS_SANGUINEOS,
 } from "@/data/formOptions";
 
 const personaSchema = z.object({
@@ -45,6 +46,7 @@ const personaSchema = z.object({
   genero: z.enum(['M', 'F'], { required_error: "Seleccione el género" }),
   paisNacimiento: z.string().min(1, "Seleccione el país"),
   fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
+  rh: z.string().min(1, "Seleccione el RH"),
   
   // Datos laborales/educativos
   nivelEducativo: z.string().min(1, "Seleccione el nivel"),
@@ -54,11 +56,6 @@ const personaSchema = z.object({
   // Contacto
   email: z.string().email("Email inválido"),
   telefono: z.string().min(7, "Teléfono inválido"),
-  direccion: z.string().min(5, "Ingrese la dirección"),
-  
-  // Seguridad social
-  eps: z.string().min(2, "Ingrese la EPS"),
-  arl: z.string().min(2, "Ingrese la ARL"),
   
   // Contacto de emergencia
   contactoEmergenciaNombre: z.string().min(2, "Ingrese el nombre"),
@@ -88,14 +85,12 @@ export default function PersonaFormPage() {
       genero: 'M',
       paisNacimiento: "CO",
       fechaNacimiento: "",
+      rh: "",
       nivelEducativo: "",
       areaTrabajo: 'operativa',
       sectorEconomico: "",
       email: "",
       telefono: "",
-      direccion: "",
-      eps: "",
-      arl: "",
       contactoEmergenciaNombre: "",
       contactoEmergenciaTelefono: "",
       contactoEmergenciaParentesco: "",
@@ -112,14 +107,12 @@ export default function PersonaFormPage() {
         genero: persona.genero,
         paisNacimiento: persona.paisNacimiento,
         fechaNacimiento: persona.fechaNacimiento,
+        rh: persona.rh,
         nivelEducativo: persona.nivelEducativo,
         areaTrabajo: persona.areaTrabajo,
         sectorEconomico: persona.sectorEconomico,
         email: persona.email,
         telefono: persona.telefono,
-        direccion: persona.direccion,
-        eps: persona.eps,
-        arl: persona.arl,
         contactoEmergenciaNombre: persona.contactoEmergencia.nombre,
         contactoEmergenciaTelefono: persona.contactoEmergencia.telefono,
         contactoEmergenciaParentesco: persona.contactoEmergencia.parentesco,
@@ -137,14 +130,12 @@ export default function PersonaFormPage() {
         genero: data.genero,
         paisNacimiento: data.paisNacimiento,
         fechaNacimiento: data.fechaNacimiento,
+        rh: data.rh,
         nivelEducativo: data.nivelEducativo as any,
         areaTrabajo: data.areaTrabajo,
         sectorEconomico: data.sectorEconomico,
         email: data.email,
         telefono: data.telefono,
-        direccion: data.direccion,
-        eps: data.eps,
-        arl: data.arl,
         contactoEmergencia: {
           nombre: data.contactoEmergenciaNombre,
           telefono: data.contactoEmergenciaTelefono,
@@ -333,6 +324,32 @@ export default function PersonaFormPage() {
                 )}
               />
 
+              {/* RH */}
+              <FormField
+                control={form.control}
+                name="rh"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RH *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {GRUPOS_SANGUINEOS.map((rh) => (
+                          <SelectItem key={rh.value} value={rh.value}>
+                            {rh.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Nivel Educativo */}
               <FormField
                 control={form.control}
@@ -437,54 +454,6 @@ export default function PersonaFormPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="direccion"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Dirección *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Calle 123 #45-67, Ciudad" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Seguridad Social */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Seguridad Social</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="eps"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>EPS *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nombre de la EPS" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="arl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ARL *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nombre de la ARL" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
@@ -527,7 +496,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Parentesco *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Esposo/a, Padre, Madre..." />
+                      <Input {...field} placeholder="Esposo/a, Hermano/a, etc." />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -549,7 +518,7 @@ export default function PersonaFormPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {isEditing ? "Actualizar" : "Crear Persona"}
+                  {isEditing ? "Actualizar" : "Guardar"}
                 </>
               )}
             </Button>

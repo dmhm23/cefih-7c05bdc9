@@ -6,6 +6,7 @@ export type Genero = 'M' | 'F';
 
 // Niveles educativos
 export type NivelEducativo = 
+  | 'analfabeta'
   | 'primaria' 
   | 'secundaria' 
   | 'bachiller' 
@@ -38,6 +39,7 @@ export interface Persona {
   genero: Genero;
   paisNacimiento: string;
   fechaNacimiento: string;
+  rh: string;
   
   // Datos laborales/educativos
   nivelEducativo: NivelEducativo;
@@ -47,11 +49,6 @@ export interface Persona {
   // Datos de contacto
   email: string;
   telefono: string;
-  direccion: string;
-  
-  // Seguridad social
-  eps: string;
-  arl: string;
   
   // Contacto de emergencia
   contactoEmergencia: ContactoEmergencia;

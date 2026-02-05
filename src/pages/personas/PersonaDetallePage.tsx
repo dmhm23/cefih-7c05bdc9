@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Mail, Phone, MapPin, Building, Calendar } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, Calendar, Droplet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,29 +85,10 @@ export default function PersonaDetallePage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
+                <Droplet className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Dirección</p>
-                  <p className="font-medium">{persona.direccion}</p>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <Building className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">EPS</p>
-                  <p className="font-medium">{persona.eps}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Building className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm text-muted-foreground">ARL</p>
-                  <p className="font-medium">{persona.arl}</p>
+                  <p className="text-sm text-muted-foreground">RH</p>
+                  <p className="font-medium">{persona.rh}</p>
                 </div>
               </div>
             </div>

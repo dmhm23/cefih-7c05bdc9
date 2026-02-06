@@ -110,6 +110,15 @@ export default function CursosPage() {
     setSelectedIndex(index);
   };
 
+  // Handler para "Ver" - cambia a solo ese registro
+  const handleViewRow = (curso: Curso) => {
+    const index = filteredCursos.findIndex((c) => c.id === curso.id);
+    // Cambiar selección a SOLO este registro
+    setSelectedIds([curso.id]);
+    // Actualizar panel
+    setSelectedIndex(index);
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
@@ -258,6 +267,9 @@ export default function CursosPage() {
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         bulkActions={bulkActions}
+        isPanelOpen={selectedIndex !== null}
+        activeRowId={selectedCurso?.id}
+        onViewRow={handleViewRow}
       />
 
       {/* Detail Sheet */}

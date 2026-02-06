@@ -170,6 +170,15 @@ export default function MatriculasPage() {
     setSelectedIndex(index);
   };
 
+  // Handler para "Ver" - cambia a solo ese registro
+  const handleViewRow = (matricula: Matricula) => {
+    const index = filteredMatriculas.findIndex((m) => m.id === matricula.id);
+    // Cambiar selección a SOLO este registro
+    setSelectedIds([matricula.id]);
+    // Actualizar panel
+    setSelectedIndex(index);
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
@@ -315,6 +324,9 @@ export default function MatriculasPage() {
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         bulkActions={bulkActions}
+        isPanelOpen={selectedIndex !== null}
+        activeRowId={selectedMatricula?.id}
+        onViewRow={handleViewRow}
       />
 
       {/* Detail Sheet */}

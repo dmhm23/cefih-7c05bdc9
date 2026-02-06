@@ -1,53 +1,47 @@
 
 
-# Plan: Boton "Ver" en Hover y Estilos de Seleccion Mejorados
+# Plan: Botón Expandir Navega a Página Completa
 
 ## Resumen
 
-Se implementaran dos mejoras principales:
-1. Un boton "Ver" que aparece al hacer hover sobre las filas cuando el panel esta abierto, permitiendo cambiar a ese registro sin acumular selecciones
-2. Estilos de seleccion mas pronunciados con bordes coloreados y checkbox mas visible
+Modificar el comportamiento del botón de expandir (Maximize2) en los paneles deslizantes para que navegue a la página de detalle completa (`/personas/:id`, `/matriculas/:id`, `/cursos/:id`) en lugar de solo expandir el panel.
 
 ---
 
-## Analisis de la Imagen de Referencia
+## Situación Actual
 
-La imagen de Jotform muestra:
-- Un boton verde "Ver" con icono que aparece en la fila en hover
-- La fila seleccionada tiene un fondo verde suave con borde izquierdo verde
-- El checkbox cuando esta seleccionado tiene fondo verde
-- Clara distincion visual entre filas seleccionadas y no seleccionadas
+| Componente | Comportamiento Actual |
+|------------|----------------------|
+| `DetailSheet` | El botón Maximize2 alterna `expanded` (hace el panel más ancho) |
+| Páginas de detalle | Ya existen: `PersonaDetallePage`, `MatriculaDetallePage`, `CursoDetallePage` |
 
 ---
 
-## Cambios a Implementar
+## Nuevo Comportamiento
 
-### 1. Boton "Ver" en Hover (cuando el panel esta abierto)
-
-Se agregara una nueva prop `isPanelOpen` al DataTable para saber cuando mostrar el boton "Ver".
-
-Comportamiento:
-- Si el panel esta abierto Y se hace hover en una fila diferente → aparece boton "Ver"
-- Al hacer clic en "Ver" → cambia seleccion a SOLO ese registro y actualiza el panel
-- El checkbox sigue funcionando independiente para seleccionar multiples
+El botón de expandir/ampliar ahora:
+1. Navega a la ruta de detalle completo del registro
+2. Cierra el panel deslizante
+3. Muestra la página de detalle en pantalla completa
 
 ```text
-Panel cerrado:
-| [ ] | 12345678 | Juan Perez | Construccion |
+Panel deslizante abierto:
++---------------------------+---------------+
+|                           | [←][→][⬜][X] |  <- Botón ⬜ (Maximize)
+|     Tabla de datos        |   Detalles    |
+|                           |   del panel   |
++---------------------------+---------------+
 
-Panel abierto + hover en otra fila:
-| [ ] | 12345678 [Ver] | Juan Perez | Construccion |  <- Boton aparece
+Usuario hace clic en ⬜:
++------------------------------------------+
+|  ← Volver   | Juan Pérez García | Editar |
++------------------------------------------+
+|                                          |
+|     PÁGINA COMPLETA DE DETALLE           |
+|     /personas/abc123                     |
+|                                          |
++------------------------------------------+
 ```
-
-### 2. Estilos de Seleccion Acentuados
-
-**Fila seleccionada:**
-- Fondo: `bg-primary/10` (verde/azul suave)
-- Borde izquierdo: `border-l-2 border-primary` (linea de color)
-
-**Checkbox seleccionado:**
-- Fondo: `bg-primary` en lugar de `bg-muted`
-- Icono: `text-primary-foreground` (blanco)
 
 ---
 
@@ -55,182 +49,107 @@ Panel abierto + hover en otra fila:
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/ui/checkbox.tsx` | Estilo seleccionado con primary |
-| `src/components/shared/DataTable.tsx` | Boton "Ver", estilos de fila, prop isPanelOpen |
-| `src/pages/personas/PersonasPage.tsx` | Pasar isPanelOpen, logica de ver registro |
-| `src/pages/matriculas/MatriculasPage.tsx` | Mismos cambios |
-| `src/pages/cursos/CursosPage.tsx` | Mismos cambios |
+| `src/components/shared/DetailSheet.tsx` | Cambiar prop `onExpandToggle` a `onFullScreen` |
+| `src/components/personas/PersonaDetailSheet.tsx` | Implementar navegación a `/personas/:id` |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Implementar navegación a `/matriculas/:id` |
+| `src/components/cursos/CursoDetailSheet.tsx` | Implementar navegación a `/cursos/:id` |
 
 ---
 
-## Detalle de Implementacion
+## Detalle Técnico
 
-### DataTable - Nuevas Props y Logica
+### DetailSheet - Nueva Prop
 
 ```typescript
-interface DataTableProps<T> {
+interface DetailSheetProps {
   // ... existing props
-  isPanelOpen?: boolean;
-  activeRowId?: string; // ID del registro actualmente mostrado en panel
-  onViewRow?: (item: T) => void; // Callback para "Ver" un registro
+  onFullScreen?: () => void; // Reemplaza onExpandToggle
+}
+
+// En el header, el botón ahora:
+{onFullScreen && (
+  <Button
+    variant="ghost"
+    size="icon"
+    className="h-8 w-8"
+    onClick={onFullScreen}
+    title="Abrir en pantalla completa"
+  >
+    <Maximize2 className="h-4 w-4" />
+  </Button>
+)}
+```
+
+Se elimina la lógica de `expanded` y `Minimize2` ya que ahora siempre navega a página completa.
+
+### PersonaDetailSheet - Navegación
+
+```typescript
+import { useNavigate } from "react-router-dom";
+
+export function PersonaDetailSheet({ ... }) {
+  const navigate = useNavigate();
+  
+  const handleFullScreen = () => {
+    if (persona) {
+      onOpenChange(false); // Cerrar panel
+      navigate(`/personas/${persona.id}`); // Navegar a página completa
+    }
+  };
+  
+  return (
+    <DetailSheet
+      // ... existing props
+      onFullScreen={handleFullScreen} // Nueva prop
+    >
+      {/* contenido */}
+    </DetailSheet>
+  );
 }
 ```
 
-### DataTable - Renderizado de Fila
+### MatriculaDetailSheet - Navegación
 
 ```typescript
-<TableRow
-  key={item.id}
-  className={cn(
-    "group relative",
-    onRowClick && "cursor-pointer",
-    isSelected && "bg-primary/10 border-l-2 border-l-primary",
-    !isSelected && "hover:bg-muted/30"
-  )}
->
-  {/* Celda con boton Ver en hover */}
-  <TableCell>
-    <div className="relative">
-      {/* Contenido normal */}
-      <span>{value}</span>
-      
-      {/* Boton Ver - solo cuando panel abierto y no es fila activa */}
-      {isPanelOpen && item.id !== activeRowId && (
-        <Button
-          variant="default"
-          size="sm"
-          className="absolute right-0 top-1/2 -translate-y-1/2 
-                     opacity-0 group-hover:opacity-100 transition-opacity
-                     h-6 px-2 text-xs"
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewRow?.(item);
-          }}
-        >
-          <ExternalLink className="h-3 w-3 mr-1" />
-          Ver
-        </Button>
-      )}
-    </div>
-  </TableCell>
-</TableRow>
-```
-
-### PersonasPage - Logica de Ver Registro
-
-```typescript
-// Nuevo handler para "Ver" un registro (sin acumular seleccion)
-const handleViewRow = (persona: Persona) => {
-  const index = filteredPersonas.findIndex((p) => p.id === persona.id);
-  // Cambiar seleccion a SOLO este registro
-  setSelectedIds([persona.id]);
-  // Actualizar panel
-  setSelectedIndex(index);
+const handleFullScreen = () => {
+  if (matricula) {
+    onOpenChange(false);
+    navigate(`/matriculas/${matricula.id}`);
+  }
 };
-
-// En DataTable
-<DataTable
-  // ... props existentes
-  isPanelOpen={selectedIndex !== null}
-  activeRowId={selectedPersona?.id}
-  onViewRow={handleViewRow}
-/>
 ```
 
-### Checkbox - Estilos Seleccionados
+### CursoDetailSheet - Navegación
 
 ```typescript
-<CheckboxPrimitive.Root
-  className={cn(
-    "peer h-4 w-4 shrink-0 rounded-sm border",
-    "border-muted-foreground/40",
-    "ring-offset-background focus-visible:outline-none focus-visible:ring-2",
-    "disabled:cursor-not-allowed disabled:opacity-50",
-    // Cuando seleccionado: fondo primario
-    "data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground",
-    className,
-  )}
->
-  <CheckboxPrimitive.Indicator>
-    <Check className="h-3 w-3" strokeWidth={2.5} />
-  </CheckboxPrimitive.Indicator>
-</CheckboxPrimitive.Root>
+const handleFullScreen = () => {
+  if (curso) {
+    onOpenChange(false);
+    navigate(`/cursos/${curso.id}`);
+  }
+};
 ```
 
 ---
 
-## Flujo de Interaccion
+## Flujo de Usuario
 
 ```text
-1. Usuario abre panel haciendo clic en una fila
-   → Fila se selecciona (checkbox marcado)
-   → Panel muestra detalles
-   → Fila tiene fondo coloreado y borde izquierdo
-
-2. Usuario hace hover en OTRA fila (con panel abierto)
-   → Aparece boton "Ver" en esa fila
-   
-3. Usuario hace clic en "Ver"
-   → Seleccion cambia a SOLO ese registro
-   → Panel actualiza a mostrar nuevo registro
-   
-4. Usuario hace clic en CHECKBOX de otra fila
-   → Se agrega a seleccion multiple
-   → Panel NO cambia (sigue mostrando registro original)
+1. Usuario en /personas
+2. Hace clic en una fila → Panel se abre
+3. Ve los detalles en el panel lateral
+4. Quiere más espacio o edición avanzada
+5. Hace clic en botón Maximize (⬜)
+6. Navega a /personas/:id (página completa)
+7. Puede usar botón "Volver" para regresar al listado
 ```
 
 ---
 
-## Seccion Tecnica
+## Beneficios
 
-### Estilos de Fila en DataTable
-
-```typescript
-// En TableRow
-const rowClasses = cn(
-  "group relative transition-colors",
-  onRowClick && "cursor-pointer",
-  isSelected
-    ? "bg-primary/10 border-l-2 border-l-primary"
-    : "hover:bg-muted/30",
-  isActive && "ring-1 ring-primary/50" // Fila activa en panel
-);
-```
-
-### Posicionamiento del Boton Ver
-
-El boton "Ver" se posicionara de forma absoluta dentro de la primera celda de contenido (despues del checkbox), apareciendo solo en hover:
-
-```typescript
-// Primera columna visible (despues de checkbox)
-<TableCell className="relative">
-  <div className="flex items-center gap-2">
-    <span>{content}</span>
-    
-    {/* Boton Ver superpuesto */}
-    {isPanelOpen && !isCurrentlyViewing && (
-      <Button
-        size="sm"
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
-                   opacity-0 group-hover:opacity-100 
-                   h-6 px-2 text-xs bg-primary hover:bg-primary/90
-                   shadow-sm z-10"
-        onClick={(e) => {
-          e.stopPropagation();
-          onViewRow?.(item);
-        }}
-      >
-        <ExternalLink className="h-3 w-3 mr-1" />
-        Ver
-      </Button>
-    )}
-  </div>
-</TableCell>
-```
-
-### Diferenciacion entre Clic en Fila vs Checkbox
-
-- **Clic en checkbox**: Agrega/quita de seleccion multiple (sin cambiar panel)
-- **Clic en boton Ver**: Cambia a ver solo ese registro
-- **Clic en fila**: Mantiene comportamiento actual (selecciona + abre panel)
+- **Consistencia**: El panel es para vista rápida, la página es para edición completa
+- **Navegación clara**: El usuario entiende que está en una página diferente
+- **URL compartible**: Puede compartir el enlace directo a un registro
+- **Historial de navegación**: El botón "atrás" del navegador funciona correctamente
 

@@ -49,14 +49,11 @@ export function DetailSheet({
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
-      // Check if click was in the table container
-      const isInTable = target.closest('[data-table-container]');
-      
       // Check if click was in the sheet panel
       const isInSheet = sheetRef.current?.contains(target);
       
-      // Close only if click was outside both table and panel
-      if (!isInTable && !isInSheet) {
+      // Close only if click was outside the panel
+      if (!isInSheet) {
         onOpenChange(false);
       }
     };

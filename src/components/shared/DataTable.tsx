@@ -113,7 +113,7 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-table-container>
       <div className="rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>

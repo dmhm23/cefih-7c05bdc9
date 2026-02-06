@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,15 +38,45 @@ export function DetailSheet({
   footer,
   countLabel = "registros",
 }: DetailSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalCount - 1;
+
+  // Handle clicks outside of table and panel to close
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Check if click was in the table container
+      const isInTable = target.closest('[data-table-container]');
+      
+      // Check if click was in the sheet panel
+      const isInSheet = sheetRef.current?.contains(target);
+      
+      // Close only if click was outside both table and panel
+      if (!isInTable && !isInSheet) {
+        onOpenChange(false);
+      }
+    };
+
+    // Use capture phase to intercept before bubble
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [open, onOpenChange]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
+        ref={sheetRef}
         side="right"
         hideCloseButton
         transparentOverlay
+        preventCloseOnOutsideClick
         className="flex flex-col p-0"
       >
         {/* Header */}

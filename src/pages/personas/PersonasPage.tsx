@@ -149,11 +149,7 @@ export default function PersonasPage() {
 
   const handleRowClick = (persona: Persona) => {
     const index = filteredPersonas.findIndex((p) => p.id === persona.id);
-    // Agregar a selección si no está
-    if (!selectedIds.includes(persona.id)) {
-      setSelectedIds((prev) => [...prev, persona.id]);
-    }
-    // Abrir panel
+    // SOLO abrir/actualizar el panel, NO seleccionar
     setSelectedIndex(index);
   };
 

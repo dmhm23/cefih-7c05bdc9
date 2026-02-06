@@ -162,11 +162,7 @@ export default function MatriculasPage() {
 
   const handleRowClick = (matricula: Matricula) => {
     const index = filteredMatriculas.findIndex((m) => m.id === matricula.id);
-    // Agregar a selección si no está
-    if (!selectedIds.includes(matricula.id)) {
-      setSelectedIds((prev) => [...prev, matricula.id]);
-    }
-    // Abrir panel
+    // SOLO abrir/actualizar el panel, NO seleccionar
     setSelectedIndex(index);
   };
 

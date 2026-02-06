@@ -7,6 +7,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
@@ -36,6 +37,7 @@ export default function MatriculasPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     tipoFormacion: "todos",
@@ -124,6 +126,22 @@ export default function MatriculasPage() {
       tipoFormacion: "todos",
       pago: "todos",
     });
+  };
+
+  const selectedMatricula = selectedIndex !== null ? filteredMatriculas[selectedIndex] : null;
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (selectedIndex === null) return;
+    const newIndex =
+      direction === "prev"
+        ? Math.max(0, selectedIndex - 1)
+        : Math.min(filteredMatriculas.length - 1, selectedIndex + 1);
+    setSelectedIndex(newIndex);
+  };
+
+  const handleRowClick = (matricula: Matricula) => {
+    const index = filteredMatriculas.findIndex((m) => m.id === matricula.id);
+    setSelectedIndex(index);
   };
 
   const columns = [
@@ -250,8 +268,18 @@ export default function MatriculasPage() {
         columns={columns}
         isLoading={isLoading}
         emptyMessage="No se encontraron matrículas"
-        onRowClick={(m) => navigate(`/matriculas/${m.id}`)}
+        onRowClick={handleRowClick}
         countLabel="matrículas"
+      />
+
+      {/* Detail Sheet */}
+      <MatriculaDetailSheet
+        open={selectedIndex !== null}
+        onOpenChange={(open) => !open && setSelectedIndex(null)}
+        matricula={selectedMatricula}
+        currentIndex={selectedIndex ?? 0}
+        totalCount={filteredMatriculas.length}
+        onNavigate={handleNavigate}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { Curso } from "@/types";
 import { format } from "date-fns";
@@ -21,6 +22,7 @@ export default function CursosPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
   });
@@ -60,6 +62,22 @@ export default function CursosPage() {
 
   const handleClearFilters = () => {
     setFilters({ estado: "todos" });
+  };
+
+  const selectedCurso = selectedIndex !== null ? filteredCursos[selectedIndex] : null;
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (selectedIndex === null) return;
+    const newIndex =
+      direction === "prev"
+        ? Math.max(0, selectedIndex - 1)
+        : Math.min(filteredCursos.length - 1, selectedIndex + 1);
+    setSelectedIndex(newIndex);
+  };
+
+  const handleRowClick = (curso: Curso) => {
+    const index = filteredCursos.findIndex((c) => c.id === curso.id);
+    setSelectedIndex(index);
   };
 
   const columns = [
@@ -188,8 +206,18 @@ export default function CursosPage() {
         columns={columns}
         isLoading={isLoading}
         emptyMessage="No se encontraron cursos"
-        onRowClick={(c) => navigate(`/cursos/${c.id}`)}
+        onRowClick={handleRowClick}
         countLabel="cursos"
+      />
+
+      {/* Detail Sheet */}
+      <CursoDetailSheet
+        open={selectedIndex !== null}
+        onOpenChange={(open) => !open && setSelectedIndex(null)}
+        curso={selectedCurso}
+        currentIndex={selectedIndex ?? 0}
+        totalCount={filteredCursos.length}
+        onNavigate={handleNavigate}
       />
     </div>
   );

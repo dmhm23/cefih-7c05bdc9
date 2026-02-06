@@ -7,6 +7,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,8 @@ export default function PersonasPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     genero: "todos",
     sectorEconomico: [],
@@ -100,6 +103,22 @@ export default function PersonasPage() {
       sectorEconomico: [],
       nivelEducativo: "todos",
     });
+  };
+
+  const selectedPersona = selectedIndex !== null ? filteredPersonas[selectedIndex] : null;
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (selectedIndex === null) return;
+    const newIndex =
+      direction === "prev"
+        ? Math.max(0, selectedIndex - 1)
+        : Math.min(filteredPersonas.length - 1, selectedIndex + 1);
+    setSelectedIndex(newIndex);
+  };
+
+  const handleRowClick = (persona: Persona) => {
+    const index = filteredPersonas.findIndex((p) => p.id === persona.id);
+    setSelectedIndex(index);
   };
 
   const getSectorLabel = (value: string) => {
@@ -219,8 +238,18 @@ export default function PersonasPage() {
         columns={columns}
         isLoading={isLoading}
         emptyMessage="No se encontraron personas"
-        onRowClick={(p) => navigate(`/personas/${p.id}`)}
+        onRowClick={handleRowClick}
         countLabel="personas"
+      />
+
+      {/* Detail Sheet */}
+      <PersonaDetailSheet
+        open={selectedIndex !== null}
+        onOpenChange={(open) => !open && setSelectedIndex(null)}
+        persona={selectedPersona}
+        currentIndex={selectedIndex ?? 0}
+        totalCount={filteredPersonas.length}
+        onNavigate={handleNavigate}
       />
 
       <ConfirmDialog

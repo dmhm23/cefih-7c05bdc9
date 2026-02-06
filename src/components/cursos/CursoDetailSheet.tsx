@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
   Calendar,
@@ -44,11 +45,11 @@ export function CursoDetailSheet({
   totalCount,
   onNavigate,
 }: CursoDetailSheetProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
   const cambiarEstado = useCambiarEstadoCurso();
   const { data: personas = [] } = usePersonas();
-  const [expanded, setExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -133,6 +134,13 @@ export function CursoDetailSheet({
     }
   };
 
+  const handleFullScreen = () => {
+    if (curso) {
+      onOpenChange(false);
+      navigate(`/cursos/${curso.id}`);
+    }
+  };
+
   return (
     <DetailSheet
       open={open}
@@ -142,8 +150,7 @@ export function CursoDetailSheet({
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}
-      expanded={expanded}
-      onExpandToggle={() => setExpanded(!expanded)}
+      onFullScreen={handleFullScreen}
       countLabel="cursos"
       footer={
         isDirty ? (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   BookOpen,
@@ -58,13 +59,13 @@ export function MatriculaDetailSheet({
   totalCount,
   onNavigate,
 }: MatriculaDetailSheetProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const updateMatricula = useUpdateMatricula();
   const cambiarEstado = useCambiarEstadoMatricula();
   const registrarPago = useRegistrarPago();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
-  const [expanded, setExpanded] = useState(false);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -155,6 +156,13 @@ export function MatriculaDetailSheet({
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "N/A";
 
+  const handleFullScreen = () => {
+    if (matricula) {
+      onOpenChange(false);
+      navigate(`/matriculas/${matricula.id}`);
+    }
+  };
+
   return (
     <DetailSheet
       open={open}
@@ -164,8 +172,7 @@ export function MatriculaDetailSheet({
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}
-      expanded={expanded}
-      onExpandToggle={() => setExpanded(!expanded)}
+      onFullScreen={handleFullScreen}
       countLabel="matrículas"
       footer={
         isDirty ? (

@@ -8,8 +8,11 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import { BulkActionsBar, BulkAction } from "./BulkActionsBar";
 import { ColumnConfig } from "./ColumnSelector";
+import { cn } from "@/lib/utils";
 
 export interface Column<T> {
   key: string;
@@ -32,6 +35,10 @@ interface DataTableProps<T> {
   bulkActions?: BulkAction[];
   // Column visibility
   columnConfig?: ColumnConfig[];
+  // Panel state for "Ver" button
+  isPanelOpen?: boolean;
+  activeRowId?: string;
+  onViewRow?: (item: T) => void;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -46,6 +53,9 @@ export function DataTable<T extends { id: string }>({
   onSelectionChange,
   bulkActions = [],
   columnConfig,
+  isPanelOpen = false,
+  activeRowId,
+  onViewRow,
 }: DataTableProps<T>) {
   // Filter visible columns based on config
   const visibleColumns = columnConfig
@@ -134,14 +144,21 @@ export function DataTable<T extends { id: string }>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item) => {
+              {data.map((item, index) => {
                 const isSelected = selectedIds.includes(item.id);
+                const isActiveRow = activeRowId === item.id;
+                const showViewButton = isPanelOpen && !isActiveRow && onViewRow;
+                
                 return (
                   <TableRow
                     key={item.id}
-                    className={`group ${onRowClick ? "cursor-pointer" : ""} ${
-                      isSelected ? "bg-muted/50" : ""
-                    }`}
+                    className={cn(
+                      "group relative transition-colors",
+                      onRowClick && "cursor-pointer",
+                      isSelected 
+                        ? "bg-primary/10 border-l-2 border-l-primary" 
+                        : "hover:bg-muted/30"
+                    )}
                     onClick={() => onRowClick?.(item)}
                   >
                     {selectable && (
@@ -153,11 +170,29 @@ export function DataTable<T extends { id: string }>({
                         />
                       </TableCell>
                     )}
-                    {visibleColumns.map((column) => (
-                      <TableCell key={column.key} className={column.className}>
+                    {visibleColumns.map((column, colIndex) => (
+                      <TableCell key={column.key} className={cn(column.className, colIndex === 0 && "relative")}>
                         {column.render
                           ? column.render(item)
                           : (item as Record<string, unknown>)[column.key] as React.ReactNode}
+                        
+                        {/* "Ver" button - only on first visible column */}
+                        {colIndex === 0 && showViewButton && (
+                          <Button
+                            size="sm"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 
+                                       opacity-0 group-hover:opacity-100 transition-opacity
+                                       h-6 px-2 text-xs bg-primary hover:bg-primary/90
+                                       shadow-sm z-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onViewRow(item);
+                            }}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Ver
+                          </Button>
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>

@@ -157,6 +157,15 @@ export default function PersonasPage() {
     setSelectedIndex(index);
   };
 
+  // Handler para "Ver" - cambia a solo ese registro
+  const handleViewRow = (persona: Persona) => {
+    const index = filteredPersonas.findIndex((p) => p.id === persona.id);
+    // Cambiar selección a SOLO este registro
+    setSelectedIds([persona.id]);
+    // Actualizar panel
+    setSelectedIndex(index);
+  };
+
   const getSectorLabel = (value: string) => {
     const sector = SECTORES_ECONOMICOS.find((s) => s.value === value);
     return sector?.label || value;
@@ -298,6 +307,9 @@ export default function PersonasPage() {
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         bulkActions={bulkActions}
+        isPanelOpen={selectedIndex !== null}
+        activeRowId={selectedPersona?.id}
+        onViewRow={handleViewRow}
       />
 
       {/* Detail Sheet */}

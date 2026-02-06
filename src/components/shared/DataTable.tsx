@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   onRowClick?: (item: T) => void;
+  countLabel?: string;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -28,6 +29,7 @@ export function DataTable<T extends { id: string }>({
   isLoading,
   emptyMessage = "No hay datos disponibles",
   onRowClick,
+  countLabel = "registros",
 }: DataTableProps<T>) {
   if (isLoading) {
     return (
@@ -51,33 +53,38 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="rounded-lg border bg-card">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column) => (
-              <TableHead key={column.key}>{column.header}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((item) => (
-            <TableRow
-              key={item.id}
-              className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-              onClick={() => onRowClick?.(item)}
-            >
+    <div className="space-y-0">
+      <div className="rounded-lg border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40">
               {columns.map((column) => (
-                <TableCell key={column.key}>
-                  {column.render
-                    ? column.render(item)
-                    : (item as Record<string, unknown>)[column.key] as React.ReactNode}
-                </TableCell>
+                <TableHead key={column.key}>{column.header}</TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data.map((item) => (
+              <TableRow
+                key={item.id}
+                className={onRowClick ? "cursor-pointer" : ""}
+                onClick={() => onRowClick?.(item)}
+              >
+                {columns.map((column) => (
+                  <TableCell key={column.key}>
+                    {column.render
+                      ? column.render(item)
+                      : (item as Record<string, unknown>)[column.key] as React.ReactNode}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="text-sm text-muted-foreground py-3 px-1">
+        {data.length} {countLabel}
+      </div>
     </div>
   );
 }

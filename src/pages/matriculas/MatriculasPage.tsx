@@ -1,32 +1,76 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, FileText, DollarSign } from "lucide-react";
+import { Plus, Eye, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula, TIPO_FORMACION_LABELS } from "@/types";
 import { format } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+const ESTADO_OPTIONS = [
+  { value: "creada", label: "Creada" },
+  { value: "pendiente", label: "Pendiente" },
+  { value: "completa", label: "Completa" },
+  { value: "certificada", label: "Certificada" },
+  { value: "cerrada", label: "Cerrada" },
+];
+
+const TIPO_FORMACION_OPTIONS = [
+  { value: "inicial", label: "Formación Inicial" },
+  { value: "periodica", label: "Formación Periódica" },
+  { value: "actualizacion", label: "Actualización" },
+];
+
+const PAGO_OPTIONS = [
+  { value: "pagado", label: "Pagado" },
+  { value: "pendiente", label: "Pendiente" },
+];
 
 export default function MatriculasPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [estadoFilter, setEstadoFilter] = useState<string>("todos");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({
+    estado: "todos",
+    tipoFormacion: "todos",
+    pago: "todos",
+  });
 
   const { data: matriculas = [], isLoading } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
+
+  const filterConfigs: FilterConfig[] = [
+    {
+      key: "estado",
+      label: "Estado",
+      type: "select",
+      options: ESTADO_OPTIONS,
+    },
+    {
+      key: "tipoFormacion",
+      label: "Tipo de Formación",
+      type: "select",
+      options: TIPO_FORMACION_OPTIONS,
+    },
+    {
+      key: "pago",
+      label: "Estado de Pago",
+      type: "select",
+      options: PAGO_OPTIONS,
+    },
+  ];
+
+  const activeFilterCount = Object.entries(filters).filter(([, value]) => {
+    if (Array.isArray(value)) return value.length > 0;
+    return value && value !== "todos";
+  }).length;
 
   const getPersonaNombre = (personaId: string) => {
     const persona = personas.find((p) => p.id === personaId);
@@ -45,16 +89,42 @@ export default function MatriculasPage() {
 
   const filteredMatriculas = matriculas.filter((m) => {
     const persona = personas.find((p) => p.id === m.personaId);
+    
+    // Text search
     const matchesSearch =
       !searchQuery ||
       persona?.numeroDocumento.includes(searchQuery) ||
       persona?.nombres.toLowerCase().includes(searchQuery.toLowerCase()) ||
       persona?.apellidos.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesEstado = estadoFilter === "todos" || m.estado === estadoFilter;
+    // Filter: Estado
+    const matchesEstado =
+      filters.estado === "todos" || m.estado === filters.estado;
 
-    return matchesSearch && matchesEstado;
+    // Filter: Tipo Formación
+    const matchesTipo =
+      filters.tipoFormacion === "todos" || m.tipoFormacion === filters.tipoFormacion;
+
+    // Filter: Pago
+    const matchesPago =
+      filters.pago === "todos" ||
+      (filters.pago === "pagado" && m.pagado) ||
+      (filters.pago === "pendiente" && !m.pagado);
+
+    return matchesSearch && matchesEstado && matchesTipo && matchesPago;
   });
+
+  const handleFilterChange = (key: string, value: string | string[]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      estado: "todos",
+      tipoFormacion: "todos",
+      pago: "todos",
+    });
+  };
 
   const columns = [
     {
@@ -65,7 +135,9 @@ export default function MatriculasPage() {
     {
       key: "persona",
       header: "Estudiante",
-      render: (m: Matricula) => getPersonaNombre(m.personaId),
+      render: (m: Matricula) => (
+        <span className="font-medium">{getPersonaNombre(m.personaId)}</span>
+      ),
     },
     {
       key: "curso",
@@ -79,7 +151,11 @@ export default function MatriculasPage() {
     {
       key: "tipoFormacion",
       header: "Tipo",
-      render: (m: Matricula) => TIPO_FORMACION_LABELS[m.tipoFormacion],
+      render: (m: Matricula) => (
+        <Badge variant="outline" className="font-normal">
+          {TIPO_FORMACION_LABELS[m.tipoFormacion]}
+        </Badge>
+      ),
     },
     {
       key: "estado",
@@ -90,9 +166,12 @@ export default function MatriculasPage() {
       key: "pago",
       header: "Pago",
       render: (m: Matricula) => (
-        <span className={m.pagado ? "text-emerald-600" : "text-amber-600"}>
-          {m.pagado ? "✓ Pagado" : "Pendiente"}
-        </span>
+        <Badge
+          variant={m.pagado ? "default" : "secondary"}
+          className={m.pagado ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-600"}
+        >
+          {m.pagado ? "Pagado" : "Pendiente"}
+        </Badge>
       ),
     },
     {
@@ -102,12 +181,13 @@ export default function MatriculasPage() {
     },
     {
       key: "actions",
-      header: "Acciones",
+      header: "",
       render: (m: Matricula) => (
-        <div className="flex gap-1">
+        <div className="flex justify-end">
           <Button
             variant="ghost"
             size="icon"
+            className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/matriculas/${m.id}`);
@@ -120,20 +200,12 @@ export default function MatriculasPage() {
     },
   ];
 
-  // Estadísticas rápidas
-  const stats = {
-    total: matriculas.length,
-    pendientes: matriculas.filter((m) => m.estado === "pendiente" || m.estado === "creada").length,
-    completas: matriculas.filter((m) => m.estado === "completa").length,
-    sinPago: matriculas.filter((m) => !m.pagado).length,
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Matrículas</h1>
-          <p className="text-muted-foreground">Gestión de inscripciones y seguimiento</p>
+          <h1 className="text-2xl font-semibold">Matrículas</h1>
+          <p className="text-sm text-muted-foreground">Gestión de inscripciones y seguimiento</p>
         </div>
         <Button onClick={() => navigate("/matriculas/nueva")}>
           <Plus className="h-4 w-4 mr-2" />
@@ -141,71 +213,46 @@ export default function MatriculasPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-sm text-muted-foreground">Total Matrículas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-amber-600">{stats.pendientes}</div>
-            <p className="text-sm text-muted-foreground">Pendientes</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-emerald-600">{stats.completas}</div>
-            <p className="text-sm text-muted-foreground">Completas</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-red-600">{stats.sinPago}</div>
-            <p className="text-sm text-muted-foreground">Sin Pago</p>
-          </CardContent>
-        </Card>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <FilterPopover
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            filters={filterConfigs}
+            values={filters}
+            onChange={handleFilterChange}
+            onClear={handleClearFilters}
+            trigger={
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Filter className="h-4 w-4" />
+                Filtro
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            }
+          />
+        </div>
+        <SearchInput
+          placeholder="Buscar por cédula o nombre..."
+          value={searchQuery}
+          onChange={setSearchQuery}
+          className="w-72"
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Listado de Matrículas</CardTitle>
-            <div className="flex gap-4">
-              <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="creada">Creada</SelectItem>
-                  <SelectItem value="pendiente">Pendiente</SelectItem>
-                  <SelectItem value="completa">Completa</SelectItem>
-                  <SelectItem value="certificada">Certificada</SelectItem>
-                  <SelectItem value="cerrada">Cerrada</SelectItem>
-                </SelectContent>
-              </Select>
-              <SearchInput
-                placeholder="Buscar por cédula o nombre..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-                className="w-72"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={filteredMatriculas}
-            columns={columns}
-            isLoading={isLoading}
-            emptyMessage="No se encontraron matrículas"
-            onRowClick={(m) => navigate(`/matriculas/${m.id}`)}
-          />
-        </CardContent>
-      </Card>
+      {/* Table */}
+      <DataTable
+        data={filteredMatriculas}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage="No se encontraron matrículas"
+        onRowClick={(m) => navigate(`/matriculas/${m.id}`)}
+        countLabel="matrículas"
+      />
     </div>
   );
 }

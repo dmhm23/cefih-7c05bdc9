@@ -1,118 +1,133 @@
 
-# Plan: Reconstruccion del Formulario de Datos Personales
+
+# Plan: Mejora de Vistas de Tablas en los Modulos
 
 ## Resumen
 
-Se rediseñara la seccion "Datos Personales" del formulario `/personas/nuevo` para incluir los campos especificados, con selectores simples y selectores con busqueda integrada para listas largas.
+Se rediseñaran las vistas de tablas en los modulos de Personas, Matriculas y Cursos siguiendo el patron de diseño de la referencia (Lightfield). El objetivo es crear una interfaz mas limpia, compacta y funcional con filtros visibles y mejor aprovechamiento del espacio.
 
 ---
 
-## Cambios en el Modelo de Datos
+## Analisis de la Referencia
 
-### Actualizacion de `src/types/persona.ts`
+De las imagenes proporcionadas se identifican los siguientes elementos clave:
 
-Se agregaran los nuevos campos al interface `Persona`:
+| Elemento | Descripcion |
+|----------|-------------|
+| Sin Card wrapper | La tabla ocupa todo el ancho sin contenedor de tarjeta |
+| Header compacto | Titulo minimo con tabs/botones inline |
+| Barra de herramientas | Filtro a la izquierda, acciones a la derecha |
+| Tabla limpia | Filas compactas, headers con iconos sutiles |
+| Tags/Badges | Para categorias y estados, con colores semanticos |
+| Contador de registros | "X registros" al pie de la tabla |
+| Sin titulos redundantes | Eliminar "Listado de..." dentro de la Card |
 
-```typescript
-// Nuevos tipos
-type TipoDocumento = 'CC' | 'CE' | 'PA' | 'PE' | 'PP';
-type Genero = 'M' | 'F';
-type NivelEducativo = 'primaria' | 'secundaria' | 'bachiller' | 'tecnico' | 
-                       'tecnologo' | 'universitario' | 'especializacion' | 
-                       'maestria' | 'doctorado';
-type AreaTrabajo = 'administrativo' | 'operativa';
+---
 
-interface Persona {
-  // Campos existentes que se mantienen
-  id: string;
-  nombres: string;
-  apellidos: string;
-  fechaNacimiento: string;
-  // ... otros campos existentes
+## Cambios por Componente
 
-  // Nuevos campos
-  tipoDocumento: TipoDocumento;
-  numeroDocumento: string;  // Renombrado de 'cedula'
-  genero: Genero;
-  paisNacimiento: string;
-  nivelEducativo: NivelEducativo;
-  areaTrabajo: AreaTrabajo;
-  sectorEconomico: string;
-}
+### 1. `DataTable.tsx` - Mejoras Generales
+
+**Antes:**
+- Tabla envuelta en borde redondeado
+- Padding amplio en celdas (p-4)
+- Sin contador de registros
+
+**Despues:**
+- Tabla sin borde externo
+- Padding compacto en celdas (px-3 py-2)
+- Contador de registros al pie ("X personas")
+- Prop opcional para mostrar contador
+
+### 2. Nuevo Componente: `TableToolbar.tsx`
+
+Barra de herramientas unificada con:
+- Boton de filtro (izquierda)
+- Busqueda y selectores (centro/derecha)
+- Boton de crear registro (derecha)
+
+```text
++----------------------------------------------------------+
+| [Filtro ▼]                    [Buscar...] [Estado ▼] [+] |
++----------------------------------------------------------+
 ```
 
+### 3. Nuevo Componente: `FilterPopover.tsx`
+
+Popover que agrupa multiples filtros:
+- Sectores economicos (para Personas)
+- Tipo de formacion (para Matriculas)
+- Estados del curso
+
 ---
 
-## Nuevos Componentes a Crear
+## Cambios por Pagina
 
-### 1. `src/components/ui/combobox.tsx`
+### PersonasPage.tsx
 
-Componente reutilizable que combina `Popover` + `Command` para crear selectores con busqueda. Se usara para:
-- Pais de nacimiento
-- Nivel educativo  
-- Sector economico
+**Eliminar:**
+- Card wrapper y CardHeader con titulo "Listado de Personas"
+- Columna "EPS" (ya no existe en el modelo)
 
-### 2. `src/data/formOptions.ts`
+**Agregar:**
+- Barra de herramientas con filtros: Genero, Sector Economico, Nivel Educativo
+- Columna Sector como badge con color
+- Contador al pie
 
-Archivo de constantes con todas las opciones de los selectores:
-
-```typescript
-export const TIPOS_DOCUMENTO = [
-  { value: 'CC', label: 'CC - Cedula de Ciudadania' },
-  { value: 'CE', label: 'CE - Cedula de Extranjeria' },
-  { value: 'PA', label: 'PA - Pasaporte' },
-  { value: 'PE', label: 'PE - Permiso Especial' },
-  { value: 'PP', label: 'PP - Permiso de Proteccion' },
-];
-
-export const GENEROS = [
-  { value: 'M', label: 'Masculino' },
-  { value: 'F', label: 'Femenino' },
-];
-
-export const NIVELES_EDUCATIVOS = [
-  { value: 'primaria', label: 'Primaria' },
-  { value: 'secundaria', label: 'Secundaria' },
-  // ... resto de niveles
-];
-
-export const AREAS_TRABAJO = [
-  { value: 'administrativo', label: 'Administrativo' },
-  { value: 'operativa', label: 'Operativa' },
-];
-
-export const SECTORES_ECONOMICOS = [
-  { value: 'construccion', label: 'Construccion' },
-  { value: 'infraestructura_vial', label: 'Infraestructura vial y transporte' },
-  // ... los 20 sectores especificados
-];
-
-export const PAISES = [
-  { value: 'CO', label: 'Colombia' },  // Primera opcion sugerida
-  { value: 'VE', label: 'Venezuela' },
-  { value: 'EC', label: 'Ecuador' },
-  // ... lista completa de paises
-];
+**Layout propuesto:**
+```text
++----------------------------------------------------------+
+| Personas                              [+ Nueva Persona]  |
+| Gestion de identidad                                     |
++----------------------------------------------------------+
+| [Filtro ▼]     [Buscar por cedula, nombre...]            |
++----------------------------------------------------------+
+| Documento | Nombre     | Sector         | Telefono | ... |
+|-----------|------------|----------------|----------|-----|
+| 123456789 | Juan Perez | [Construccion] | 311...   | ... |
+| 987654321 | Maria...   | [Energia]      | 300...   | ... |
++----------------------------------------------------------+
+| 2 personas                                               |
++----------------------------------------------------------+
 ```
 
+### MatriculasPage.tsx
+
+**Eliminar:**
+- Cards de estadisticas (mover a indicadores inline o eliminar)
+- Card wrapper con titulo "Listado de Matriculas"
+
+**Agregar:**
+- Barra de herramientas con filtros: Estado, Tipo Formacion, Pago
+- Badges para tipo de formacion
+- Indicadores de pago mas visuales
+
+### CursosPage.tsx
+
+**Eliminar:**
+- Cards de estadisticas
+- Card wrapper con titulo "Listado de Cursos"
+
+**Agregar:**
+- Barra de herramientas con filtros: Estado, Fechas
+- Badge de capacidad (X/Y inscritos)
+
 ---
 
-## Estructura del Formulario Actualizado
+## Nuevo Diseno de Tabla
 
-### Seccion: Datos Personales (Card)
+### Estilos actualizados en table.tsx
 
-| Campo | Tipo de Input | Ancho |
-|-------|---------------|-------|
-| Tipo de documento | Select simple | 50% |
-| No. Documento | Input text | 50% |
-| Nombres | Input text | 50% |
-| Apellidos | Input text | 50% |
-| Genero | Select simple | 50% |
-| Pais de nacimiento | Combobox con busqueda | 50% |
-| Fecha de nacimiento | Input date | 50% |
-| Nivel educativo | Combobox con busqueda | 50% |
-| Area de trabajo | Select simple | 50% |
-| Sector economico | Combobox con busqueda | 50% |
+```typescript
+// TableHead - mas compacto
+"h-10 px-3 text-left align-middle font-medium text-muted-foreground text-xs uppercase tracking-wide"
+
+// TableCell - padding reducido
+"px-3 py-2.5 align-middle text-sm"
+
+// TableRow - hover sutil
+"border-b transition-colors hover:bg-muted/30"
+```
 
 ---
 
@@ -120,103 +135,98 @@ export const PAISES = [
 
 | Archivo | Accion | Descripcion |
 |---------|--------|-------------|
-| `src/types/persona.ts` | Modificar | Agregar nuevos tipos y campos |
-| `src/data/formOptions.ts` | Crear | Constantes de opciones |
-| `src/components/ui/combobox.tsx` | Crear | Selector con busqueda reutilizable |
-| `src/pages/personas/PersonaFormPage.tsx` | Modificar | Actualizar campos del formulario |
-| `src/data/mockData.ts` | Modificar | Actualizar datos de ejemplo |
-| `src/services/personaService.ts` | Verificar | Asegurar compatibilidad |
-| `src/hooks/usePersonas.ts` | Verificar | Asegurar compatibilidad |
+| `src/components/ui/table.tsx` | Modificar | Reducir padding, headers compactos |
+| `src/components/shared/DataTable.tsx` | Modificar | Agregar contador, quitar borde externo |
+| `src/components/shared/TableToolbar.tsx` | Crear | Barra de herramientas unificada |
+| `src/components/shared/FilterPopover.tsx` | Crear | Popover de filtros multiples |
+| `src/pages/personas/PersonasPage.tsx` | Modificar | Nuevo layout sin cards |
+| `src/pages/matriculas/MatriculasPage.tsx` | Modificar | Nuevo layout, filtros inline |
+| `src/pages/cursos/CursosPage.tsx` | Modificar | Nuevo layout, filtros inline |
 
 ---
 
-## Implementacion del Combobox
+## Nuevos Componentes
 
-Se creara un componente generico que reciba:
-- Lista de opciones
-- Placeholder
-- Texto de busqueda
-- Opcion sugerida (para pais Colombia)
+### TableToolbar.tsx
+
+Props:
+- `onFilter`: callback para abrir filtros
+- `filterCount`: numero de filtros activos (muestra badge)
+- `searchPlaceholder`: placeholder de busqueda
+- `searchValue` / `onSearchChange`: control de busqueda
+- `children`: selectores adicionales (estado, etc)
+- `actions`: botones de accion (crear, exportar)
+
+### FilterPopover.tsx
+
+Props:
+- `filters`: array de configuracion de filtros
+- `values`: estado actual de filtros
+- `onChange`: callback al cambiar filtros
+- `onClear`: limpiar todos los filtros
+
+---
+
+## Ejemplo Visual Final - PersonasPage
 
 ```text
-+---------------------------+
-| Colombia              [v] |
-+---------------------------+
-| [Buscar pais...]          |
-|---------------------------|
-| > Colombia   (sugerido)   |
-| Argentina                 |
-| Brasil                    |
-| Chile                     |
-| ...                       |
-+---------------------------+
++------------------------------------------------------------------+
+| Personas                                     [+ Nueva Persona]   |
+| Gestion de identidad - Hoja de Vida Digital                      |
++------------------------------------------------------------------+
+|                                                                  |
+| [≡ Filtro]                      [🔍 Buscar por cedula, nombre..] |
+|                                                                  |
++------------------------------------------------------------------+
+| □ | Documento   | Nombre Completo  | Sector           | Tel     |
+|---|-------------|------------------|------------------|---------|
+|   | 1234567890  | Juan Perez       | [Construccion]   | 311...  |
+|   | 9876543210  | Maria Lopez      | [Energia]        | 300...  |
+|   | 5555555555  | Carlos Ruiz      | [Telecomunic..] | 315...  |
++------------------------------------------------------------------+
+| 3 personas                                                       |
++------------------------------------------------------------------+
 ```
-
----
-
-## Validacion con Zod
-
-Se actualizara el schema de validacion:
-
-```typescript
-const personaSchema = z.object({
-  tipoDocumento: z.enum(['CC', 'CE', 'PA', 'PE', 'PP']),
-  numeroDocumento: z.string().min(6, "Minimo 6 caracteres"),
-  nombres: z.string().min(2, "Ingrese el nombre"),
-  apellidos: z.string().min(2, "Ingrese los apellidos"),
-  genero: z.enum(['M', 'F']),
-  paisNacimiento: z.string().min(1, "Seleccione el pais"),
-  fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
-  nivelEducativo: z.string().min(1, "Seleccione el nivel"),
-  areaTrabajo: z.enum(['administrativo', 'operativa']),
-  sectorEconomico: z.string().min(1, "Seleccione el sector"),
-  // ... campos existentes (email, telefono, etc.)
-});
-```
-
----
-
-## Consideraciones de UX
-
-1. **Colombia como sugerencia principal**: Al abrir el selector de pais, Colombia aparece primero y resaltado
-2. **Busqueda instantanea**: Los combobox filtran mientras el usuario escribe
-3. **Accesibilidad**: Navegacion por teclado en todos los selectores
-4. **Validacion visual**: Bordes rojos en campos con error
-5. **Labels claros**: Cada campo indica si es obligatorio (*)
 
 ---
 
 ## Seccion Tecnica
 
-### Patron Combobox (Popover + Command)
+### Estructura del FilterPopover
 
 ```typescript
-// Estructura basica del componente
-<Popover>
-  <PopoverTrigger>
-    <Button variant="outline">
-      {selectedValue || placeholder}
-      <ChevronsUpDown />
-    </Button>
-  </PopoverTrigger>
-  <PopoverContent>
-    <Command>
-      <CommandInput placeholder="Buscar..." />
-      <CommandList>
-        <CommandEmpty>Sin resultados</CommandEmpty>
-        <CommandGroup>
-          {options.map(option => (
-            <CommandItem key={option.value}>
-              {option.label}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  </PopoverContent>
-</Popover>
+interface FilterConfig {
+  key: string;
+  label: string;
+  type: 'select' | 'multiselect' | 'date-range';
+  options?: { value: string; label: string }[];
+}
+
+// Ejemplo de uso
+<FilterPopover
+  filters={[
+    { key: 'genero', label: 'Genero', type: 'select', options: GENEROS },
+    { key: 'sector', label: 'Sector', type: 'multiselect', options: SECTORES_ECONOMICOS },
+    { key: 'nivelEducativo', label: 'Nivel Educativo', type: 'select', options: NIVELES_EDUCATIVOS },
+  ]}
+  values={filterValues}
+  onChange={setFilterValues}
+/>
 ```
 
-### Lista de Paises
+### Logica de Filtrado
 
-Se incluira una lista completa de paises latinoamericanos y principales paises del mundo, con Colombia posicionada primero para facilitar la seleccion rapida.
+Se centralizara la logica de filtrado en cada pagina usando un hook o funcion que combine:
+- Busqueda de texto (nombre, documento)
+- Filtros de select (genero, estado)
+- Filtros multiples (sectores)
+
+### Contador de Registros
+
+El DataTable mostrara automaticamente el contador:
+```typescript
+<div className="text-sm text-muted-foreground py-2 px-3">
+  {data.length} {countLabel || 'registros'}
+</div>
+```
+

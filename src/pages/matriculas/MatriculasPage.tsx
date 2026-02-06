@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Filter } from "lucide-react";
+import { Plus, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, Column } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
+import { RowActions, createViewAction } from "@/components/shared/RowActions";
+import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula, TIPO_FORMACION_LABELS } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+
+const STORAGE_KEY = "matriculas_visible_columns";
 
 const ESTADO_OPTIONS = [
   { value: "creada", label: "Creada" },
@@ -33,20 +39,42 @@ const PAGO_OPTIONS = [
   { value: "pendiente", label: "Pendiente" },
 ];
 
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { key: "documento", header: "Documento", visible: true },
+  { key: "persona", header: "Estudiante", visible: true },
+  { key: "curso", header: "Curso", visible: true },
+  { key: "tipoFormacion", header: "Tipo", visible: true },
+  { key: "estado", header: "Estado", visible: true },
+  { key: "pago", header: "Pago", visible: true },
+  { key: "fecha", header: "Fecha", visible: true },
+  { key: "actions", header: "", visible: true, alwaysVisible: true },
+];
+
 export default function MatriculasPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     tipoFormacion: "todos",
     pago: "todos",
   });
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
+  });
 
   const { data: matriculas = [], isLoading } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
+
+  // Persist column config
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
+  }, [columnConfig]);
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -92,22 +120,14 @@ export default function MatriculasPage() {
   const filteredMatriculas = matriculas.filter((m) => {
     const persona = personas.find((p) => p.id === m.personaId);
     
-    // Text search
     const matchesSearch =
       !searchQuery ||
       persona?.numeroDocumento.includes(searchQuery) ||
       persona?.nombres.toLowerCase().includes(searchQuery.toLowerCase()) ||
       persona?.apellidos.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Filter: Estado
-    const matchesEstado =
-      filters.estado === "todos" || m.estado === filters.estado;
-
-    // Filter: Tipo Formación
-    const matchesTipo =
-      filters.tipoFormacion === "todos" || m.tipoFormacion === filters.tipoFormacion;
-
-    // Filter: Pago
+    const matchesEstado = filters.estado === "todos" || m.estado === filters.estado;
+    const matchesTipo = filters.tipoFormacion === "todos" || m.tipoFormacion === filters.tipoFormacion;
     const matchesPago =
       filters.pago === "todos" ||
       (filters.pago === "pagado" && m.pagado) ||
@@ -144,7 +164,26 @@ export default function MatriculasPage() {
     setSelectedIndex(index);
   };
 
-  const columns = [
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: (ids) => {
+        toast({ title: `Eliminar ${ids.length} matrículas (pendiente)` });
+      },
+    },
+    {
+      label: "Exportar",
+      icon: Download,
+      variant: "outline",
+      onClick: (ids) => {
+        toast({ title: `Exportando ${ids.length} registros...` });
+      },
+    },
+  ];
+
+  const columns: Column<Matricula>[] = [
     {
       key: "documento",
       header: "Documento",
@@ -200,20 +239,14 @@ export default function MatriculasPage() {
     {
       key: "actions",
       header: "",
+      className: "w-[80px]",
       render: (m: Matricula) => (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/matriculas/${m.id}`);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
+        <RowActions
+          showOnHover
+          actions={[
+            createViewAction(() => navigate(`/matriculas/${m.id}`)),
+          ]}
+        />
       ),
     },
   ];
@@ -253,6 +286,7 @@ export default function MatriculasPage() {
               </Button>
             }
           />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
         </div>
         <SearchInput
           placeholder="Buscar por cédula o nombre..."
@@ -266,10 +300,15 @@ export default function MatriculasPage() {
       <DataTable
         data={filteredMatriculas}
         columns={columns}
+        columnConfig={columnConfig}
         isLoading={isLoading}
         emptyMessage="No se encontraron matrículas"
         onRowClick={handleRowClick}
         countLabel="matrículas"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={bulkActions}
       />
 
       {/* Detail Sheet */}

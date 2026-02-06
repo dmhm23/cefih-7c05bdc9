@@ -1,16 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Users, Filter } from "lucide-react";
+import { Plus, Users, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, Column } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
+import { RowActions, createViewAction, createEditAction } from "@/components/shared/RowActions";
+import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { Curso } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+
+const STORAGE_KEY = "cursos_visible_columns";
 
 const ESTADO_OPTIONS = [
   { value: "abierto", label: "Abierto" },
@@ -18,16 +24,37 @@ const ESTADO_OPTIONS = [
   { value: "cerrado", label: "Cerrado" },
 ];
 
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { key: "nombre", header: "Nombre del Curso", visible: true },
+  { key: "entrenador", header: "Entrenador", visible: true },
+  { key: "fechas", header: "Fechas", visible: true },
+  { key: "duracion", header: "Duración", visible: true },
+  { key: "capacidad", header: "Inscritos", visible: true },
+  { key: "estado", header: "Estado", visible: true },
+  { key: "actions", header: "", visible: true, alwaysVisible: true },
+];
+
 export default function CursosPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
   });
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
+  });
 
   const { data: cursos = [], isLoading } = useCursos();
+
+  // Persist column config
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
+  }, [columnConfig]);
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -44,13 +71,11 @@ export default function CursosPage() {
   }).length;
 
   const filteredCursos = cursos.filter((c) => {
-    // Text search
     const matchesSearch =
       !searchQuery ||
       c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Filter: Estado
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
 
     return matchesSearch && matchesEstado;
@@ -80,7 +105,26 @@ export default function CursosPage() {
     setSelectedIndex(index);
   };
 
-  const columns = [
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: (ids) => {
+        toast({ title: `Eliminar ${ids.length} cursos (pendiente)` });
+      },
+    },
+    {
+      label: "Exportar",
+      icon: Download,
+      variant: "outline",
+      onClick: (ids) => {
+        toast({ title: `Exportando ${ids.length} registros...` });
+      },
+    },
+  ];
+
+  const columns: Column<Curso>[] = [
     {
       key: "nombre",
       header: "Nombre del Curso",
@@ -138,20 +182,15 @@ export default function CursosPage() {
     {
       key: "actions",
       header: "",
+      className: "w-[80px]",
       render: (c: Curso) => (
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/cursos/${c.id}`);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
+        <RowActions
+          showOnHover
+          actions={[
+            createViewAction(() => navigate(`/cursos/${c.id}`)),
+            createEditAction(() => navigate(`/cursos/${c.id}/editar`)),
+          ]}
+        />
       ),
     },
   ];
@@ -191,6 +230,7 @@ export default function CursosPage() {
               </Button>
             }
           />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
         </div>
         <SearchInput
           placeholder="Buscar por nombre o entrenador..."
@@ -204,10 +244,15 @@ export default function CursosPage() {
       <DataTable
         data={filteredCursos}
         columns={columns}
+        columnConfig={columnConfig}
         isLoading={isLoading}
         emptyMessage="No se encontraron cursos"
         onRowClick={handleRowClick}
         countLabel="cursos"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={bulkActions}
       />
 
       {/* Detail Sheet */}

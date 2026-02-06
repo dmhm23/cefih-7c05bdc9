@@ -48,6 +48,8 @@ export function DetailSheet({
         side="right"
         size={expanded ? "expanded" : "default"}
         hideCloseButton
+        transparentOverlay
+        preventCloseOnOutsideClick
         className="flex flex-col p-0"
       >
         {/* Header */}

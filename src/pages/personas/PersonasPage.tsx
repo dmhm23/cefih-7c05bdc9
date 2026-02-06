@@ -1,34 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Edit, Trash2, Filter } from "lucide-react";
+import { Plus, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/shared/DataTable";
+import { DataTable, Column } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
+import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
+import { RowActions, createViewAction, createEditAction, createDeleteAction } from "@/components/shared/RowActions";
+import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, SECTORES_ECONOMICOS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
 
+const STORAGE_KEY = "personas_visible_columns";
+
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { key: "numeroDocumento", header: "Documento", visible: true },
+  { key: "nombre", header: "Nombre Completo", visible: true },
+  { key: "sector", header: "Sector", visible: true },
+  { key: "telefono", header: "Teléfono", visible: true },
+  { key: "email", header: "Email", visible: false },
+  { key: "genero", header: "Género", visible: false },
+  { key: "nivelEducativo", header: "Nivel Educativo", visible: false },
+  { key: "actions", header: "", visible: true, alwaysVisible: true },
+];
+
 export default function PersonasPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     genero: "todos",
     sectorEconomico: [],
     nivelEducativo: "todos",
   });
+  const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
+  });
 
   const { data: personas = [], isLoading } = usePersonas();
   const deletePersona = useDeletePersona();
+
+  // Persist column config
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
+  }, [columnConfig]);
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -57,7 +83,6 @@ export default function PersonasPage() {
   }).length;
 
   const filteredPersonas = personas.filter((p) => {
-    // Text search
     const query = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
@@ -66,18 +91,10 @@ export default function PersonasPage() {
       p.apellidos.toLowerCase().includes(query) ||
       (p.email?.toLowerCase().includes(query) ?? false);
 
-    // Filter: Género
-    const matchesGenero =
-      filters.genero === "todos" || p.genero === filters.genero;
-
-    // Filter: Sector Económico (multiselect)
+    const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;
     const sectorFilters = filters.sectorEconomico as string[];
-    const matchesSector =
-      sectorFilters.length === 0 || sectorFilters.includes(p.sectorEconomico);
-
-    // Filter: Nivel Educativo
-    const matchesNivel =
-      filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
+    const matchesSector = sectorFilters.length === 0 || sectorFilters.includes(p.sectorEconomico);
+    const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
 
     return matchesSearch && matchesGenero && matchesSector && matchesNivel;
   });
@@ -87,10 +104,23 @@ export default function PersonasPage() {
     try {
       await deletePersona.mutateAsync(deleteId);
       toast({ title: "Persona eliminada correctamente" });
-    } catch (error) {
+    } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });
     }
     setDeleteId(null);
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      for (const id of selectedIds) {
+        await deletePersona.mutateAsync(id);
+      }
+      toast({ title: `${selectedIds.length} personas eliminadas` });
+      setSelectedIds([]);
+    } catch {
+      toast({ title: "Error al eliminar", variant: "destructive" });
+    }
+    setBulkDeleteConfirm(false);
   };
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -126,7 +156,34 @@ export default function PersonasPage() {
     return sector?.label || value;
   };
 
-  const columns = [
+  const getGeneroLabel = (value: string) => {
+    const genero = GENEROS.find((g) => g.value === value);
+    return genero?.label || value;
+  };
+
+  const getNivelLabel = (value: string) => {
+    const nivel = NIVELES_EDUCATIVOS.find((n) => n.value === value);
+    return nivel?.label || value;
+  };
+
+  const bulkActions: BulkAction[] = [
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      variant: "destructive",
+      onClick: () => setBulkDeleteConfirm(true),
+    },
+    {
+      label: "Exportar",
+      icon: Download,
+      variant: "outline",
+      onClick: (ids) => {
+        toast({ title: `Exportando ${ids.length} registros...` });
+      },
+    },
+  ];
+
+  const columns: Column<Persona>[] = [
     { key: "numeroDocumento", header: "Documento" },
     {
       key: "nombre",
@@ -145,45 +202,30 @@ export default function PersonasPage() {
       ),
     },
     { key: "telefono", header: "Teléfono" },
+    { key: "email", header: "Email" },
+    {
+      key: "genero",
+      header: "Género",
+      render: (p: Persona) => getGeneroLabel(p.genero),
+    },
+    {
+      key: "nivelEducativo",
+      header: "Nivel Educativo",
+      render: (p: Persona) => getNivelLabel(p.nivelEducativo),
+    },
     {
       key: "actions",
       header: "",
+      className: "w-[100px]",
       render: (p: Persona) => (
-        <div className="flex gap-1 justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/personas/${p.id}`);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/personas/${p.id}/editar`);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteId(p.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
+        <RowActions
+          showOnHover
+          actions={[
+            createViewAction(() => navigate(`/personas/${p.id}`)),
+            createEditAction(() => navigate(`/personas/${p.id}/editar`)),
+            createDeleteAction(() => setDeleteId(p.id)),
+          ]}
+        />
       ),
     },
   ];
@@ -223,6 +265,7 @@ export default function PersonasPage() {
               </Button>
             }
           />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
         </div>
         <SearchInput
           placeholder="Buscar por cédula, nombre o email..."
@@ -236,10 +279,15 @@ export default function PersonasPage() {
       <DataTable
         data={filteredPersonas}
         columns={columns}
+        columnConfig={columnConfig}
         isLoading={isLoading}
         emptyMessage="No se encontraron personas"
         onRowClick={handleRowClick}
         countLabel="personas"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={bulkActions}
       />
 
       {/* Detail Sheet */}
@@ -260,6 +308,16 @@ export default function PersonasPage() {
         confirmText="Eliminar"
         variant="destructive"
         onConfirm={handleDelete}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+        title={`¿Eliminar ${selectedIds.length} personas?`}
+        description="Esta acción no se puede deshacer. Se eliminarán las personas seleccionadas y todos sus datos asociados."
+        confirmText="Eliminar todos"
+        variant="destructive"
+        onConfirm={handleBulkDelete}
       />
     </div>
   );

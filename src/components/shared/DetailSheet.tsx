@@ -42,33 +42,38 @@ export function DetailSheet({
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalCount - 1;
 
-  // Handle clicks outside of table and panel to close
+  // Track when a Radix portal (dropdown/select/popover) is open
+  const portalOpenRef = useRef(false);
+
   useEffect(() => {
     if (!open) return;
 
+    // Watch for Radix portals appearing/disappearing
+    const observer = new MutationObserver(() => {
+      const hasOpenPortal = !!document.querySelector(
+        '[data-radix-popper-content-wrapper], [data-radix-select-viewport], [role="listbox"], [role="menu"]'
+      );
+      portalOpenRef.current = hasOpenPortal;
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
     const handleClickOutside = (event: MouseEvent) => {
+      // Skip if a Radix portal is currently open (dropdown dismissing)
+      if (portalOpenRef.current) return;
+
       const target = event.target as HTMLElement;
-      
-      // Check if click was in the sheet panel
       const isInSheet = sheetRef.current?.contains(target);
       
-      // Check if click was in a Radix portal (dropdowns, selects, popovers, etc.)
-      const isInRadixPortal = target.closest('[data-radix-popper-content-wrapper]') ||
-        target.closest('[role="listbox"]') ||
-        target.closest('[role="menu"]') ||
-        target.closest('[data-radix-select-viewport]') ||
-        target.closest('[data-radix-collection-item]');
-      
-      // Close only if click was outside the panel and not in a portal dropdown
-      if (!isInSheet && !isInRadixPortal) {
+      if (!isInSheet) {
         onOpenChange(false);
       }
     };
 
-    // Use capture phase to intercept before bubble
     document.addEventListener('mousedown', handleClickOutside, true);
     
     return () => {
+      observer.disconnect();
       document.removeEventListener('mousedown', handleClickOutside, true);
     };
   }, [open, onOpenChange]);

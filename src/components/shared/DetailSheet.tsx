@@ -70,7 +70,7 @@ export function DetailSheet({
   }, [open, onOpenChange]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
         ref={sheetRef}
         side="right"

@@ -1,40 +1,36 @@
 
 
-# Plan: Clic en fila actualiza el panel en vez de cerrarlo
+# Fix: Panel lateral se actualiza al hacer clic en otra fila (sin clic extra)
 
-## Cambio
+## Problema raiz
 
-Modificar una sola linea en `DetailSheet.tsx`: en el handler `handleClickOutside`, antes de cerrar el panel, verificar si el clic fue sobre una fila de la tabla (`[data-table-container]`). Si fue sobre la tabla, no hacer nada (dejar que el evento llegue a la fila y su `onRowClick` actualice el panel). Solo cerrar si el clic fue fuera del panel Y fuera de la tabla.
+El componente `Sheet` usa `Radix Dialog` en modo **modal** (por defecto). Esto activa un **focus trap** que intercepta y consume los clics fuera del panel antes de que lleguen a las filas de la tabla. Por eso se necesitan dos clics: el primero es "tragado" por el focus trap, el segundo ya llega a la fila.
 
-## Archivo a modificar
+## Solucion
 
-`src/components/shared/DetailSheet.tsx`
+Pasar `modal={false}` al componente `Sheet`. Esto desactiva el focus trap y permite que los clics en la tabla lleguen directamente a las filas, actualizando el panel sin cerrarlo.
 
-## Cambio exacto
+## Archivos a modificar
 
-Reemplazar la logica actual:
+### 1. `src/components/shared/DetailSheet.tsx`
 
-```typescript
-const isInSheet = sheetRef.current?.contains(target);
-
-if (!isInSheet) {
-  onOpenChange(false);
-}
-```
-
-Por:
+- Agregar `modal={false}` al componente `<Sheet>`
+- Mantener el handler `handleClickOutside` existente para cerrar al hacer clic fuera del panel Y fuera de la tabla
 
 ```typescript
-const isInSheet = sheetRef.current?.contains(target);
-const isInTable = target.closest('[data-table-container]');
+// Antes:
+<Sheet open={open} onOpenChange={onOpenChange}>
 
-if (!isInSheet && !isInTable) {
-  onOpenChange(false);
-}
+// Despues:
+<Sheet open={open} onOpenChange={onOpenChange} modal={false}>
 ```
+
+### 2. `src/components/ui/sheet.tsx` (limpieza opcional)
+
+- Se puede remover `preventCloseOnOutsideClick` y los handlers `onPointerDownOutside`/`onInteractOutside` ya que con `modal={false}` Radix no intenta cerrar en clics externos. Sin embargo, para minimizar cambios y riesgo, se puede dejar como esta.
 
 ## Comportamiento resultante
 
-- Clic en el panel: no se cierra (igual que antes)
-- Clic en una fila de la tabla: no se cierra, el `onRowClick` de la fila actualiza el contenido del panel
-- Clic fuera del panel y fuera de la tabla (sidebar, header, etc): se cierra el panel
+- Panel abierto + clic en otra fila: el panel actualiza su contenido inmediatamente (un solo clic)
+- Panel abierto + clic fuera del panel y de la tabla: el panel se cierra
+- Dropdowns dentro del panel: siguen funcionando sin cerrar el panel

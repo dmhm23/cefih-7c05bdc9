@@ -52,8 +52,15 @@ export function DetailSheet({
       // Check if click was in the sheet panel
       const isInSheet = sheetRef.current?.contains(target);
       
-      // Close only if click was outside the panel
-      if (!isInSheet) {
+      // Check if click was in a Radix portal (dropdowns, selects, popovers, etc.)
+      const isInRadixPortal = target.closest('[data-radix-popper-content-wrapper]') ||
+        target.closest('[role="listbox"]') ||
+        target.closest('[role="menu"]') ||
+        target.closest('[data-radix-select-viewport]') ||
+        target.closest('[data-radix-collection-item]');
+      
+      // Close only if click was outside the panel and not in a portal dropdown
+      if (!isInSheet && !isInRadixPortal) {
         onOpenChange(false);
       }
     };

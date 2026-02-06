@@ -1,47 +1,42 @@
 
 
-# Plan: Botón Expandir Navega a Página Completa
+# Plan: Corregir Interacción Tabla-Panel Deslizante
 
 ## Resumen
 
-Modificar el comportamiento del botón de expandir (Maximize2) en los paneles deslizantes para que navegue a la página de detalle completa (`/personas/:id`, `/matriculas/:id`, `/cursos/:id`) en lugar de solo expandir el panel.
+El problema actual es que el overlay del Sheet captura los clics antes de que lleguen a las filas de la tabla, causando que el panel se cierre en lugar de actualizar su contenido. Se necesita una estrategia para diferenciar los clics en la tabla de los clics fuera de ella.
 
 ---
 
-## Situación Actual
-
-| Componente | Comportamiento Actual |
-|------------|----------------------|
-| `DetailSheet` | El botón Maximize2 alterna `expanded` (hace el panel más ancho) |
-| Páginas de detalle | Ya existen: `PersonaDetallePage`, `MatriculaDetallePage`, `CursoDetallePage` |
-
----
-
-## Nuevo Comportamiento
-
-El botón de expandir/ampliar ahora:
-1. Navega a la ruta de detalle completo del registro
-2. Cierra el panel deslizante
-3. Muestra la página de detalle en pantalla completa
+## Problema Identificado
 
 ```text
-Panel deslizante abierto:
-+---------------------------+---------------+
-|                           | [←][→][⬜][X] |  <- Botón ⬜ (Maximize)
-|     Tabla de datos        |   Detalles    |
-|                           |   del panel   |
-+---------------------------+---------------+
-
-Usuario hace clic en ⬜:
-+------------------------------------------+
-|  ← Volver   | Juan Pérez García | Editar |
-+------------------------------------------+
-|                                          |
-|     PÁGINA COMPLETA DE DETALLE           |
-|     /personas/abc123                     |
-|                                          |
-+------------------------------------------+
+Estado actual:
++----------------------------+----------------+
+|                            |                |
+|   TABLA (debajo del        |   PANEL        |
+|   overlay transparente)    |   ABIERTO      |
+|                            |                |
++----------------------------+----------------+
+         ↑
+   Clic en fila
+         ↓
+   1. Overlay captura el clic primero
+   2. Sheet se cierra
+   3. El evento nunca llega a la fila
 ```
+
+---
+
+## Solucion Propuesta
+
+Usar `preventCloseOnOutsideClick` en el Sheet y manejar el cierre manualmente detectando clics fuera de la tabla.
+
+### Estrategia:
+
+1. **Prevenir cierre automatico**: Activar `preventCloseOnOutsideClick` en el Sheet
+2. **Detectar clics fuera de la tabla**: Agregar un listener global que cierre el panel si el clic no fue en la tabla ni en el panel
+3. **Separar logica de seleccion**: El clic en fila solo actualiza el panel, NO selecciona. Solo el checkbox selecciona.
 
 ---
 
@@ -49,107 +44,197 @@ Usuario hace clic en ⬜:
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/shared/DetailSheet.tsx` | Cambiar prop `onExpandToggle` a `onFullScreen` |
-| `src/components/personas/PersonaDetailSheet.tsx` | Implementar navegación a `/personas/:id` |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Implementar navegación a `/matriculas/:id` |
-| `src/components/cursos/CursoDetailSheet.tsx` | Implementar navegación a `/cursos/:id` |
+| `src/components/shared/DetailSheet.tsx` | Activar `preventCloseOnOutsideClick`, agregar ref y listener para detectar clics fuera |
+| `src/components/shared/DataTable.tsx` | Agregar `data-table-container` para identificar la tabla, separar logica de clic |
+| `src/pages/personas/PersonasPage.tsx` | Modificar `handleRowClick` para NO seleccionar automaticamente |
+| `src/pages/matriculas/MatriculasPage.tsx` | Mismos cambios |
+| `src/pages/cursos/CursosPage.tsx` | Mismos cambios |
 
 ---
 
-## Detalle Técnico
+## Detalle de Implementacion
 
-### DetailSheet - Nueva Prop
+### 1. DataTable - Identificar el Contenedor
+
+Agregar un `data-attribute` para identificar la tabla:
 
 ```typescript
-interface DetailSheetProps {
-  // ... existing props
-  onFullScreen?: () => void; // Reemplaza onExpandToggle
-}
-
-// En el header, el botón ahora:
-{onFullScreen && (
-  <Button
-    variant="ghost"
-    size="icon"
-    className="h-8 w-8"
-    onClick={onFullScreen}
-    title="Abrir en pantalla completa"
-  >
-    <Maximize2 className="h-4 w-4" />
-  </Button>
-)}
+// DataTable.tsx
+return (
+  <div className="space-y-2" data-table-container>
+    <div className="rounded-lg border overflow-hidden">
+      ...
+    </div>
+  </div>
+);
 ```
 
-Se elimina la lógica de `expanded` y `Minimize2` ya que ahora siempre navega a página completa.
+### 2. DataTable - Separar Logica de Seleccion
 
-### PersonaDetailSheet - Navegación
+El clic en la fila YA NO selecciona automaticamente. Solo actualiza el panel:
 
 ```typescript
-import { useNavigate } from "react-router-dom";
+// DataTable.tsx - el onRowClick solo cambia el panel
+<TableRow
+  onClick={() => onRowClick?.(item)}  // Solo abre/cambia panel
+>
+  {/* Checkbox - este SI selecciona */}
+  <Checkbox onClick={(e) => handleToggleRow(item.id, e)} />
+</TableRow>
+```
 
-export function PersonaDetailSheet({ ... }) {
-  const navigate = useNavigate();
-  
-  const handleFullScreen = () => {
-    if (persona) {
-      onOpenChange(false); // Cerrar panel
-      navigate(`/personas/${persona.id}`); // Navegar a página completa
-    }
-  };
-  
+### 3. PersonasPage - Modificar handleRowClick
+
+```typescript
+// PersonasPage.tsx
+const handleRowClick = (persona: Persona) => {
+  const index = filteredPersonas.findIndex((p) => p.id === persona.id);
+  // SOLO abrir/actualizar el panel, NO seleccionar
+  setSelectedIndex(index);
+};
+
+// handleViewRow sigue igual - cambia seleccion a solo ese registro
+const handleViewRow = (persona: Persona) => {
+  const index = filteredPersonas.findIndex((p) => p.id === persona.id);
+  setSelectedIds([persona.id]);
+  setSelectedIndex(index);
+};
+```
+
+### 4. DetailSheet - Prevenir Cierre y Manejar Clics Externos
+
+```typescript
+// DetailSheet.tsx
+import { useEffect, useRef } from "react";
+
+export function DetailSheet({
+  open,
+  onOpenChange,
+  // ... rest
+}: DetailSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Verificar si el clic fue en la tabla
+      const isInTable = target.closest('[data-table-container]');
+      
+      // Verificar si el clic fue en el panel
+      const isInSheet = sheetRef.current?.contains(target);
+      
+      // Si no fue ni en tabla ni en panel, cerrar
+      if (!isInTable && !isInSheet) {
+        onOpenChange(false);
+      }
+    };
+
+    // Usar capture para interceptar antes del bubble
+    document.addEventListener('mousedown', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [open, onOpenChange]);
+
   return (
-    <DetailSheet
-      // ... existing props
-      onFullScreen={handleFullScreen} // Nueva prop
-    >
-      {/* contenido */}
-    </DetailSheet>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        ref={sheetRef}
+        side="right"
+        hideCloseButton
+        transparentOverlay
+        preventCloseOnOutsideClick  // <-- Agregar esto
+        className="flex flex-col p-0"
+      >
+        {/* ... contenido ... */}
+      </SheetContent>
+    </Sheet>
   );
 }
 ```
 
-### MatriculaDetailSheet - Navegación
-
-```typescript
-const handleFullScreen = () => {
-  if (matricula) {
-    onOpenChange(false);
-    navigate(`/matriculas/${matricula.id}`);
-  }
-};
-```
-
-### CursoDetailSheet - Navegación
-
-```typescript
-const handleFullScreen = () => {
-  if (curso) {
-    onOpenChange(false);
-    navigate(`/cursos/${curso.id}`);
-  }
-};
-```
-
 ---
 
-## Flujo de Usuario
+## Flujo de Interaccion Corregido
 
 ```text
-1. Usuario en /personas
-2. Hace clic en una fila → Panel se abre
-3. Ve los detalles en el panel lateral
-4. Quiere más espacio o edición avanzada
-5. Hace clic en botón Maximize (⬜)
-6. Navega a /personas/:id (página completa)
-7. Puede usar botón "Volver" para regresar al listado
+1. Usuario abre panel haciendo clic en una fila
+   → Panel se abre mostrando detalles
+   → Registro NO se selecciona automaticamente
+
+2. Usuario hace clic en OTRA fila (con panel abierto)
+   → El clic llega a la fila (porque preventCloseOnOutsideClick)
+   → Panel actualiza mostrando nuevo registro
+   → Ningun registro se selecciona
+
+3. Usuario hace clic FUERA de la tabla (sidebar, header, etc)
+   → El listener detecta que no es tabla ni panel
+   → Panel se cierra
+
+4. Usuario hace clic en CHECKBOX de una fila
+   → Registro se selecciona/deselecciona
+   → Panel NO cambia (sigue mostrando el mismo registro)
 ```
 
 ---
 
-## Beneficios
+## Diagrama de Eventos
 
-- **Consistencia**: El panel es para vista rápida, la página es para edición completa
-- **Navegación clara**: El usuario entiende que está en una página diferente
-- **URL compartible**: Puede compartir el enlace directo a un registro
-- **Historial de navegación**: El botón "atrás" del navegador funciona correctamente
+```text
+Clic en pantalla
+      │
+      ▼
+┌─────────────────────────────┐
+│ mousedown listener (capture)│
+└─────────────────────────────┘
+      │
+      ▼
+┌─────────────────────┐     ┌──────────────────┐
+│ Es en [data-table]? │─NO─►│ Es en SheetRef?  │
+└─────────────────────┘     └──────────────────┘
+      │YES                        │NO
+      │                           ▼
+      ▼                    ┌─────────────┐
+┌─────────────────┐        │ CERRAR PANEL│
+│ Dejar pasar     │        └─────────────┘
+│ (onRowClick     │
+│  actualiza panel)│
+└─────────────────┘
+```
+
+---
+
+## Seccion Tecnica
+
+### Prop Ref en SheetContent
+
+El `SheetContent` de Radix ya soporta `ref` mediante `forwardRef`, pero necesitamos pasarlo correctamente:
+
+```typescript
+// sheet.tsx - ya tiene forwardRef
+const SheetContent = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Content>,
+  SheetContentProps
+>(...);
+```
+
+### Uso del Ref en DetailSheet
+
+```typescript
+// DetailSheet.tsx
+<SheetContent
+  ref={sheetRef as React.RefObject<HTMLDivElement>}
+  ...
+>
+```
+
+### Consideraciones del Event Listener
+
+- Usar `mousedown` en lugar de `click` para capturar antes
+- Usar `capture: true` para interceptar durante la fase de captura
+- Limpiar el listener cuando el panel se cierra o el componente se desmonta
 

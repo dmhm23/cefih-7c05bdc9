@@ -1,232 +1,332 @@
 
 
-# Plan: Mejora de Vistas de Tablas en los Modulos
+# Plan: Panel Deslizante de Detalle con Edicion Inline
 
 ## Resumen
 
-Se rediseñaran las vistas de tablas en los modulos de Personas, Matriculas y Cursos siguiendo el patron de diseño de la referencia (Lightfield). El objetivo es crear una interfaz mas limpia, compacta y funcional con filtros visibles y mejor aprovechamiento del espacio.
+Se creara un panel deslizante (Sheet) que se abre de derecha a izquierda al hacer clic en cualquier registro de la tabla. Este panel mostrara la informacion completa de la entidad y permitira edicion directa sin navegar a otra pagina. El componente sera reutilizable para Personas, Matriculas y Cursos.
 
 ---
 
-## Analisis de la Referencia
+## Analisis de las Referencias
 
-De las imagenes proporcionadas se identifican los siguientes elementos clave:
+### Referencia 1 (Lightfield)
+- Panel con header compacto
+- Campos con icono + label + valor horizontal
+- Link para copiar/abrir registro
+- Boton expandir
 
-| Elemento | Descripcion |
-|----------|-------------|
-| Sin Card wrapper | La tabla ocupa todo el ancho sin contenedor de tarjeta |
-| Header compacto | Titulo minimo con tabs/botones inline |
-| Barra de herramientas | Filtro a la izquierda, acciones a la derecha |
-| Tabla limpia | Filas compactas, headers con iconos sutiles |
-| Tags/Badges | Para categorias y estados, con colores semanticos |
-| Contador de registros | "X registros" al pie de la tabla |
-| Sin titulos redundantes | Eliminar "Listado de..." dentro de la Card |
+### Referencia 2 (Jotform)
+- Navegacion entre registros (flechas con contador "1 de X")
+- Header con multiples acciones (descargar, imprimir, ajustes)
+- Layout vertical: label arriba, valor abajo
+- Iconos de accion por campo (calendario para fechas)
+- Valores tipo badge para categorias
+- Titulo con numero de orden y fecha de actualizacion
+
+### Caracteristicas Combinadas
+| Elemento | Implementacion |
+|----------|---------------|
+| Navegacion registros | Flechas con "1 de X registros" |
+| Header acciones | Expandir, editar en nueva pestaña, cerrar |
+| Layout campos | Vertical (label arriba, valor abajo) |
+| Edicion inline | Click en valor activa modo edicion |
+| Badges | Para campos categoricos |
+| Ancho dinamico | Normal (480px) o expandido (720px) |
 
 ---
 
-## Cambios por Componente
-
-### 1. `DataTable.tsx` - Mejoras Generales
-
-**Antes:**
-- Tabla envuelta en borde redondeado
-- Padding amplio en celdas (p-4)
-- Sin contador de registros
-
-**Despues:**
-- Tabla sin borde externo
-- Padding compacto en celdas (px-3 py-2)
-- Contador de registros al pie ("X personas")
-- Prop opcional para mostrar contador
-
-### 2. Nuevo Componente: `TableToolbar.tsx`
-
-Barra de herramientas unificada con:
-- Boton de filtro (izquierda)
-- Busqueda y selectores (centro/derecha)
-- Boton de crear registro (derecha)
+## Arquitectura de Componentes
 
 ```text
-+----------------------------------------------------------+
-| [Filtro ▼]                    [Buscar...] [Estado ▼] [+] |
-+----------------------------------------------------------+
+DetailSheet (Base Reutilizable)
+├── DetailSheetHeader
+│   ├── Titulo + Subtitulo
+│   ├── Navegacion (prev/next)
+│   └── Acciones (expand, close)
+├── DetailSheetContent (scroll)
+│   └── Secciones con EditableField
+└── DetailSheetFooter (opcional)
+    └── Boton Guardar (cuando hay cambios)
 ```
-
-### 3. Nuevo Componente: `FilterPopover.tsx`
-
-Popover que agrupa multiples filtros:
-- Sectores economicos (para Personas)
-- Tipo de formacion (para Matriculas)
-- Estados del curso
 
 ---
 
-## Cambios por Pagina
+## Componentes a Crear
 
-### PersonasPage.tsx
+### 1. `src/components/shared/DetailSheet.tsx`
 
-**Eliminar:**
-- Card wrapper y CardHeader con titulo "Listado de Personas"
-- Columna "EPS" (ya no existe en el modelo)
+Componente base con:
+- Navegacion entre registros
+- Header con titulo y acciones
+- Contenido scrolleable
+- Ancho dinamico (expandible)
 
-**Agregar:**
-- Barra de herramientas con filtros: Genero, Sector Economico, Nivel Educativo
-- Columna Sector como badge con color
-- Contador al pie
+Props:
+```typescript
+interface DetailSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  subtitle?: string;
+  // Navegacion
+  currentIndex: number;
+  totalCount: number;
+  onNavigate: (direction: 'prev' | 'next') => void;
+  // Expansion
+  expanded?: boolean;
+  onExpandToggle?: () => void;
+  // Contenido
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}
+```
 
-**Layout propuesto:**
+### 2. `src/components/shared/EditableField.tsx`
+
+Campo con edicion inline:
+- Modo lectura: muestra label + valor
+- Modo edicion: muestra input apropiado
+- Tipos: text, select, combobox, date
+
+Props:
+```typescript
+interface EditableFieldProps {
+  label: string;
+  value: string;
+  displayValue?: string; // Para mostrar labels de selects
+  onChange: (value: string) => void;
+  type?: 'text' | 'select' | 'combobox' | 'date';
+  options?: { value: string; label: string }[];
+  icon?: React.ElementType;
+  editable?: boolean;
+  badge?: boolean; // Mostrar valor como badge
+}
+```
+
+### 3. `src/components/personas/PersonaDetailSheet.tsx`
+
+Panel especifico para Personas con secciones:
+- Identificacion (tipo doc, numero)
+- Datos personales (nombres, genero, fecha nacimiento, RH)
+- Datos laborales (nivel educativo, area, sector)
+- Contacto (email, telefono)
+- Contacto de emergencia
+- Lista de matriculas asociadas
+
+### 4. `src/components/matriculas/MatriculaDetailSheet.tsx`
+
+Panel para Matriculas con:
+- Datos del estudiante (link clickeable)
+- Datos del curso (link clickeable)
+- Estado y tipo de formacion
+- Documentos requeridos
+- Estado de pago
+
+### 5. `src/components/cursos/CursoDetailSheet.tsx`
+
+Panel para Cursos con:
+- Informacion general
+- Fechas y duracion
+- Entrenador
+- Capacidad y estudiantes inscritos
+- Estado del curso
+
+---
+
+## Diseno Visual del Panel
+
+### Header con Navegacion
 ```text
-+----------------------------------------------------------+
-| Personas                              [+ Nueva Persona]  |
-| Gestion de identidad                                     |
-+----------------------------------------------------------+
-| [Filtro ▼]     [Buscar por cedula, nombre...]            |
-+----------------------------------------------------------+
-| Documento | Nombre     | Sector         | Telefono | ... |
-|-----------|------------|----------------|----------|-----|
-| 123456789 | Juan Perez | [Construccion] | 311...   | ... |
-| 987654321 | Maria...   | [Energia]      | 300...   | ... |
-+----------------------------------------------------------+
-| 2 personas                                               |
-+----------------------------------------------------------+
++--------------------------------------------------+
+| [<] Juan Carlos Rodriguez         [<>] [->] [X]  |
+|     CC: 1234567890                               |
+|     1 de 25 personas                             |
++--------------------------------------------------+
 ```
 
-### MatriculasPage.tsx
+### Seccion de Campos (Layout Vertical)
+```text
++--------------------------------------------------+
+| IDENTIFICACION                                   |
+|                                                  |
+| Tipo de Documento                                |
+| [CC - Cedula de Ciudadania]  <-- Badge           |
+|                                                  |
+| Numero de Documento                              |
+| 1234567890                                       |
+|                                                  |
+| DATOS PERSONALES                                 |
+|                                                  |
+| Nombres                                          |
+| Juan Carlos               [Editar al hacer clic] |
+|                                                  |
+| Apellidos                                        |
+| Rodriguez Perez                                  |
+|                                                  |
+| Fecha de Nacimiento                         [📅] |
+| 15 de marzo, 1990                                |
++--------------------------------------------------+
+```
 
-**Eliminar:**
-- Cards de estadisticas (mover a indicadores inline o eliminar)
-- Card wrapper con titulo "Listado de Matriculas"
-
-**Agregar:**
-- Barra de herramientas con filtros: Estado, Tipo Formacion, Pago
-- Badges para tipo de formacion
-- Indicadores de pago mas visuales
-
-### CursosPage.tsx
-
-**Eliminar:**
-- Cards de estadisticas
-- Card wrapper con titulo "Listado de Cursos"
-
-**Agregar:**
-- Barra de herramientas con filtros: Estado, Fechas
-- Badge de capacidad (X/Y inscritos)
+### Footer con Guardar
+```text
++--------------------------------------------------+
+|                    [Cancelar]  [Guardar Cambios] |
++--------------------------------------------------+
+```
 
 ---
 
-## Nuevo Diseno de Tabla
+## Modificacion del Sheet Component
 
-### Estilos actualizados en table.tsx
+Se agregara variante `size` al `SheetContent`:
 
 ```typescript
-// TableHead - mas compacto
-"h-10 px-3 text-left align-middle font-medium text-muted-foreground text-xs uppercase tracking-wide"
-
-// TableCell - padding reducido
-"px-3 py-2.5 align-middle text-sm"
-
-// TableRow - hover sutil
-"border-b transition-colors hover:bg-muted/30"
+const sheetVariants = cva("fixed z-50 ...", {
+  variants: {
+    side: { right: "..." },
+    size: {
+      default: "w-[480px] max-w-[90vw]",
+      expanded: "w-[720px] max-w-[90vw]",
+    },
+  },
+  defaultVariants: { side: "right", size: "default" },
+});
 ```
 
 ---
 
-## Archivos a Modificar/Crear
+## Modificaciones a Paginas
+
+### PersonasPage.tsx
+- Agregar estado `selectedIndex` para navegacion
+- Cambiar `onRowClick` para abrir Sheet en lugar de navegar
+- Renderizar `PersonaDetailSheet`
+- Manejar navegacion prev/next
+
+### MatriculasPage.tsx
+- Misma logica con `MatriculaDetailSheet`
+
+### CursosPage.tsx
+- Misma logica con `CursoDetailSheet`
+
+---
+
+## Flujo de Edicion Inline
+
+```text
+1. Usuario abre panel (clic en fila)
+2. Campos se muestran en modo lectura
+3. Usuario hace clic en un campo
+4. Campo se convierte en input editable
+5. Usuario modifica y presiona Tab/Enter o hace clic fuera
+6. Campo vuelve a modo lectura
+7. Boton "Guardar" aparece en footer
+8. Usuario guarda o descarta cambios
+```
+
+---
+
+## Archivos a Crear/Modificar
 
 | Archivo | Accion | Descripcion |
 |---------|--------|-------------|
-| `src/components/ui/table.tsx` | Modificar | Reducir padding, headers compactos |
-| `src/components/shared/DataTable.tsx` | Modificar | Agregar contador, quitar borde externo |
-| `src/components/shared/TableToolbar.tsx` | Crear | Barra de herramientas unificada |
-| `src/components/shared/FilterPopover.tsx` | Crear | Popover de filtros multiples |
-| `src/pages/personas/PersonasPage.tsx` | Modificar | Nuevo layout sin cards |
-| `src/pages/matriculas/MatriculasPage.tsx` | Modificar | Nuevo layout, filtros inline |
-| `src/pages/cursos/CursosPage.tsx` | Modificar | Nuevo layout, filtros inline |
-
----
-
-## Nuevos Componentes
-
-### TableToolbar.tsx
-
-Props:
-- `onFilter`: callback para abrir filtros
-- `filterCount`: numero de filtros activos (muestra badge)
-- `searchPlaceholder`: placeholder de busqueda
-- `searchValue` / `onSearchChange`: control de busqueda
-- `children`: selectores adicionales (estado, etc)
-- `actions`: botones de accion (crear, exportar)
-
-### FilterPopover.tsx
-
-Props:
-- `filters`: array de configuracion de filtros
-- `values`: estado actual de filtros
-- `onChange`: callback al cambiar filtros
-- `onClear`: limpiar todos los filtros
-
----
-
-## Ejemplo Visual Final - PersonasPage
-
-```text
-+------------------------------------------------------------------+
-| Personas                                     [+ Nueva Persona]   |
-| Gestion de identidad - Hoja de Vida Digital                      |
-+------------------------------------------------------------------+
-|                                                                  |
-| [≡ Filtro]                      [🔍 Buscar por cedula, nombre..] |
-|                                                                  |
-+------------------------------------------------------------------+
-| □ | Documento   | Nombre Completo  | Sector           | Tel     |
-|---|-------------|------------------|------------------|---------|
-|   | 1234567890  | Juan Perez       | [Construccion]   | 311...  |
-|   | 9876543210  | Maria Lopez      | [Energia]        | 300...  |
-|   | 5555555555  | Carlos Ruiz      | [Telecomunic..] | 315...  |
-+------------------------------------------------------------------+
-| 3 personas                                                       |
-+------------------------------------------------------------------+
-```
+| `src/components/ui/sheet.tsx` | Modificar | Agregar variante size |
+| `src/components/shared/DetailSheet.tsx` | Crear | Componente base |
+| `src/components/shared/EditableField.tsx` | Crear | Campo con edicion inline |
+| `src/components/personas/PersonaDetailSheet.tsx` | Crear | Panel de Personas |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Crear | Panel de Matriculas |
+| `src/components/cursos/CursoDetailSheet.tsx` | Crear | Panel de Cursos |
+| `src/pages/personas/PersonasPage.tsx` | Modificar | Integrar Sheet |
+| `src/pages/matriculas/MatriculasPage.tsx` | Modificar | Integrar Sheet |
+| `src/pages/cursos/CursosPage.tsx` | Modificar | Integrar Sheet |
 
 ---
 
 ## Seccion Tecnica
 
-### Estructura del FilterPopover
+### Estado del Panel en PersonasPage
 
 ```typescript
-interface FilterConfig {
-  key: string;
-  label: string;
-  type: 'select' | 'multiselect' | 'date-range';
-  options?: { value: string; label: string }[];
-}
+const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+const [isExpanded, setIsExpanded] = useState(false);
 
-// Ejemplo de uso
-<FilterPopover
-  filters={[
-    { key: 'genero', label: 'Genero', type: 'select', options: GENEROS },
-    { key: 'sector', label: 'Sector', type: 'multiselect', options: SECTORES_ECONOMICOS },
-    { key: 'nivelEducativo', label: 'Nivel Educativo', type: 'select', options: NIVELES_EDUCATIVOS },
-  ]}
-  values={filterValues}
-  onChange={setFilterValues}
-/>
+const selectedPersona = selectedIndex !== null 
+  ? filteredPersonas[selectedIndex] 
+  : null;
+
+const handleNavigate = (direction: 'prev' | 'next') => {
+  if (selectedIndex === null) return;
+  const newIndex = direction === 'prev' 
+    ? Math.max(0, selectedIndex - 1)
+    : Math.min(filteredPersonas.length - 1, selectedIndex + 1);
+  setSelectedIndex(newIndex);
+};
 ```
 
-### Logica de Filtrado
+### Logica de EditableField
 
-Se centralizara la logica de filtrado en cada pagina usando un hook o funcion que combine:
-- Busqueda de texto (nombre, documento)
-- Filtros de select (genero, estado)
-- Filtros multiples (sectores)
-
-### Contador de Registros
-
-El DataTable mostrara automaticamente el contador:
 ```typescript
-<div className="text-sm text-muted-foreground py-2 px-3">
-  {data.length} {countLabel || 'registros'}
-</div>
+const [isEditing, setIsEditing] = useState(false);
+const [localValue, setLocalValue] = useState(value);
+
+const handleBlur = () => {
+  setIsEditing(false);
+  if (localValue !== value) {
+    onChange(localValue);
+  }
+};
+
+const handleKeyDown = (e: React.KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    handleBlur();
+  }
+  if (e.key === 'Escape') {
+    setLocalValue(value);
+    setIsEditing(false);
+  }
+};
 ```
+
+### Estado de Cambios en PersonaDetailSheet
+
+```typescript
+const [formData, setFormData] = useState<Partial<PersonaFormData>>({});
+const [isDirty, setIsDirty] = useState(false);
+
+const handleFieldChange = (field: string, value: string) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+  setIsDirty(true);
+};
+
+const handleSave = async () => {
+  if (isDirty && persona) {
+    await updatePersona.mutateAsync({ id: persona.id, data: formData });
+    setIsDirty(false);
+    setFormData({});
+    toast({ title: "Cambios guardados" });
+  }
+};
+
+const handleClose = () => {
+  if (isDirty) {
+    // Mostrar confirmacion antes de cerrar
+  } else {
+    onOpenChange(false);
+  }
+};
+```
+
+---
+
+## Consideraciones de UX
+
+1. Navegacion fluida: Las flechas permiten revisar registros sin cerrar el panel
+2. Edicion sin friccion: Un clic activa el modo edicion
+3. Feedback visual: Campos editados muestran un indicador sutil
+4. Confirmacion de cambios: Si hay cambios sin guardar, se pregunta antes de cerrar
+5. Expansion opcional: El usuario puede ampliar el panel si necesita mas espacio
+6. Accesibilidad: Focus trap, navegacion por teclado, labels descriptivos
+
 

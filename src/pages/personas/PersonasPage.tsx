@@ -10,6 +10,7 @@ import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
 import { RowActions, createViewAction, createEditAction, createDeleteAction } from "@/components/shared/RowActions";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
+import { CopyableCell } from "@/components/shared/CopyableCell";
 import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
@@ -148,6 +149,11 @@ export default function PersonasPage() {
 
   const handleRowClick = (persona: Persona) => {
     const index = filteredPersonas.findIndex((p) => p.id === persona.id);
+    // Agregar a selección si no está
+    if (!selectedIds.includes(persona.id)) {
+      setSelectedIds((prev) => [...prev, persona.id]);
+    }
+    // Abrir panel
     setSelectedIndex(index);
   };
 
@@ -184,7 +190,11 @@ export default function PersonasPage() {
   ];
 
   const columns: Column<Persona>[] = [
-    { key: "numeroDocumento", header: "Documento" },
+    {
+      key: "numeroDocumento",
+      header: "Documento",
+      render: (p: Persona) => <CopyableCell value={p.numeroDocumento} />,
+    },
     {
       key: "nombre",
       header: "Nombre Completo",

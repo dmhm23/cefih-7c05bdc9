@@ -104,18 +104,6 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div className="space-y-2">
-      {/* Bulk Actions Bar */}
-      {selectable && selectedIds.length > 0 && (
-        <BulkActionsBar
-          selectedCount={selectedIds.length}
-          totalCount={data.length}
-          selectedIds={selectedIds}
-          onSelectAll={handleSelectAll}
-          onClearSelection={handleClearSelection}
-          actions={bulkActions}
-        />
-      )}
-
       <div className="rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -182,6 +170,18 @@ export function DataTable<T extends { id: string }>({
       <div className="text-sm text-muted-foreground py-1 px-1">
         {data.length} {countLabel}
       </div>
+
+      {/* Floating Bulk Actions Bar */}
+      {selectable && selectedIds.length > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedIds.length}
+          totalCount={data.length}
+          selectedIds={selectedIds}
+          onSelectAll={handleSelectAll}
+          onClearSelection={handleClearSelection}
+          actions={bulkActions}
+        />
+      )}
     </div>
   );
 }

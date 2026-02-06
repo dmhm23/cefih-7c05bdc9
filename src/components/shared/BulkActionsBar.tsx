@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 
 export interface BulkAction {
   label: string;
@@ -20,43 +19,28 @@ interface BulkActionsBarProps {
 
 export function BulkActionsBar({
   selectedCount,
-  totalCount,
   selectedIds,
-  onSelectAll,
   onClearSelection,
   actions,
 }: BulkActionsBarProps) {
   if (selectedCount === 0) return null;
 
-  const isAllSelected = selectedCount === totalCount;
-  const isPartiallySelected = selectedCount > 0 && selectedCount < totalCount;
-
   return (
-    <div className="flex items-center justify-between bg-muted/50 border rounded-lg px-4 py-2">
-      <div className="flex items-center gap-3">
-        <Checkbox
-          checked={isAllSelected}
-          ref={(el) => {
-            if (el) {
-              (el as HTMLButtonElement & { indeterminate: boolean }).indeterminate = isPartiallySelected;
-            }
-          }}
-          onCheckedChange={() => (isAllSelected ? onClearSelection() : onSelectAll())}
-          aria-label="Seleccionar todos"
-        />
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-4 bg-background border shadow-lg rounded-full px-5 py-2.5">
+      <div className="flex items-center gap-2">
         <span className="text-sm font-medium">
           {selectedCount} seleccionado{selectedCount !== 1 ? "s" : ""}
         </span>
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-muted-foreground"
+          className="h-7 w-7 p-0 rounded-full"
           onClick={onClearSelection}
         >
-          <X className="h-3.5 w-3.5 mr-1" />
-          Limpiar
+          <X className="h-3.5 w-3.5" />
         </Button>
       </div>
+      <div className="h-4 w-px bg-border" />
       <div className="flex gap-2">
         {actions.map((action) => (
           <Button

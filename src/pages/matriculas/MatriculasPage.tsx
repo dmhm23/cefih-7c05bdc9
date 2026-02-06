@@ -10,6 +10,7 @@ import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
 import { RowActions, createViewAction } from "@/components/shared/RowActions";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
+import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
@@ -161,6 +162,11 @@ export default function MatriculasPage() {
 
   const handleRowClick = (matricula: Matricula) => {
     const index = filteredMatriculas.findIndex((m) => m.id === matricula.id);
+    // Agregar a selección si no está
+    if (!selectedIds.includes(matricula.id)) {
+      setSelectedIds((prev) => [...prev, matricula.id]);
+    }
+    // Abrir panel
     setSelectedIndex(index);
   };
 
@@ -187,7 +193,7 @@ export default function MatriculasPage() {
     {
       key: "documento",
       header: "Documento",
-      render: (m: Matricula) => getPersonaDocumento(m.personaId),
+      render: (m: Matricula) => <CopyableCell value={getPersonaDocumento(m.personaId)} />,
     },
     {
       key: "persona",

@@ -102,6 +102,11 @@ export default function CursosPage() {
 
   const handleRowClick = (curso: Curso) => {
     const index = filteredCursos.findIndex((c) => c.id === curso.id);
+    // Agregar a selección si no está
+    if (!selectedIds.includes(curso.id)) {
+      setSelectedIds((prev) => [...prev, curso.id]);
+    }
+    // Abrir panel
     setSelectedIndex(index);
   };
 

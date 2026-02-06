@@ -1,39 +1,66 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Users, Calendar } from "lucide-react";
+import { Plus, Eye, Users, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { useCursos } from "@/hooks/useCursos";
-import { Curso, ESTADO_CURSO_LABELS } from "@/types";
+import { Curso } from "@/types";
 import { format } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+const ESTADO_OPTIONS = [
+  { value: "abierto", label: "Abierto" },
+  { value: "en_progreso", label: "En Progreso" },
+  { value: "cerrado", label: "Cerrado" },
+];
 
 export default function CursosPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [estadoFilter, setEstadoFilter] = useState<string>("todos");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({
+    estado: "todos",
+  });
 
   const { data: cursos = [], isLoading } = useCursos();
 
+  const filterConfigs: FilterConfig[] = [
+    {
+      key: "estado",
+      label: "Estado del Curso",
+      type: "select",
+      options: ESTADO_OPTIONS,
+    },
+  ];
+
+  const activeFilterCount = Object.entries(filters).filter(([, value]) => {
+    if (Array.isArray(value)) return value.length > 0;
+    return value && value !== "todos";
+  }).length;
+
   const filteredCursos = cursos.filter((c) => {
+    // Text search
     const matchesSearch =
       !searchQuery ||
       c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesEstado = estadoFilter === "todos" || c.estado === estadoFilter;
+    // Filter: Estado
+    const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
 
     return matchesSearch && matchesEstado;
   });
+
+  const handleFilterChange = (key: string, value: string | string[]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ estado: "todos" });
+  };
 
   const columns = [
     {
@@ -53,25 +80,37 @@ export default function CursosPage() {
       header: "Fechas",
       render: (c: Curso) => (
         <div className="text-sm">
-          <p>{format(new Date(c.fechaInicio), "dd/MM/yyyy")}</p>
-          <p className="text-muted-foreground">al {format(new Date(c.fechaFin), "dd/MM/yyyy")}</p>
+          <span>{format(new Date(c.fechaInicio), "dd/MM/yyyy")}</span>
+          <span className="text-muted-foreground"> - {format(new Date(c.fechaFin), "dd/MM/yyyy")}</span>
         </div>
       ),
     },
     {
       key: "duracion",
       header: "Duración",
-      render: (c: Curso) => `${c.duracionDias} días (${c.horasTotales}h)`,
+      render: (c: Curso) => (
+        <span className="text-sm">{c.duracionDias}d ({c.horasTotales}h)</span>
+      ),
     },
     {
       key: "capacidad",
       header: "Inscritos",
-      render: (c: Curso) => (
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span>{c.matriculasIds.length} / {c.capacidadMaxima}</span>
-        </div>
-      ),
+      render: (c: Curso) => {
+        const ocupacion = c.matriculasIds.length / c.capacidadMaxima;
+        const colorClass = ocupacion >= 0.9 
+          ? "text-red-600" 
+          : ocupacion >= 0.7 
+            ? "text-amber-600" 
+            : "text-muted-foreground";
+        return (
+          <div className="flex items-center gap-1.5">
+            <Users className={`h-4 w-4 ${colorClass}`} />
+            <span className={colorClass}>
+              {c.matriculasIds.length}/{c.capacidadMaxima}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "estado",
@@ -80,36 +119,31 @@ export default function CursosPage() {
     },
     {
       key: "actions",
-      header: "Acciones",
+      header: "",
       render: (c: Curso) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/cursos/${c.id}`);
-          }}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/cursos/${c.id}`);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
       ),
     },
   ];
 
-  // Stats
-  const stats = {
-    total: cursos.length,
-    abiertos: cursos.filter((c) => c.estado === "abierto").length,
-    enProgreso: cursos.filter((c) => c.estado === "en_progreso").length,
-    cerrados: cursos.filter((c) => c.estado === "cerrado").length,
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Cursos</h1>
-          <p className="text-muted-foreground">Gestión de cursos y grupos de formación</p>
+          <h1 className="text-2xl font-semibold">Cursos</h1>
+          <p className="text-sm text-muted-foreground">Gestión de cursos y grupos de formación</p>
         </div>
         <Button onClick={() => navigate("/cursos/nuevo")}>
           <Plus className="h-4 w-4 mr-2" />
@@ -117,69 +151,46 @@ export default function CursosPage() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-sm text-muted-foreground">Total Cursos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-emerald-600">{stats.abiertos}</div>
-            <p className="text-sm text-muted-foreground">Abiertos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">{stats.enProgreso}</div>
-            <p className="text-sm text-muted-foreground">En Progreso</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-gray-600">{stats.cerrados}</div>
-            <p className="text-sm text-muted-foreground">Cerrados</p>
-          </CardContent>
-        </Card>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <FilterPopover
+            open={filterOpen}
+            onOpenChange={setFilterOpen}
+            filters={filterConfigs}
+            values={filters}
+            onChange={handleFilterChange}
+            onClear={handleClearFilters}
+            trigger={
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <Filter className="h-4 w-4" />
+                Filtro
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            }
+          />
+        </div>
+        <SearchInput
+          placeholder="Buscar por nombre o entrenador..."
+          value={searchQuery}
+          onChange={setSearchQuery}
+          className="w-72"
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Listado de Cursos</CardTitle>
-            <div className="flex gap-4">
-              <Select value={estadoFilter} onValueChange={setEstadoFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="abierto">Abierto</SelectItem>
-                  <SelectItem value="en_progreso">En Progreso</SelectItem>
-                  <SelectItem value="cerrado">Cerrado</SelectItem>
-                </SelectContent>
-              </Select>
-              <SearchInput
-                placeholder="Buscar por nombre o entrenador..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-                className="w-72"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={filteredCursos}
-            columns={columns}
-            isLoading={isLoading}
-            emptyMessage="No se encontraron cursos"
-            onRowClick={(c) => navigate(`/cursos/${c.id}`)}
-          />
-        </CardContent>
-      </Card>
+      {/* Table */}
+      <DataTable
+        data={filteredCursos}
+        columns={columns}
+        isLoading={isLoading}
+        emptyMessage="No se encontraron cursos"
+        onRowClick={(c) => navigate(`/cursos/${c.id}`)}
+        countLabel="cursos"
+      />
     </div>
   );
 }

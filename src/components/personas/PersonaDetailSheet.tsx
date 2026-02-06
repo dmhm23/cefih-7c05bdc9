@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   FileText,
@@ -47,9 +48,9 @@ export function PersonaDetailSheet({
   totalCount,
   onNavigate,
 }: PersonaDetailSheetProps) {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const updatePersona = useUpdatePersona();
-  const [expanded, setExpanded] = useState(false);
   const [formData, setFormData] = useState<Partial<PersonaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -128,6 +129,13 @@ export function PersonaDetailSheet({
   const fullName = `${getValue("nombres")} ${getValue("apellidos")}`;
   const docInfo = `${getValue("tipoDocumento")}: ${getValue("numeroDocumento")}`;
 
+  const handleFullScreen = () => {
+    if (persona) {
+      onOpenChange(false);
+      navigate(`/personas/${persona.id}`);
+    }
+  };
+
   return (
     <DetailSheet
       open={open}
@@ -137,8 +145,7 @@ export function PersonaDetailSheet({
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}
-      expanded={expanded}
-      onExpandToggle={() => setExpanded(!expanded)}
+      onFullScreen={handleFullScreen}
       countLabel="personas"
       footer={
         isDirty ? (

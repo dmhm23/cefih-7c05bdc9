@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -16,9 +16,8 @@ interface DetailSheetProps {
   currentIndex: number;
   totalCount: number;
   onNavigate: (direction: 'prev' | 'next') => void;
-  // Expansion
-  expanded?: boolean;
-  onExpandToggle?: () => void;
+  // Full screen navigation
+  onFullScreen?: () => void;
   // Content
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -33,8 +32,7 @@ export function DetailSheet({
   currentIndex,
   totalCount,
   onNavigate,
-  expanded = false,
-  onExpandToggle,
+  onFullScreen,
   children,
   footer,
   countLabel = "registros",
@@ -46,7 +44,6 @@ export function DetailSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        size={expanded ? "expanded" : "default"}
         hideCloseButton
         transparentOverlay
         className="flex flex-col p-0"
@@ -84,19 +81,16 @@ export function DetailSheet({
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            {/* Expand */}
-            {onExpandToggle && (
+            {/* Full Screen */}
+            {onFullScreen && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={onExpandToggle}
+                onClick={onFullScreen}
+                title="Abrir en pantalla completa"
               >
-                {expanded ? (
-                  <Minimize2 className="h-4 w-4" />
-                ) : (
-                  <Maximize2 className="h-4 w-4" />
-                )}
+                <Maximize2 className="h-4 w-4" />
               </Button>
             )}
 

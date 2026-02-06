@@ -42,27 +42,18 @@ export function DetailSheet({
   const canGoPrev = currentIndex > 0;
   const canGoNext = currentIndex < totalCount - 1;
 
-  // Track when a Radix portal (dropdown/select/popover) is open
-  const portalOpenRef = useRef(false);
-
   useEffect(() => {
     if (!open) return;
 
-    // Watch for Radix portals appearing/disappearing
-    const observer = new MutationObserver(() => {
+    const handleClickOutside = (event: PointerEvent) => {
+      const target = event.target as HTMLElement;
+
+      // Check if a Radix portal is currently open (dropdown/select/popover)
       const hasOpenPortal = !!document.querySelector(
         '[data-radix-popper-content-wrapper], [data-radix-select-viewport], [role="listbox"], [role="menu"]'
       );
-      portalOpenRef.current = hasOpenPortal;
-    });
+      if (hasOpenPortal) return;
 
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // Skip if a Radix portal is currently open (dropdown dismissing)
-      if (portalOpenRef.current) return;
-
-      const target = event.target as HTMLElement;
       const isInSheet = sheetRef.current?.contains(target);
       
       if (!isInSheet) {
@@ -70,11 +61,10 @@ export function DetailSheet({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('pointerdown', handleClickOutside, true);
     
     return () => {
-      observer.disconnect();
-      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('pointerdown', handleClickOutside, true);
     };
   }, [open, onOpenChange]);
 

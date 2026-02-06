@@ -55,8 +55,9 @@ export function DetailSheet({
       if (hasOpenPortal) return;
 
       const isInSheet = sheetRef.current?.contains(target);
+      const isInTable = target.closest('[data-table-container]');
       
-      if (!isInSheet) {
+      if (!isInSheet && !isInTable) {
         onOpenChange(false);
       }
     };

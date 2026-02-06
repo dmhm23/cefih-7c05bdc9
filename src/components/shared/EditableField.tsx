@@ -1,0 +1,206 @@
+import { useState, useRef, useEffect } from "react";
+import { Calendar, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+
+interface EditableFieldProps {
+  label: string;
+  value: string;
+  displayValue?: string;
+  onChange: (value: string) => void;
+  type?: "text" | "select" | "date";
+  options?: { value: string; label: string }[];
+  icon?: React.ElementType;
+  editable?: boolean;
+  badge?: boolean;
+  badgeVariant?: "default" | "secondary" | "outline" | "destructive";
+  placeholder?: string;
+}
+
+export function EditableField({
+  label,
+  value,
+  displayValue,
+  onChange,
+  type = "text",
+  options = [],
+  icon: Icon,
+  editable = true,
+  badge = false,
+  badgeVariant = "secondary",
+  placeholder = "Sin valor",
+}: EditableFieldProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (localValue !== value) {
+      onChange(localValue);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleBlur();
+    }
+    if (e.key === "Escape") {
+      setLocalValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  const handleSelectChange = (newValue: string) => {
+    onChange(newValue);
+    setIsEditing(false);
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      onChange(date.toISOString().split("T")[0]);
+    }
+    setIsEditing(false);
+  };
+
+  const renderValue = () => {
+    const display = displayValue || value || placeholder;
+    const isEmpty = !value;
+
+    if (badge && !isEmpty) {
+      return (
+        <Badge variant={badgeVariant} className="font-normal">
+          {display}
+        </Badge>
+      );
+    }
+
+    return (
+      <span className={cn(isEmpty && "text-muted-foreground italic")}>
+        {display}
+      </span>
+    );
+  };
+
+  const renderEditableContent = () => {
+    if (!editable) {
+      return renderValue();
+    }
+
+    if (type === "text") {
+      if (isEditing) {
+        return (
+          <Input
+            ref={inputRef}
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className="h-8 text-sm"
+          />
+        );
+      }
+      return (
+        <div
+          onClick={() => setIsEditing(true)}
+          className="cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+        >
+          {renderValue()}
+        </div>
+      );
+    }
+
+    if (type === "select") {
+      return (
+        <Select value={value} onValueChange={handleSelectChange}>
+          <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-muted/50 px-2 -mx-2">
+            <SelectValue placeholder={placeholder}>
+              {badge && value ? (
+                <Badge variant={badgeVariant} className="font-normal">
+                  {displayValue || options.find(o => o.value === value)?.label || value}
+                </Badge>
+              ) : (
+                displayValue || options.find(o => o.value === value)?.label || value || placeholder
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (type === "date") {
+      const dateValue = value ? new Date(value) : undefined;
+      const displayDate = dateValue
+        ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
+        : placeholder;
+
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors">
+              <span className={cn(!value && "text-muted-foreground italic")}>
+                {displayDate}
+              </span>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <CalendarComponent
+              mode="single"
+              selected={dateValue}
+              onSelect={handleDateChange}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      );
+    }
+
+    return renderValue();
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+      <div className="text-sm">{renderEditableContent()}</div>
+    </div>
+  );
+}

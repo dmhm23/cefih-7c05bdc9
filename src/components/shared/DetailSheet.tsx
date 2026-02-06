@@ -61,11 +61,11 @@ export function DetailSheet({
       }
     };
 
-    // Use capture phase to intercept before bubble
-    document.addEventListener('mousedown', handleClickOutside, true);
+    // Use bubble phase (not capture) so table row clicks happen first
+    document.addEventListener('click', handleClickOutside, false);
     
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('click', handleClickOutside, false);
     };
   }, [open, onOpenChange]);
 

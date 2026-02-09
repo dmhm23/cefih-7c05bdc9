@@ -126,12 +126,19 @@ export default function MatriculaFormPage() {
     setSearchQuery("");
   };
 
-  const handlePersonaCreated = (id: string) => {
-    // Re-fetch will happen via query invalidation, but we set the ID immediately
+  const handlePersonaCreated = async (id: string) => {
     form.setValue("personaId", id);
-    // We need to find the persona from the search results after invalidation
-    // For now, clear search and show a success state
     setSearchQuery("");
+    // Fetch the newly created persona to display their info
+    try {
+      const { personaService } = await import("@/services/personaService");
+      const persona = await personaService.getById(id);
+      if (persona) {
+        setSelectedPersona(persona);
+      }
+    } catch {
+      // ID is already set, worst case shows fallback
+    }
   };
 
   const onSubmit = async (data: MatriculaFormData) => {

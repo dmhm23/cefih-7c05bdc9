@@ -146,6 +146,14 @@ export const NIVELES_FORMACION_EMPRESA = [
   { value: 'coordinador_ta', label: 'Coordinador T.A.' },
 ] as const;
 
+export const FORMAS_PAGO = [
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
+  { value: 'consignacion', label: 'Consignación' },
+  { value: 'tarjeta', label: 'Tarjeta' },
+  { value: 'otro', label: 'Otro' },
+] as const;
+
 // Tipos derivados para TypeScript
 export type TipoDocumentoOption = typeof TIPOS_DOCUMENTO[number];
 export type GeneroOption = typeof GENEROS[number];

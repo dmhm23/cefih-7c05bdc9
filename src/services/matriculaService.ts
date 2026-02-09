@@ -184,7 +184,18 @@ export const matriculaService = {
     return mockMatriculas[index];
   },
 
-  async registrarPago(id: string, facturaNumero: string): Promise<Matricula> {
+  async registrarPago(id: string, datosPago: {
+    facturaNumero?: string;
+    valorCupo?: number;
+    abono?: number;
+    fechaFacturacion?: string;
+    ctaFactNumero?: string;
+    ctaFactTitular?: string;
+    fechaPago?: string;
+    formaPago?: string;
+    cobroContactoNombre?: string;
+    cobroContactoCelular?: string;
+  }): Promise<Matricula> {
     await delay(800);
 
     const index = mockMatriculas.findIndex(m => m.id === id);
@@ -192,13 +203,20 @@ export const matriculaService = {
       throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
     }
 
+    const valorCupo = datosPago.valorCupo ?? mockMatriculas[index].valorCupo ?? 0;
+    const abono = datosPago.abono ?? mockMatriculas[index].abono ?? 0;
+    const saldo = valorCupo - abono;
+
     mockMatriculas[index] = {
       ...mockMatriculas[index],
-      pagado: true,
-      facturaNumero,
-      fechaPago: new Date().toISOString().split('T')[0],
+      ...datosPago,
+      valorCupo,
+      abono,
+      pagado: saldo <= 0,
+      facturaNumero: datosPago.ctaFactNumero || datosPago.facturaNumero || mockMatriculas[index].facturaNumero,
+      fechaPago: datosPago.fechaPago || new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString(),
-    };
+    } as Matricula;
 
     return mockMatriculas[index];
   },

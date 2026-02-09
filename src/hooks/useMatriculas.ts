@@ -112,8 +112,8 @@ export const useRegistrarPago = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, facturaNumero }: { id: string; facturaNumero: string }) =>
-      matriculaService.registrarPago(id, facturaNumero),
+    mutationFn: ({ id, datosPago }: { id: string; datosPago: Parameters<typeof matriculaService.registrarPago>[1] }) =>
+      matriculaService.registrarPago(id, datosPago),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['matricula', id] });
       queryClient.invalidateQueries({ queryKey: ['matriculas'] });

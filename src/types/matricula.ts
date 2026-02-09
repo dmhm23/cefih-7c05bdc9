@@ -5,6 +5,13 @@ export type EstadoMatricula =
   | 'certificada' 
   | 'cerrada';
 
+export type FormaPago = 
+  | 'efectivo'
+  | 'transferencia'
+  | 'consignacion'
+  | 'tarjeta'
+  | 'otro';
+
 export type TipoFormacion = 
   | 'inicial' 
   | 'reentrenamiento' 
@@ -97,9 +104,29 @@ export interface Matricula {
   evaluacionCompletada: boolean;
   evaluacionPuntaje?: number;
   encuestaCompletada: boolean;
+
+  // Información de cobros / cartera
+  cobroContactoNombre?: string;     // Persona contacto de la empresa (cobros)
+  cobroContactoCelular?: string;    // Celular del contacto
+  valorCupo?: number;               // Valor del cupo
+  abono?: number;                   // Abono realizado
+  // saldo se calcula: valorCupo - abono
+  fechaFacturacion?: string;        // Fecha de facturación
+  ctaFactNumero?: string;           // No. CTA-FACT
+  ctaFactTitular?: string;          // Titular
+  fechaPago?: string;               // Fecha de pago
+  formaPago?: FormaPago;            // Forma de pago
+
   pagado: boolean;
-  facturaNumero?: string;
-  fechaPago?: string;
+  facturaNumero?: string;           // Legacy — se mantiene por compatibilidad
+
+  // Certificado
+  fechaGeneracionCertificado?: string;  // Automático al generar PDF
+  fechaEntregaCertificado?: string;     // Manual por el usuario
+
+  // Observaciones
+  observaciones?: string;
+
   createdAt: string;
   updatedAt: string;
 }
@@ -119,6 +146,14 @@ export const TIPO_FORMACION_LABELS: Record<TipoFormacion, string> = {
   reentrenamiento: 'Reentrenamiento',
   avanzado: 'Nivel Avanzado',
   coordinador: 'Coordinador de Alturas',
+};
+
+export const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
+  efectivo: 'Efectivo',
+  transferencia: 'Transferencia',
+  consignacion: 'Consignación',
+  tarjeta: 'Tarjeta',
+  otro: 'Otro',
 };
 
 export const NIVEL_PREVIO_LABELS: Record<NivelPrevio, string> = {

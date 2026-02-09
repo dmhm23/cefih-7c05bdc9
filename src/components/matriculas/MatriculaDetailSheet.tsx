@@ -20,6 +20,9 @@ import {
   AlertTriangle,
   Check,
   X,
+  Wallet,
+  Award,
+  MessageSquareText,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
@@ -38,7 +41,7 @@ import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import {
   Matricula, ESTADO_MATRICULA_LABELS, TIPO_FORMACION_LABELS, EstadoMatricula, TipoFormacion,
-  NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS,
+  NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -135,7 +138,7 @@ export function MatriculaDetailSheet({
 
   const handleRegistrarPago = async () => {
     try {
-      await registrarPago.mutateAsync({ id: matricula.id, facturaNumero: `FAC-${Date.now()}` });
+      await registrarPago.mutateAsync({ id: matricula.id, datosPago: { ctaFactNumero: `FAC-${Date.now()}` } });
       toast({ title: "Pago registrado correctamente" });
     } catch (error) {
       toast({ title: "Error al registrar pago", variant: "destructive" });
@@ -490,30 +493,69 @@ export function MatriculaDetailSheet({
 
           <Separator />
 
-          {/* Pago */}
-          <DetailSection title="Estado de Pago">
+          {/* Cobros / Cartera */}
+          <DetailSection title="Cobros / Cartera">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Estado de pago</span>
+              {matricula.tipoVinculacion === 'empresa' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Contacto cobro</p>
+                    <p className="text-sm font-medium">{matricula.cobroContactoNombre || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Celular contacto</p>
+                    <p className="text-sm font-medium">{matricula.cobroContactoCelular || '—'}</p>
+                  </div>
                 </div>
-                <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
-                  {matricula.pagado ? "Pagado" : "Pendiente"}
-                </Badge>
+              )}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Valor cupo</p>
+                  <p className="text-sm font-medium">{matricula.valorCupo ? `$${matricula.valorCupo.toLocaleString('es-CO')}` : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Abono</p>
+                  <p className="text-sm font-medium">{matricula.abono ? `$${matricula.abono.toLocaleString('es-CO')}` : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Saldo</p>
+                  <p className={`text-sm font-medium ${(matricula.valorCupo ?? 0) - (matricula.abono ?? 0) > 0 ? 'text-destructive' : 'text-emerald-600'}`}>
+                    ${((matricula.valorCupo ?? 0) - (matricula.abono ?? 0)).toLocaleString('es-CO')}
+                  </p>
+                </div>
               </div>
-              {matricula.pagado && matricula.facturaNumero && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Receipt className="h-4 w-4" />
-                  <span>Factura: {matricula.facturaNumero}</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha facturación</p>
+                  <p className="text-sm font-medium">{matricula.fechaFacturacion || '—'}</p>
                 </div>
-              )}
-              {matricula.pagado && matricula.fechaPago && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Fecha: {format(new Date(matricula.fechaPago), "d MMM yyyy", { locale: es })}</span>
+                <div>
+                  <p className="text-xs text-muted-foreground">No. CTA-FACT</p>
+                  <p className="text-sm font-medium">{matricula.ctaFactNumero || '—'}</p>
                 </div>
-              )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Titular</p>
+                  <p className="text-sm font-medium">{matricula.ctaFactTitular || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Forma de pago</p>
+                  <p className="text-sm font-medium">{matricula.formaPago ? FORMA_PAGO_LABELS[matricula.formaPago] : '—'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha de pago</p>
+                  <p className="text-sm font-medium">{matricula.fechaPago ? format(new Date(matricula.fechaPago), "d MMM yyyy", { locale: es }) : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Estado</p>
+                  <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
+                    {matricula.pagado ? "Pagado" : "Pendiente"}
+                  </Badge>
+                </div>
+              </div>
               {!matricula.pagado && (
                 <Button variant="outline" size="sm" className="w-full" onClick={handleRegistrarPago} disabled={registrarPago.isPending}>
                   <CreditCard className="h-4 w-4 mr-2" />
@@ -521,6 +563,40 @@ export function MatriculaDetailSheet({
                 </Button>
               )}
             </div>
+          </DetailSection>
+
+          <Separator />
+
+          {/* Certificado */}
+          <DetailSection title="Certificado">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Award className="h-3 w-3" /> Fecha generación</p>
+                <p className="text-sm font-medium">{matricula.fechaGeneracionCertificado ? format(new Date(matricula.fechaGeneracionCertificado), "d MMM yyyy", { locale: es }) : '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Fecha entrega</p>
+                <EditableField
+                  label=""
+                  value={getValue("fechaEntregaCertificado") || ""}
+                  onChange={(v) => handleFieldChange("fechaEntregaCertificado", v)}
+                  type="date"
+                />
+              </div>
+            </div>
+          </DetailSection>
+
+          <Separator />
+
+          {/* Observaciones */}
+          <DetailSection title="Observaciones">
+            <EditableField
+              label=""
+              value={getValue("observaciones") || ""}
+              onChange={(v) => handleFieldChange("observaciones", v)}
+              type="text"
+              icon={MessageSquareText}
+            />
           </DetailSection>
 
           {/* Metadata */}

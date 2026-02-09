@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, BookOpen, FileCheck, CreditCard, ClipboardCheck, MessageSquare, PenTool, HeartPulse, ShieldCheck, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, User, BookOpen, FileCheck, CreditCard, ClipboardCheck, MessageSquare, PenTool, HeartPulse, ShieldCheck, CheckCircle2, Circle, Wallet, Award, MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -9,7 +9,8 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
 import { usePersona } from "@/hooks/usePersonas";
 import { useCurso } from "@/hooks/useCursos";
-import { TIPO_FORMACION_LABELS } from "@/types";
+import { TIPO_FORMACION_LABELS, FORMA_PAGO_LABELS } from "@/types";
+import { FormaPago } from "@/types/matricula";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +129,7 @@ export default function MatriculaDetallePage() {
       return;
     }
     try {
-      await registrarPago.mutateAsync({ id: matricula.id, facturaNumero });
+      await registrarPago.mutateAsync({ id: matricula.id, datosPago: { ctaFactNumero: facturaNumero } });
       toast({ title: "Pago registrado correctamente" });
       setPagoDialogOpen(false);
       setFacturaNumero("");
@@ -411,23 +412,112 @@ export default function MatriculaDetallePage() {
             </CardContent>
           </Card>
 
-          {/* Información de Pago */}
-          {matricula.pagado && (
+          {/* Cobros / Cartera */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Cobros / Cartera
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {matricula.tipoVinculacion === 'empresa' && (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Contacto cobro</p>
+                      <p className="font-medium">{matricula.cobroContactoNombre || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Celular contacto</p>
+                      <p className="font-medium">{matricula.cobroContactoCelular || '—'}</p>
+                    </div>
+                    <div />
+                  </>
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Valor del cupo</p>
+                  <p className="font-medium text-lg">{matricula.valorCupo ? `$${matricula.valorCupo.toLocaleString('es-CO')}` : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Abono</p>
+                  <p className="font-medium text-lg">{matricula.abono ? `$${matricula.abono.toLocaleString('es-CO')}` : '$0'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Saldo</p>
+                  <p className={cn("font-bold text-lg", (matricula.valorCupo ?? 0) - (matricula.abono ?? 0) > 0 ? 'text-destructive' : 'text-emerald-600')}>
+                    ${((matricula.valorCupo ?? 0) - (matricula.abono ?? 0)).toLocaleString('es-CO')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fecha facturación</p>
+                  <p className="font-medium">{matricula.fechaFacturacion || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">No. CTA-FACT</p>
+                  <p className="font-medium">{matricula.ctaFactNumero || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Titular</p>
+                  <p className="font-medium">{matricula.ctaFactTitular || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fecha de pago</p>
+                  <p className="font-medium">{matricula.fechaPago || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Forma de pago</p>
+                  <p className="font-medium">{matricula.formaPago ? FORMA_PAGO_LABELS[matricula.formaPago] : '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Estado</p>
+                  <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
+                    {matricula.pagado ? "Pagado" : "Pendiente"}
+                  </Badge>
+                </div>
+              </div>
+              {!matricula.pagado && (
+                <Button className="mt-4" onClick={() => setPagoDialogOpen(true)}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Registrar Pago
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Certificado */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                Certificado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Fecha de generación</p>
+                  <p className="font-medium">{matricula.fechaGeneracionCertificado || 'No generado'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fecha de entrega</p>
+                  <p className="font-medium">{matricula.fechaEntregaCertificado || 'No entregado'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Observaciones */}
+          {matricula.observaciones && (
             <Card>
               <CardHeader>
-                <CardTitle>Información de Pago</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquareText className="h-5 w-5" />
+                  Observaciones
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Número de Factura</p>
-                    <p className="font-medium">{matricula.facturaNumero}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Fecha de Pago</p>
-                    <p className="font-medium">{matricula.fechaPago}</p>
-                  </div>
-                </div>
+                <p className="text-sm whitespace-pre-wrap">{matricula.observaciones}</p>
               </CardContent>
             </Card>
           )}

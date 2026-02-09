@@ -12,6 +12,9 @@ import {
   ClipboardList,
   PenTool,
   Receipt,
+  Building2,
+  GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
@@ -22,10 +25,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
-import { Matricula, ESTADO_MATRICULA_LABELS, TIPO_FORMACION_LABELS, EstadoMatricula, TipoFormacion } from "@/types/matricula";
+import {
+  Matricula, ESTADO_MATRICULA_LABELS, TIPO_FORMACION_LABELS, EstadoMatricula, TipoFormacion,
+  NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS,
+} from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  AREAS_TRABAJO,
+  SECTORES_ECONOMICOS,
+} from "@/data/formOptions";
 
 interface MatriculaDetailSheetProps {
   open: boolean;
@@ -69,7 +79,6 @@ export function MatriculaDetailSheet({
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
 
-  // Reset form data when matricula changes
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
@@ -87,54 +96,33 @@ export function MatriculaDetailSheet({
 
   const handleSave = async () => {
     try {
-      // Handle estado change separately
       if (formData.estado && formData.estado !== matricula.estado) {
         await cambiarEstado.mutateAsync({
           id: matricula.id,
           estado: formData.estado as EstadoMatricula,
         });
       }
-
-      // Handle other changes
       const otherChanges = { ...formData };
       delete otherChanges.estado;
-
       if (Object.keys(otherChanges).length > 0) {
-        await updateMatricula.mutateAsync({
-          id: matricula.id,
-          data: otherChanges,
-        });
+        await updateMatricula.mutateAsync({ id: matricula.id, data: otherChanges });
       }
-
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);
     } catch (error) {
-      toast({
-        title: "Error al guardar",
-        description: "No se pudieron guardar los cambios",
-        variant: "destructive",
-      });
+      toast({ title: "Error al guardar", description: "No se pudieron guardar los cambios", variant: "destructive" });
     }
   };
 
-  const handleCancel = () => {
-    setFormData({});
-    setIsDirty(false);
-  };
+  const handleCancel = () => { setFormData({}); setIsDirty(false); };
 
   const handleRegistrarPago = async () => {
     try {
-      await registrarPago.mutateAsync({
-        id: matricula.id,
-        facturaNumero: `FAC-${Date.now()}`,
-      });
+      await registrarPago.mutateAsync({ id: matricula.id, facturaNumero: `FAC-${Date.now()}` });
       toast({ title: "Pago registrado correctamente" });
     } catch (error) {
-      toast({
-        title: "Error al registrar pago",
-        variant: "destructive",
-      });
+      toast({ title: "Error al registrar pago", variant: "destructive" });
     }
   };
 
@@ -142,7 +130,11 @@ export function MatriculaDetailSheet({
     return (formData[field] as Matricula[K]) ?? matricula[field];
   };
 
-  // Calculate progress
+  const getDisplayLabel = (value: string | undefined, options: readonly { value: string; label: string }[]) => {
+    if (!value) return "—";
+    return options.find((o) => o.value === value)?.label || value;
+  };
+
   const completedSteps = [
     matricula.firmaCapturada,
     matricula.documentos.every((d) => d.estado === "verificado"),
@@ -154,13 +146,10 @@ export function MatriculaDetailSheet({
 
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
-  const cursoName = curso?.nombre || "N/A";
+  const cursoName = curso?.nombre || "Sin curso asignado";
 
   const handleFullScreen = () => {
-    if (matricula) {
-      onOpenChange(false);
-      navigate(`/matriculas/${matricula.id}`);
-    }
+    if (matricula) { onOpenChange(false); navigate(`/matriculas/${matricula.id}`); }
   };
 
   return (
@@ -177,9 +166,7 @@ export function MatriculaDetailSheet({
       footer={
         isDirty ? (
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancelar
-            </Button>
+            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
             <Button onClick={handleSave} disabled={updateMatricula.isPending || cambiarEstado.isPending}>
               {updateMatricula.isPending || cambiarEstado.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
@@ -211,13 +198,7 @@ export function MatriculaDetailSheet({
               options={ESTADO_OPTIONS}
               icon={FileCheck}
               badge
-              badgeVariant={
-                getValue("estado") === "certificada"
-                  ? "default"
-                  : getValue("estado") === "cerrada"
-                  ? "destructive"
-                  : "secondary"
-              }
+              badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
             />
             <EditableField
               label="Tipo de Formación"
@@ -270,31 +251,111 @@ export function MatriculaDetailSheet({
 
         <Separator />
 
+        {/* Historial de Formación Previa */}
+        {(matricula.nivelPrevio || matricula.centroFormacionPrevio || matricula.fechaCertificacionPrevia) && (
+          <>
+            <DetailSection title="Historial de Formación Previa">
+              <div className="grid grid-cols-2 gap-4">
+                {matricula.nivelPrevio && (
+                  <div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><GraduationCap className="h-3 w-3" /> Nivel Previo</p>
+                    <p className="text-sm font-medium">{NIVEL_PREVIO_LABELS[matricula.nivelPrevio]}</p>
+                  </div>
+                )}
+                {matricula.centroFormacionPrevio && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Centro de Formación</p>
+                    <p className="text-sm font-medium">{matricula.centroFormacionPrevio}</p>
+                  </div>
+                )}
+                {matricula.fechaCertificacionPrevia && (
+                  <div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Fecha Certificación</p>
+                    <p className="text-sm font-medium">{matricula.fechaCertificacionPrevia}</p>
+                  </div>
+                )}
+              </div>
+            </DetailSection>
+            <Separator />
+          </>
+        )}
+
+        {/* Vinculación Laboral */}
+        {matricula.tipoVinculacion && (
+          <>
+            <DetailSection title="Vinculación Laboral">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1"><Briefcase className="h-3 w-3" /> Tipo</p>
+                  <Badge variant="outline">{TIPO_VINCULACION_LABELS[matricula.tipoVinculacion]}</Badge>
+                </div>
+                {matricula.areaTrabajo && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Área de Trabajo</p>
+                    <p className="text-sm font-medium">{getDisplayLabel(matricula.areaTrabajo, AREAS_TRABAJO)}</p>
+                  </div>
+                )}
+                {matricula.sectorEconomico && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" /> Sector Económico</p>
+                    <p className="text-sm font-medium">{getDisplayLabel(matricula.sectorEconomico, SECTORES_ECONOMICOS)}</p>
+                  </div>
+                )}
+                {matricula.tipoVinculacion === 'empresa' && matricula.empresaNombre && (
+                  <>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Empresa</p>
+                      <p className="text-sm font-medium">{matricula.empresaNombre}</p>
+                    </div>
+                    {matricula.empresaNit && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">NIT</p>
+                        <p className="text-sm font-medium">{matricula.empresaNit}</p>
+                      </div>
+                    )}
+                    {matricula.empresaCargo && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Cargo</p>
+                        <p className="text-sm font-medium">{matricula.empresaCargo}</p>
+                      </div>
+                    )}
+                    {matricula.empresaNivelFormacion && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Nivel</p>
+                        <p className="text-sm font-medium">{NIVEL_FORMACION_EMPRESA_LABELS[matricula.empresaNivelFormacion]}</p>
+                      </div>
+                    )}
+                    {matricula.empresaContactoNombre && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Contacto</p>
+                        <p className="text-sm font-medium">{matricula.empresaContactoNombre}</p>
+                        {matricula.empresaContactoTelefono && (
+                          <p className="text-xs text-muted-foreground">{matricula.empresaContactoTelefono}</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </DetailSection>
+            <Separator />
+          </>
+        )}
+
         {/* Checklist */}
         <DetailSection title="Checklist de Requisitos">
           <div className="space-y-3">
-            <ChecklistItem
-              label="Firma capturada"
-              completed={matricula.firmaCapturada}
-              icon={PenTool}
-            />
+            <ChecklistItem label="Firma capturada" completed={matricula.firmaCapturada} icon={PenTool} />
             <ChecklistItem
               label="Documentos verificados"
               completed={matricula.documentos.every((d) => d.estado === "verificado")}
               icon={FileText}
               sublabel={`${matricula.documentos.filter((d) => d.estado === "verificado").length}/${matricula.documentos.length} documentos`}
             />
-            <ChecklistItem
-              label="Evaluación completada"
-              completed={matricula.evaluacionCompletada}
-              icon={ClipboardList}
+            <ChecklistItem label="Evaluación completada" completed={matricula.evaluacionCompletada} icon={ClipboardList}
               sublabel={matricula.evaluacionPuntaje ? `Puntaje: ${matricula.evaluacionPuntaje}%` : undefined}
             />
-            <ChecklistItem
-              label="Encuesta completada"
-              completed={matricula.encuestaCompletada}
-              icon={FileCheck}
-            />
+            <ChecklistItem label="Encuesta completada" completed={matricula.encuestaCompletada} icon={FileCheck} />
           </div>
         </DetailSection>
 
@@ -325,13 +386,7 @@ export function MatriculaDetailSheet({
               </div>
             )}
             {!matricula.pagado && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={handleRegistrarPago}
-                disabled={registrarPago.isPending}
-              >
+              <Button variant="outline" size="sm" className="w-full" onClick={handleRegistrarPago} disabled={registrarPago.isPending}>
                 <CreditCard className="h-4 w-4 mr-2" />
                 {registrarPago.isPending ? "Registrando..." : "Registrar Pago"}
               </Button>

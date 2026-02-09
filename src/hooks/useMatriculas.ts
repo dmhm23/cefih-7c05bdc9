@@ -40,19 +40,20 @@ export const useMatriculasByEstado = (estado: EstadoMatricula) => {
   });
 };
 
+export const useHistorialByPersona = (personaId: string) => {
+  return useQuery({
+    queryKey: ['matriculas', 'historial', personaId],
+    queryFn: () => matriculaService.getHistorialByPersona(personaId),
+    enabled: !!personaId,
+  });
+};
+
 export const useCreateMatricula = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: {
-      personaId: string;
-      cursoId: string;
-      tipoFormacion: 'inicial' | 'reentrenamiento' | 'avanzado' | 'coordinador';
-      firmaCapturada: boolean;
-      evaluacionCompletada: boolean;
-      encuestaCompletada: boolean;
-      pagado: boolean;
-    }) => matriculaService.create(data),
+    mutationFn: (data: Parameters<typeof matriculaService.create>[0]) =>
+      matriculaService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matriculas'] });
       queryClient.invalidateQueries({ queryKey: ['cursos'] });

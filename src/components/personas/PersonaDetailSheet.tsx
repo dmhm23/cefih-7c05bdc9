@@ -258,6 +258,7 @@ export function PersonaDetailSheet({
                 options={[...SECTORES_ECONOMICOS]}
                 icon={Building2}
               />
+              <p className="text-xs text-muted-foreground mt-1 italic">Estos campos se gestionan desde la matrícula</p>
             </div>
           </div>
         </DetailSection>

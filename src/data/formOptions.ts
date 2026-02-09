@@ -129,6 +129,23 @@ export const PAISES = [
   { value: 'MA', label: 'Marruecos' },
 ] as const;
 
+export const NIVELES_PREVIOS = [
+  { value: 'trabajador_autorizado', label: 'Trabajador Autorizado' },
+  { value: 'avanzado', label: 'Avanzado Trabajo en Alturas' },
+] as const;
+
+export const TIPOS_VINCULACION = [
+  { value: 'empresa', label: 'Empresa' },
+  { value: 'independiente', label: 'Independiente' },
+] as const;
+
+export const NIVELES_FORMACION_EMPRESA = [
+  { value: 'jefe_area', label: 'Jefe de Área' },
+  { value: 'trabajador_autorizado', label: 'Trabajador Autorizado' },
+  { value: 'reentrenamiento', label: 'Reentrenamiento' },
+  { value: 'coordinador_ta', label: 'Coordinador T.A.' },
+] as const;
+
 // Tipos derivados para TypeScript
 export type TipoDocumentoOption = typeof TIPOS_DOCUMENTO[number];
 export type GeneroOption = typeof GENEROS[number];
@@ -137,3 +154,6 @@ export type AreaTrabajoOption = typeof AREAS_TRABAJO[number];
 export type SectorEconomicoOption = typeof SECTORES_ECONOMICOS[number];
 export type PaisOption = typeof PAISES[number];
 export type GrupoSanguineoOption = typeof GRUPOS_SANGUINEOS[number];
+export type NivelPrevioOption = typeof NIVELES_PREVIOS[number];
+export type TipoVinculacionOption = typeof TIPOS_VINCULACION[number];
+export type NivelFormacionEmpresaOption = typeof NIVELES_FORMACION_EMPRESA[number];

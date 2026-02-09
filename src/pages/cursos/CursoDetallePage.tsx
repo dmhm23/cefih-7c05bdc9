@@ -1,12 +1,15 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Lock, Unlock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
+import { EditableField } from "@/components/shared/EditableField";
+import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { ESTADO_CURSO_LABELS, EstadoMatricula } from "@/types";
+import { Curso, CursoFormData } from "@/types/curso";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -29,8 +32,17 @@ export default function CursoDetallePage() {
   const { data: matriculas = [] } = useMatriculasByCurso(id || "");
   const { data: personas = [] } = usePersonas();
   const cambiarEstado = useCambiarEstadoCurso();
+  const updateCurso = useUpdateCurso();
+
+  const [formData, setFormData] = useState<Partial<CursoFormData>>({});
+  const [isDirty, setIsDirty] = useState(false);
 
   const getPersona = (personaId: string) => personas.find((p) => p.id === personaId);
+
+  useEffect(() => {
+    setFormData({});
+    setIsDirty(false);
+  }, [curso?.id]);
 
   if (isLoading) {
     return (
@@ -52,6 +64,32 @@ export default function CursoDetallePage() {
     );
   }
 
+  const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateCurso.mutateAsync({ id: curso.id, data: formData });
+      toast({ title: "Cambios guardados correctamente" });
+      setFormData({});
+      setIsDirty(false);
+    } catch {
+      toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({});
+    setIsDirty(false);
+  };
+
+  const getValue = (field: keyof Curso): string => {
+    const val = (formData[field as keyof CursoFormData] ?? curso[field]) as string | number | undefined;
+    return val?.toString() ?? "";
+  };
+
   const handleCambiarEstado = async (nuevoEstado: "abierto" | "en_progreso" | "cerrado") => {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });
@@ -65,7 +103,7 @@ export default function CursoDetallePage() {
     }
   };
 
-  const capacidadUsada = (matriculas.length / curso.capacidadMaxima) * 100;
+  const capacidadUsada = (matriculas.length / (Number(getValue("capacidadMaxima")) || 1)) * 100;
 
   return (
     <div className="space-y-4">
@@ -76,10 +114,10 @@ export default function CursoDetallePage() {
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">{curso.nombre}</h1>
+            <h1 className="text-xl font-semibold">{getValue("nombre")}</h1>
             <StatusBadge status={curso.estado} />
           </div>
-          <p className="text-sm text-muted-foreground">{curso.descripcion}</p>
+          <p className="text-sm text-muted-foreground">{getValue("descripcion")}</p>
         </div>
         <div className="flex gap-2">
           {curso.estado === "abierto" && (
@@ -111,32 +149,54 @@ export default function CursoDetallePage() {
               Información del Curso
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Inicio</p>
-                <p className="text-sm font-medium">
-                  {format(new Date(curso.fechaInicio), "dd MMM yyyy", { locale: es })}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fin</p>
-                <p className="text-sm font-medium">
-                  {format(new Date(curso.fechaFin), "dd MMM yyyy", { locale: es })}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Duración</p>
-                <p className="text-sm font-medium">{curso.duracionDias} días ({curso.horasTotales}h)</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Entrenador</p>
-                <p className="text-sm font-medium">{curso.entrenadorNombre}</p>
-              </div>
+              <EditableField
+                label="Nombre"
+                value={getValue("nombre")}
+                onChange={(v) => handleFieldChange("nombre", v)}
+              />
+              <EditableField
+                label="Descripción"
+                value={getValue("descripcion")}
+                onChange={(v) => handleFieldChange("descripcion", v)}
+              />
+              <EditableField
+                label="Inicio"
+                value={getValue("fechaInicio")}
+                onChange={(v) => handleFieldChange("fechaInicio", v)}
+                type="date"
+              />
+              <EditableField
+                label="Fin"
+                value={getValue("fechaFin")}
+                onChange={(v) => handleFieldChange("fechaFin", v)}
+                type="date"
+              />
+              <EditableField
+                label="Duración (días)"
+                value={getValue("duracionDias")}
+                onChange={(v) => handleFieldChange("duracionDias", Number(v) || 0)}
+              />
+              <EditableField
+                label="Horas Totales"
+                value={getValue("horasTotales")}
+                onChange={(v) => handleFieldChange("horasTotales", Number(v) || 0)}
+              />
+              <EditableField
+                label="Entrenador"
+                value={getValue("entrenadorNombre")}
+                onChange={(v) => handleFieldChange("entrenadorNombre", v)}
+              />
+              <EditableField
+                label="Capacidad Máxima"
+                value={getValue("capacidadMaxima")}
+                onChange={(v) => handleFieldChange("capacidadMaxima", Number(v) || 0)}
+              />
             </div>
 
             <div className="mt-2">
               <div className="flex justify-between text-xs mb-1">
                 <span>Capacidad</span>
-                <span>{matriculas.length} / {curso.capacidadMaxima}</span>
+                <span>{matriculas.length} / {getValue("capacidadMaxima")}</span>
               </div>
               <Progress value={capacidadUsada} className="h-1.5" />
             </div>
@@ -265,6 +325,18 @@ export default function CursoDetallePage() {
           </div>
         </div>
       </div>
+
+      {/* Barra flotante de guardar */}
+      {isDirty && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 bg-background border rounded-lg shadow-lg p-3">
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={updateCurso.isPending}>
+            {updateCurso.isPending ? "Guardando..." : "Guardar Cambios"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

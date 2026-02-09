@@ -489,6 +489,47 @@ export default function MatriculaFormPage() {
 
                 <FormField
                   control={form.control}
+                  name="empresaCargo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Cargo del estudiante" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="empresaNivelFormacion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nivel de Formación</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {NIVELES_FORMACION_EMPRESA.map((n) => (
+                            <SelectItem key={n.value} value={n.value}>
+                              {n.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
                   name="areaTrabajo"
                   render={({ field }) => (
                     <FormItem>
@@ -574,43 +615,6 @@ export default function MatriculaFormPage() {
                           <FormControl>
                             <Input {...field} placeholder="Nombre completo" />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="empresaCargo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cargo</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Cargo del estudiante" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="empresaNivelFormacion"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nivel de Formación</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Seleccionar..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {NIVELES_FORMACION_EMPRESA.map((n) => (
-                                <SelectItem key={n.value} value={n.value}>
-                                  {n.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}

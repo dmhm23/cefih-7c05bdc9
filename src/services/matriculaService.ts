@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 import { mockMatriculas, mockCursos, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
+import { getDocumentosRequeridos } from './documentoService';
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {
@@ -65,13 +66,12 @@ export const matriculaService = {
     }
 
     const now = new Date().toISOString();
-    
-    // Documentos requeridos por defecto
-    const documentosRequeridos: DocumentoRequerido[] = [
-      { id: uuid(), tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
-      { id: uuid(), tipo: 'examen_medico', nombre: 'Examen Médico Ocupacional', estado: 'pendiente' },
-      { id: uuid(), tipo: 'certificado_eps', nombre: 'Certificado EPS', estado: 'pendiente' },
-    ];
+
+    // Documentos requeridos dinámicos según nivel de formación
+    const documentosRequeridos = getDocumentosRequeridos(
+      data.empresaNivelFormacion as any,
+      data.tipoFormacion
+    );
 
     const newMatricula: Matricula = {
       ...data,

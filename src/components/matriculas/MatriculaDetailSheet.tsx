@@ -15,6 +15,11 @@ import {
   Building2,
   GraduationCap,
   Briefcase,
+  HeartPulse,
+  ShieldCheck,
+  AlertTriangle,
+  Check,
+  X,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
@@ -22,7 +27,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago } from "@/hooks/useMatriculas";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import {
@@ -32,6 +43,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { FirmaCaptura } from "@/components/matriculas/FirmaCaptura";
+import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
@@ -74,10 +87,13 @@ export function MatriculaDetailSheet({
   const updateMatricula = useUpdateMatricula();
   const cambiarEstado = useCambiarEstadoMatricula();
   const registrarPago = useRegistrarPago();
+  const capturarFirma = useCapturarFirma();
+  const uploadDocumento = useUploadDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [firmaDialogOpen, setFirmaDialogOpen] = useState(false);
 
   useEffect(() => {
     setFormData({});
@@ -126,6 +142,34 @@ export function MatriculaDetailSheet({
     }
   };
 
+  const handleCapturarFirma = async (firmaBase64: string) => {
+    try {
+      await capturarFirma.mutateAsync({ id: matricula.id, firmaBase64 });
+      toast({ title: "Firma capturada correctamente" });
+      setFirmaDialogOpen(false);
+    } catch (error) {
+      toast({ title: "Error al capturar firma", variant: "destructive" });
+    }
+  };
+
+  const handleUploadDoc = async (documentoId: string, file: File) => {
+    try {
+      await uploadDocumento.mutateAsync({
+        matriculaId: matricula.id,
+        documentoId,
+        file,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: "Documento cargado correctamente" });
+    } catch (error) {
+      toast({ title: "Error al cargar documento", variant: "destructive" });
+    }
+  };
+
   const getValue = <K extends keyof Matricula>(field: K): Matricula[K] => {
     return (formData[field] as Matricula[K]) ?? matricula[field];
   };
@@ -141,8 +185,9 @@ export function MatriculaDetailSheet({
     matricula.evaluacionCompletada,
     matricula.encuestaCompletada,
     matricula.pagado,
+    matricula.consentimientoSalud,
   ].filter(Boolean).length;
-  const progressPercent = (completedSteps / 5) * 100;
+  const progressPercent = (completedSteps / 6) * 100;
 
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
@@ -152,255 +197,350 @@ export function MatriculaDetailSheet({
     if (matricula) { onOpenChange(false); navigate(`/matriculas/${matricula.id}`); }
   };
 
+  const ConsentIcon = ({ value }: { value: boolean }) => (
+    value
+      ? <Check className="h-3.5 w-3.5 text-emerald-600" />
+      : <X className="h-3.5 w-3.5 text-muted-foreground" />
+  );
+
   return (
-    <DetailSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title={personaName}
-      subtitle={cursoName}
-      currentIndex={currentIndex}
-      totalCount={totalCount}
-      onNavigate={onNavigate}
-      onFullScreen={handleFullScreen}
-      countLabel="matrículas"
-      footer={
-        isDirty ? (
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={updateMatricula.isPending || cambiarEstado.isPending}>
-              {updateMatricula.isPending || cambiarEstado.isPending ? "Guardando..." : "Guardar Cambios"}
-            </Button>
-          </div>
-        ) : undefined
-      }
-    >
-      <div className="space-y-6">
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso de matrícula</span>
-            <span className="font-medium">{completedSteps}/5 completados</span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </div>
-
-        <Separator />
-
-        {/* Estado y Tipo */}
-        <DetailSection title="Estado de la Matrícula">
-          <div className="grid grid-cols-2 gap-4">
-            <EditableField
-              label="Estado"
-              value={getValue("estado")}
-              displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
-              onChange={(v) => handleFieldChange("estado", v)}
-              type="select"
-              options={ESTADO_OPTIONS}
-              icon={FileCheck}
-              badge
-              badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
-            />
-            <EditableField
-              label="Tipo de Formación"
-              value={getValue("tipoFormacion")}
-              displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion")]}
-              onChange={(v) => handleFieldChange("tipoFormacion", v)}
-              type="select"
-              options={TIPO_FORMACION_OPTIONS}
-              icon={BookOpen}
-              badge
-              badgeVariant="outline"
-            />
-          </div>
-        </DetailSection>
-
-        <Separator />
-
-        {/* Estudiante */}
-        <DetailSection title="Estudiante">
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-5 w-5 text-primary" />
+    <>
+      <DetailSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={personaName}
+        subtitle={cursoName}
+        currentIndex={currentIndex}
+        totalCount={totalCount}
+        onNavigate={onNavigate}
+        onFullScreen={handleFullScreen}
+        countLabel="matrículas"
+        footer={
+          isDirty ? (
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={updateMatricula.isPending || cambiarEstado.isPending}>
+                {updateMatricula.isPending || cambiarEstado.isPending ? "Guardando..." : "Guardar Cambios"}
+              </Button>
             </div>
-            <div>
-              <p className="font-medium">{personaName}</p>
-              <p className="text-sm text-muted-foreground">{personaDoc}</p>
+          ) : undefined
+        }
+      >
+        <div className="space-y-6">
+          {/* Progress */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progreso de matrícula</span>
+              <span className="font-medium">{completedSteps}/6 completados</span>
             </div>
+            <Progress value={progressPercent} className="h-2" />
           </div>
-        </DetailSection>
 
-        <Separator />
+          <Separator />
 
-        {/* Curso */}
-        <DetailSection title="Curso">
-          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <BookOpen className="h-5 w-5 text-primary" />
+          {/* Estado y Tipo */}
+          <DetailSection title="Estado de la Matrícula">
+            <div className="grid grid-cols-2 gap-4">
+              <EditableField
+                label="Estado"
+                value={getValue("estado")}
+                displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
+                onChange={(v) => handleFieldChange("estado", v)}
+                type="select"
+                options={ESTADO_OPTIONS}
+                icon={FileCheck}
+                badge
+                badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
+              />
+              <EditableField
+                label="Tipo de Formación"
+                value={getValue("tipoFormacion")}
+                displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion")]}
+                onChange={(v) => handleFieldChange("tipoFormacion", v)}
+                type="select"
+                options={TIPO_FORMACION_OPTIONS}
+                icon={BookOpen}
+                badge
+                badgeVariant="outline"
+              />
             </div>
-            <div className="flex-1">
-              <p className="font-medium">{cursoName}</p>
-              {curso && (
-                <p className="text-sm text-muted-foreground">
-                  {format(new Date(curso.fechaInicio), "d MMM", { locale: es })} -{" "}
-                  {format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}
-                </p>
-              )}
+          </DetailSection>
+
+          <Separator />
+
+          {/* Estudiante */}
+          <DetailSection title="Estudiante">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">{personaName}</p>
+                <p className="text-sm text-muted-foreground">{personaDoc}</p>
+              </div>
             </div>
-          </div>
-        </DetailSection>
+          </DetailSection>
 
-        <Separator />
+          <Separator />
 
-        {/* Historial de Formación Previa */}
-        {(matricula.nivelPrevio || matricula.centroFormacionPrevio || matricula.fechaCertificacionPrevia) && (
-          <>
-            <DetailSection title="Historial de Formación Previa">
-              <div className="grid grid-cols-2 gap-4">
-                {matricula.nivelPrevio && (
-                  <div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><GraduationCap className="h-3 w-3" /> Nivel Previo</p>
-                    <p className="text-sm font-medium">{NIVEL_PREVIO_LABELS[matricula.nivelPrevio]}</p>
-                  </div>
-                )}
-                {matricula.centroFormacionPrevio && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Centro de Formación</p>
-                    <p className="text-sm font-medium">{matricula.centroFormacionPrevio}</p>
-                  </div>
-                )}
-                {matricula.fechaCertificacionPrevia && (
-                  <div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Fecha Certificación</p>
-                    <p className="text-sm font-medium">{matricula.fechaCertificacionPrevia}</p>
-                  </div>
+          {/* Curso */}
+          <DetailSection title="Curso">
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium">{cursoName}</p>
+                {curso && (
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(curso.fechaInicio), "d MMM", { locale: es })} -{" "}
+                    {format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}
+                  </p>
                 )}
               </div>
-            </DetailSection>
-            <Separator />
-          </>
-        )}
+            </div>
+          </DetailSection>
 
-        {/* Vinculación Laboral */}
-        {matricula.tipoVinculacion && (
-          <>
-            <DetailSection title="Vinculación Laboral">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1"><Briefcase className="h-3 w-3" /> Tipo</p>
-                  <Badge variant="outline">{TIPO_VINCULACION_LABELS[matricula.tipoVinculacion]}</Badge>
-                </div>
-                {matricula.areaTrabajo && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Área de Trabajo</p>
-                    <p className="text-sm font-medium">{getDisplayLabel(matricula.areaTrabajo, AREAS_TRABAJO)}</p>
-                  </div>
-                )}
-                {matricula.sectorEconomico && (
-                  <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" /> Sector Económico</p>
-                    <p className="text-sm font-medium">{getDisplayLabel(matricula.sectorEconomico, SECTORES_ECONOMICOS)}</p>
-                  </div>
-                )}
-                {matricula.tipoVinculacion === 'empresa' && matricula.empresaNombre && (
-                  <>
+          <Separator />
+
+          {/* Historial de Formación Previa */}
+          {(matricula.nivelPrevio || matricula.centroFormacionPrevio || matricula.fechaCertificacionPrevia) && (
+            <>
+              <DetailSection title="Historial de Formación Previa">
+                <div className="grid grid-cols-2 gap-4">
+                  {matricula.nivelPrevio && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Empresa</p>
-                      <p className="text-sm font-medium">{matricula.empresaNombre}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><GraduationCap className="h-3 w-3" /> Nivel Previo</p>
+                      <p className="text-sm font-medium">{NIVEL_PREVIO_LABELS[matricula.nivelPrevio]}</p>
                     </div>
-                    {matricula.empresaNit && (
+                  )}
+                  {matricula.centroFormacionPrevio && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Centro de Formación</p>
+                      <p className="text-sm font-medium">{matricula.centroFormacionPrevio}</p>
+                    </div>
+                  )}
+                  {matricula.fechaCertificacionPrevia && (
+                    <div>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Fecha Certificación</p>
+                      <p className="text-sm font-medium">{matricula.fechaCertificacionPrevia}</p>
+                    </div>
+                  )}
+                </div>
+              </DetailSection>
+              <Separator />
+            </>
+          )}
+
+          {/* Vinculación Laboral */}
+          {matricula.tipoVinculacion && (
+            <>
+              <DetailSection title="Vinculación Laboral">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Briefcase className="h-3 w-3" /> Tipo</p>
+                    <Badge variant="outline">{TIPO_VINCULACION_LABELS[matricula.tipoVinculacion]}</Badge>
+                  </div>
+                  {matricula.empresaCargo && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Cargo</p>
+                      <p className="text-sm font-medium">{matricula.empresaCargo}</p>
+                    </div>
+                  )}
+                  {matricula.empresaNivelFormacion && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Nivel</p>
+                      <p className="text-sm font-medium">{NIVEL_FORMACION_EMPRESA_LABELS[matricula.empresaNivelFormacion]}</p>
+                    </div>
+                  )}
+                  {matricula.areaTrabajo && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Área de Trabajo</p>
+                      <p className="text-sm font-medium">{getDisplayLabel(matricula.areaTrabajo, AREAS_TRABAJO)}</p>
+                    </div>
+                  )}
+                  {matricula.sectorEconomico && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="h-3 w-3" /> Sector Económico</p>
+                      <p className="text-sm font-medium">{getDisplayLabel(matricula.sectorEconomico, SECTORES_ECONOMICOS)}</p>
+                    </div>
+                  )}
+                  {matricula.tipoVinculacion === 'empresa' && matricula.empresaNombre && (
+                    <>
                       <div>
-                        <p className="text-xs text-muted-foreground">NIT</p>
-                        <p className="text-sm font-medium">{matricula.empresaNit}</p>
+                        <p className="text-xs text-muted-foreground">Empresa</p>
+                        <p className="text-sm font-medium">{matricula.empresaNombre}</p>
                       </div>
-                    )}
-                    {matricula.empresaCargo && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Cargo</p>
-                        <p className="text-sm font-medium">{matricula.empresaCargo}</p>
-                      </div>
-                    )}
-                    {matricula.empresaNivelFormacion && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Nivel</p>
-                        <p className="text-sm font-medium">{NIVEL_FORMACION_EMPRESA_LABELS[matricula.empresaNivelFormacion]}</p>
-                      </div>
-                    )}
-                    {matricula.empresaContactoNombre && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Contacto</p>
-                        <p className="text-sm font-medium">{matricula.empresaContactoNombre}</p>
-                        {matricula.empresaContactoTelefono && (
-                          <p className="text-xs text-muted-foreground">{matricula.empresaContactoTelefono}</p>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                      {matricula.empresaNit && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">NIT</p>
+                          <p className="text-sm font-medium">{matricula.empresaNit}</p>
+                        </div>
+                      )}
+                      {matricula.empresaContactoNombre && (
+                        <div>
+                          <p className="text-xs text-muted-foreground">Contacto</p>
+                          <p className="text-sm font-medium">{matricula.empresaContactoNombre}</p>
+                          {matricula.empresaContactoTelefono && (
+                            <p className="text-xs text-muted-foreground">{matricula.empresaContactoTelefono}</p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </DetailSection>
+              <Separator />
+            </>
+          )}
+
+          {/* Consentimiento de Salud */}
+          <DetailSection title="Consentimiento de Salud">
+            {matricula.consentimientoSalud ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <ConsentIcon value={!matricula.restriccionMedica} />
+                  <span>Restricción médica: {matricula.restriccionMedica ? matricula.restriccionMedicaDetalle || 'Sí' : 'No'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <ConsentIcon value={!matricula.alergias} />
+                  <span>Alergias: {matricula.alergias ? matricula.alergiasDetalle || 'Sí' : 'No'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <ConsentIcon value={!matricula.consumoMedicamentos} />
+                  <span>Medicamentos: {matricula.consumoMedicamentos ? matricula.consumoMedicamentosDetalle || 'Sí' : 'No'}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <ConsentIcon value={matricula.nivelLectoescritura} />
+                  <span>Lectoescritura: {matricula.nivelLectoescritura ? 'Sí' : 'No'}</span>
+                </div>
               </div>
-            </DetailSection>
-            <Separator />
-          </>
-        )}
-
-        {/* Checklist */}
-        <DetailSection title="Checklist de Requisitos">
-          <div className="space-y-3">
-            <ChecklistItem label="Firma capturada" completed={matricula.firmaCapturada} icon={PenTool} />
-            <ChecklistItem
-              label="Documentos verificados"
-              completed={matricula.documentos.every((d) => d.estado === "verificado")}
-              icon={FileText}
-              sublabel={`${matricula.documentos.filter((d) => d.estado === "verificado").length}/${matricula.documentos.length} documentos`}
-            />
-            <ChecklistItem label="Evaluación completada" completed={matricula.evaluacionCompletada} icon={ClipboardList}
-              sublabel={matricula.evaluacionPuntaje ? `Puntaje: ${matricula.evaluacionPuntaje}%` : undefined}
-            />
-            <ChecklistItem label="Encuesta completada" completed={matricula.encuestaCompletada} icon={FileCheck} />
-          </div>
-        </DetailSection>
-
-        <Separator />
-
-        {/* Pago */}
-        <DetailSection title="Estado de Pago">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Estado de pago</span>
-              </div>
-              <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
-                {matricula.pagado ? "Pagado" : "Pendiente"}
-              </Badge>
-            </div>
-            {matricula.pagado && matricula.facturaNumero && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Receipt className="h-4 w-4" />
-                <span>Factura: {matricula.facturaNumero}</span>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Consentimiento pendiente</span>
               </div>
             )}
-            {matricula.pagado && matricula.fechaPago && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Fecha: {format(new Date(matricula.fechaPago), "d MMM yyyy", { locale: es })}</span>
-              </div>
-            )}
-            {!matricula.pagado && (
-              <Button variant="outline" size="sm" className="w-full" onClick={handleRegistrarPago} disabled={registrarPago.isPending}>
-                <CreditCard className="h-4 w-4 mr-2" />
-                {registrarPago.isPending ? "Registrando..." : "Registrar Pago"}
+          </DetailSection>
+
+          <Separator />
+
+          {/* Documentos */}
+          <DetailSection title="Documentos">
+            <DocumentosCarga
+              documentos={matricula.documentos}
+              onUpload={handleUploadDoc}
+              isUploading={uploadDocumento.isPending}
+              compact
+            />
+          </DetailSection>
+
+          <Separator />
+
+          {/* Firma Digital */}
+          <DetailSection title="Firma Digital">
+            {matricula.firmaCapturada && matricula.firmaBase64 ? (
+              <FirmaCaptura firmaExistente={matricula.firmaBase64} onGuardar={() => {}} />
+            ) : (
+              <Button variant="outline" size="sm" className="w-full" onClick={() => setFirmaDialogOpen(true)}>
+                <PenTool className="h-4 w-4 mr-2" />
+                Capturar Firma
               </Button>
             )}
-          </div>
-        </DetailSection>
+          </DetailSection>
 
-        {/* Metadata */}
-        <div className="text-xs text-muted-foreground pt-4">
-          <p>Creada: {format(new Date(matricula.createdAt), "d MMM yyyy, HH:mm", { locale: es })}</p>
-          <p>Actualizada: {format(new Date(matricula.updatedAt), "d MMM yyyy, HH:mm", { locale: es })}</p>
+          <Separator />
+
+          {/* Autorización de Datos */}
+          <DetailSection title="Autorización de Datos">
+            <div className="flex items-center gap-2 text-sm">
+              {matricula.autorizacionDatos ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <span>Autorización concedida</span>
+                </>
+              ) : (
+                <>
+                  <Circle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Pendiente de autorización</span>
+                </>
+              )}
+            </div>
+          </DetailSection>
+
+          <Separator />
+
+          {/* Checklist */}
+          <DetailSection title="Checklist de Requisitos">
+            <div className="space-y-3">
+              <ChecklistItem label="Consentimiento de salud" completed={matricula.consentimientoSalud} icon={HeartPulse} />
+              <ChecklistItem label="Firma capturada" completed={matricula.firmaCapturada} icon={PenTool} />
+              <ChecklistItem
+                label="Documentos verificados"
+                completed={matricula.documentos.every((d) => d.estado === "verificado")}
+                icon={FileText}
+                sublabel={`${matricula.documentos.filter((d) => d.estado === "verificado").length}/${matricula.documentos.length} documentos`}
+              />
+              <ChecklistItem label="Evaluación completada" completed={matricula.evaluacionCompletada} icon={ClipboardList}
+                sublabel={matricula.evaluacionPuntaje ? `Puntaje: ${matricula.evaluacionPuntaje}%` : undefined}
+              />
+              <ChecklistItem label="Encuesta completada" completed={matricula.encuestaCompletada} icon={FileCheck} />
+            </div>
+          </DetailSection>
+
+          <Separator />
+
+          {/* Pago */}
+          <DetailSection title="Estado de Pago">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Estado de pago</span>
+                </div>
+                <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
+                  {matricula.pagado ? "Pagado" : "Pendiente"}
+                </Badge>
+              </div>
+              {matricula.pagado && matricula.facturaNumero && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Receipt className="h-4 w-4" />
+                  <span>Factura: {matricula.facturaNumero}</span>
+                </div>
+              )}
+              {matricula.pagado && matricula.fechaPago && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>Fecha: {format(new Date(matricula.fechaPago), "d MMM yyyy", { locale: es })}</span>
+                </div>
+              )}
+              {!matricula.pagado && (
+                <Button variant="outline" size="sm" className="w-full" onClick={handleRegistrarPago} disabled={registrarPago.isPending}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {registrarPago.isPending ? "Registrando..." : "Registrar Pago"}
+                </Button>
+              )}
+            </div>
+          </DetailSection>
+
+          {/* Metadata */}
+          <div className="text-xs text-muted-foreground pt-4">
+            <p>Creada: {format(new Date(matricula.createdAt), "d MMM yyyy, HH:mm", { locale: es })}</p>
+            <p>Actualizada: {format(new Date(matricula.updatedAt), "d MMM yyyy, HH:mm", { locale: es })}</p>
+          </div>
         </div>
-      </div>
-    </DetailSheet>
+      </DetailSheet>
+
+      {/* Firma Dialog */}
+      <Dialog open={firmaDialogOpen} onOpenChange={setFirmaDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Capturar Firma</DialogTitle>
+          </DialogHeader>
+          <FirmaCaptura onGuardar={handleCapturarFirma} isPending={capturarFirma.isPending} />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

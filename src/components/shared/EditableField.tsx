@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Popover,
   PopoverContent,
@@ -139,6 +140,17 @@ export function EditableField({
     }
 
     if (type === "select") {
+      if (options.length > 5) {
+        return (
+          <Combobox
+            options={[...options]}
+            value={value}
+            onValueChange={(val) => handleSelectChange(val)}
+            placeholder={placeholder}
+            className="h-8 text-sm border-none shadow-none hover:bg-muted/50 px-2 -mx-2"
+          />
+        );
+      }
       return (
         <Select value={value} onValueChange={handleSelectChange}>
           <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-muted/50 px-2 -mx-2">
@@ -152,7 +164,7 @@ export function EditableField({
               )}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent side="bottom">
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}

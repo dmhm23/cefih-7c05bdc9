@@ -140,7 +140,7 @@ export function EditableField({
     }
 
     if (type === "select") {
-      if (options.length > 5) {
+      if (options.length >= 4) {
         return (
           <Combobox
             options={[...options]}

@@ -15,24 +15,16 @@ import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailShe
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
-import { Matricula, TIPO_FORMACION_LABELS } from "@/types";
+import { Matricula } from "@/types";
+import { TipoDocumento } from "@/types/matricula";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 
-const ESTADO_OPTIONS = [
-  { value: "creada", label: "Creada" },
+const ESTADO_DOCUMENTAL_OPTIONS = [
+  { value: "completo", label: "Completo" },
   { value: "pendiente", label: "Pendiente" },
-  { value: "completa", label: "Completa" },
-  { value: "certificada", label: "Certificada" },
-  { value: "cerrada", label: "Cerrada" },
-];
-
-const TIPO_FORMACION_OPTIONS = [
-  { value: "inicial", label: "Formación Inicial" },
-  { value: "periodica", label: "Formación Periódica" },
-  { value: "actualizacion", label: "Actualización" },
 ];
 
 const PAGO_OPTIONS = [
@@ -41,13 +33,13 @@ const PAGO_OPTIONS = [
 ];
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: "documento", header: "Documento", visible: true },
-  { key: "persona", header: "Estudiante", visible: true },
-  { key: "curso", header: "Curso", visible: true },
-  { key: "tipoFormacion", header: "Tipo", visible: true },
-  { key: "estado", header: "Estado", visible: true },
-  { key: "pago", header: "Pago", visible: true },
-  { key: "fecha", header: "Fecha", visible: true },
+  { key: "fechaCreacion", header: "Fecha Creación", visible: true },
+  { key: "empresa", header: "Empresa", visible: true },
+  { key: "asistente", header: "Asistente", visible: true },
+  { key: "fechaArl", header: "Fecha Cobertura ARL", visible: true },
+  { key: "fechaExamen", header: "Fecha Examen", visible: true },
+  { key: "estadoDocumental", header: "Estado Documental", visible: true },
+  { key: "estadoFinanciero", header: "Estado Financiero", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -59,8 +51,7 @@ export default function MatriculasPage() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
-    estado: "todos",
-    tipoFormacion: "todos",
+    estadoDocumental: "todos",
     pago: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
@@ -77,18 +68,27 @@ export default function MatriculasPage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
   }, [columnConfig]);
 
+  const getDocumentoFecha = (matricula: Matricula, tipo: TipoDocumento, campo: 'fechaInicioCobertura' | 'fechaDocumento') => {
+    const doc = matricula.documentos?.find((d) => d.tipo === tipo);
+    if (!doc) return "-";
+    const fecha = doc[campo];
+    return fecha ? format(new Date(fecha), "dd/MM/yyyy") : "-";
+  };
+
+  const getEstadoDocumental = (matricula: Matricula): "Completo" | "Pendiente" => {
+    const docsObligatorios = (matricula.documentos || []).filter((d) => !d.opcional);
+    if (docsObligatorios.length === 0) return "Pendiente";
+    return docsObligatorios.every((d) => d.estado === "cargado" || d.estado === "verificado")
+      ? "Completo"
+      : "Pendiente";
+  };
+
   const filterConfigs: FilterConfig[] = [
     {
-      key: "estado",
-      label: "Estado",
+      key: "estadoDocumental",
+      label: "Estado Documental",
       type: "select",
-      options: ESTADO_OPTIONS,
-    },
-    {
-      key: "tipoFormacion",
-      label: "Tipo de Formación",
-      type: "select",
-      options: TIPO_FORMACION_OPTIONS,
+      options: ESTADO_DOCUMENTAL_OPTIONS,
     },
     {
       key: "pago",
@@ -127,14 +127,14 @@ export default function MatriculasPage() {
       persona?.nombres.toLowerCase().includes(searchQuery.toLowerCase()) ||
       persona?.apellidos.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesEstado = filters.estado === "todos" || m.estado === filters.estado;
-    const matchesTipo = filters.tipoFormacion === "todos" || m.tipoFormacion === filters.tipoFormacion;
+    const estadoDoc = getEstadoDocumental(m).toLowerCase();
+    const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;
     const matchesPago =
       filters.pago === "todos" ||
       (filters.pago === "pagado" && m.pagado) ||
       (filters.pago === "pendiente" && !m.pagado);
 
-    return matchesSearch && matchesEstado && matchesTipo && matchesPago;
+    return matchesSearch && matchesEstadoDoc && matchesPago;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -143,8 +143,7 @@ export default function MatriculasPage() {
 
   const handleClearFilters = () => {
     setFilters({
-      estado: "todos",
-      tipoFormacion: "todos",
+      estadoDocumental: "todos",
       pago: "todos",
     });
   };
@@ -196,43 +195,54 @@ export default function MatriculasPage() {
 
   const columns: Column<Matricula>[] = [
     {
-      key: "documento",
-      header: "Documento",
-      render: (m: Matricula) => <CopyableCell value={getPersonaDocumento(m.personaId)} />,
+      key: "fechaCreacion",
+      header: "Fecha Creación",
+      render: (m: Matricula) => format(new Date(m.createdAt), "dd/MM/yyyy"),
     },
     {
-      key: "persona",
-      header: "Estudiante",
+      key: "empresa",
+      header: "Empresa",
+      render: (m: Matricula) => (
+        <span className="truncate block max-w-[180px]">
+          {m.tipoVinculacion === "empresa" && m.empresaNombre ? m.empresaNombre : "Independiente"}
+        </span>
+      ),
+    },
+    {
+      key: "asistente",
+      header: "Asistente",
       render: (m: Matricula) => (
         <span className="font-medium">{getPersonaNombre(m.personaId)}</span>
       ),
     },
     {
-      key: "curso",
-      header: "Curso",
-      render: (m: Matricula) => (
-        <span className="max-w-[200px] truncate block">
-          {getCursoNombre(m.cursoId)}
-        </span>
-      ),
+      key: "fechaArl",
+      header: "Fecha Cobertura ARL",
+      render: (m: Matricula) => getDocumentoFecha(m, "arl", "fechaInicioCobertura"),
     },
     {
-      key: "tipoFormacion",
-      header: "Tipo",
-      render: (m: Matricula) => (
-        <Badge variant="outline" className="font-normal">
-          {TIPO_FORMACION_LABELS[m.tipoFormacion]}
-        </Badge>
-      ),
+      key: "fechaExamen",
+      header: "Fecha Examen",
+      render: (m: Matricula) => getDocumentoFecha(m, "examen_medico", "fechaDocumento"),
     },
     {
-      key: "estado",
-      header: "Estado",
-      render: (m: Matricula) => <StatusBadge status={m.estado} />,
+      key: "estadoDocumental",
+      header: "Estado Documental",
+      render: (m: Matricula) => {
+        const estado = getEstadoDocumental(m);
+        return (
+          <Badge
+            variant={estado === "Completo" ? "default" : "secondary"}
+            className={estado === "Completo" ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-600"}
+          >
+            {estado}
+          </Badge>
+        );
+      },
     },
     {
-      key: "pago",
-      header: "Pago",
+      key: "estadoFinanciero",
+      header: "Estado Financiero",
       render: (m: Matricula) => (
         <Badge
           variant={m.pagado ? "default" : "secondary"}
@@ -241,11 +251,6 @@ export default function MatriculasPage() {
           {m.pagado ? "Pagado" : "Pendiente"}
         </Badge>
       ),
-    },
-    {
-      key: "fecha",
-      header: "Fecha",
-      render: (m: Matricula) => format(new Date(m.createdAt), "dd/MM/yyyy"),
     },
     {
       key: "actions",

@@ -1,36 +1,43 @@
 
+# Buscador en dropdowns y apertura hacia abajo
 
-# Fix: Panel lateral se actualiza al hacer clic en otra fila (sin clic extra)
+## Resumen
 
-## Problema raiz
+Los dropdowns del panel lateral usan el componente `Select` de Radix, que no tiene buscador y puede abrirse hacia arriba. La solucion es modificar el componente `EditableField` para que:
 
-El componente `Sheet` usa `Radix Dialog` en modo **modal** (por defecto). Esto activa un **focus trap** que intercepta y consume los clics fuera del panel antes de que lleguen a las filas de la tabla. Por eso se necesitan dos clics: el primero es "tragado" por el focus trap, el segundo ya llega a la fila.
+1. Cuando un dropdown tiene **mas de 5 opciones**, use el componente `Combobox` (ya existente en el proyecto) que incluye un campo de busqueda integrado.
+2. Cuando tiene **5 o menos opciones**, siga usando `Select` pero forzando la apertura hacia abajo con `side="bottom"`.
 
-## Solucion
+## Dropdowns afectados
 
-Pasar `modal={false}` al componente `Sheet`. Esto desactiva el focus trap y permite que los clics en la tabla lleguen directamente a las filas, actualizando el panel sin cerrarlo.
+| Campo | Opciones | Componente a usar |
+|---|---|---|
+| Tipo de Documento | 5 | Select (hacia abajo) |
+| Genero | 2 | Select (hacia abajo) |
+| Pais de Nacimiento | 44 | Combobox (con buscador) |
+| Grupo Sanguineo | 8 | Combobox (con buscador) |
+| Nivel Educativo | 10 | Combobox (con buscador) |
+| Area de Trabajo | 2 | Select (hacia abajo) |
+| Sector Economico | 20 | Combobox (con buscador) |
 
-## Archivos a modificar
+## Detalle tecnico
 
-### 1. `src/components/shared/DetailSheet.tsx`
+### Archivo: `src/components/shared/EditableField.tsx`
 
-- Agregar `modal={false}` al componente `<Sheet>`
-- Mantener el handler `handleClickOutside` existente para cerrar al hacer clic fuera del panel Y fuera de la tabla
+1. Importar el componente `Combobox` de `@/components/ui/combobox`
+2. En el bloque `type === "select"` (lineas 141-163), agregar logica condicional:
+   - Si `options.length > 5`: renderizar `Combobox` con las mismas props (`value`, `onValueChange`, `options`)
+   - Si `options.length <= 5`: mantener `Select` actual pero agregar `side="bottom"` al `SelectContent`
+3. Aplicar estilos consistentes al `Combobox` para que se integre visualmente (altura `h-8`, sin borde, hover sutil)
+
+### Archivo: `src/components/ui/combobox.tsx`
+
+No requiere cambios funcionales. El componente ya soporta busqueda y las props necesarias (`options`, `value`, `onValueChange`, `placeholder`).
+
+### Cambio en SelectContent
 
 ```typescript
-// Antes:
-<Sheet open={open} onOpenChange={onOpenChange}>
-
-// Despues:
-<Sheet open={open} onOpenChange={onOpenChange} modal={false}>
+<SelectContent side="bottom">
 ```
 
-### 2. `src/components/ui/sheet.tsx` (limpieza opcional)
-
-- Se puede remover `preventCloseOnOutsideClick` y los handlers `onPointerDownOutside`/`onInteractOutside` ya que con `modal={false}` Radix no intenta cerrar en clics externos. Sin embargo, para minimizar cambios y riesgo, se puede dejar como esta.
-
-## Comportamiento resultante
-
-- Panel abierto + clic en otra fila: el panel actualiza su contenido inmediatamente (un solo clic)
-- Panel abierto + clic fuera del panel y de la tabla: el panel se cierra
-- Dropdowns dentro del panel: siguen funcionando sin cerrar el panel
+Esto fuerza a Radix a abrir el dropdown hacia abajo siempre, evitando que se abra hacia arriba y oculte opciones.

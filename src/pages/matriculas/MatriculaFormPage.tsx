@@ -177,31 +177,31 @@ export default function MatriculaFormPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/matriculas")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Nueva Matrícula</h1>
-          <p className="text-muted-foreground">Inscribir estudiante a un curso</p>
+          <h1 className="text-2xl font-bold">Nueva Matrícula</h1>
+          <p className="text-sm text-muted-foreground">Inscribir estudiante a un curso</p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Sección 1: Búsqueda de Estudiante */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Search className="h-4 w-4" />
                 Buscar Estudiante
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 Busca por número de documento, nombre o apellido
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 px-4 pb-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -212,11 +212,10 @@ export default function MatriculaFormPage() {
                 />
               </div>
 
-              {/* Resultados de búsqueda */}
               {searchQuery.length >= 2 && (
-                <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
+                <div className="border rounded-lg divide-y max-h-40 overflow-y-auto">
                   {isSearching ? (
-                    <div className="p-3 text-sm text-muted-foreground flex items-center gap-2">
+                    <div className="p-2.5 text-sm text-muted-foreground flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Buscando...
                     </div>
@@ -225,29 +224,24 @@ export default function MatriculaFormPage() {
                       <button
                         key={p.id}
                         type="button"
-                        className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-center gap-3"
+                        className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex items-center gap-3"
                         onClick={() => handleSelectPersona(p)}
                       >
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <UserIcon className="h-4 w-4 text-primary" />
+                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <UserIcon className="h-3.5 w-3.5 text-primary" />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{p.nombres} {p.apellidos}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{p.nombres} {p.apellidos}</p>
                           <p className="text-xs text-muted-foreground">{p.tipoDocumento}: {p.numeroDocumento}</p>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <div className="p-4 text-center space-y-2">
+                    <div className="p-3 text-center space-y-1.5">
                       <p className="text-sm text-muted-foreground">
                         No encontramos a esta persona en el sistema
                       </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCrearPersonaOpen(true)}
-                      >
+                      <Button type="button" variant="outline" size="sm" onClick={() => setCrearPersonaOpen(true)}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Crear persona
                       </Button>
@@ -256,35 +250,30 @@ export default function MatriculaFormPage() {
                 </div>
               )}
 
-              {/* Persona seleccionada */}
               {selectedPersona && (
-                <div className="p-4 bg-muted/50 rounded-lg flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserIcon className="h-5 w-5 text-primary" />
+                <div className="p-3 bg-muted/50 rounded-lg flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <UserIcon className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Estudiante seleccionado</p>
-                    <p className="font-semibold">{selectedPersona.nombres} {selectedPersona.apellidos}</p>
-                    <p className="text-sm text-muted-foreground">{selectedPersona.tipoDocumento}: {selectedPersona.numeroDocumento}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Estudiante seleccionado</p>
+                    <p className="font-semibold text-sm">{selectedPersona.nombres} {selectedPersona.apellidos}</p>
+                    <p className="text-xs text-muted-foreground">{selectedPersona.tipoDocumento}: {selectedPersona.numeroDocumento}</p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setSelectedPersona(null);
-                      form.setValue("personaId", "");
-                    }}
+                    onClick={() => { setSelectedPersona(null); form.setValue("personaId", ""); }}
                   >
                     Cambiar
                   </Button>
                 </div>
               )}
 
-              {/* Persona ID set but no persona object (e.g. just created) */}
               {personaId && !selectedPersona && (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                  <p className="text-sm text-emerald-700 flex items-center gap-2">
+                <div className="p-3 bg-muted/30 border rounded-lg">
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <Info className="h-4 w-4" />
                     Persona seleccionada correctamente
                   </p>
@@ -294,54 +283,76 @@ export default function MatriculaFormPage() {
               <FormField
                 control={form.control}
                 name="personaId"
-                render={() => (
-                  <FormItem className="hidden">
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={() => <FormItem className="hidden"><FormMessage /></FormItem>}
               />
             </CardContent>
           </Card>
 
-          {/* Sección 2: Curso (opcional) */}
+          {/* Sección 2: Curso + Tipo Formación */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 Curso
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs">
                 Opcional — puedes asignar un curso después
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="cursoId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Curso</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar curso (opcional)..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {cursosAbiertos.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nombre} ({c.fechaInicio})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent className="space-y-3 px-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cursoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Curso</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar curso (opcional)..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {cursosAbiertos.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.nombre} ({c.fechaInicio})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tipoFormacion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Formación *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(TIPO_FORMACION_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               {selectedCurso && (
-                <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 p-2.5 bg-muted/50 rounded-lg">
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha de Inicio</p>
                     <p className="text-sm font-medium">
@@ -356,45 +367,20 @@ export default function MatriculaFormPage() {
                   </div>
                 </div>
               )}
-
-              <FormField
-                control={form.control}
-                name="tipoFormacion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de Formación *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(TIPO_FORMACION_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 
           {/* Sección 3: Historial de Formación Previa */}
           <Card>
-            <CardHeader>
-              <CardTitle>Historial de Formación Previa</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base">Historial de Formación Previa</CardTitle>
+              <CardDescription className="text-xs">
                 {historial
                   ? "Se encontró historial previo — los datos se autocompletaron"
                   : "Si la persona tiene formación previa, ingresa los datos aquí"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="px-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -420,7 +406,6 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="centroFormacionPrevio"
@@ -428,13 +413,12 @@ export default function MatriculaFormPage() {
                     <FormItem>
                       <FormLabel>Centro de Formación</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Nombre del centro o código del curso" />
+                        <Input {...field} placeholder="Nombre del centro o código" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="fechaCertificacionPrevia"
@@ -454,13 +438,13 @@ export default function MatriculaFormPage() {
 
           {/* Sección 4: Vinculación Laboral */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
                 Vinculación Laboral
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 px-4 pb-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
@@ -486,7 +470,6 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="empresaCargo"
@@ -500,7 +483,6 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="empresaNivelFormacion"
@@ -527,7 +509,7 @@ export default function MatriculaFormPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="areaTrabajo"
@@ -552,7 +534,6 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="sectorEconomico"
@@ -575,11 +556,10 @@ export default function MatriculaFormPage() {
                 />
               </div>
 
-              {/* Campos de empresa (solo si tipoVinculacion === 'empresa') */}
               {tipoVinculacion === "empresa" && (
-                <div className="space-y-4 pt-2 border-t">
-                  <p className="text-sm font-medium text-muted-foreground pt-2">Datos de la Empresa</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3 pt-2 border-t">
+                  <p className="text-sm font-medium text-muted-foreground pt-1">Datos de la Empresa</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField
                       control={form.control}
                       name="empresaNombre"
@@ -620,8 +600,7 @@ export default function MatriculaFormPage() {
                       )}
                     />
                   </div>
-
-                  <p className="text-sm font-medium text-muted-foreground pt-2">Persona de Contacto</p>
+                  <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -655,7 +634,7 @@ export default function MatriculaFormPage() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-4">
+          <div className="flex justify-end gap-3 pb-4">
             <Button type="button" variant="outline" onClick={() => navigate("/matriculas")}>
               Cancelar
             </Button>

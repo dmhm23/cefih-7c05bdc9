@@ -161,16 +161,13 @@ export function PersonaDetailSheet({
       }
     >
       <div className="space-y-6">
-        {/* Identificación */}
-        <DetailSection title="Identificación">
+        {/* Datos Personales */}
+        <DetailSection title="Datos Personales">
           <div className="grid grid-cols-2 gap-4">
             <EditableField
               label="Tipo de Documento"
               value={getValue("tipoDocumento")}
-              displayValue={getDisplayLabel(
-                getValue("tipoDocumento"),
-                TIPOS_DOCUMENTO
-              )}
+              displayValue={getDisplayLabel(getValue("tipoDocumento"), TIPOS_DOCUMENTO)}
               onChange={(v) => handleFieldChange("tipoDocumento", v)}
               type="select"
               options={[...TIPOS_DOCUMENTO]}
@@ -183,14 +180,6 @@ export function PersonaDetailSheet({
               onChange={(v) => handleFieldChange("numeroDocumento", v)}
               icon={FileText}
             />
-          </div>
-        </DetailSection>
-
-        <Separator />
-
-        {/* Datos Personales */}
-        <DetailSection title="Datos Personales">
-          <div className="grid grid-cols-2 gap-4">
             <EditableField
               label="Nombres"
               value={getValue("nombres")}
@@ -240,21 +229,10 @@ export function PersonaDetailSheet({
               badge
               badgeVariant="outline"
             />
-          </div>
-        </DetailSection>
-
-        <Separator />
-
-        {/* Datos Laborales */}
-        <DetailSection title="Datos Laborales">
-          <div className="grid grid-cols-2 gap-4">
             <EditableField
               label="Nivel Educativo"
               value={getValue("nivelEducativo")}
-              displayValue={getDisplayLabel(
-                getValue("nivelEducativo"),
-                NIVELES_EDUCATIVOS
-              )}
+              displayValue={getDisplayLabel(getValue("nivelEducativo"), NIVELES_EDUCATIVOS)}
               onChange={(v) => handleFieldChange("nivelEducativo", v)}
               type="select"
               options={[...NIVELES_EDUCATIVOS]}
@@ -274,10 +252,7 @@ export function PersonaDetailSheet({
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico")}
-                displayValue={getDisplayLabel(
-                  getValue("sectorEconomico"),
-                  SECTORES_ECONOMICOS
-                )}
+                displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
@@ -289,8 +264,8 @@ export function PersonaDetailSheet({
 
         <Separator />
 
-        {/* Contacto */}
-        <DetailSection title="Contacto">
+        {/* Datos de Contacto */}
+        <DetailSection title="Datos de Contacto">
           <div className="grid grid-cols-2 gap-4">
             <EditableField
               label="Email"

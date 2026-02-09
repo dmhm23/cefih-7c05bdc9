@@ -25,6 +25,10 @@ export type TipoDocumento =
   | 'cedula' 
   | 'examen_medico' 
   | 'certificado_eps' 
+  | 'arl'
+  | 'planilla_seguridad_social'
+  | 'curso_previo'
+  | 'consolidado'
   | 'otro';
 
 export type EstadoDocumento = 
@@ -39,6 +43,9 @@ export interface DocumentoRequerido {
   urlDrive?: string;
   estado: EstadoDocumento;
   fechaCarga?: string;
+  fechaDocumento?: string;
+  fechaInicioCobertura?: string;
+  opcional?: boolean;
 }
 
 export interface Matricula {
@@ -69,6 +76,20 @@ export interface Matricula {
   areaTrabajo?: string;
   sectorEconomico?: string;
   
+  // Consentimiento de salud
+  consentimientoSalud: boolean;
+  restriccionMedica: boolean;
+  restriccionMedicaDetalle?: string;
+  alergias: boolean;
+  alergiasDetalle?: string;
+  consumoMedicamentos: boolean;
+  consumoMedicamentosDetalle?: string;
+  embarazo?: boolean;
+  nivelLectoescritura: boolean;
+
+  // Autorización de datos
+  autorizacionDatos: boolean;
+
   // Documentos y validaciones
   documentos: DocumentoRequerido[];
   firmaCapturada: boolean;

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { matriculaService } from '@/services/matriculaService';
+import { driveService } from '@/services/driveService';
 import { EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 
 export const useMatriculas = () => {
@@ -141,6 +142,35 @@ export const useDeleteMatricula = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matriculas'] });
       queryClient.invalidateQueries({ queryKey: ['cursos'] });
+    },
+  });
+};
+
+export const useUploadDocumento = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      matriculaId,
+      documentoId,
+      file,
+      metadata,
+    }: {
+      matriculaId: string;
+      documentoId: string;
+      file: File;
+      metadata?: { cursoId?: string; personaNombre?: string; personaCedula?: string };
+    }) => {
+      const url = await driveService.uploadDocumento(matriculaId, documentoId, file, metadata);
+      return matriculaService.updateDocumento(matriculaId, documentoId, {
+        estado: 'cargado',
+        fechaCarga: new Date().toISOString().split('T')[0],
+        urlDrive: url,
+      });
+    },
+    onSuccess: (_, { matriculaId }) => {
+      queryClient.invalidateQueries({ queryKey: ['matricula', matriculaId] });
+      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
     },
   });
 };

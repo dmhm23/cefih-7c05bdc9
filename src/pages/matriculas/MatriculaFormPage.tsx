@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info, HeartPulse, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,9 @@ import { useToast } from "@/hooks/use-toast";
 import { TIPO_FORMACION_LABELS } from "@/types";
 import { useState, useEffect } from "react";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
+import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { Persona } from "@/types/persona";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -59,6 +61,18 @@ const matriculaSchema = z.object({
   empresaContactoTelefono: z.string().optional(),
   areaTrabajo: z.string().optional(),
   sectorEconomico: z.string().optional(),
+  // Consentimiento de salud
+  consentimientoSalud: z.boolean().default(false),
+  restriccionMedica: z.boolean().default(false),
+  restriccionMedicaDetalle: z.string().optional(),
+  alergias: z.boolean().default(false),
+  alergiasDetalle: z.string().optional(),
+  consumoMedicamentos: z.boolean().default(false),
+  consumoMedicamentosDetalle: z.string().optional(),
+  embarazo: z.boolean().optional(),
+  nivelLectoescritura: z.boolean().default(true),
+  // Autorización de datos
+  autorizacionDatos: z.boolean().default(true),
 });
 
 type MatriculaFormData = z.infer<typeof matriculaSchema>;
@@ -94,6 +108,16 @@ export default function MatriculaFormPage() {
       empresaContactoTelefono: "",
       areaTrabajo: "",
       sectorEconomico: "",
+      consentimientoSalud: false,
+      restriccionMedica: false,
+      restriccionMedicaDetalle: "",
+      alergias: false,
+      alergiasDetalle: "",
+      consumoMedicamentos: false,
+      consumoMedicamentosDetalle: "",
+      embarazo: false,
+      nivelLectoescritura: true,
+      autorizacionDatos: true,
     },
   });
 
@@ -160,6 +184,16 @@ export default function MatriculaFormPage() {
         empresaContactoTelefono: data.empresaContactoTelefono || undefined,
         areaTrabajo: data.areaTrabajo || undefined,
         sectorEconomico: data.sectorEconomico || undefined,
+        consentimientoSalud: data.consentimientoSalud,
+        restriccionMedica: data.restriccionMedica,
+        restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
+        alergias: data.alergias,
+        alergiasDetalle: data.alergiasDetalle || undefined,
+        consumoMedicamentos: data.consumoMedicamentos,
+        consumoMedicamentosDetalle: data.consumoMedicamentosDetalle || undefined,
+        embarazo: data.embarazo || undefined,
+        nivelLectoescritura: data.nivelLectoescritura,
+        autorizacionDatos: data.autorizacionDatos,
         firmaCapturada: false,
         evaluacionCompletada: false,
         encuestaCompletada: false,
@@ -631,6 +665,71 @@ export default function MatriculaFormPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Sección 5: Consentimiento de Salud */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <HeartPulse className="h-4 w-4" />
+                Consentimiento de Salud
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Información médica relevante para el curso
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <ConsentimientoSalud
+                data={{
+                  consentimientoSalud: form.watch("consentimientoSalud"),
+                  restriccionMedica: form.watch("restriccionMedica"),
+                  restriccionMedicaDetalle: form.watch("restriccionMedicaDetalle"),
+                  alergias: form.watch("alergias"),
+                  alergiasDetalle: form.watch("alergiasDetalle"),
+                  consumoMedicamentos: form.watch("consumoMedicamentos"),
+                  consumoMedicamentosDetalle: form.watch("consumoMedicamentosDetalle"),
+                  embarazo: form.watch("embarazo"),
+                  nivelLectoescritura: form.watch("nivelLectoescritura"),
+                }}
+                onChange={(field, value) => form.setValue(field as any, value, { shouldDirty: true })}
+                showEmbarazo={selectedPersona?.genero === 'F'}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Sección 6: Autorización de Datos */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Autorización de Tratamiento de Datos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <FormField
+                control={form.control}
+                name="autorizacionDatos"
+                render={({ field }) => (
+                  <FormItem className="flex items-start gap-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        className="mt-0.5"
+                      />
+                    </FormControl>
+                    <div className="space-y-1">
+                      <FormLabel className="text-sm leading-tight">
+                        Autorizo el tratamiento de mis datos personales de acuerdo con la política de privacidad y la Ley 1581 de 2012 de protección de datos personales.
+                      </FormLabel>
+                      <p className="text-xs text-muted-foreground">
+                        Los datos serán utilizados exclusivamente para fines de formación, certificación y cumplimiento normativo.
+                      </p>
+                    </div>
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 

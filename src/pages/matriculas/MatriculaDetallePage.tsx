@@ -1,11 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, User, BookOpen, FileCheck, CreditCard, ClipboardCheck, MessageSquare, PenTool } from "lucide-react";
+import { ArrowLeft, User, BookOpen, FileCheck, CreditCard, ClipboardCheck, MessageSquare, PenTool, HeartPulse, ShieldCheck, CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula } from "@/hooks/useMatriculas";
+import { useMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
 import { usePersona } from "@/hooks/usePersonas";
 import { useCurso } from "@/hooks/useCursos";
 import { TIPO_FORMACION_LABELS } from "@/types";
@@ -23,6 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FirmaCaptura } from "@/components/matriculas/FirmaCaptura";
+import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
+import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 
 interface ChecklistItem {
   id: string;
@@ -46,6 +50,8 @@ export default function MatriculaDetallePage() {
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
+  const capturarFirma = useCapturarFirma();
+  const uploadDocumento = useUploadDocumento();
 
   if (isLoading) {
     return (
@@ -74,6 +80,12 @@ export default function MatriculaDetallePage() {
   const docsCompletos = matricula.documentos.filter((d) => d.estado !== "pendiente").length;
   const totalDocs = matricula.documentos.length;
   const checklistItems: ChecklistItem[] = [
+    {
+      id: "consentimiento",
+      label: "Consentimiento de salud",
+      completed: matricula.consentimientoSalud,
+      icon: HeartPulse,
+    },
     {
       id: "docs",
       label: `Documentos (${docsCompletos}/${totalDocs})`,
@@ -110,23 +122,6 @@ export default function MatriculaDetallePage() {
   const completedItems = checklistItems.filter((item) => item.completed).length;
   const progressPercent = (completedItems / checklistItems.length) * 100;
 
-  const handleSimularDocumento = async (docId: string) => {
-    try {
-      await updateDocumento.mutateAsync({
-        matriculaId: matricula.id,
-        documentoId: docId,
-        data: {
-          estado: "cargado",
-          fechaCarga: new Date().toISOString().split("T")[0],
-          urlDrive: `https://drive.google.com/mock/${docId}`,
-        },
-      });
-      toast({ title: "Documento cargado (simulado)" });
-    } catch {
-      toast({ title: "Error al cargar documento", variant: "destructive" });
-    }
-  };
-
   const handleRegistrarPago = async () => {
     if (!facturaNumero.trim()) {
       toast({ title: "Ingrese el número de factura", variant: "destructive" });
@@ -148,6 +143,45 @@ export default function MatriculaDetallePage() {
       toast({ title: `Estado cambiado a ${nuevoEstado}` });
     } catch {
       toast({ title: "Error al cambiar estado", variant: "destructive" });
+    }
+  };
+
+  const handleCapturarFirma = async (firmaBase64: string) => {
+    try {
+      await capturarFirma.mutateAsync({ id: matricula.id, firmaBase64 });
+      toast({ title: "Firma capturada correctamente" });
+    } catch {
+      toast({ title: "Error al capturar firma", variant: "destructive" });
+    }
+  };
+
+  const handleUploadDoc = async (documentoId: string, file: File) => {
+    try {
+      await uploadDocumento.mutateAsync({
+        matriculaId: matricula.id,
+        documentoId,
+        file,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: "Documento cargado correctamente" });
+    } catch {
+      toast({ title: "Error al cargar documento", variant: "destructive" });
+    }
+  };
+
+  const handleDocFechaChange = async (documentoId: string, field: string, value: string) => {
+    try {
+      await updateDocumento.mutateAsync({
+        matriculaId: matricula.id,
+        documentoId,
+        data: { [field]: value } as any,
+      });
+    } catch {
+      toast({ title: "Error al actualizar fecha", variant: "destructive" });
     }
   };
 
@@ -204,6 +238,39 @@ export default function MatriculaDetallePage() {
             </Card>
           </div>
 
+          {/* Consentimiento de Salud */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HeartPulse className="h-5 w-5" />
+                Consentimiento de Salud
+                {matricula.consentimientoSalud ? (
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 ml-auto">Completado</Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 ml-auto">Pendiente</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ConsentimientoSalud
+                data={{
+                  consentimientoSalud: matricula.consentimientoSalud,
+                  restriccionMedica: matricula.restriccionMedica,
+                  restriccionMedicaDetalle: matricula.restriccionMedicaDetalle,
+                  alergias: matricula.alergias,
+                  alergiasDetalle: matricula.alergiasDetalle,
+                  consumoMedicamentos: matricula.consumoMedicamentos,
+                  consumoMedicamentosDetalle: matricula.consumoMedicamentosDetalle,
+                  embarazo: matricula.embarazo,
+                  nivelLectoescritura: matricula.nivelLectoescritura,
+                }}
+                onChange={() => {}}
+                showEmbarazo={persona?.genero === 'F'}
+                readOnly
+              />
+            </CardContent>
+          </Card>
+
           {/* Historial de Formación Previa */}
           {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
             <Card>
@@ -247,6 +314,12 @@ export default function MatriculaDetallePage() {
                     <p className="text-sm text-muted-foreground">Tipo</p>
                     <p className="font-medium">{matricula.tipoVinculacion === 'empresa' ? 'Empresa' : 'Independiente'}</p>
                   </div>
+                  {matricula.empresaCargo && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cargo</p>
+                      <p className="font-medium">{matricula.empresaCargo}</p>
+                    </div>
+                  )}
                   {matricula.areaTrabajo && (
                     <div>
                       <p className="text-sm text-muted-foreground">Área de Trabajo</p>
@@ -263,12 +336,6 @@ export default function MatriculaDetallePage() {
                         <div>
                           <p className="text-sm text-muted-foreground">NIT</p>
                           <p className="font-medium">{matricula.empresaNit}</p>
-                        </div>
-                      )}
-                      {matricula.empresaCargo && (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Cargo</p>
-                          <p className="font-medium">{matricula.empresaCargo}</p>
                         </div>
                       )}
                       {matricula.empresaRepresentanteLegal && (
@@ -290,56 +357,56 @@ export default function MatriculaDetallePage() {
               <CardTitle>Documentos Requeridos</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {matricula.documentos.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={cn(
-                          "h-8 w-8 rounded-full flex items-center justify-center",
-                          doc.estado === "verificado"
-                            ? "bg-emerald-100 text-emerald-600"
-                            : doc.estado === "cargado"
-                            ? "bg-blue-100 text-blue-600"
-                            : "bg-gray-100 text-gray-400"
-                        )}
-                      >
-                        <FileCheck className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{doc.nombre}</p>
-                        {doc.fechaCarga && (
-                          <p className="text-xs text-muted-foreground">
-                            Cargado: {doc.fechaCarga}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge
-                        status={
-                          doc.estado === "verificado"
-                            ? "verde"
-                            : doc.estado === "cargado"
-                            ? "amarillo"
-                            : "rojo"
-                        }
-                      />
-                      {doc.estado === "pendiente" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSimularDocumento(doc.id)}
-                        >
-                          Simular Carga
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <DocumentosCarga
+                documentos={matricula.documentos}
+                onUpload={handleUploadDoc}
+                onFechaChange={handleDocFechaChange}
+                isUploading={uploadDocumento.isPending}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Firma Digital */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PenTool className="h-5 w-5" />
+                Firma Digital
+                {matricula.firmaCapturada && (
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 ml-auto">Capturada</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FirmaCaptura
+                firmaExistente={matricula.firmaCapturada ? matricula.firmaBase64 : undefined}
+                onGuardar={handleCapturarFirma}
+                isPending={capturarFirma.isPending}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Autorización de Datos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5" />
+                Autorización de Tratamiento de Datos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                {matricula.autorizacionDatos ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    <span className="font-medium">Autorización concedida</span>
+                  </>
+                ) : (
+                  <>
+                    <Circle className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-muted-foreground">Pendiente de autorización</span>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

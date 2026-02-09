@@ -86,9 +86,6 @@ export function DetailSheet({
             {subtitle && (
               <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {currentIndex + 1} de {totalCount} {countLabel}
-            </p>
           </div>
 
           <div className="flex items-center gap-1">

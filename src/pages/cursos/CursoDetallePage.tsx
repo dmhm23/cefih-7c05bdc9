@@ -106,7 +106,7 @@ export default function CursoDetallePage() {
         {/* Panel principal */}
         <div className="lg:col-span-2 space-y-4">
           {/* Info del curso */}
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Información del Curso
             </h3>
@@ -143,7 +143,7 @@ export default function CursoDetallePage() {
           </div>
 
           {/* Lista de estudiantes */}
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Estudiantes Inscritos
@@ -212,7 +212,7 @@ export default function CursoDetallePage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Resumen de Estados
             </h3>
@@ -240,7 +240,7 @@ export default function CursoDetallePage() {
             )}
           </div>
 
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Acciones
             </h3>
@@ -253,7 +253,7 @@ export default function CursoDetallePage() {
             </Button>
           </div>
 
-          <div className="border rounded-lg p-4 space-y-1 text-xs">
+          <div className="border rounded-lg p-4 shadow-sm space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Creado:</span>
               <span>{format(new Date(curso.createdAt), "dd/MM/yyyy")}</span>

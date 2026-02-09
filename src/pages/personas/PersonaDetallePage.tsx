@@ -124,7 +124,7 @@ export default function PersonaDetallePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           {/* Datos Personales */}
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Datos Personales
             </h3>
@@ -207,7 +207,7 @@ export default function PersonaDetallePage() {
           </div>
 
           {/* Datos de Contacto */}
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Datos de Contacto
             </h3>
@@ -228,7 +228,7 @@ export default function PersonaDetallePage() {
           </div>
 
           {/* Contacto de Emergencia */}
-          <div className="border rounded-lg p-4 space-y-2">
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Contacto de Emergencia
             </h3>

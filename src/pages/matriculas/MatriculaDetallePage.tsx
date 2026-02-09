@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, CreditCard, CheckCircle2, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,15 +6,16 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
+import { EditableField } from "@/components/shared/EditableField";
+import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
 import { usePersona } from "@/hooks/usePersonas";
 import { useCurso } from "@/hooks/useCursos";
 import { TIPO_FORMACION_LABELS, FORMA_PAGO_LABELS } from "@/types";
+import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +28,13 @@ import { Label } from "@/components/ui/label";
 import { FirmaCaptura } from "@/components/matriculas/FirmaCaptura";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
+import {
+  TIPOS_VINCULACION,
+  AREAS_TRABAJO,
+  SECTORES_ECONOMICOS,
+  NIVELES_PREVIOS,
+  FORMAS_PAGO,
+} from "@/data/formOptions";
 
 interface ChecklistItem {
   id: string;
@@ -40,16 +49,24 @@ export default function MatriculaDetallePage() {
   const { toast } = useToast();
   const [pagoDialogOpen, setPagoDialogOpen] = useState(false);
   const [facturaNumero, setFacturaNumero] = useState("");
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [isDirty, setIsDirty] = useState(false);
 
   const { data: matricula, isLoading } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
-  
+
+  const updateMatricula = useUpdateMatricula();
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
   const capturarFirma = useCapturarFirma();
   const uploadDocumento = useUploadDocumento();
+
+  useEffect(() => {
+    setFormData({});
+    setIsDirty(false);
+  }, [matricula?.id]);
 
   if (isLoading) {
     return (
@@ -70,6 +87,36 @@ export default function MatriculaDetallePage() {
       </div>
     );
   }
+
+  const handleFieldChange = (field: string, value: string | number) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateMatricula.mutateAsync({ id: matricula.id, data: formData });
+      toast({ title: "Cambios guardados correctamente" });
+      setFormData({});
+      setIsDirty(false);
+    } catch {
+      toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({});
+    setIsDirty(false);
+  };
+
+  const getValue = (field: keyof Matricula): string => {
+    const val = (formData[field] ?? matricula[field]) as string | number | undefined;
+    return val?.toString() ?? "";
+  };
+
+  const getDisplayLabel = (value: string, options: readonly { value: string; label: string }[]) => {
+    return options.find((o) => o.value === value)?.label || value;
+  };
 
   const docsCompletos = matricula.documentos.filter((d) => d.estado !== "pendiente").length;
   const totalDocs = matricula.documentos.length;
@@ -227,74 +274,88 @@ export default function MatriculaDetallePage() {
                 Formación Previa
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                {matricula.nivelPrevio && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Nivel Previo</p>
-                    <p className="text-sm font-medium">{matricula.nivelPrevio === 'trabajador_autorizado' ? 'Trabajador Autorizado' : 'Avanzado Trabajo en Alturas'}</p>
-                  </div>
-                )}
-                {matricula.centroFormacionPrevio && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Centro de Formación</p>
-                    <p className="text-sm font-medium">{matricula.centroFormacionPrevio}</p>
-                  </div>
-                )}
-                {matricula.fechaCertificacionPrevia && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Fecha Certificación</p>
-                    <p className="text-sm font-medium">{matricula.fechaCertificacionPrevia}</p>
-                  </div>
-                )}
+                <EditableField
+                  label="Nivel Previo"
+                  value={getValue("nivelPrevio")}
+                  displayValue={getDisplayLabel(getValue("nivelPrevio"), NIVELES_PREVIOS)}
+                  onChange={(v) => handleFieldChange("nivelPrevio", v)}
+                  type="select"
+                  options={[...NIVELES_PREVIOS]}
+                  badge
+                />
+                <EditableField
+                  label="Centro de Formación"
+                  value={getValue("centroFormacionPrevio")}
+                  onChange={(v) => handleFieldChange("centroFormacionPrevio", v)}
+                />
+                <EditableField
+                  label="Fecha Certificación"
+                  value={getValue("fechaCertificacionPrevia")}
+                  onChange={(v) => handleFieldChange("fechaCertificacionPrevia", v)}
+                  type="date"
+                />
               </div>
             </div>
           )}
 
           {/* Vinculación Laboral */}
-          {matricula.tipoVinculacion && (
-            <div className="border rounded-lg p-4 shadow-sm space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Vinculación Laboral
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div>
-                  <p className="text-xs text-muted-foreground">Tipo</p>
-                  <p className="text-sm font-medium">{matricula.tipoVinculacion === 'empresa' ? 'Empresa' : 'Independiente'}</p>
-                </div>
-                {matricula.empresaCargo && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Cargo</p>
-                    <p className="text-sm font-medium">{matricula.empresaCargo}</p>
-                  </div>
-                )}
-                {matricula.areaTrabajo && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Área de Trabajo</p>
-                    <p className="text-sm font-medium">{matricula.areaTrabajo === 'administrativo' ? 'Administrativo' : 'Operativa'}</p>
-                  </div>
-                )}
-                {matricula.tipoVinculacion === 'empresa' && matricula.empresaNombre && (
-                  <>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Empresa</p>
-                      <p className="text-sm font-medium">{matricula.empresaNombre}</p>
-                    </div>
-                    {matricula.empresaNit && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">NIT</p>
-                        <p className="text-sm font-medium">{matricula.empresaNit}</p>
-                      </div>
-                    )}
-                    {matricula.empresaRepresentanteLegal && (
-                      <div>
-                        <p className="text-xs text-muted-foreground">Representante Legal</p>
-                        <p className="text-sm font-medium">{matricula.empresaRepresentanteLegal}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Vinculación Laboral
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <EditableField
+                label="Tipo"
+                value={getValue("tipoVinculacion")}
+                displayValue={getDisplayLabel(getValue("tipoVinculacion"), TIPOS_VINCULACION)}
+                onChange={(v) => handleFieldChange("tipoVinculacion", v)}
+                type="select"
+                options={[...TIPOS_VINCULACION]}
+                badge
+              />
+              <EditableField
+                label="Cargo"
+                value={getValue("empresaCargo")}
+                onChange={(v) => handleFieldChange("empresaCargo", v)}
+              />
+              <EditableField
+                label="Área de Trabajo"
+                value={getValue("areaTrabajo")}
+                displayValue={getDisplayLabel(getValue("areaTrabajo"), AREAS_TRABAJO)}
+                onChange={(v) => handleFieldChange("areaTrabajo", v)}
+                type="select"
+                options={[...AREAS_TRABAJO]}
+                badge
+              />
+              {(getValue("tipoVinculacion") === "empresa") && (
+                <>
+                  <EditableField
+                    label="Empresa"
+                    value={getValue("empresaNombre")}
+                    onChange={(v) => handleFieldChange("empresaNombre", v)}
+                  />
+                  <EditableField
+                    label="NIT"
+                    value={getValue("empresaNit")}
+                    onChange={(v) => handleFieldChange("empresaNit", v)}
+                  />
+                  <EditableField
+                    label="Representante Legal"
+                    value={getValue("empresaRepresentanteLegal")}
+                    onChange={(v) => handleFieldChange("empresaRepresentanteLegal", v)}
+                  />
+                </>
+              )}
+              <EditableField
+                label="Sector Económico"
+                value={getValue("sectorEconomico")}
+                displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
+                onChange={(v) => handleFieldChange("sectorEconomico", v)}
+                type="select"
+                options={[...SECTORES_ECONOMICOS]}
+              />
             </div>
-          )}
+          </div>
 
           {/* Documentos */}
           <div className="border rounded-lg p-4 shadow-sm space-y-2">
@@ -352,53 +413,67 @@ export default function MatriculaDetallePage() {
               Cobros / Cartera
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {matricula.tipoVinculacion === 'empresa' && (
+              {(getValue("tipoVinculacion") === 'empresa') && (
                 <>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Contacto cobro</p>
-                    <p className="text-sm font-medium">{matricula.cobroContactoNombre || '—'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Celular contacto</p>
-                    <p className="text-sm font-medium">{matricula.cobroContactoCelular || '—'}</p>
-                  </div>
+                  <EditableField
+                    label="Contacto cobro"
+                    value={getValue("cobroContactoNombre")}
+                    onChange={(v) => handleFieldChange("cobroContactoNombre", v)}
+                  />
+                  <EditableField
+                    label="Celular contacto"
+                    value={getValue("cobroContactoCelular")}
+                    onChange={(v) => handleFieldChange("cobroContactoCelular", v)}
+                  />
                   <div />
                 </>
               )}
-              <div>
-                <p className="text-xs text-muted-foreground">Valor del cupo</p>
-                <p className="text-sm font-semibold">{matricula.valorCupo ? `$${matricula.valorCupo.toLocaleString('es-CO')}` : '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Abono</p>
-                <p className="text-sm font-semibold">{matricula.abono ? `$${matricula.abono.toLocaleString('es-CO')}` : '$0'}</p>
-              </div>
+              <EditableField
+                label="Valor del cupo"
+                value={getValue("valorCupo")}
+                onChange={(v) => handleFieldChange("valorCupo", Number(v) || 0)}
+              />
+              <EditableField
+                label="Abono"
+                value={getValue("abono")}
+                onChange={(v) => handleFieldChange("abono", Number(v) || 0)}
+              />
               <div>
                 <p className="text-xs text-muted-foreground">Saldo</p>
-                <p className={cn("text-sm font-bold", (matricula.valorCupo ?? 0) - (matricula.abono ?? 0) > 0 ? 'text-destructive' : 'text-emerald-600')}>
-                  ${((matricula.valorCupo ?? 0) - (matricula.abono ?? 0)).toLocaleString('es-CO')}
+                <p className={cn("text-sm font-bold", (Number(getValue("valorCupo")) || 0) - (Number(getValue("abono")) || 0) > 0 ? 'text-destructive' : 'text-emerald-600')}>
+                  ${((Number(getValue("valorCupo")) || 0) - (Number(getValue("abono")) || 0)).toLocaleString('es-CO')}
                 </p>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha facturación</p>
-                <p className="text-sm font-medium">{matricula.fechaFacturacion || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">No. CTA-FACT</p>
-                <p className="text-sm font-medium">{matricula.ctaFactNumero || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Titular</p>
-                <p className="text-sm font-medium">{matricula.ctaFactTitular || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha de pago</p>
-                <p className="text-sm font-medium">{matricula.fechaPago || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Forma de pago</p>
-                <p className="text-sm font-medium">{matricula.formaPago ? FORMA_PAGO_LABELS[matricula.formaPago] : '—'}</p>
-              </div>
+              <EditableField
+                label="Fecha facturación"
+                value={getValue("fechaFacturacion")}
+                onChange={(v) => handleFieldChange("fechaFacturacion", v)}
+                type="date"
+              />
+              <EditableField
+                label="No. CTA-FACT"
+                value={getValue("ctaFactNumero")}
+                onChange={(v) => handleFieldChange("ctaFactNumero", v)}
+              />
+              <EditableField
+                label="Titular"
+                value={getValue("ctaFactTitular")}
+                onChange={(v) => handleFieldChange("ctaFactTitular", v)}
+              />
+              <EditableField
+                label="Fecha de pago"
+                value={getValue("fechaPago")}
+                onChange={(v) => handleFieldChange("fechaPago", v)}
+                type="date"
+              />
+              <EditableField
+                label="Forma de pago"
+                value={getValue("formaPago")}
+                displayValue={getValue("formaPago") ? getDisplayLabel(getValue("formaPago"), FORMAS_PAGO) : ""}
+                onChange={(v) => handleFieldChange("formaPago", v)}
+                type="select"
+                options={[...FORMAS_PAGO]}
+              />
               <div>
                 <p className="text-xs text-muted-foreground">Estado</p>
                 <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
@@ -420,26 +495,33 @@ export default function MatriculaDetallePage() {
               Certificado
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha de generación</p>
-                <p className="text-sm font-medium">{matricula.fechaGeneracionCertificado || 'No generado'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha de entrega</p>
-                <p className="text-sm font-medium">{matricula.fechaEntregaCertificado || 'No entregado'}</p>
-              </div>
+              <EditableField
+                label="Fecha de generación"
+                value={getValue("fechaGeneracionCertificado")}
+                onChange={(v) => handleFieldChange("fechaGeneracionCertificado", v)}
+                type="date"
+              />
+              <EditableField
+                label="Fecha de entrega"
+                value={getValue("fechaEntregaCertificado")}
+                onChange={(v) => handleFieldChange("fechaEntregaCertificado", v)}
+                type="date"
+              />
             </div>
           </div>
 
           {/* Observaciones */}
-          {matricula.observaciones && (
-            <div className="border rounded-lg p-4 shadow-sm space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Observaciones
-              </h3>
-              <p className="text-sm whitespace-pre-wrap">{matricula.observaciones}</p>
-            </div>
-          )}
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Observaciones
+            </h3>
+            <EditableField
+              label=""
+              value={getValue("observaciones")}
+              onChange={(v) => handleFieldChange("observaciones", v)}
+              placeholder="Sin observaciones"
+            />
+          </div>
         </div>
 
         {/* Sidebar - Checklist compacto */}
@@ -498,6 +580,18 @@ export default function MatriculaDetallePage() {
           </div>
         </div>
       </div>
+
+      {/* Barra flotante de guardar */}
+      {isDirty && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 bg-background border rounded-lg shadow-lg p-3">
+          <Button variant="outline" size="sm" onClick={handleCancel}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={updateMatricula.isPending}>
+            {updateMatricula.isPending ? "Guardando..." : "Guardar Cambios"}
+          </Button>
+        </div>
+      )}
 
       {/* Dialog de Pago */}
       <Dialog open={pagoDialogOpen} onOpenChange={setPagoDialogOpen}>

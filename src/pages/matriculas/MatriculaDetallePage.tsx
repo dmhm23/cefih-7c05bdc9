@@ -193,7 +193,7 @@ export default function MatriculaDetallePage() {
         {/* Panel principal */}
         <div className="lg:col-span-2 space-y-4">
           {/* Consentimiento de Salud */}
-          <div className="space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Consentimiento de Salud
@@ -222,7 +222,7 @@ export default function MatriculaDetallePage() {
 
           {/* Historial de Formación Previa */}
           {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
-            <div className="border-t pt-3 space-y-2">
+            <div className="border rounded-lg p-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Formación Previa
               </h3>
@@ -251,7 +251,7 @@ export default function MatriculaDetallePage() {
 
           {/* Vinculación Laboral */}
           {matricula.tipoVinculacion && (
-            <div className="border-t pt-3 space-y-2">
+            <div className="border rounded-lg p-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Vinculación Laboral
               </h3>
@@ -297,7 +297,7 @@ export default function MatriculaDetallePage() {
           )}
 
           {/* Documentos */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Documentos Requeridos
             </h3>
@@ -310,7 +310,7 @@ export default function MatriculaDetallePage() {
           </div>
 
           {/* Firma Digital */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Firma Digital
@@ -327,7 +327,7 @@ export default function MatriculaDetallePage() {
           </div>
 
           {/* Autorización de Datos */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Autorización de Datos
             </h3>
@@ -347,7 +347,7 @@ export default function MatriculaDetallePage() {
           </div>
 
           {/* Cobros / Cartera */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Cobros / Cartera
             </h3>
@@ -415,7 +415,7 @@ export default function MatriculaDetallePage() {
           </div>
 
           {/* Certificado */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Certificado
             </h3>
@@ -433,7 +433,7 @@ export default function MatriculaDetallePage() {
 
           {/* Observaciones */}
           {matricula.observaciones && (
-            <div className="border-t pt-3 space-y-2">
+            <div className="border rounded-lg p-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Observaciones
               </h3>
@@ -444,7 +444,7 @@ export default function MatriculaDetallePage() {
 
         {/* Sidebar - Checklist compacto */}
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Progreso
             </h3>
@@ -478,7 +478,7 @@ export default function MatriculaDetallePage() {
           </div>
 
           {/* Acciones */}
-          <div className="border-t pt-3 space-y-2">
+          <div className="border rounded-lg p-4 space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Acciones
             </h3>

@@ -188,7 +188,7 @@ export default function MatriculaDetallePage() {
               </CardContent>
             </Card>
 
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/cursos/${matricula.cursoId}`)}>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => matricula.cursoId && navigate(`/cursos/${matricula.cursoId}`)}>
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -196,13 +196,93 @@ export default function MatriculaDetallePage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Curso</p>
-                    <p className="font-semibold truncate max-w-[200px]">{curso?.nombre}</p>
+                    <p className="font-semibold truncate max-w-[200px]">{curso?.nombre || "Sin curso asignado"}</p>
                     <p className="text-sm text-muted-foreground">{TIPO_FORMACION_LABELS[matricula.tipoFormacion]}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Historial de Formación Previa */}
+          {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Formación Previa</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  {matricula.nivelPrevio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nivel Previo</p>
+                      <p className="font-medium">{matricula.nivelPrevio === 'trabajador_autorizado' ? 'Trabajador Autorizado' : 'Avanzado Trabajo en Alturas'}</p>
+                    </div>
+                  )}
+                  {matricula.centroFormacionPrevio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Centro de Formación</p>
+                      <p className="font-medium">{matricula.centroFormacionPrevio}</p>
+                    </div>
+                  )}
+                  {matricula.fechaCertificacionPrevia && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Fecha Certificación</p>
+                      <p className="font-medium">{matricula.fechaCertificacionPrevia}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Vinculación Laboral */}
+          {matricula.tipoVinculacion && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Vinculación Laboral</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Tipo</p>
+                    <p className="font-medium">{matricula.tipoVinculacion === 'empresa' ? 'Empresa' : 'Independiente'}</p>
+                  </div>
+                  {matricula.areaTrabajo && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Área de Trabajo</p>
+                      <p className="font-medium">{matricula.areaTrabajo === 'administrativo' ? 'Administrativo' : 'Operativa'}</p>
+                    </div>
+                  )}
+                  {matricula.tipoVinculacion === 'empresa' && matricula.empresaNombre && (
+                    <>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Empresa</p>
+                        <p className="font-medium">{matricula.empresaNombre}</p>
+                      </div>
+                      {matricula.empresaNit && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">NIT</p>
+                          <p className="font-medium">{matricula.empresaNit}</p>
+                        </div>
+                      )}
+                      {matricula.empresaCargo && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Cargo</p>
+                          <p className="font-medium">{matricula.empresaCargo}</p>
+                        </div>
+                      )}
+                      {matricula.empresaRepresentanteLegal && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Representante Legal</p>
+                          <p className="font-medium">{matricula.empresaRepresentanteLegal}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Documentos */}
           <Card>

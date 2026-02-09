@@ -11,6 +11,16 @@ export type TipoFormacion =
   | 'avanzado' 
   | 'coordinador';
 
+export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
+
+export type TipoVinculacion = 'empresa' | 'independiente';
+
+export type NivelFormacionEmpresa = 
+  | 'jefe_area' 
+  | 'trabajador_autorizado' 
+  | 'reentrenamiento' 
+  | 'coordinador_ta';
+
 export type TipoDocumento = 
   | 'cedula' 
   | 'examen_medico' 
@@ -37,6 +47,29 @@ export interface Matricula {
   cursoId: string;
   tipoFormacion: TipoFormacion;
   estado: EstadoMatricula;
+  
+  // Fechas autocompletadas desde curso
+  fechaInicio?: string;
+  fechaFin?: string;
+  
+  // Historial de formación previa
+  nivelPrevio?: NivelPrevio;
+  centroFormacionPrevio?: string;
+  fechaCertificacionPrevia?: string;
+  
+  // Vinculación laboral
+  tipoVinculacion?: TipoVinculacion;
+  empresaNombre?: string;
+  empresaNit?: string;
+  empresaRepresentanteLegal?: string;
+  empresaCargo?: string;
+  empresaNivelFormacion?: NivelFormacionEmpresa;
+  empresaContactoNombre?: string;
+  empresaContactoTelefono?: string;
+  areaTrabajo?: string;
+  sectorEconomico?: string;
+  
+  // Documentos y validaciones
   documentos: DocumentoRequerido[];
   firmaCapturada: boolean;
   firmaBase64?: string;
@@ -65,4 +98,21 @@ export const TIPO_FORMACION_LABELS: Record<TipoFormacion, string> = {
   reentrenamiento: 'Reentrenamiento',
   avanzado: 'Nivel Avanzado',
   coordinador: 'Coordinador de Alturas',
+};
+
+export const NIVEL_PREVIO_LABELS: Record<NivelPrevio, string> = {
+  trabajador_autorizado: 'Trabajador Autorizado',
+  avanzado: 'Avanzado Trabajo en Alturas',
+};
+
+export const TIPO_VINCULACION_LABELS: Record<TipoVinculacion, string> = {
+  empresa: 'Empresa',
+  independiente: 'Independiente',
+};
+
+export const NIVEL_FORMACION_EMPRESA_LABELS: Record<NivelFormacionEmpresa, string> = {
+  jefe_area: 'Jefe de Área',
+  trabajador_autorizado: 'Trabajador Autorizado',
+  reentrenamiento: 'Reentrenamiento',
+  coordinador_ta: 'Coordinador T.A.',
 };

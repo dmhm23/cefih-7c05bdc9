@@ -29,27 +29,39 @@ export const matriculaService = {
     return mockMatriculas.filter(m => m.estado === estado);
   },
 
+  async getHistorialByPersona(personaId: string): Promise<Matricula | null> {
+    await delay(300);
+    // Return the most recent completed/certified matricula for pre-filling
+    const previas = mockMatriculas
+      .filter(m => m.personaId === personaId && ['completa', 'certificada', 'cerrada'].includes(m.estado))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return previas[0] || null;
+  },
+
   async create(data: Omit<MatriculaFormData, 'documentos' | 'estado'>): Promise<Matricula> {
     await delay(1000);
 
-    // Verificar que el curso existe y está abierto
-    const curso = mockCursos.find(c => c.id === data.cursoId);
-    if (!curso) {
-      throw new ApiError('Curso no encontrado', 404, 'CURSO_NOT_FOUND');
-    }
-    if (curso.estado === 'cerrado') {
-      throw new ApiError('No se puede matricular en un curso cerrado', 400, 'CURSO_CERRADO');
-    }
-    if (curso.matriculasIds.length >= curso.capacidadMaxima) {
-      throw new ApiError('El curso ha alcanzado su capacidad máxima', 400, 'CAPACIDAD_MAXIMA');
-    }
+    // Curso es opcional ahora
+    let curso = null;
+    if (data.cursoId) {
+      curso = mockCursos.find(c => c.id === data.cursoId);
+      if (!curso) {
+        throw new ApiError('Curso no encontrado', 404, 'CURSO_NOT_FOUND');
+      }
+      if (curso.estado === 'cerrado') {
+        throw new ApiError('No se puede matricular en un curso cerrado', 400, 'CURSO_CERRADO');
+      }
+      if (curso.matriculasIds.length >= curso.capacidadMaxima) {
+        throw new ApiError('El curso ha alcanzado su capacidad máxima', 400, 'CAPACIDAD_MAXIMA');
+      }
 
-    // Verificar que no exista matrícula duplicada
-    const exists = mockMatriculas.find(
-      m => m.personaId === data.personaId && m.cursoId === data.cursoId
-    );
-    if (exists) {
-      throw new ApiError('Esta persona ya está matriculada en este curso', 400, 'MATRICULA_DUPLICADA');
+      // Verificar que no exista matrícula duplicada
+      const exists = mockMatriculas.find(
+        m => m.personaId === data.personaId && m.cursoId === data.cursoId
+      );
+      if (exists) {
+        throw new ApiError('Esta persona ya está matriculada en este curso', 400, 'MATRICULA_DUPLICADA');
+      }
     }
 
     const now = new Date().toISOString();
@@ -65,6 +77,9 @@ export const matriculaService = {
       ...data,
       id: uuid(),
       estado: 'creada',
+      // Autocompletar fechas desde curso
+      fechaInicio: curso?.fechaInicio || data.fechaInicio,
+      fechaFin: curso?.fechaFin || data.fechaFin,
       documentos: documentosRequeridos,
       createdAt: now,
       updatedAt: now,
@@ -73,7 +88,9 @@ export const matriculaService = {
     mockMatriculas.push(newMatricula);
     
     // Actualizar curso con la nueva matrícula
-    curso.matriculasIds.push(newMatricula.id);
+    if (curso) {
+      curso.matriculasIds.push(newMatricula.id);
+    }
 
     // Log de auditoría
     mockAuditLogs.push({

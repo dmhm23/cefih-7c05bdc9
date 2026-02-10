@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
-import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useCapturarFirma, useUploadDocumento } from "@/hooks/useMatriculas";
+import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
 import { usePersona } from "@/hooks/usePersonas";
 import { useCurso } from "@/hooks/useCursos";
 import { TIPO_FORMACION_LABELS, FORMA_PAGO_LABELS } from "@/types";
@@ -25,8 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FirmaCaptura } from "@/components/matriculas/FirmaCaptura";
-import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import {
   TIPOS_VINCULACION,
@@ -34,6 +32,9 @@ import {
   SECTORES_ECONOMICOS,
   NIVELES_PREVIOS,
   FORMAS_PAGO,
+  NIVELES_FORMACION_EMPRESA,
+  EPS_OPTIONS,
+  ARL_OPTIONS,
 } from "@/data/formOptions";
 
 interface ChecklistItem {
@@ -60,7 +61,6 @@ export default function MatriculaDetallePage() {
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
-  const capturarFirma = useCapturarFirma();
   const uploadDocumento = useUploadDocumento();
 
   useEffect(() => {
@@ -121,9 +121,7 @@ export default function MatriculaDetallePage() {
   const docsCompletos = matricula.documentos.filter((d) => d.estado !== "pendiente").length;
   const totalDocs = matricula.documentos.length;
   const checklistItems: ChecklistItem[] = [
-    { id: "consentimiento", label: "Consentimiento de salud", completed: matricula.consentimientoSalud },
     { id: "docs", label: `Documentos (${docsCompletos}/${totalDocs})`, completed: docsCompletos === totalDocs },
-    { id: "firma", label: "Firma capturada", completed: matricula.firmaCapturada },
     { id: "pago", label: "Pago registrado", completed: matricula.pagado, action: () => !matricula.pagado && setPagoDialogOpen(true) },
     { id: "evaluacion", label: "Evaluación completada", completed: matricula.evaluacionCompletada },
     { id: "encuesta", label: "Encuesta de satisfacción", completed: matricula.encuestaCompletada },
@@ -153,15 +151,6 @@ export default function MatriculaDetallePage() {
       toast({ title: `Estado cambiado a ${nuevoEstado}` });
     } catch {
       toast({ title: "Error al cambiar estado", variant: "destructive" });
-    }
-  };
-
-  const handleCapturarFirma = async (firmaBase64: string) => {
-    try {
-      await capturarFirma.mutateAsync({ id: matricula.id, firmaBase64 });
-      toast({ title: "Firma capturada correctamente" });
-    } catch {
-      toast({ title: "Error al capturar firma", variant: "destructive" });
     }
   };
 
@@ -239,33 +228,6 @@ export default function MatriculaDetallePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Panel principal */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Consentimiento de Salud */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Consentimiento de Salud
-              </h3>
-              <Badge variant="outline" className={cn("text-xs ml-auto", matricula.consentimientoSalud ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600")}>
-                {matricula.consentimientoSalud ? "Completado" : "Pendiente"}
-              </Badge>
-            </div>
-            <ConsentimientoSalud
-              data={{
-                consentimientoSalud: matricula.consentimientoSalud,
-                restriccionMedica: matricula.restriccionMedica,
-                restriccionMedicaDetalle: matricula.restriccionMedicaDetalle,
-                alergias: matricula.alergias,
-                alergiasDetalle: matricula.alergiasDetalle,
-                consumoMedicamentos: matricula.consumoMedicamentos,
-                consumoMedicamentosDetalle: matricula.consumoMedicamentosDetalle,
-                embarazo: matricula.embarazo,
-                nivelLectoescritura: matricula.nivelLectoescritura,
-              }}
-              onChange={() => {}}
-              showEmbarazo={persona?.genero === 'F'}
-              readOnly
-            />
-          </div>
 
           {/* Historial de Formación Previa */}
           {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
@@ -319,6 +281,14 @@ export default function MatriculaDetallePage() {
                 onChange={(v) => handleFieldChange("empresaCargo", v)}
               />
               <EditableField
+                label="Nivel de Formación"
+                value={getValue("empresaNivelFormacion")}
+                displayValue={getDisplayLabel(getValue("empresaNivelFormacion"), NIVELES_FORMACION_EMPRESA)}
+                onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+                type="select"
+                options={[...NIVELES_FORMACION_EMPRESA]}
+              />
+              <EditableField
                 label="Área de Trabajo"
                 value={getValue("areaTrabajo")}
                 displayValue={getDisplayLabel(getValue("areaTrabajo"), AREAS_TRABAJO)}
@@ -346,6 +316,20 @@ export default function MatriculaDetallePage() {
                   />
                 </>
               )}
+              {getValue("tipoVinculacion") === "empresa" && (
+                <>
+                  <EditableField
+                    label="Contacto Empresa"
+                    value={getValue("empresaContactoNombre")}
+                    onChange={(v) => handleFieldChange("empresaContactoNombre", v)}
+                  />
+                  <EditableField
+                    label="Tel. Contacto"
+                    value={getValue("empresaContactoTelefono")}
+                    onChange={(v) => handleFieldChange("empresaContactoTelefono", v)}
+                  />
+                </>
+              )}
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico")}
@@ -353,6 +337,22 @@ export default function MatriculaDetallePage() {
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
+              />
+              <EditableField
+                label="EPS"
+                value={getValue("eps")}
+                displayValue={getDisplayLabel(getValue("eps"), EPS_OPTIONS)}
+                onChange={(v) => handleFieldChange("eps", v)}
+                type="select"
+                options={[...EPS_OPTIONS]}
+              />
+              <EditableField
+                label="ARL"
+                value={getValue("arl")}
+                displayValue={getDisplayLabel(getValue("arl"), ARL_OPTIONS)}
+                onChange={(v) => handleFieldChange("arl", v)}
+                type="select"
+                options={[...ARL_OPTIONS]}
               />
             </div>
           </div>
@@ -368,43 +368,6 @@ export default function MatriculaDetallePage() {
               onFechaChange={handleDocFechaChange}
               isUploading={uploadDocumento.isPending}
             />
-          </div>
-
-          {/* Firma Digital */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Firma Digital
-              </h3>
-              {matricula.firmaCapturada && (
-                <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 ml-auto">Capturada</Badge>
-              )}
-            </div>
-            <FirmaCaptura
-              firmaExistente={matricula.firmaCapturada ? matricula.firmaBase64 : undefined}
-              onGuardar={handleCapturarFirma}
-              isPending={capturarFirma.isPending}
-            />
-          </div>
-
-          {/* Autorización de Datos */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Autorización de Datos
-            </h3>
-            <div className="flex items-center gap-2 text-sm">
-              {matricula.autorizacionDatos ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span className="font-medium">Autorización concedida</span>
-                </>
-              ) : (
-                <>
-                  <Circle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Pendiente de autorización</span>
-                </>
-              )}
-            </div>
           </div>
 
           {/* Cobros / Cartera */}

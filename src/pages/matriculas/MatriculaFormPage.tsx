@@ -869,35 +869,39 @@ export default function MatriculaFormPage() {
                       )}
                     />
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="empresaContactoNombre"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre de Contacto</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Nombre completo" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="empresaContactoTelefono"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Teléfono de Contacto</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="3001234567" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {tipoVinculacion === "empresa" && (
+                    <>
+                      <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="empresaContactoNombre"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nombre de Contacto</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Nombre completo" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="empresaContactoTelefono"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Teléfono de Contacto</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="3001234567" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </CardContent>

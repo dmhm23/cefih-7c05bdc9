@@ -327,7 +327,7 @@ export default function MatriculaDetallePage() {
                 options={[...AREAS_TRABAJO]}
                 badge
               />
-              {(getValue("tipoVinculacion") === "empresa") && (
+              {(getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "independiente") && (
                 <>
                   <EditableField
                     label="Empresa"

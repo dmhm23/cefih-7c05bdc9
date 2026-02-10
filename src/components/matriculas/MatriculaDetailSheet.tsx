@@ -549,7 +549,7 @@ export function MatriculaDetailSheet({
                   icon={Building2}
                 />
               </div>
-              {getValue("tipoVinculacion") === 'empresa' && (
+              {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'independiente') && (
                 <>
                   <EditableField
                     label="Empresa"
@@ -562,6 +562,10 @@ export function MatriculaDetailSheet({
                     value={getValue("empresaNit") || ""}
                     onChange={(v) => handleFieldChange("empresaNit", v)}
                   />
+                </>
+              )}
+              {getValue("tipoVinculacion") === 'empresa' && (
+                <>
                   <EditableField
                     label="Contacto Empresa"
                     value={getValue("empresaContactoNombre") || ""}

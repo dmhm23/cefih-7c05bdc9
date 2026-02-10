@@ -1,38 +1,41 @@
 
 
-## Auto-completar datos de empresa para independientes
+## Ocultar campos de Contacto Empresa para independientes
 
-### Problema actual
-La sección "Datos de la Empresa" solo se muestra cuando el tipo de vinculacion es "empresa". Cuando se selecciona "independiente", esos campos no aparecen.
+### Problema
+Cuando el tipo de vinculacion es "independiente", los campos "Contacto Empresa" y "Tel. Contacto" no aplican porque el estudiante trabaja por cuenta propia. Actualmente se muestran en algunas vistas, generando confusion.
 
 ### Cambios a realizar
 
-**Archivo: `src/pages/matriculas/MatriculaFormPage.tsx`**
+**1. Formulario de creacion (`src/pages/matriculas/MatriculaFormPage.tsx`)**
+- Envolver el bloque "Persona de Contacto" (lineas 872-900) con una condicion: solo mostrarlo cuando `tipoVinculacion === "empresa"`.
+- Actualmente esta dentro del bloque que se muestra para empresa e independiente; se agrega un `if` interno.
 
-1. **Mostrar "Datos de la Empresa" para ambos tipos de vinculacion** -- cambiar la condicion `tipoVinculacion === "empresa"` a `tipoVinculacion === "empresa" || tipoVinculacion === "independiente"` para que la seccion sea visible en ambos casos.
+**2. Panel lateral (`src/components/matriculas/MatriculaDetailSheet.tsx`)**
+- Los campos "Contacto Empresa" y "Tel. Contacto" (lineas 565-575) ya estan dentro de un bloque que solo se muestra para `empresa`. Esto ya funciona correctamente.
+- Se debe expandir ese bloque para mostrar Empresa, NIT y Rep. Legal tambien para independientes, pero mantener Contacto y Telefono solo para empresa. Esto se logra separando los campos en dos grupos:
+  - Grupo 1 (empresa + independiente): Empresa, NIT, Representante Legal
+  - Grupo 2 (solo empresa): Contacto Empresa, Tel. Contacto
 
-2. **Auto-completar campos cuando se selecciona "independiente"** -- agregar un `useEffect` que observe `tipoVinculacion` y `selectedPersona`. Cuando `tipoVinculacion` cambie a `"independiente"` y haya una persona seleccionada:
-   - `empresaNombre` = `selectedPersona.nombres + " " + selectedPersona.apellidos`
-   - `empresaNit` = `selectedPersona.numeroDocumento`
-   - `empresaRepresentanteLegal` = `selectedPersona.nombres + " " + selectedPersona.apellidos`
+**3. Pagina detalle (`src/pages/matriculas/MatriculaDetallePage.tsx`)**
+- Si se agregan campos de contacto empresa en el futuro (segun el plan pendiente), aplicar la misma condicion: solo visibles cuando `tipoVinculacion === "empresa"`.
 
-3. **Limpiar campos si cambia a "empresa"** -- en el mismo `useEffect`, si se cambia a "empresa", limpiar esos tres campos para que el usuario los llene manualmente.
-
-4. **Tambien auto-completar si se selecciona persona despues** -- ajustar el `useEffect` para que si ya esta seleccionado "independiente" y luego se elige una persona, tambien se auto-completen los campos.
-
-### Detalles tecnicos
+### Detalle tecnico
 
 ```text
-useEffect:
-  Si tipoVinculacion === "independiente" && selectedPersona:
-    -> setValue("empresaNombre", nombres + apellidos)
-    -> setValue("empresaNit", numeroDocumento)  
-    -> setValue("empresaRepresentanteLegal", nombres + apellidos)
-  Si tipoVinculacion === "empresa":
-    -> setValue("empresaNombre", "")
-    -> setValue("empresaNit", "")
-    -> setValue("empresaRepresentanteLegal", "")
+MatriculaFormPage.tsx:
+  Linea ~872: Envolver "Persona de Contacto" con:
+    {tipoVinculacion === "empresa" && (
+      <p>Persona de Contacto</p>
+      <div>...campos contacto...</div>
+    )}
+
+MatriculaDetailSheet.tsx:
+  Separar el bloque actual en:
+    {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente") && (
+      -> Empresa, NIT, Rep. Legal
+    )}
+    {tipoVinculacion === "empresa" && (
+      -> Contacto Empresa, Tel. Contacto
+    )}
 ```
-
-Los campos auto-completados seguiran siendo editables por si el usuario necesita corregir algun dato.
-

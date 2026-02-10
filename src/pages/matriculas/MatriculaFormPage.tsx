@@ -933,40 +933,6 @@ export default function MatriculaFormPage() {
             </CardContent>
           </Card>
 
-          {/* Sección 6: Autorización de Datos */}
-          <Card>
-            <CardHeader className="pb-2 pt-4 px-4">
-              <CardTitle className="text-base flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4" />
-                Autorización de Tratamiento de Datos
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <FormField
-                control={form.control}
-                name="autorizacionDatos"
-                render={({ field }) => (
-                  <FormItem className="flex items-start gap-3">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="mt-0.5"
-                      />
-                    </FormControl>
-                    <div className="space-y-1">
-                      <FormLabel className="text-sm leading-tight">
-                        Autorizo el tratamiento de mis datos personales de acuerdo con la política de privacidad y la Ley 1581 de 2012 de protección de datos personales.
-                      </FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        Los datos serán utilizados exclusivamente para fines de formación, certificación y cumplimiento normativo.
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
 
           <div className="flex justify-end gap-3 pb-4">
             <Button type="button" variant="outline" onClick={() => navigate("/matriculas")}>

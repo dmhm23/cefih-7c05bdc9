@@ -129,6 +129,20 @@ export default function MatriculaFormPage() {
   const selectedCurso = cursos.find((c) => c.id === cursoId);
   const cursosAbiertos = cursos.filter((c) => c.estado !== "cerrado");
 
+  // Auto-completar datos de empresa para independientes
+  useEffect(() => {
+    if (tipoVinculacion === "independiente" && selectedPersona) {
+      const nombreCompleto = `${selectedPersona.nombres} ${selectedPersona.apellidos}`;
+      form.setValue("empresaNombre", nombreCompleto);
+      form.setValue("empresaNit", selectedPersona.numeroDocumento);
+      form.setValue("empresaRepresentanteLegal", nombreCompleto);
+    } else if (tipoVinculacion === "empresa") {
+      form.setValue("empresaNombre", "");
+      form.setValue("empresaNit", "");
+      form.setValue("empresaRepresentanteLegal", "");
+    }
+  }, [tipoVinculacion, selectedPersona, form]);
+
   // Autocompletar historial cuando se encuentra
   useEffect(() => {
     if (historial) {
@@ -596,7 +610,7 @@ export default function MatriculaFormPage() {
                 />
               </div>
 
-              {tipoVinculacion === "empresa" && (
+              {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente") && (
                 <div className="space-y-3 pt-2 border-t">
                   <p className="text-sm font-medium text-muted-foreground pt-1">Datos de la Empresa</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

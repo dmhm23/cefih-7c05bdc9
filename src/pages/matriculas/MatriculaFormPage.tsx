@@ -46,6 +46,8 @@ import {
   NIVELES_EDUCATIVOS,
   GRUPOS_SANGUINEOS,
   PAISES,
+  EPS_OPTIONS,
+  ARL_OPTIONS,
 } from "@/data/formOptions";
 
 const matriculaSchema = z.object({
@@ -67,6 +69,8 @@ const matriculaSchema = z.object({
   empresaContactoTelefono: z.string().optional(),
   areaTrabajo: z.string().optional(),
   sectorEconomico: z.string().optional(),
+  eps: z.string().optional(),
+  arl: z.string().optional(),
   // Consentimiento de salud
   consentimientoSalud: z.boolean().default(false),
   restriccionMedica: z.boolean().default(false),
@@ -118,6 +122,8 @@ export default function MatriculaFormPage() {
       empresaContactoTelefono: "",
       areaTrabajo: "",
       sectorEconomico: "",
+      eps: "",
+      arl: "",
       consentimientoSalud: false,
       restriccionMedica: false,
       restriccionMedicaDetalle: "",
@@ -258,6 +264,8 @@ export default function MatriculaFormPage() {
         empresaContactoTelefono: data.empresaContactoTelefono || undefined,
         areaTrabajo: data.areaTrabajo || undefined,
         sectorEconomico: data.sectorEconomico || undefined,
+        eps: data.eps || undefined,
+        arl: data.arl || undefined,
         consentimientoSalud: data.consentimientoSalud,
         restriccionMedica: data.restriccionMedica,
         restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
@@ -817,6 +825,49 @@ export default function MatriculaFormPage() {
                           placeholder="Seleccionar sector..."
                           searchPlaceholder="Buscar sector..."
                           emptyMessage="Sector no encontrado"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="eps"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>EPS</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={EPS_OPTIONS}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                          placeholder="Seleccionar EPS..."
+                          searchPlaceholder="Buscar EPS..."
+                          emptyMessage="EPS no encontrada"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="arl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ARL</FormLabel>
+                      <FormControl>
+                        <Combobox
+                          options={ARL_OPTIONS}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                          placeholder="Seleccionar ARL..."
+                          searchPlaceholder="Buscar ARL..."
+                          emptyMessage="ARL no encontrada"
                         />
                       </FormControl>
                       <FormMessage />

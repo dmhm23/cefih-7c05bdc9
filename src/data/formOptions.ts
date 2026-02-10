@@ -165,3 +165,48 @@ export type GrupoSanguineoOption = typeof GRUPOS_SANGUINEOS[number];
 export type NivelPrevioOption = typeof NIVELES_PREVIOS[number];
 export type TipoVinculacionOption = typeof TIPOS_VINCULACION[number];
 export type NivelFormacionEmpresaOption = typeof NIVELES_FORMACION_EMPRESA[number];
+
+export const EPS_OPTIONS = [
+  { value: 'coosalud', label: 'Coosalud EPS-S' },
+  { value: 'nueva_eps', label: 'Nueva EPS' },
+  { value: 'mutual_ser', label: 'Mutual Ser' },
+  { value: 'salud_mia', label: 'Salud Mía' },
+  { value: 'aliansalud', label: 'Aliansalud EPS' },
+  { value: 'salud_total', label: 'Salud Total EPS S.A.' },
+  { value: 'sanitas', label: 'EPS Sanitas' },
+  { value: 'sura_eps', label: 'EPS Sura' },
+  { value: 'famisanar', label: 'Famisanar' },
+  { value: 'sos', label: 'Servicio Occidental de Salud EPS SOS' },
+  { value: 'comfenalco_valle', label: 'Comfenalco Valle' },
+  { value: 'compensar', label: 'Compensar EPS' },
+  { value: 'epm', label: 'EPM - Empresas Públicas de Medellín' },
+  { value: 'fondo_ferrocarriles', label: 'Fondo de Pasivo Social de Ferrocarriles Nacionales de Colombia' },
+  { value: 'cajacopi', label: 'Cajacopi Atlántico' },
+  { value: 'familiar_colombia', label: 'EPS Familiar de Colombia' },
+  { value: 'capital_salud', label: 'Capital Salud' },
+  { value: 'asmet_salud', label: 'Asmet Salud' },
+  { value: 'emssanar', label: 'Emssanar' },
+  { value: 'savia_salud', label: 'Savia Salud' },
+  { value: 'anas_wayuu', label: 'Anas Wayuu EPS' },
+  { value: 'comfaoriente', label: 'Comfaoriente' },
+  { value: 'comfachoco', label: 'Comfachoco' },
+  { value: 'salud_vida', label: 'EPS Salud Vida' },
+  { value: 'otra_eps', label: 'Otra' },
+] as const;
+
+export const ARL_OPTIONS = [
+  { value: 'sura_arl', label: 'ARL Sura' },
+  { value: 'positiva', label: 'Positiva Compañía de Seguros S.A.' },
+  { value: 'axa_colpatria', label: 'Axa Colpatria Seguros S.A.' },
+  { value: 'colmena', label: 'Colmena Seguros S.A.' },
+  { value: 'aurora', label: 'Compañía de Seguros de Vida Aurora S.A.' },
+  { value: 'bolivar', label: 'Seguros Bolívar S.A.' },
+  { value: 'equidad', label: 'La Equidad Seguros Generales Organismo Cooperativo' },
+  { value: 'alfa', label: 'Seguros Alfa' },
+  { value: 'suramericana', label: 'Seguros Generales Suramericana S.A.' },
+  { value: 'liberty', label: 'Liberty Seguros de Vida' },
+  { value: 'otra_arl', label: 'Otra' },
+] as const;
+
+export type EpsOption = typeof EPS_OPTIONS[number];
+export type ArlOption = typeof ARL_OPTIONS[number];

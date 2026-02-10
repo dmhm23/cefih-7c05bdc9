@@ -70,7 +70,9 @@ const matriculaSchema = z.object({
   areaTrabajo: z.string().optional(),
   sectorEconomico: z.string().optional(),
   eps: z.string().optional(),
+  epsOtra: z.string().optional(),
   arl: z.string().optional(),
+  arlOtra: z.string().optional(),
   // Consentimiento de salud
   consentimientoSalud: z.boolean().default(false),
   restriccionMedica: z.boolean().default(false),
@@ -123,7 +125,9 @@ export default function MatriculaFormPage() {
       areaTrabajo: "",
       sectorEconomico: "",
       eps: "",
+      epsOtra: "",
       arl: "",
+      arlOtra: "",
       consentimientoSalud: false,
       restriccionMedica: false,
       restriccionMedicaDetalle: "",
@@ -265,7 +269,9 @@ export default function MatriculaFormPage() {
         areaTrabajo: data.areaTrabajo || undefined,
         sectorEconomico: data.sectorEconomico || undefined,
         eps: data.eps || undefined,
+        epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
         arl: data.arl || undefined,
+        arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
         consentimientoSalud: data.consentimientoSalud,
         restriccionMedica: data.restriccionMedica,
         restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
@@ -854,6 +860,21 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
+                {form.watch("eps") === "otra_eps" && (
+                  <FormField
+                    control={form.control}
+                    name="epsOtra"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre de la EPS</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Escriba el nombre de la EPS..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
                 <FormField
                   control={form.control}
                   name="arl"
@@ -874,6 +895,21 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
+                {form.watch("arl") === "otra_arl" && (
+                  <FormField
+                    control={form.control}
+                    name="arlOtra"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre de la ARL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Escriba el nombre de la ARL..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente") && (

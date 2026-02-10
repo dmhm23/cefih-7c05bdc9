@@ -83,7 +83,9 @@ export interface Matricula {
   areaTrabajo?: string;
   sectorEconomico?: string;
   eps?: string;
+  epsOtra?: string;
   arl?: string;
+  arlOtra?: string;
   
   // Consentimiento de salud
   consentimientoSalud: boolean;

@@ -346,6 +346,14 @@ export default function MatriculaDetallePage() {
                 type="select"
                 options={[...EPS_OPTIONS]}
               />
+              {getValue("eps") === "otra_eps" && (
+                <EditableField
+                  label="Nombre EPS"
+                  value={getValue("epsOtra")}
+                  onChange={(v) => handleFieldChange("epsOtra", v)}
+                  placeholder="Escriba el nombre de la EPS..."
+                />
+              )}
               <EditableField
                 label="ARL"
                 value={getValue("arl")}
@@ -354,6 +362,14 @@ export default function MatriculaDetallePage() {
                 type="select"
                 options={[...ARL_OPTIONS]}
               />
+              {getValue("arl") === "otra_arl" && (
+                <EditableField
+                  label="Nombre ARL"
+                  value={getValue("arlOtra")}
+                  onChange={(v) => handleFieldChange("arlOtra", v)}
+                  placeholder="Escriba el nombre de la ARL..."
+                />
+              )}
             </div>
           </div>
 

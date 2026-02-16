@@ -1,32 +1,21 @@
-## Nombre de archivo PDF y margenes optimizados
+## Correcciones en Vista Previa del Documento
 
-### Cambios
+### 1. Reducir margen gris del preview a `p-2`
 
-**1. Nombre del archivo descargado**
+El margen gris visible en la vista previa proviene del `div` contenedor en la linea 161: `className="p-6 bg-muted/30"`. El `p-6` (24px) genera ese espacio gris alrededor del documento.
 
-Estructura: `{nombreFormato}-{tipoDocumento}-{numeroDocumento}-{nombres}-{apellidos}.pdf`
+**Solucion:** Cambiar `p-6` por `p-2` en ese contenedor (linea 161). Esto no afecta la descarga PDF, que usa sus propios estilos en `PRINT_STYLES`.
 
-- Se crea una funcion utilitaria `buildPdfFilename` que:
-  - Recibe el nombre del formato, persona (tipo doc, numero doc, nombres, apellidos)
-  - Convierte todo a minusculas
-  - Elimina tildes y caracteres especiales con `normalize("NFD").replace(/[\u0300-\u036f]/g, "")`
-  - Reemplaza espacios por guiones
-  - Elimina dobles guiones si algun campo esta vacio
-  - Retorna el string final con `.pdf`
-- Se aplica en `InfoAprendizPreviewDialog.tsx`:
-  - El `<title>` del print window se establece con el nombre generado (los navegadores usan el title como nombre por defecto al guardar PDF)
-- Se aplica tambien en `FormatosList.tsx` → `onDownload`: el callback del padre ya invoca `handlePrint`, por lo que el nombre se genera en el mismo lugar.
+### 2. Eliminar tooltip del boton "Descargar PDF"
 
-**2. Margenes del documento a 1cm**
+El tooltip "Descargar como PDF" se muestra automaticamente al abrir el modal porque Radix Tooltip puede activarse con el foco inicial del dialog. Ademas, el boton ya tiene texto visible "Descargar PDF", haciendo el tooltip redundante.
 
-- En `PRINT_STYLES`, cambiar el padding del body de `20mm 15mm` a `10mm` (1cm uniforme en todos los lados)
-- En `@media print`, cambiar de `10mm` a `5mm`
-- En `.doc-root`, reducir el padding interno ya que los margenes del body cubren el espaciado
+**Solucion:** Eliminar el wrapper `TooltipProvider > Tooltip > TooltipTrigger > TooltipContent` (lineas 146-156) y dejar solo el `Button` directamente.
 
-### Archivos modificados
+### Archivo modificado
 
 `**src/components/matriculas/formatos/InfoAprendizPreviewDialog.tsx**`
 
-- Agregar funcion `buildPdfFilename(formatName, persona)`
-- Usar el nombre generado en `printWindow.document.write` como `<title>`
-- Ajustar margenes en `PRINT_STYLES`: body padding a `10mm`, `@media print` body padding a `10mm`
+- Linea 161: cambiar `p-6` a `p-[5mm]`
+- Lineas 146-156: remover Tooltip wrapper, dejar solo el Button
+- Eliminar import de Tooltip components (linea 10) si ya no se usan en el archivo

@@ -14,6 +14,26 @@ import { Persona } from "@/types/persona";
 import { Matricula } from "@/types/matricula";
 import { Curso } from "@/types/curso";
 
+function buildPdfFilename(formatName: string, persona: Persona | null): string {
+  const parts = [
+    formatName,
+    persona?.tipoDocumento || "",
+    persona?.numeroDocumento || "",
+    persona?.nombres || "",
+    persona?.apellidos || "",
+  ];
+  return (
+    parts
+      .join("-")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-{2,}/g, "-")
+      .replace(/^-|-$/g, "") + ".pdf"
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,9 +44,9 @@ interface Props {
 
 const PRINT_STYLES = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 20mm 15mm; font-size: 12px; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 10mm; font-size: 12px; }
   
-  .doc-root { max-width: 210mm; margin: 0 auto; position: relative; padding: 32px; background: white; }
+  .doc-root { max-width: 210mm; margin: 0 auto; position: relative; padding: 16px; background: white; }
   .doc-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 12px; }
   .borrador-subtitle { font-size: 10px; color: #d97706; margin-top: 4px; }
 
@@ -73,7 +93,7 @@ const PRINT_STYLES = `
   .auto-eval-table button[role="radio"] span { display: none; }
 
   @media print { 
-    body { padding: 10mm; } 
+    body { padding: 5mm; } 
     .watermark span { color: rgba(0,0,0,0.03); } 
   }
 `;
@@ -87,6 +107,8 @@ export default function InfoAprendizPreviewDialog({
 }: Props) {
   const documentRef = useRef<HTMLDivElement>(null);
 
+  const pdfFilename = buildPdfFilename("informacion-aprendiz", persona);
+
   const handlePrint = useCallback(() => {
     if (!documentRef.current) return;
 
@@ -99,7 +121,7 @@ export default function InfoAprendizPreviewDialog({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Información del Aprendiz</title>
+          <title>${pdfFilename}</title>
           <style>${PRINT_STYLES}</style>
         </head>
         <body>
@@ -113,7 +135,7 @@ export default function InfoAprendizPreviewDialog({
       printWindow.print();
       printWindow.close();
     }, 300);
-  }, []);
+  }, [pdfFilename]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

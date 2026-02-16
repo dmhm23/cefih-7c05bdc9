@@ -1,132 +1,136 @@
 
 
-## Plan: Limpiar secciones y agregar EPS/ARL a Vinculacion Laboral
+## Formato "Informacion del Aprendiz" — Preview + Descarga PDF
 
-### Resumen de cambios
+### Resumen
 
-Se realizan 3 tipos de cambios:
-1. **Eliminar** Consentimiento de Salud, Firma Digital y Autorizacion de Datos del panel lateral y de `/matriculas/:id`
-2. **Sincronizar** campos faltantes de Vinculacion Laboral entre las 3 vistas
-3. **Agregar** selectores con buscador de EPS y ARL en todas las vistas
+Transformar la seccion "Progreso" del sidebar en `/matriculas/:id` en una seccion "Formatos para Formacion" que lista documentos generables. El primero es "Informacion del Aprendiz", un documento autodiligenciado con datos de Persona, Matricula y Curso, con vista previa tipo documento y descarga PDF.
 
 ---
 
-### 1. Eliminar secciones UI del panel lateral y pagina detalle
-
-**Panel lateral (`MatriculaDetailSheet.tsx`):**
-- Eliminar seccion "Consentimiento de Salud" (lineas 586-646)
-- Eliminar seccion "Firma Digital" (lineas 662-672) y el boton de captura
-- Eliminar seccion "Autorización de Datos" (lineas 676-691)
-- Eliminar el dialog de firma (lineas 848-856)
-- Actualizar el calculo de progreso para no incluir consentimiento/firma (ajustar conteo)
-
-**Pagina detalle (`MatriculaDetallePage.tsx`):**
-- Eliminar seccion "Consentimiento de Salud" (lineas 242-268)
-- Eliminar seccion "Firma Digital" (lineas 373-388)
-- Eliminar seccion "Autorización de Datos" (lineas 390-408)
-- Eliminar imports no usados (ConsentimientoSalud, FirmaCaptura, capturarFirma)
-
-Tenerlos presente en otro lugar para usarlo en otro módulo cuando me lo soliciten.
-
----
-
-### 2. Sincronizar campos faltantes de Vinculacion Laboral
-
-Comparacion de campos entre las 3 vistas:
+### 1. Arquitectura general
 
 ```text
-Campo               | Formulario | Panel lateral | Pagina detalle
---------------------|------------|---------------|---------------
-Nivel de Formacion  | Si         | Si            | NO (falta)
-Rep. Legal          | Si         | NO (falta)    | Si
-Contacto Empresa    | Si (emp)   | Si (emp)      | NO (falta)
-Tel. Contacto       | Si (emp)   | Si (emp)      | NO (falta)
+MatriculaDetallePage.tsx
+  └─ Sidebar (col derecha)
+      └─ Seccion "Formatos para Formacion" (reemplaza "Progreso")
+          └─ FormatosList (lista de formatos con acciones)
+              └─ Fila: "Informacion del Aprendiz" [Ver preview] [Descargar PDF]
+
+InfoAprendizPreviewDialog.tsx (modal ancho)
+  └─ Renderiza el documento como "hoja" A4
+  └─ Boton "Descargar PDF" + "Cerrar"
+
+InfoAprendizDocument.tsx (componente puro del documento)
+  └─ Secciones: Ficha, Emergencia, Salud, Autorizacion, Firma, Autoevaluacion
+  └─ Layout grid 2 columnas, estilo ficha (label/valor)
 ```
 
-**Panel lateral (`MatriculaDetailSheet.tsx`):**
-- Agregar campo "Representante Legal" despues de NIT, dentro del bloque empresa/independiente
+### 2. Generacion de PDF
 
-**Pagina detalle (`MatriculaDetallePage.tsx`):**
-- Agregar campo "Nivel de Formacion" con selector (NIVELES_FORMACION_EMPRESA)
-- Agregar campos "Contacto Empresa" y "Tel. Contacto" solo visibles para `empresa`
-- Importar NIVELES_FORMACION_EMPRESA desde formOptions
+Se usara `window.print()` con estilos `@media print` sobre el contenedor del documento. No requiere dependencias adicionales. El componente del documento se renderiza en un iframe oculto o se usa la API de print directamente sobre el contenido del modal. Esto garantiza que el PDF descargado coincide exactamente con el preview.
 
----
+Alternativa considerada: `@react-pdf/renderer` no esta instalado y agregaria complejidad significativa. El approach de print CSS es mas simple y cumple los criterios de aceptacion.
 
-### 3. Agregar EPS y ARL
+### 3. Archivos nuevos
 
-**Archivo `src/data/formOptions.ts`:**
-- Agregar array `EPS_OPTIONS` con las ~26 opciones proporcionadas
-- Agregar array `ARL_OPTIONS` con las 10 opciones proporcionadas
+**A. `src/types/formato.ts`**
+- Tipo `EstadoFormato = 'borrador' | 'completo'`
+- Interface `FormatoDocumento` con: id, nombre, estado, tipo
 
-**Archivo `src/types/matricula.ts`:**
-- Agregar campos `eps?: string` y `arl?: string` al interface Matricula
+**B. `src/components/matriculas/formatos/InfoAprendizDocument.tsx`**
+- Componente puro que recibe datos de persona, matricula y curso
+- Renderiza el documento con layout de ficha (label: valor)
+- Secciones:
+  1. **Ficha de Matricula**: grid 2 cols con fecha inicio/fin, empresa, celular, tipo/num documento, nombres, apellidos, genero, pais, fecha nacimiento, nivel educativo, area trabajo, cargo, nivel formacion
+  2. **Informacion de Emergencia**: contacto nombre, telefono, RH del participante
+  3. **Consentimiento de Salud**: preguntas con respuestas Si/No (solo lectura, datos de matricula)
+  4. **Autorizacion de Datos**: seccion visible con badge "Pendiente"
+  5. **Firma**: recuadro vacio con badge "Pendiente"
+  6. **Autoevaluacion**: 6 preguntas con opciones Si/No/N-A, todas en "Si" por defecto, editables en preview
+- Marca de agua "BORRADOR" cuando faltan secciones pendientes
+- Datos vacios muestran "Pendiente" con estilo tenue
+- Sin curso: fechas muestran "Pendiente asignacion a curso"
 
-**Formulario (`MatriculaFormPage.tsx`):**
-- Agregar `eps` y `arl` al schema zod y defaultValues
-- Agregar dos campos Combobox (mas de 4 opciones) en la seccion de Vinculacion Laboral
-- Incluir en el onSubmit
+**C. `src/components/matriculas/formatos/InfoAprendizPreviewDialog.tsx`**
+- Dialog/modal ancho (max-w-4xl) con scroll
+- Contiene el documento dentro de un contenedor "tipo hoja" con sombra y fondo blanco
+- Botones: "Descargar PDF" (primario) y "Cerrar" (secundario)
+- La descarga usa `window.print()` con estilos print que aislan solo el documento
 
-**Panel lateral (`MatriculaDetailSheet.tsx`):**
-- Agregar EditableField para EPS y ARL con tipo combobox/select
+**D. `src/components/matriculas/formatos/FormatosList.tsx`**
+- Lista de formatos como filas/cards
+- Cada fila: icono, nombre del formato, badge de estado, botones "Ver preview" y "Descargar PDF"
+- Por ahora solo tiene "Informacion del Aprendiz"
 
-**Pagina detalle (`MatriculaDetallePage.tsx`):**
-- Agregar EditableField para EPS y ARL con tipo combobox/select
+### 4. Archivos modificados
 
----
+**`src/pages/matriculas/MatriculaDetallePage.tsx`**
+- Reemplazar la seccion "Progreso" (lineas 507-539) del sidebar por la seccion "Formatos para Formacion"
+- Importar FormatosList e InfoAprendizPreviewDialog
+- Agregar estado para controlar apertura del preview dialog
+- Pasar datos de persona, matricula y curso al dialog
 
-### Detalle tecnico
+### 5. Contenido detallado del documento
 
-**Nuevas opciones en `formOptions.ts`:**
+**Seccion 6.1 - Ficha de Matricula (grid 2 columnas):**
 
-```text
-EPS_OPTIONS (26 opciones):
-  coosalud -> "Coosalud EPS-S"
-  nueva_eps -> "Nueva EPS"
-  mutual_ser -> "Mutual Ser"
-  salud_mia -> "Salud Mía"
-  aliansalud -> "Aliansalud EPS"
-  salud_total -> "Salud Total EPS S.A."
-  sanitas -> "EPS Sanitas"
-  sura_eps -> "EPS Sura"
-  famisanar -> "Famisanar"
-  sos -> "Servicio Occidental de Salud EPS SOS"
-  comfenalco_valle -> "Comfenalco Valle"
-  compensar -> "Compensar EPS"
-  epm -> "EPM - Empresas Públicas de Medellín"
-  fondo_ferrocarriles -> "Fondo de Pasivo Social de Ferrocarriles Nacionales de Colombia"
-  cajacopi -> "Cajacopi Atlántico"
-  familiar_colombia -> "EPS Familiar de Colombia"
-  capital_salud -> "Capital Salud"
-  asmet_salud -> "Asmet Salud"
-  emssanar -> "Emssanar"
-  savia_salud -> "Savia Salud"
-  anas_wayuu -> "Anas Wayuu EPS"
-  comfaoriente -> "Comfaoriente"
-  comfachoco -> "Comfachoco"
-  salud_vida -> "EPS Salud Vida"
-  otra_eps -> "Otra" -> Habilitar un input text para escribir.
+| Columna izquierda | Columna derecha |
+|---|---|
+| Fecha inicio curso | Fecha fin curso |
+| Empresa que paga | Celular estudiante |
+| Tipo documento | Numero documento |
+| Primer nombre | Segundo nombre |
+| Primer apellido | Segundo apellido |
+| Genero | Pais nacimiento |
+| Fecha nacimiento | Nivel educativo |
+| Area de trabajo | Cargo |
+| Nivel de formacion (span completo) | |
 
-ARL_OPTIONS (10 opciones):
-  sura_arl -> "ARL Sura"
-  positiva -> "Positiva Compañía de Seguros S.A."
-  axa_colpatria -> "Axa Colpatria Seguros S.A."
-  colmena -> "Colmena Seguros S.A."
-  aurora -> "Compañía de Seguros de Vida Aurora S.A."
-  bolivar -> "Seguros Bolívar S.A."
-  equidad -> "La Equidad Seguros Generales Organismo Cooperativo"
-  alfa -> "Seguros Alfa"
-  suramericana -> "Seguros Generales Suramericana S.A."
-  liberty -> "Liberty Seguros de Vida"
-  otra_ARL -> "Otra" -> Habilitar un input text para escribir.
-```
+Nota: nombres y apellidos se separan por espacio para primer/segundo.
 
-Se usa Combobox para EPS (26 opciones) y ARL (10 opciones), ambos superan el umbral de 4 opciones.
+**Seccion 6.2 - Emergencia (grid 2 columnas):**
 
-**Archivos modificados:**
-- `src/types/matricula.ts`
-- `src/data/formOptions.ts`
-- `src/pages/matriculas/MatriculaFormPage.tsx`
-- `src/components/matriculas/MatriculaDetailSheet.tsx`
-- `src/pages/matriculas/MatriculaDetallePage.tsx`
+| Columna izquierda | Columna derecha |
+|---|---|
+| Contacto emergencia | Telefono emergencia |
+| RH del participante | |
+
+**Seccion 6.3 - Consentimiento Salud (solo lectura):**
+- Restriccion medica: Si/No + detalle
+- Alergias: Si/No + detalle
+- Medicamentos: Si/No + detalle
+- Embarazo: Si/No (si aplica)
+- Lectoescritura: Si/No
+
+**Seccion 6.4 - Autorizacion datos:** Badge "Pendiente del estudiante"
+
+**Seccion 6.5 - Firma:** Recuadro vacio con borde punteado + Badge "Pendiente del estudiante"
+
+**Seccion 6.6 - Autoevaluacion:**
+Tabla con columnas: Pregunta | Si | No | N/A
+- Ha realizado curso de alturas nivel Avanzado Trabajador Autorizado o Reentrenamiento con anterioridad?
+- Sabe que es un arnes y para que sirve?
+- Considera tener conocimientos y habilidades en Trabajo en Alturas?
+- La Res. 4272 de 2021, es la que Establece los Requisitos Minimos de seguridad para Trabajar en Alturas?
+- Tiene presente la diferencia entre las medidas de prevencion y medidas de proteccion contra caidas?
+- Dentro de sus actividades laborales, debe desarrollar actividades superando los 2 m?
+
+Todas marcadas en "Si" por defecto. Editables en preview (radio buttons).
+
+### 6. Estilos del documento
+
+- Contenedor con `max-width: 210mm`, centrado, fondo blanco, sombra
+- Titulos de seccion: texto uppercase, bold, con separador inferior
+- Campos: `text-xs` para label, `text-sm font-medium` para valor
+- Datos vacios: color tenue + texto "Pendiente" o guion
+- Marca "BORRADOR": texto semitransparente diagonal o banner superior
+- `@media print`: ocultar botones, bordes del modal, mostrar solo el documento
+
+### 7. Flujo de estados
+
+- El documento siempre existe (no necesita generacion previa)
+- Estado `BORRADOR`: cuando faltan autorizacion, firma o autoevaluacion del estudiante
+- Se puede descargar PDF incluso en estado borrador
+- No se implementa estado `PDF_LISTO` por ahora (el PDF se genera al momento de descargar)
 

@@ -195,7 +195,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
       {/* FICHA DE MATRÍCULA */}
       <div className="section-group">
         <SectionTitle title="Ficha de Matrícula" />
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 grid-2">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 grid-2">
           <FieldCell label="Fecha inicio del curso" value={fechaInicio} />
           <FieldCell label="Fecha finalización del curso" value={fechaFin} />
           <FieldCell label="Empresa que paga el curso" value={matricula.empresaNombre} />
@@ -221,7 +221,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
       {/* EMERGENCIA */}
       <div className="section-group">
         <SectionTitle title="Información de Emergencia" />
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 grid-2">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 grid-2">
           <FieldCell label="Contacto de emergencia" value={persona?.contactoEmergencia?.nombre} />
           <FieldCell label="Teléfono de emergencia" value={persona?.contactoEmergencia?.telefono} />
           <FieldCell label="RH del participante" value={persona?.rh} />

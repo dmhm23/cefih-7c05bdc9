@@ -1,26 +1,44 @@
 
 
-## Ajustes visuales en Información del Aprendiz
+## Cambios en "Informacion del Aprendiz"
 
-### 1. Consentimiento de salud con Select (Si/No) en lugar de Switch
+### 1. Eliminar campos de la seccion "Ficha de Matricula"
 
-Reemplazar los componentes `Switch` por un `Select` con dos opciones: "Si" y "No". Esto aplica a las 5 preguntas de salud (restriccion medica, alergias, consumo medicamentos, embarazo, lectoescritura). Los inputs de detalle siguen apareciendo condicionalmente cuando la respuesta es "Si".
+Se eliminaran los siguientes campos del grid:
+- **Celular del estudiante** (linea 202)
+- **EPS** (linea 215)
+- **ARL** (linea 216)
 
-### 2. Espaciado antes de cada seccion (12px)
+Tambien se eliminaran las variables `epsDisplay` y `arlDisplay` (lineas 169-174) y los imports de `EPS_OPTIONS` y `ARL_OPTIONS` (linea 19) ya que dejan de usarse.
 
-Actualmente `SectionTitle` tiene `mt-5` (20px). Cambiar a `mt-3` (12px) para un espaciado consistente de 12px antes de cada subtitulo. Mantener `first:mt-0` para que la primera seccion no tenga margen superior.
+### 2. Redisenar la seccion "Autorizacion de Uso de Datos"
 
-### 3. Tamanios de texto
+Reemplazar el bloque actual (lineas 317-321) que solo dice "Pendiente del estudiante" por una seccion interactiva con:
 
-- **Subtitulos** (`SectionTitle` > `h2`): cambiar de `text-xs` a `text-base`
-- **Texto general del documento**: ya usa `text-sm` en la mayoria de campos. Verificar que `FieldCell` values, health rows, y tablas de evaluacion usen `text-sm` consistentemente. Los labels de campos (`field-label`) pueden mantenerse en `text-[10px]` ya que son etiquetas auxiliares.
+- Un **resumen en viñetas** con los 6 puntos clave de la autorizacion, redactados de forma clara y concisa.
+- Un enlace **"Si lo desea, puede leer la informacion completa dando clic aqui"** que abre un `Dialog` con el texto legal completo proporcionado por el usuario.
+- Un **Select dropdown** con opciones "Autorizo" (valor por defecto) y "No autorizo".
+- La seccion mostrara la badge "Pendiente" mientras el estudiante no haya firmado (`firmaCapturada === false`).
 
-### Archivo modificado
+### Detalles tecnicos
 
-**`src/components/matriculas/formatos/InfoAprendizDocument.tsx`**
+**Archivo modificado:** `src/components/matriculas/formatos/InfoAprendizDocument.tsx`
 
-- Linea 7: reemplazar import de `Switch` por import de `Select, SelectTrigger, SelectValue, SelectContent, SelectItem`
-- Linea 89-99 (`SectionTitle`): cambiar `h2` de `text-xs` a `text-base`, ajustar `mt-5` a `mt-3`
-- Lineas 234-285: reemplazar cada `Switch` por un `Select` con opciones "Si"/"No"
-- Las tablas de evaluacion y print versions no cambian
+**Cambios especificos:**
+
+1. **Imports**: Agregar `Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription` desde `@/components/ui/dialog`.
+
+2. **Estado nuevo**: Agregar `autorizacionDatos` (boolean, default `true` = "Autorizo") y `showTextoCompleto` (boolean para controlar el dialog).
+
+3. **Auto-save**: Incluir `autorizacionDatos` en el payload de `triggerSave`.
+
+4. **Seccion Autorizacion (lineas 317-321)**: Reemplazar por:
+   - Resumen con `ul` de 6 items (Datos Sensibles, Publicidad y Cobros, Prohibicion de Celulares, Salud y Seguridad, Firma Digital, Sus Derechos).
+   - Enlace que abre el Dialog con el texto legal completo.
+   - Select con "Autorizo" / "No autorizo", valor por defecto "Autorizo".
+   - Badge "Pendiente" si `!matricula.firmaCapturada`.
+
+5. **Dialog**: Contenedor modal con scroll para el texto legal completo (los literales a-i y la nota final).
+
+6. **Eliminacion de campos**: Quitar `FieldCell` de celular, EPS y ARL del grid de Ficha de Matricula. Limpiar imports y variables no usadas.
 

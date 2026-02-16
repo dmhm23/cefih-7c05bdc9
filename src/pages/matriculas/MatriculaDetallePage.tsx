@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CreditCard, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -26,6 +25,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
+import FormatosList from "@/components/matriculas/formatos/FormatosList";
+import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
 import {
   TIPOS_VINCULACION,
   AREAS_TRABAJO,
@@ -44,6 +45,8 @@ interface ChecklistItem {
   action?: () => void;
 }
 
+type PreviewFormatoId = string | null;
+
 export default function MatriculaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -52,6 +55,7 @@ export default function MatriculaDetallePage() {
   const [facturaNumero, setFacturaNumero] = useState("");
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
 
   const { data: matricula, isLoading } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
@@ -507,35 +511,19 @@ export default function MatriculaDetallePage() {
         <div className="space-y-4">
           <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Progreso
+              Formatos para Formación
             </h3>
-            <div className="flex justify-between text-xs mb-1">
-              <span>{completedItems} de {checklistItems.length}</span>
-              <span>{Math.round(progressPercent)}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-1.5" />
-
-            <div className="space-y-1 mt-2">
-              {checklistItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "flex items-center gap-2 p-2 rounded text-sm transition-colors",
-                    item.completed ? "text-emerald-700" : "text-muted-foreground",
-                    item.action && !item.completed && "cursor-pointer hover:bg-muted"
-                  )}
-                  onClick={item.action}
-                >
-                  <div
-                    className={cn(
-                      "h-2 w-2 rounded-full shrink-0",
-                      item.completed ? "bg-emerald-500" : "bg-muted-foreground/40"
-                    )}
-                  />
-                  <span className={item.completed ? "font-medium" : ""}>{item.label}</span>
-                </div>
-              ))}
-            </div>
+            <FormatosList
+              formatos={[
+                {
+                  id: "info_aprendiz",
+                  nombre: "Información del Aprendiz",
+                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
+                },
+              ]}
+              onPreview={(id) => setPreviewFormato(id)}
+              onDownload={(id) => setPreviewFormato(id)}
+            />
           </div>
 
           {/* Acciones */}
@@ -598,6 +586,15 @@ export default function MatriculaDetallePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Preview de formato */}
+      <InfoAprendizPreviewDialog
+        open={previewFormato === "info_aprendiz"}
+        onOpenChange={(open) => !open && setPreviewFormato(null)}
+        persona={persona ?? null}
+        matricula={matricula}
+        curso={curso ?? null}
+      />
     </div>
   );
 }

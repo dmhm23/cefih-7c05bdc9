@@ -88,7 +88,7 @@ function FieldCell({ label, value, span }: { label: string; value?: string; span
 
 function SectionTitle({ title, pending }: { title: string; pending?: boolean }) {
   return (
-    <div className="section-title border-b pb-1 mb-3 mt-10 first:mt-0 flex items-center gap-2">
+    <div className="section-title border-b pb-1 mb-3 flex items-center gap-2">
       <h2 className="text-base font-bold uppercase tracking-widest">{title}</h2>
       {pending && (
         <Badge variant="outline" className="badge-pending text-[10px] py-0 px-1.5 text-amber-600 border-amber-300">
@@ -174,7 +174,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
     : getLabel(matricula.arl, ARL_OPTIONS);
 
   return (
-    <div id="info-aprendiz-document" className="doc-root bg-white text-foreground p-8 max-w-[210mm] mx-auto relative print:shadow-none print:p-6">
+    <div id="info-aprendiz-document" className="doc-root bg-white text-foreground p-8 max-w-[210mm] mx-auto relative print:shadow-none print:p-6 space-y-8">
       {isBorrador && (
         <div className="watermark absolute inset-0 flex items-center justify-center pointer-events-none z-10 print:z-10">
           <span className="text-6xl font-black text-muted-foreground/10 -rotate-45 select-none tracking-[0.2em] uppercase">

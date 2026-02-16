@@ -7,9 +7,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 import { Download } from "lucide-react";
+import { toast } from "sonner";
+
 import InfoAprendizDocument from "./InfoAprendizDocument";
+import { useUpdateMatricula } from "@/hooks/useMatriculas";
 import { Persona } from "@/types/persona";
 import { Matricula } from "@/types/matricula";
 import { Curso } from "@/types/curso";
@@ -50,6 +52,8 @@ const PRINT_STYLES = `
   .doc-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 12px; }
   .borrador-subtitle { font-size: 10px; color: #d97706; margin-top: 4px; }
 
+  .section-group { break-inside: avoid; }
+
   .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
   .section-title h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
 
@@ -75,22 +79,26 @@ const PRINT_STYLES = `
   .watermark { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 1; }
   .watermark span { font-size: 60px; font-weight: 900; color: rgba(0,0,0,0.04); transform: rotate(-45deg); letter-spacing: 0.2em; text-transform: uppercase; }
 
-  .auto-eval-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .auto-eval-table th { text-align: left; font-size: 10px; font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid #d4d4d4; }
-  .auto-eval-table th:not(:first-child) { text-align: center; }
-  .auto-eval-table td { padding: 4px 8px 4px 0; border-bottom: 1px solid #f5f5f5; font-size: 10px; }
-  .auto-eval-table td:not(:first-child) { text-align: center; }
+  /* Hide screen-only elements (radios, switches, inputs) */
+  .screen-only-eval { display: none !important; }
+  .health-section { display: none !important; }
+  .health-switch { display: none !important; }
+  .health-input { display: none !important; }
 
-  /* Replace radio buttons with circles for print */
-  .auto-eval-table button[role="radio"] { 
-    width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #737373; 
-    display: inline-block; background: transparent; padding: 0; appearance: none; 
+  /* Show print-only elements */
+  .print-only-eval { display: block !important; }
+  .print-only-health { display: block !important; font-size: 12px; }
+  .print-only-health > * + * { margin-top: 4px; }
+
+  .eval-print-row, .health-print-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 11px;
   }
-  .auto-eval-table button[role="radio"][data-state="checked"] { 
-    background: #1a1a1a; border-color: #1a1a1a; 
-  }
-  .auto-eval-table button[role="radio"] svg { display: none; }
-  .auto-eval-table button[role="radio"] span { display: none; }
+  .eval-print-row .font-medium, .health-print-row .font-medium { font-weight: 500; }
 
   @media print { 
     body { padding: 5mm; } 
@@ -106,8 +114,23 @@ export default function InfoAprendizPreviewDialog({
   curso,
 }: Props) {
   const documentRef = useRef<HTMLDivElement>(null);
+  const updateMatricula = useUpdateMatricula();
 
   const pdfFilename = buildPdfFilename("informacion-aprendiz", persona);
+
+  const handleAutoSave = useCallback(
+    (data: Record<string, unknown>) => {
+      updateMatricula.mutate(
+        { id: matricula.id, data },
+        {
+          onSuccess: () => {
+            toast.success("Cambios guardados");
+          },
+        }
+      );
+    },
+    [matricula.id, updateMatricula]
+  );
 
   const handlePrint = useCallback(() => {
     if (!documentRef.current) return;
@@ -157,6 +180,7 @@ export default function InfoAprendizPreviewDialog({
                 persona={persona}
                 matricula={matricula}
                 curso={curso}
+                onAutoSave={handleAutoSave}
               />
             </div>
           </div>

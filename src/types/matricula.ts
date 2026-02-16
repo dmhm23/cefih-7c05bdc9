@@ -128,6 +128,10 @@ export interface Matricula {
   fechaGeneracionCertificado?: string;  // Automático al generar PDF
   fechaEntregaCertificado?: string;     // Manual por el usuario
 
+  // Evaluaciones editables en formato
+  autoevaluacionRespuestas?: string[];
+  evaluacionCompetenciasRespuestas?: string[];
+
   // Observaciones
   observaciones?: string;
 

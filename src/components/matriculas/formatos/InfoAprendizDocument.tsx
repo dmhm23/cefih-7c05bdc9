@@ -4,7 +4,7 @@ import { Matricula } from "@/types/matricula";
 import { Curso } from "@/types/curso";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -88,8 +88,8 @@ function FieldCell({ label, value, span }: { label: string; value?: string; span
 
 function SectionTitle({ title, pending }: { title: string; pending?: boolean }) {
   return (
-    <div className="section-title border-b pb-1 mb-3 mt-5 first:mt-0 flex items-center gap-2">
-      <h2 className="text-xs font-bold uppercase tracking-widest">{title}</h2>
+    <div className="section-title border-b pb-1 mb-3 mt-3 first:mt-0 flex items-center gap-2">
+      <h2 className="text-base font-bold uppercase tracking-widest">{title}</h2>
       {pending && (
         <Badge variant="outline" className="badge-pending text-[10px] py-0 px-1.5 text-amber-600 border-amber-300">
           Pendiente
@@ -234,7 +234,10 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
         <div className="health-section space-y-2 text-sm">
           <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
             <span>¿Tiene alguna restricción médica?</span>
-            <Switch checked={restriccionMedica} onCheckedChange={(v) => setRestriccionMedica(v)} className="health-switch" />
+            <Select value={restriccionMedica ? "si" : "no"} onValueChange={(v) => setRestriccionMedica(v === "si")}>
+              <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+            </Select>
           </div>
           {restriccionMedica && (
             <Input
@@ -247,7 +250,10 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
 
           <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
             <span>¿Tiene alergias?</span>
-            <Switch checked={alergias} onCheckedChange={(v) => setAlergias(v)} className="health-switch" />
+            <Select value={alergias ? "si" : "no"} onValueChange={(v) => setAlergias(v === "si")}>
+              <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+            </Select>
           </div>
           {alergias && (
             <Input
@@ -260,7 +266,10 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
 
           <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
             <span>¿Consume medicamentos?</span>
-            <Switch checked={consumoMedicamentos} onCheckedChange={(v) => setConsumoMedicamentos(v)} className="health-switch" />
+            <Select value={consumoMedicamentos ? "si" : "no"} onValueChange={(v) => setConsumoMedicamentos(v === "si")}>
+              <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+            </Select>
           </div>
           {consumoMedicamentos && (
             <Input
@@ -274,13 +283,19 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
           {matricula.embarazo !== undefined && (
             <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
               <span>¿Se encuentra en estado de embarazo?</span>
-              <Switch checked={!!embarazo} onCheckedChange={(v) => setEmbarazo(v)} className="health-switch" />
+              <Select value={embarazo ? "si" : "no"} onValueChange={(v) => setEmbarazo(v === "si")}>
+                <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+              </Select>
             </div>
           )}
 
           <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
             <span>¿Sabe leer y escribir?</span>
-            <Switch checked={lectoescritura} onCheckedChange={(v) => setLectoescritura(v)} className="health-switch" />
+            <Select value={lectoescritura ? "si" : "no"} onValueChange={(v) => setLectoescritura(v === "si")}>
+              <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+            </Select>
           </div>
         </div>
 

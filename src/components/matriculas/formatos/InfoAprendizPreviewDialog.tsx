@@ -7,7 +7,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, X } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { Download } from "lucide-react";
 import InfoAprendizDocument from "./InfoAprendizDocument";
 import { Persona } from "@/types/persona";
 import { Matricula } from "@/types/matricula";
@@ -21,6 +22,62 @@ interface Props {
   curso: Curso | null;
 }
 
+const PRINT_STYLES = `
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 20mm 15mm; font-size: 12px; }
+  
+  .doc-root { max-width: 210mm; margin: 0 auto; position: relative; padding: 32px; background: white; }
+  .doc-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 12px; }
+  .borrador-subtitle { font-size: 10px; color: #d97706; margin-top: 4px; }
+
+  .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
+  .section-title h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
+
+  .field-cell .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #737373; line-height: 1.2; }
+  .field-cell .field-value { font-size: 12px; font-weight: 500; line-height: 1.3; }
+  .field-cell .field-empty { color: #a3a3a3; font-style: italic; }
+  .field-span { grid-column: span 2; }
+
+  .badge-pending { display: inline-flex; align-items: center; font-size: 9px; border: 1px solid #fbbf24; color: #d97706; border-radius: 9999px; padding: 0 6px; }
+
+  .health-section { font-size: 12px; }
+  .health-section > * + * { margin-top: 4px; }
+  .health-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .health-row .font-medium { font-weight: 500; }
+  .health-detail { font-size: 10px; color: #737373; padding-left: 8px; }
+
+  .pending-text { font-size: 12px; color: #a3a3a3; font-style: italic; }
+
+  .signature-box { border: 2px dashed #d4d4d4; border-radius: 4px; height: 80px; display: flex; align-items: center; justify-content: center; }
+
+  .watermark { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 1; }
+  .watermark span { font-size: 60px; font-weight: 900; color: rgba(0,0,0,0.04); transform: rotate(-45deg); letter-spacing: 0.2em; text-transform: uppercase; }
+
+  .auto-eval-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .auto-eval-table th { text-align: left; font-size: 10px; font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid #d4d4d4; }
+  .auto-eval-table th:not(:first-child) { text-align: center; }
+  .auto-eval-table td { padding: 4px 8px 4px 0; border-bottom: 1px solid #f5f5f5; font-size: 10px; }
+  .auto-eval-table td:not(:first-child) { text-align: center; }
+
+  /* Replace radio buttons with circles for print */
+  .auto-eval-table button[role="radio"] { 
+    width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #737373; 
+    display: inline-block; background: transparent; padding: 0; appearance: none; 
+  }
+  .auto-eval-table button[role="radio"][data-state="checked"] { 
+    background: #1a1a1a; border-color: #1a1a1a; 
+  }
+  .auto-eval-table button[role="radio"] svg { display: none; }
+  .auto-eval-table button[role="radio"] span { display: none; }
+
+  @media print { 
+    body { padding: 10mm; } 
+    .watermark span { color: rgba(0,0,0,0.03); } 
+  }
+`;
+
 export default function InfoAprendizPreviewDialog({
   open,
   onOpenChange,
@@ -33,7 +90,7 @@ export default function InfoAprendizPreviewDialog({
   const handlePrint = useCallback(() => {
     if (!documentRef.current) return;
 
-    const printWindow = window.open("", "_blank", "width=800,height=600");
+    const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
     const content = documentRef.current.innerHTML;
@@ -43,34 +100,11 @@ export default function InfoAprendizPreviewDialog({
       <html>
         <head>
           <title>Información del Aprendiz</title>
-          <style>
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 20mm 15mm; font-size: 12px; }
-            h1 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 12px; }
-            h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; }
-            .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #737373; line-height: 1.2; }
-            .field-value { font-size: 12px; font-weight: 500; line-height: 1.3; }
-            .field-empty { color: #a3a3a3; font-style: italic; }
-            .col-span-2 { grid-column: span 2; }
-            .health-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 2px 0; }
-            .health-detail { font-size: 10px; color: #737373; padding-left: 8px; }
-            .pending-text { font-size: 12px; color: #a3a3a3; font-style: italic; }
-            .signature-box { border: 2px dashed #d4d4d4; border-radius: 4px; height: 80px; display: flex; align-items: center; justify-content: center; }
-            .badge { display: inline-flex; align-items: center; font-size: 9px; border: 1px solid #fbbf24; color: #d97706; border-radius: 9999px; padding: 0 6px; margin-left: 8px; }
-            .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60px; font-weight: 900; color: rgba(0,0,0,0.04); letter-spacing: 0.2em; text-transform: uppercase; pointer-events: none; z-index: 1; }
-            table { width: 100%; border-collapse: collapse; font-size: 11px; }
-            th { text-align: left; font-size: 10px; font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid #d4d4d4; }
-            th.center { text-align: center; }
-            td { padding: 4px 8px 4px 0; border-bottom: 1px solid #f5f5f5; font-size: 10px; }
-            td.center { text-align: center; }
-            .radio-cell { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #737373; display: inline-block; }
-            .radio-cell.checked { background: #1a1a1a; border-color: #1a1a1a; }
-            .section-header { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
-            @media print { body { padding: 10mm; } .watermark { color: rgba(0,0,0,0.03); } }
-          </style>
+          <style>${PRINT_STYLES}</style>
         </head>
-        <body>${content}</body>
+        <body>
+          <div class="doc-root">${content}</div>
+        </body>
       </html>
     `);
 
@@ -78,24 +112,26 @@ export default function InfoAprendizPreviewDialog({
     setTimeout(() => {
       printWindow.print();
       printWindow.close();
-    }, 250);
+    }, 300);
   }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-8">
             <DialogTitle>Vista Previa — Información del Aprendiz</DialogTitle>
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={handlePrint}>
-                <Download className="h-4 w-4 mr-1" />
-                Descargar PDF
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="sm" onClick={handlePrint}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Descargar PDF
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Descargar como PDF</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </DialogHeader>
 

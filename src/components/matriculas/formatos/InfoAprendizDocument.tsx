@@ -4,7 +4,6 @@ import { Matricula } from "@/types/matricula";
 import { Curso } from "@/types/curso";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -58,9 +57,9 @@ function formatDate(dateStr: string | undefined): string {
 function FieldCell({ label, value, span }: { label: string; value?: string; span?: boolean }) {
   const isEmpty = !value || value.trim() === "";
   return (
-    <div className={span ? "col-span-2" : ""}>
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">{label}</p>
-      <p className={`text-sm font-medium leading-snug ${isEmpty ? "text-muted-foreground/50 italic" : ""}`}>
+    <div className={`field-cell ${span ? "col-span-2 field-span" : ""}`}>
+      <p className="field-label text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">{label}</p>
+      <p className={`field-value text-sm font-medium leading-snug ${isEmpty ? "text-muted-foreground/50 italic field-empty" : ""}`}>
         {isEmpty ? "Pendiente" : value}
       </p>
     </div>
@@ -69,10 +68,10 @@ function FieldCell({ label, value, span }: { label: string; value?: string; span
 
 function SectionTitle({ title, pending }: { title: string; pending?: boolean }) {
   return (
-    <div className="border-b pb-1 mb-3 mt-5 first:mt-0 flex items-center gap-2">
+    <div className="section-title border-b pb-1 mb-3 mt-5 first:mt-0 flex items-center gap-2">
       <h2 className="text-xs font-bold uppercase tracking-widest">{title}</h2>
       {pending && (
-        <Badge variant="outline" className="text-[10px] py-0 px-1.5 text-amber-600 border-amber-300">
+        <Badge variant="outline" className="badge-pending text-[10px] py-0 px-1.5 text-amber-600 border-amber-300">
           Pendiente
         </Badge>
       )}
@@ -106,29 +105,26 @@ export default function InfoAprendizDocument({ persona, matricula, curso }: Prop
     : getLabel(matricula.arl, ARL_OPTIONS);
 
   return (
-    <div id="info-aprendiz-document" className="bg-white text-foreground p-8 max-w-[210mm] mx-auto relative print:shadow-none print:p-6">
-      {/* Watermark */}
+    <div id="info-aprendiz-document" className="doc-root bg-white text-foreground p-8 max-w-[210mm] mx-auto relative print:shadow-none print:p-6">
       {isBorrador && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 print:z-10">
+        <div className="watermark absolute inset-0 flex items-center justify-center pointer-events-none z-10 print:z-10">
           <span className="text-6xl font-black text-muted-foreground/10 -rotate-45 select-none tracking-[0.2em] uppercase">
             Borrador
           </span>
         </div>
       )}
 
-      {/* Header */}
       <div className="text-center mb-4">
-        <h1 className="text-base font-bold uppercase tracking-wide">Información del Aprendiz</h1>
+        <h1 className="doc-title text-base font-bold uppercase tracking-wide">Información del Aprendiz</h1>
         {isBorrador && (
-          <p className="text-xs text-amber-600 mt-1">
+          <p className="text-xs text-amber-600 mt-1 borrador-subtitle">
             BORRADOR — Pendiente autorización y firma del aprendiz
           </p>
         )}
       </div>
 
-      {/* 6.1 Ficha de Matrícula */}
       <SectionTitle title="Ficha de Matrícula" />
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 grid-2">
         <FieldCell label="Fecha inicio del curso" value={fechaInicio} />
         <FieldCell label="Fecha finalización del curso" value={fechaFin} />
         <FieldCell label="Empresa que paga el curso" value={matricula.empresaNombre} />
@@ -154,63 +150,58 @@ export default function InfoAprendizDocument({ persona, matricula, curso }: Prop
         />
       </div>
 
-      {/* 6.2 Información de Emergencia */}
       <SectionTitle title="Información de Emergencia" />
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-2 grid-2">
         <FieldCell label="Contacto de emergencia" value={persona?.contactoEmergencia?.nombre} />
         <FieldCell label="Teléfono de emergencia" value={persona?.contactoEmergencia?.telefono} />
         <FieldCell label="RH del participante" value={persona?.rh} />
       </div>
 
-      {/* 6.3 Consentimiento de Salud */}
       <SectionTitle title="Consentimiento de Salud" />
-      <div className="space-y-1.5 text-sm">
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+      <div className="health-section space-y-1.5 text-sm">
+        <div className="health-row grid grid-cols-[1fr_auto] gap-2">
           <span>¿Tiene alguna restricción médica?</span>
           <span className="font-medium">{matricula.restriccionMedica ? "Sí" : "No"}</span>
         </div>
         {matricula.restriccionMedica && matricula.restriccionMedicaDetalle && (
-          <p className="text-xs text-muted-foreground pl-2">Detalle: {matricula.restriccionMedicaDetalle}</p>
+          <p className="health-detail text-xs text-muted-foreground pl-2">Detalle: {matricula.restriccionMedicaDetalle}</p>
         )}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="health-row grid grid-cols-[1fr_auto] gap-2">
           <span>¿Tiene alergias?</span>
           <span className="font-medium">{matricula.alergias ? "Sí" : "No"}</span>
         </div>
         {matricula.alergias && matricula.alergiasDetalle && (
-          <p className="text-xs text-muted-foreground pl-2">Detalle: {matricula.alergiasDetalle}</p>
+          <p className="health-detail text-xs text-muted-foreground pl-2">Detalle: {matricula.alergiasDetalle}</p>
         )}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="health-row grid grid-cols-[1fr_auto] gap-2">
           <span>¿Consume medicamentos?</span>
           <span className="font-medium">{matricula.consumoMedicamentos ? "Sí" : "No"}</span>
         </div>
         {matricula.consumoMedicamentos && matricula.consumoMedicamentosDetalle && (
-          <p className="text-xs text-muted-foreground pl-2">Detalle: {matricula.consumoMedicamentosDetalle}</p>
+          <p className="health-detail text-xs text-muted-foreground pl-2">Detalle: {matricula.consumoMedicamentosDetalle}</p>
         )}
         {matricula.embarazo !== undefined && (
-          <div className="grid grid-cols-[1fr_auto] gap-2">
+          <div className="health-row grid grid-cols-[1fr_auto] gap-2">
             <span>¿Se encuentra en estado de embarazo?</span>
             <span className="font-medium">{matricula.embarazo ? "Sí" : "No"}</span>
           </div>
         )}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="health-row grid grid-cols-[1fr_auto] gap-2">
           <span>¿Sabe leer y escribir?</span>
           <span className="font-medium">{matricula.nivelLectoescritura ? "Sí" : "No"}</span>
         </div>
       </div>
 
-      {/* 6.4 Autorización de Datos */}
       <SectionTitle title="Autorización de Uso de Datos" pending />
-      <p className="text-sm text-muted-foreground/60 italic">Pendiente del estudiante</p>
+      <p className="pending-text text-sm text-muted-foreground/60 italic">Pendiente del estudiante</p>
 
-      {/* 6.5 Firma */}
       <SectionTitle title="Firma del Aprendiz" pending />
-      <div className="border-2 border-dashed border-muted-foreground/20 rounded h-24 flex items-center justify-center">
-        <span className="text-sm text-muted-foreground/40 italic">Pendiente del estudiante</span>
+      <div className="signature-box border-2 border-dashed border-muted-foreground/20 rounded h-24 flex items-center justify-center">
+        <span className="pending-text text-sm text-muted-foreground/40 italic">Pendiente del estudiante</span>
       </div>
 
-      {/* 6.6 Autoevaluación */}
       <SectionTitle title="Autoevaluación de Conocimientos y Habilidades Previas" />
-      <table className="w-full text-sm border-collapse">
+      <table className="auto-eval-table w-full text-sm border-collapse">
         <thead>
           <tr className="border-b">
             <th className="text-left py-1.5 pr-4 text-xs font-semibold w-[70%]">Pregunta</th>

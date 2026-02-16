@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+
 import { Download } from "lucide-react";
 import InfoAprendizDocument from "./InfoAprendizDocument";
 import { Persona } from "@/types/persona";
@@ -143,22 +143,15 @@ export default function InfoAprendizPreviewDialog({
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <div className="flex items-center justify-between pr-8">
             <DialogTitle>Vista Previa — Información del Aprendiz</DialogTitle>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button size="sm" onClick={handlePrint}>
-                    <Download className="h-4 w-4 mr-1" />
-                    Descargar PDF
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Descargar como PDF</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Button size="sm" onClick={handlePrint}>
+              <Download className="h-4 w-4 mr-1" />
+              Descargar PDF
+            </Button>
           </div>
         </DialogHeader>
 
         <ScrollArea className="flex-1">
-          <div className="p-6 bg-muted/30 min-h-full">
+          <div className="p-2 bg-muted/30 min-h-full">
             <div ref={documentRef} className="shadow-lg rounded border">
               <InfoAprendizDocument
                 persona={persona}

@@ -15,9 +15,9 @@ import {
   AREAS_TRABAJO,
   NIVELES_FORMACION_EMPRESA,
   PAISES,
-  EPS_OPTIONS,
-  ARL_OPTIONS,
 } from "@/data/formOptions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   persona: Persona | null;
@@ -122,6 +122,10 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
   const [embarazo, setEmbarazo] = useState(matricula.embarazo);
   const [lectoescritura, setLectoescritura] = useState(matricula.nivelLectoescritura);
 
+  // Autorización de datos state
+  const [autorizacionDatos, setAutorizacionDatos] = useState(matricula.autorizacionDatos !== false);
+  const [showTextoCompleto, setShowTextoCompleto] = useState(false);
+
   // Debounced auto-save
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerSave = useCallback(() => {
@@ -139,9 +143,10 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
         consumoMedicamentosDetalle: consumoDetalle,
         embarazo,
         nivelLectoescritura: lectoescritura,
+        autorizacionDatos,
       });
     }, 500);
-  }, [onAutoSave, respuestas, competencias, restriccionMedica, restriccionDetalle, alergias, alergiasDetalle, consumoMedicamentos, consumoDetalle, embarazo, lectoescritura]);
+  }, [onAutoSave, respuestas, competencias, restriccionMedica, restriccionDetalle, alergias, alergiasDetalle, consumoMedicamentos, consumoDetalle, embarazo, lectoescritura, autorizacionDatos]);
 
   // Track changes for auto-save (skip initial render)
   const isFirstRender = useRef(true);
@@ -151,7 +156,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
       return;
     }
     triggerSave();
-  }, [respuestas, competencias, restriccionMedica, restriccionDetalle, alergias, alergiasDetalle, consumoMedicamentos, consumoDetalle, embarazo, lectoescritura]);
+  }, [respuestas, competencias, restriccionMedica, restriccionDetalle, alergias, alergiasDetalle, consumoMedicamentos, consumoDetalle, embarazo, lectoescritura, autorizacionDatos]);
 
   useEffect(() => {
     return () => {
@@ -165,13 +170,6 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
 
   const fechaInicio = curso?.fechaInicio ? formatDate(curso.fechaInicio) : "Pendiente asignación a curso";
   const fechaFin = curso?.fechaFin ? formatDate(curso.fechaFin) : "Pendiente asignación a curso";
-
-  const epsDisplay = matricula.eps === "otra_eps"
-    ? matricula.epsOtra || "Otra (sin especificar)"
-    : getLabel(matricula.eps, EPS_OPTIONS);
-  const arlDisplay = matricula.arl === "otra_arl"
-    ? matricula.arlOtra || "Otra (sin especificar)"
-    : getLabel(matricula.arl, ARL_OPTIONS);
 
   return (
     <div id="info-aprendiz-document" className="doc-root bg-white text-foreground p-8 max-w-[210mm] mx-auto relative print:shadow-none print:p-6 space-y-8">
@@ -199,7 +197,6 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
           <FieldCell label="Fecha inicio del curso" value={fechaInicio} />
           <FieldCell label="Fecha finalización del curso" value={fechaFin} />
           <FieldCell label="Empresa que paga el curso" value={matricula.empresaNombre} />
-          <FieldCell label="Celular del estudiante" value={persona?.telefono} />
           <FieldCell label="Tipo de documento" value={getLabel(persona?.tipoDocumento, TIPOS_DOCUMENTO)} />
           <FieldCell label="Número de documento" value={persona?.numeroDocumento} />
           <FieldCell label="Primer nombre" value={primerNombre} />
@@ -212,8 +209,6 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
           <FieldCell label="Nivel educativo" value={getLabel(persona?.nivelEducativo, NIVELES_EDUCATIVOS)} />
           <FieldCell label="Área de trabajo" value={getLabel(matricula.areaTrabajo, AREAS_TRABAJO)} />
           <FieldCell label="Cargo" value={matricula.empresaCargo} />
-          <FieldCell label="EPS" value={epsDisplay} />
-          <FieldCell label="ARL" value={arlDisplay} />
           <FieldCell label="Nivel de formación" value={getLabel(matricula.empresaNivelFormacion, NIVELES_FORMACION_EMPRESA)} span />
         </div>
       </div>
@@ -316,8 +311,66 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
 
       {/* AUTORIZACIÓN */}
       <div className="section-group">
-        <SectionTitle title="Autorización de Uso de Datos" pending />
-        <p className="pending-text text-sm text-muted-foreground/60 italic">Pendiente del estudiante</p>
+        <SectionTitle title="Autorización de Uso de Datos" pending={!matricula.firmaCapturada} />
+
+        <div className="space-y-4 text-sm">
+          <p className="font-semibold">Lo que debe saber (Resumen):</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-xs leading-relaxed">
+            <li><strong>Sus Datos Sensibles:</strong> Autoriza el uso de sus datos personales, huellas, fotos y videos para fines de seguridad y registro.</li>
+            <li><strong>Publicidad y Cobros:</strong> Acepta recibir publicidad, estados de cuenta y avisos de deudas por WhatsApp y correo electrónico.</li>
+            <li><strong>Prohibición de Celulares:</strong> No puede tomar fotos ni videos durante las capacitaciones.</li>
+            <li><strong>Salud y Seguridad:</strong> Declara que su estado de salud es real y acepta los riesgos propios del entrenamiento físico.</li>
+            <li><strong>Firma Digital:</strong> Acepta que sus firmas electrónicas tengan plena validez legal, únicamente para los formatos requeridos en la formación y entrenamiento en trabajo en alturas.</li>
+            <li><strong>Sus Derechos:</strong> Puede solicitar en cualquier momento la corrección o eliminación de su información.</li>
+          </ul>
+
+          <p className="text-xs">
+            Si lo desea, puede leer la información completa dando{" "}
+            <button
+              type="button"
+              onClick={() => setShowTextoCompleto(true)}
+              className="text-primary underline underline-offset-2 hover:text-primary/80 font-medium"
+            >
+              clic aquí
+            </button>.
+          </p>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium">Decisión:</span>
+            <Select value={autorizacionDatos ? "autorizo" : "no_autorizo"} onValueChange={(v) => setAutorizacionDatos(v === "autorizo")}>
+              <SelectTrigger className="w-44 h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent side="bottom">
+                <SelectItem value="autorizo">Autorizo</SelectItem>
+                <SelectItem value="no_autorizo">No autorizo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Dialog open={showTextoCompleto} onOpenChange={setShowTextoCompleto}>
+          <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Autorización de Uso de Datos — Texto Completo</DialogTitle>
+              <DialogDescription>Lea detenidamente la siguiente autorización.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-3 text-sm leading-relaxed pb-4">
+                <p>Para efectos del tratamiento de datos personales recolectados antes de la entrada en vigencia del Decreto 1377 de 2013, reglamentario de la Ley 1581 de 2012, FIH Ltda., como responsable de la información obtenida a través de distintos canales de atención, solicita la autorización de quienes han suministrado sus datos para que, de manera libre, previa, expresa y voluntaria, permitan continuar con su tratamiento.</p>
+                <p className="font-semibold">Declaro que:</p>
+                <p><strong>a)</strong> Toda la información proporcionada en este formulario y demás bases de datos es verdadera y completa, incluso aquella que no está escrita de mi puño y letra.</p>
+                <p><strong>b)</strong> Conozco el código de buen comportamiento del centro de formación y entrenamiento y me acojo a lo que allí se establece.</p>
+                <p><strong>c)</strong> Autorizo al centro de formación y entrenamiento de TSA FIH Ltda. para recolectar, transferir, almacenar, usar, circular, suprimir, compartir, actualizar, transmitir y, en general, dar tratamiento a mis datos personales, incluyendo datos sensibles como mis huellas digitales, fotografías, videos y demás, de conformidad con la Ley, con el fin de ejecutar el control, seguimiento, monitoreo, vigilancia y, en general, garantizar la seguridad de sus instalaciones, así como documentar actividades gremiales.</p>
+                <p><strong>d)</strong> He sido informado acerca del uso restringido de celulares y me comprometo a no tomar registros de video y/o fotográficos tanto en formación como en entrenamiento.</p>
+                <p><strong>e)</strong> Se me han informado los procedimientos, reglamentos, políticas e instructivos del SGSST, así como los peligros y riesgos a los cuales me encuentro expuesto durante la formación y el entrenamiento.</p>
+                <p><strong>f)</strong> Me comprometo a cumplir con todas las medidas de autocuidado y protocolos establecidos por la empresa para la prevención de enfermedades emergentes, respiratorias y virales, así como a notificar oportunamente cualquier síntoma o sospecha asociada a estas patologías.</p>
+                <p><strong>g)</strong> Manifiesto mi renuncia a acoger artículos y leyes que puedan generar controversia.</p>
+                <p><strong>h)</strong> Declaro que toda la información suministrada sobre mi estado actual de salud es verdadera y actualizada.</p>
+                <p><strong>i)</strong> Autorizo expresamente el uso de firma digital en la documentación requerida por el centro de entrenamiento, en cumplimiento de la normativa vigente en Colombia sobre la validez jurídica de la firma electrónica y digital.</p>
+                <p className="mt-4 border-t pt-3 text-xs text-muted-foreground"><strong>Nota:</strong> El alcance de la autorización faculta al centro de formación y entrenamiento a enviar mensajes con contenidos institucionales, notificaciones, información del estado de cuenta, saldos, cuotas pendientes de pago y demás información relativa al portafolio de servicios de la Entidad, a través de correo electrónico y/o mensajes de texto al teléfono móvil. Los titulares podrán ejercer sus derechos de conocer, actualizar, rectificar y suprimir sus datos personales a través de los canales dispuestos por FIH Ltda. para la atención al público.</p>
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* FIRMA */}

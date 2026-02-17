@@ -1,81 +1,118 @@
 
 
-## Encabezado Reutilizable para Documentos de Formatos
+## Dos Nuevos Formatos: Registro de Asistencia y Participacion PTA-ATS
 
 ### Resumen
 
-Crear un componente reutilizable `DocumentHeader` que renderice un encabezado tipo grid/tabla estructurada para todos los documentos generados. Se implementara primero en el formato "Informacion del Aprendiz" con valores fijos que en el futuro seran editables desde un modulo "Formatos".
+Crear dos nuevos documentos automaticos que reutilizan datos existentes de Persona, Matricula y Curso. Ambos requieren que el estudiante haya completado el formato "Informacion del Aprendiz" (autorizacion + firma). Para pruebas, la matricula m1 (Juan Carlos Rodriguez Perez) se actualizara en mock data para simular ese estado completo.
 
-### Estructura visual del encabezado
+---
 
-```text
-+-------------------+-------------------------------+---------------------------------------------+
-|                   |                               | FREDDY IVAN HOYOS INSTRUCTORES Y            |
-|    [LOGO]         |   INFORMACION DEL APRENDIZ    | FACILITADORES LTDA.                         |
-|   (centrado       |   (centrado, mayusculas,      +---------------------------------------------+
-|    vertical y     |    tipografia destacada)       | SISTEMA DE GESTION INTEGRADO                |
-|   horizontalmente)|                               +---------------------------------------------+
-|                   +---------------+---------------+ SUBSISTEMA: Alturas                         |
-|                   | Codigo:       | Version:      +----------------------+----------------------+
-|                   | FIH04-013     | 021           | CREACION: 22/03/2018 | EDICION: 17/02/2025  |
-+-------------------+---------------+---------------+----------------------+----------------------+
+### 1. Actualizar mock data (matricula m1)
+
+En `src/data/mockData.ts`, modificar la matricula `m1` para simular que Juan Carlos ya diligencio el formato de Informacion del Aprendiz:
+
+- `firmaCapturada: true`
+- `firmaBase64`: un valor base64 valido (mismo patron que m2/m4)
+- `autorizacionDatos: true` (ya esta)
+
+---
+
+### 2. Actualizar tipo FormatoDocumento
+
+En `src/types/formato.ts`, agregar los nuevos tipos al campo `tipo`:
+
+```
+tipo: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats'
 ```
 
-### Archivos nuevos
+---
 
-**`src/assets/logo-empresa.png`**
-- Copiar la imagen subida por el usuario al directorio de assets del proyecto
+### 3. Nuevo componente: RegistroAsistenciaDocument
 
-**`src/components/shared/DocumentHeader.tsx`**
-- Componente reutilizable con las siguientes props:
-  - `nombreDocumento`: string (ej: "INFORMACION DEL APRENDIZ")
-  - `codigo`: string (ej: "FIH04-013")
-  - `version`: string (ej: "021")
-  - `fechaCreacion`: string (ej: "22/03/2018")
-  - `fechaEdicion`: string (ej: "17/02/2025")
-  - `empresaNombre`: string (valor por defecto fijo)
-  - `sistemaGestion`: string (valor por defecto: "SISTEMA DE GESTION INTEGRADO")
-  - `subsistema`: string (ej: "Alturas")
-- Renderiza un grid de 3 columnas con bordes estilo tabla
-- Bloque izquierdo: logo importado desde `@/assets/logo-empresa.png`, centrado en ambos ejes
-- Bloque central: nombre del documento en mayusculas con tipografia destacada; fila inferior dividida en Codigo y Version
-- Bloque derecho: filas apiladas con nombre de empresa (negrita, mayusculas), sistema de gestion, subsistema, y una fila dividida con fechas de creacion y edicion
-- Usa clases CSS vanilla (no Tailwind) para compatibilidad con el sistema de impresion `window.print()`
+**Archivo**: `src/components/matriculas/formatos/RegistroAsistenciaDocument.tsx`
 
-### Archivos modificados
+Props: `persona`, `matricula`, `curso`, `fechaAsistencia` (editable por admin), `onFechaChange`
 
-**`src/components/matriculas/formatos/InfoAprendizDocument.tsx`**
-- Importar `DocumentHeader`
-- Reemplazar el bloque actual del titulo (lineas 184-191, el `<div className="text-center mb-4">` con `<h1>` y subtitulo borrador) por el nuevo componente `<DocumentHeader>` con los valores:
-  - nombreDocumento: "INFORMACION DEL APRENDIZ"
-  - codigo: "FIH04-013"
-  - version: "021"
-  - fechaCreacion: "22/03/2018"
-  - fechaEdicion: "17/02/2025"
-  - subsistema: "Alturas"
-- Mantener la logica de "Borrador" (marca de agua y subtitulo) debajo del encabezado
+Contenido del documento:
+- `<DocumentHeader>` con: nombre "REGISTRO DE ASISTENCIA DE FORMACION Y ENTRENAMIENTO EN ALTURAS", codigo "FIH04-014", version "009", fechaCreacion "12/04/2018", fechaEdicion "03/2025", subsistema "Alturas"
+- Cuerpo con campos tipo ficha (FieldCell, grid 2 columnas):
+  - Fecha de asistencia (editable por admin, autocompletada desde `curso.fechaInicio`)
+  - Empresa (desde `matricula.empresaNombre` o "Independiente")
+  - Nombres y apellidos completos (desde Persona, NO editables)
+  - Tipo de documento (desde Persona, NO editable)
+  - Numero de documento (desde Persona, NO editable)
+  - Numero de celular (desde Persona, NO editable)
+  - Tema de la actividad (nombre del curso)
+  - Instructor a cargo (entrenador del curso)
+- Seccion de firma: muestra la imagen `firmaBase64` de la matricula (reutilizada, sin nueva captura)
+- Marca de agua "Borrador" si no hay firma
 
-**`src/components/matriculas/formatos/InfoAprendizPreviewDialog.tsx`**
-- Agregar estilos CSS para el encabezado en `PRINT_STYLES`:
-  - `.doc-header`: grid de 3 columnas con bordes solidos
-  - `.doc-header-logo`: celda del logo con centrado flex
-  - `.doc-header-center`: celda central con nombre del documento
-  - `.doc-header-right`: celda derecha con filas internas
-  - Tipografias y espaciados consistentes con el resto del documento
-  - `break-inside: avoid` para evitar corte en impresion
+---
 
-### Valores iniciales fijos
+### 4. Nuevo componente: RegistroAsistenciaPreviewDialog
 
-| Campo | Valor |
-|-------|-------|
-| Nombre documento | INFORMACION DEL APRENDIZ |
-| Codigo | FIH04-013 |
-| Version | 021 |
-| Fecha creacion | 22/03/2018 |
-| Fecha edicion | 17/02/2025 |
-| Empresa | FREDDY IVAN HOYOS INSTRUCTORES Y FACILITADORES LTDA. |
-| Sistema | SISTEMA DE GESTION INTEGRADO |
-| Subsistema | Alturas |
+**Archivo**: `src/components/matriculas/formatos/RegistroAsistenciaPreviewDialog.tsx`
 
-Estos valores se mantendran como constantes/props por defecto hasta que se construya el modulo "Formatos" en el roadmap.
+Sigue el mismo patron que `InfoAprendizPreviewDialog`:
+- Dialog con vista previa y boton "Descargar PDF"
+- `PRINT_STYLES` reutilizando los estilos de encabezado ya definidos
+- Nombre de archivo: `registro-asistencia-{tipoDoc}-{numDoc}-{nombres}-{apellidos}.pdf`
+- La fecha de asistencia es editable dentro de la preview (Input controlado)
+- Bloqueado si `!matricula.firmaCapturada || !matricula.autorizacionDatos` (muestra mensaje)
+
+---
+
+### 5. Nuevo componente: ParticipacionPtaAtsDocument
+
+**Archivo**: `src/components/matriculas/formatos/ParticipacionPtaAtsDocument.tsx`
+
+Props: `persona`, `matricula`, `curso`, `fechaDiligenciamiento` (editable), `onFechaChange`
+
+Contenido del documento:
+- `<DocumentHeader>` con: nombre "PARTICIPACION EN EL DILIGENCIAMIENTO DEL PTA - ATS", codigo "FIH04-077", version "001", fechaCreacion "10/03/2025", fechaEdicion "03/2025", subsistema "Alturas"
+- Bloque de texto normativo fijo (no editable):
+  > "En cumplimiento de lo establecido en la Resolucion 4272 de 2021 del Ministerio del Trabajo, por la cual se establecen los requisitos minimos de seguridad para el desarrollo de trabajo en alturas, declaro que he participado activamente en el diligenciamiento del Permiso de Trabajo en Alturas (PTA) y el Analisis de Trabajo Seguro (ATS), previo al inicio de las actividades de formacion y entrenamiento en trabajo en alturas."
+- Fecha de diligenciamiento (autocompletada desde `curso.fechaInicio`, editable por admin)
+- Datos del estudiante (NO editables): nombres, apellidos, tipo y numero de documento
+- Firma digital reutilizada desde `matricula.firmaBase64`
+- Marca de agua "Borrador" si no hay firma
+
+---
+
+### 6. Nuevo componente: ParticipacionPtaAtsPreviewDialog
+
+**Archivo**: `src/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog.tsx`
+
+Mismo patron que los otros dialogs de preview:
+- Vista previa + descarga PDF
+- Nombre de archivo: `participacion-pta-ats-{tipoDoc}-{numDoc}-{nombres}-{apellidos}.pdf`
+- Bloqueado si no hay firma previa
+
+---
+
+### 7. Integrar en MatriculaDetallePage
+
+En `src/pages/matriculas/MatriculaDetallePage.tsx`:
+
+- Importar los dos nuevos PreviewDialog
+- Agregar estados para `previewFormato` que acepte los nuevos IDs
+- En la seccion "Formatos para Formacion" del sidebar, agregar los dos nuevos formatos a la lista de `FormatosList`:
+  - "Registro de Asistencia" con estado calculado (completo si firma existe, borrador si no)
+  - "Participacion PTA - ATS" con estado calculado igual
+- Renderizar los dos nuevos PreviewDialog condicionalmente segun `previewFormato`
+
+---
+
+### Resumen de archivos
+
+| Archivo | Accion |
+|---------|--------|
+| `src/data/mockData.ts` | Modificar m1: agregar firma |
+| `src/types/formato.ts` | Agregar tipos nuevos |
+| `src/components/matriculas/formatos/RegistroAsistenciaDocument.tsx` | Crear |
+| `src/components/matriculas/formatos/RegistroAsistenciaPreviewDialog.tsx` | Crear |
+| `src/components/matriculas/formatos/ParticipacionPtaAtsDocument.tsx` | Crear |
+| `src/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog.tsx` | Crear |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Integrar formatos |
 

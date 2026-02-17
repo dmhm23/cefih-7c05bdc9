@@ -1,84 +1,81 @@
 
 
-## Sistema de Comentarios para Matriculas
+## Encabezado Reutilizable para Documentos de Formatos
 
 ### Resumen
 
-Reemplazar el campo estatico "Observaciones" y agregar un sistema de comentarios con historial en dos secciones de la vista `/matriculas/:id`:
+Crear un componente reutilizable `DocumentHeader` que renderice un encabezado tipo grid/tabla estructurada para todos los documentos generados. Se implementara primero en el formato "Informacion del Aprendiz" con valores fijos que en el futuro seran editables desde un modulo "Formatos".
 
-1. **Cobros / Cartera** -- nuevo bloque de comentarios de seguimiento de cartera
-2. **Observaciones finales** -- convertir de campo de texto estatico a sistema de comentarios
+### Estructura visual del encabezado
 
-Ambas secciones compartiran el mismo componente reutilizable de comentarios.
+```text
++-------------------+-------------------------------+---------------------------------------------+
+|                   |                               | FREDDY IVAN HOYOS INSTRUCTORES Y            |
+|    [LOGO]         |   INFORMACION DEL APRENDIZ    | FACILITADORES LTDA.                         |
+|   (centrado       |   (centrado, mayusculas,      +---------------------------------------------+
+|    vertical y     |    tipografia destacada)       | SISTEMA DE GESTION INTEGRADO                |
+|   horizontalmente)|                               +---------------------------------------------+
+|                   +---------------+---------------+ SUBSISTEMA: Alturas                         |
+|                   | Codigo:       | Version:      +----------------------+----------------------+
+|                   | FIH04-013     | 021           | CREACION: 22/03/2018 | EDICION: 17/02/2025  |
++-------------------+---------------+---------------+----------------------+----------------------+
+```
 
 ### Archivos nuevos
 
-**`src/types/comentario.ts`**
-- Interfaz `Comentario`: id, matriculaId, seccion (`'cartera' | 'observaciones'`), texto, usuarioId, usuarioNombre, creadoEn, editadoEn (opcional)
-- Type `SeccionComentario`
+**`src/assets/logo-empresa.png`**
+- Copiar la imagen subida por el usuario al directorio de assets del proyecto
 
-**`src/components/shared/ComentariosSection.tsx`**
-- Componente reutilizable que recibe: lista de comentarios, seccion, matriculaId, callbacks (agregar, editar, eliminar)
-- Input de texto + boton "Agregar" para nuevos comentarios
-- Lista cronologica de comentarios, cada uno mostrando: usuario, fecha/hora formateada, texto, botones de editar y eliminar
-- Collapsible: si hay mas de 3 comentarios, mostrar los 3 mas recientes y un boton "Ver todos (N)" que expande el historial completo usando el componente Collapsible ya disponible
-- Modo edicion inline: al hacer clic en editar, el texto se convierte en input editable con botones guardar/cancelar
-- Confirmacion al eliminar usando el toast o un mini-confirm inline
-
-**`src/services/comentarioService.ts`**
-- Almacen en memoria (`mockComentarios` array en `mockData.ts`)
-- Metodos: `getByMatriculaSeccion(matriculaId, seccion)`, `create(data)`, `update(id, texto)`, `delete(id)`
-- Cada operacion crea un registro en `mockAuditLogs` con accion crear/editar/eliminar, incluyendo usuario y timestamp
-
-**`src/hooks/useComentarios.ts`**
-- `useComentarios(matriculaId, seccion)` -- query
-- `useCreateComentario()` -- mutation
-- `useUpdateComentario()` -- mutation
-- `useDeleteComentario()` -- mutation
-- Todos invalidan el query de comentarios al completarse
+**`src/components/shared/DocumentHeader.tsx`**
+- Componente reutilizable con las siguientes props:
+  - `nombreDocumento`: string (ej: "INFORMACION DEL APRENDIZ")
+  - `codigo`: string (ej: "FIH04-013")
+  - `version`: string (ej: "021")
+  - `fechaCreacion`: string (ej: "22/03/2018")
+  - `fechaEdicion`: string (ej: "17/02/2025")
+  - `empresaNombre`: string (valor por defecto fijo)
+  - `sistemaGestion`: string (valor por defecto: "SISTEMA DE GESTION INTEGRADO")
+  - `subsistema`: string (ej: "Alturas")
+- Renderiza un grid de 3 columnas con bordes estilo tabla
+- Bloque izquierdo: logo importado desde `@/assets/logo-empresa.png`, centrado en ambos ejes
+- Bloque central: nombre del documento en mayusculas con tipografia destacada; fila inferior dividida en Codigo y Version
+- Bloque derecho: filas apiladas con nombre de empresa (negrita, mayusculas), sistema de gestion, subsistema, y una fila dividida con fechas de creacion y edicion
+- Usa clases CSS vanilla (no Tailwind) para compatibilidad con el sistema de impresion `window.print()`
 
 ### Archivos modificados
 
-**`src/data/mockData.ts`**
-- Agregar array `mockComentarios` exportado (puede iniciar vacio o con 2-3 comentarios de ejemplo para m1)
+**`src/components/matriculas/formatos/InfoAprendizDocument.tsx`**
+- Importar `DocumentHeader`
+- Reemplazar el bloque actual del titulo (lineas 184-191, el `<div className="text-center mb-4">` con `<h1>` y subtitulo borrador) por el nuevo componente `<DocumentHeader>` con los valores:
+  - nombreDocumento: "INFORMACION DEL APRENDIZ"
+  - codigo: "FIH04-013"
+  - version: "021"
+  - fechaCreacion: "22/03/2018"
+  - fechaEdicion: "17/02/2025"
+  - subsistema: "Alturas"
+- Mantener la logica de "Borrador" (marca de agua y subtitulo) debajo del encabezado
 
-**`src/types/audit.ts`**
-- Agregar `'comentario'` al tipo `TipoEntidad`
+**`src/components/matriculas/formatos/InfoAprendizPreviewDialog.tsx`**
+- Agregar estilos CSS para el encabezado en `PRINT_STYLES`:
+  - `.doc-header`: grid de 3 columnas con bordes solidos
+  - `.doc-header-logo`: celda del logo con centrado flex
+  - `.doc-header-center`: celda central con nombre del documento
+  - `.doc-header-right`: celda derecha con filas internas
+  - Tipografias y espaciados consistentes con el resto del documento
+  - `break-inside: avoid` para evitar corte en impresion
 
-**`src/pages/matriculas/MatriculaDetallePage.tsx`**
-- En la seccion "Cobros / Cartera" (linea 480-560): agregar `<ComentariosSection>` despues de los campos de pago, con seccion `'cartera'`
-- Reemplazar la seccion "Observaciones" (lineas 583-594): eliminar el `EditableField` estatico y colocar `<ComentariosSection>` con seccion `'observaciones'`
-- Importar el nuevo componente
+### Valores iniciales fijos
 
-### Detalle del componente ComentariosSection
+| Campo | Valor |
+|-------|-------|
+| Nombre documento | INFORMACION DEL APRENDIZ |
+| Codigo | FIH04-013 |
+| Version | 021 |
+| Fecha creacion | 22/03/2018 |
+| Fecha edicion | 17/02/2025 |
+| Empresa | FREDDY IVAN HOYOS INSTRUCTORES Y FACILITADORES LTDA. |
+| Sistema | SISTEMA DE GESTION INTEGRADO |
+| Subsistema | Alturas |
 
-```text
-+------------------------------------------+
-| Comentarios                    [Colapsar] |
-+------------------------------------------+
-| [Escriba un comentario...] [Agregar]     |
-+------------------------------------------+
-| Usuario Actual - 17 feb 2026, 14:30      |
-| Texto del comentario aqui...             |
-|                          [Editar] [Eliminar]|
-+------------------------------------------+
-| Usuario Actual - 16 feb 2026, 09:15      |
-| Otro comentario...                       |
-|                          [Editar] [Eliminar]|
-+------------------------------------------+
-| > Ver todos los comentarios (5)          |
-+------------------------------------------+
-```
+Estos valores se mantendran como constantes/props por defecto hasta que se construya el modulo "Formatos" en el roadmap.
 
-- Los comentarios se muestran del mas reciente al mas antiguo
-- El boton "Colapsar/Expandir" minimiza toda la seccion
-- Cada accion (crear, editar, eliminar) genera un audit log automaticamente desde el servicio
-
-### Registro en logs (audit)
-
-Cada operacion en `comentarioService` registra en `mockAuditLogs`:
-- **Crear**: entidadTipo `'comentario'`, accion `'crear'`, valorNuevo con el texto
-- **Editar**: accion `'editar'`, valorAnterior con texto viejo, valorNuevo con texto nuevo
-- **Eliminar**: accion `'eliminar'`, valorAnterior con el comentario eliminado
-
-Todos incluyen usuarioId, usuarioNombre y timestamp. La vista de logs del administrador se implementara posteriormente.

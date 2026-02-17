@@ -287,22 +287,6 @@ export default function MatriculaDetallePage() {
         </div>
       </div>
 
-      {/* Barra resumen */}
-      <div className="flex gap-4 text-sm border rounded p-2.5">
-        <div className="flex-1">
-          <span className="text-xs text-muted-foreground">Estudiante:</span>{" "}
-          <span className="font-medium">{persona?.nombres} {persona?.apellidos}</span>
-        </div>
-        <div className="border-l" />
-        <div
-          className="flex-1 cursor-pointer hover:text-primary transition-colors"
-          onClick={() => matricula.cursoId && navigate(`/cursos/${matricula.cursoId}`)}
-        >
-          <span className="text-xs text-muted-foreground">Curso:</span>{" "}
-          <span className="font-medium">{curso?.nombre || "Sin curso"}</span>
-          <span className="text-xs text-muted-foreground ml-1">({TIPO_FORMACION_LABELS[matricula.tipoFormacion]})</span>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Panel principal */}

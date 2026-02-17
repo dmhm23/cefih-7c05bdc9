@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useRef } from "react";
+import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { DocumentoRequerido } from "@/types/matricula";
@@ -42,6 +41,7 @@ export function DocumentosCarga({
   const [consolidado, setConsolidado] = useState(false);
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
   const [expanded, setExpanded] = useState(!compact);
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
 
   const completados = documentos.filter((d) => d.estado !== "pendiente").length;
   const total = documentos.length;
@@ -49,19 +49,60 @@ export function DocumentosCarga({
 
   const handleFileChange = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) onUpload(docId, file);
+    if (file) {
+      onUpload(docId, file);
+      showPreview(file);
+    }
   };
 
   const handleConsolidadoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onUploadConsolidado && tiposSeleccionados.length > 0) {
-      onUploadConsolidado(file, tiposSeleccionados);
+    if (file && onUploadConsolidado) {
+      const tipos = tiposSeleccionados.length > 0 ? tiposSeleccionados : documentos.filter(d => d.estado === "pendiente").map(d => d.tipo);
+      onUploadConsolidado(file, tipos);
+      showPreview(file);
+    }
+  };
+
+  const showPreview = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setPreviewFile({ url, name: file.name, type: file.type });
+  };
+
+  const closePreview = () => {
+    if (previewFile) {
+      URL.revokeObjectURL(previewFile.url);
+      setPreviewFile(null);
     }
   };
 
   const toggleTipo = (tipo: string) => {
     setTiposSeleccionados((prev) =>
       prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]
+    );
+  };
+
+  const renderFechaFields = (doc: DocumentoRequerido) => {
+    if ((doc.tipo !== 'examen_medico' && doc.tipo !== 'arl') || !onFechaChange) return null;
+    return (
+      <div className="flex gap-2 mt-1">
+        {doc.tipo === 'examen_medico' && (
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground whitespace-nowrap">Fecha examen:</Label>
+            <Input type="date" className="h-6 text-xs w-32 px-1"
+              value={doc.fechaDocumento || ""}
+              onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
+          </div>
+        )}
+        {doc.tipo === 'arl' && (
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground whitespace-nowrap">Inicio cobertura:</Label>
+            <Input type="date" className="h-6 text-xs w-32 px-1"
+              value={doc.fechaInicioCobertura || ""}
+              onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -77,13 +118,44 @@ export function DocumentosCarga({
             </Button>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{consolidado ? "Consolidado" : "Individual"}</span>
-          <Switch checked={consolidado} onCheckedChange={setConsolidado} />
-        </div>
       </div>
       <Progress value={progress} className="h-1.5" />
 
+      {/* Mode selector - Segmented tabs */}
+      {expanded && (
+        <div className="space-y-1">
+          <div className="inline-flex rounded-lg bg-muted p-1 w-full">
+            <button
+              type="button"
+              onClick={() => setConsolidado(false)}
+              className={cn(
+                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all text-center",
+                !consolidado
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              📄 Individual
+              <span className="block text-[10px] font-normal opacity-70">Un archivo por documento</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConsolidado(true)}
+              className={cn(
+                "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all text-center",
+                consolidado
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              📋 Consolidado
+              <span className="block text-[10px] font-normal opacity-70">Varios documentos en un PDF</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Individual mode */}
       {expanded && !consolidado && (
         <div className="space-y-2">
           {documentos.map((doc) => (
@@ -107,26 +179,7 @@ export function DocumentosCarga({
                     <ExternalLink className="h-3 w-3" /> Ver en Drive
                   </a>
                 )}
-                {(doc.tipo === 'examen_medico' || doc.tipo === 'arl') && onFechaChange && (
-                  <div className="flex gap-2 mt-1">
-                    {doc.tipo === 'examen_medico' && (
-                      <div className="flex items-center gap-1">
-                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Fecha examen:</Label>
-                        <Input type="date" className="h-6 text-xs w-32 px-1"
-                          value={doc.fechaDocumento || ""}
-                          onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
-                      </div>
-                    )}
-                    {doc.tipo === 'arl' && (
-                      <div className="flex items-center gap-1">
-                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Inicio cobertura:</Label>
-                        <Input type="date" className="h-6 text-xs w-32 px-1"
-                          value={doc.fechaInicioCobertura || ""}
-                          onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
-                      </div>
-                    )}
-                  </div>
-                )}
+                {renderFechaFields(doc)}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="outline" className={cn("text-xs", ESTADO_COLORS[doc.estado])}>
@@ -147,29 +200,73 @@ export function DocumentosCarga({
         </div>
       )}
 
+      {/* Consolidado mode */}
       {expanded && consolidado && (
         <div className="space-y-3 p-3 border rounded-lg">
           <p className="text-sm text-muted-foreground">Seleccione los documentos incluidos en el PDF:</p>
           <div className="space-y-2">
-            {documentos.filter(d => d.estado === "pendiente").map((doc) => (
-              <label key={doc.id} className="flex items-center gap-2 cursor-pointer">
-                <Checkbox checked={tiposSeleccionados.includes(doc.tipo)}
-                  onCheckedChange={() => toggleTipo(doc.tipo)} />
-                <span className="text-sm">{doc.nombre}</span>
-              </label>
-            ))}
+            {documentos.map((doc) => {
+              const isPendiente = doc.estado === "pendiente";
+              return (
+                <div key={doc.id}>
+                  <label className={cn("flex items-center gap-2", isPendiente ? "cursor-pointer" : "cursor-default")}>
+                    <Checkbox
+                      checked={tiposSeleccionados.includes(doc.tipo)}
+                      onCheckedChange={() => toggleTipo(doc.tipo)}
+                      disabled={!isPendiente}
+                    />
+                    <span className={cn("text-sm", !isPendiente && "text-muted-foreground")}>{doc.nombre}</span>
+                    {!isPendiente && (
+                      <Badge variant="outline" className={cn("text-[10px] ml-1", ESTADO_COLORS[doc.estado])}>
+                        {ESTADO_LABELS[doc.estado]}
+                      </Badge>
+                    )}
+                  </label>
+                  {renderFechaFields(doc)}
+                </div>
+              );
+            })}
           </div>
-          {tiposSeleccionados.length > 0 && (
-            <label className="cursor-pointer">
-              <input type="file" className="hidden" accept=".pdf"
-                onChange={handleConsolidadoUpload} disabled={isUploading} />
-              <Button type="button" variant="outline" size="sm" className="w-full" asChild>
-                <span>
-                  <Upload className="h-3.5 w-3.5 mr-1" />
-                  Cargar PDF consolidado ({tiposSeleccionados.length} docs)
-                </span>
-              </Button>
-            </label>
+
+          {/* Upload always visible */}
+          <label className="cursor-pointer">
+            <input type="file" className="hidden" accept=".pdf"
+              onChange={handleConsolidadoUpload} disabled={isUploading} />
+            <Button type="button" variant="outline" size="sm" className="w-full" asChild>
+              <span>
+                <Upload className="h-3.5 w-3.5 mr-1" />
+                Cargar PDF consolidado
+                {tiposSeleccionados.length > 0 && ` (${tiposSeleccionados.length} seleccionados)`}
+              </span>
+            </Button>
+          </label>
+        </div>
+      )}
+
+      {/* File preview */}
+      {previewFile && (
+        <div className="border rounded-lg overflow-hidden">
+          <div className="flex items-center justify-between bg-muted px-3 py-1.5">
+            <div className="flex items-center gap-2 text-xs font-medium truncate">
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{previewFile.name}</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={closePreview}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {previewFile.type === "application/pdf" ? (
+            <iframe src={previewFile.url} className="w-full h-64 border-0" title="Vista previa" />
+          ) : previewFile.type.startsWith("image/") ? (
+            <img src={previewFile.url} alt="Vista previa" className="w-full max-h-64 object-contain p-2" />
+          ) : (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              <FileText className="h-8 w-8 mx-auto mb-2" />
+              <p>{previewFile.name}</p>
+              <a href={previewFile.url} download={previewFile.name} className="text-xs text-primary hover:underline mt-1 inline-block">
+                Descargar archivo
+              </a>
+            </div>
           )}
         </div>
       )}

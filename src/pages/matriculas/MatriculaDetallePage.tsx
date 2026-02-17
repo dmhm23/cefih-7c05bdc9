@@ -29,6 +29,8 @@ import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
+import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
+import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
 import {
   TIPOS_VINCULACION,
   AREAS_TRABAJO,
@@ -745,6 +747,16 @@ export default function MatriculaDetallePage() {
                   nombre: "Información del Aprendiz",
                   estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
                 },
+                {
+                  id: "registro_asistencia",
+                  nombre: "Registro de Asistencia",
+                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
+                },
+                {
+                  id: "participacion_pta_ats",
+                  nombre: "Participación PTA - ATS",
+                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
+                },
               ]}
               onPreview={(id) => setPreviewFormato(id)}
               onDownload={(id) => setPreviewFormato(id)}
@@ -814,9 +826,23 @@ export default function MatriculaDetallePage() {
 
 
 
-      {/* Preview de formato */}
+      {/* Preview de formatos */}
       <InfoAprendizPreviewDialog
         open={previewFormato === "info_aprendiz"}
+        onOpenChange={(open) => !open && setPreviewFormato(null)}
+        persona={persona ?? null}
+        matricula={matricula}
+        curso={curso ?? null}
+      />
+      <RegistroAsistenciaPreviewDialog
+        open={previewFormato === "registro_asistencia"}
+        onOpenChange={(open) => !open && setPreviewFormato(null)}
+        persona={persona ?? null}
+        matricula={matricula}
+        curso={curso ?? null}
+      />
+      <ParticipacionPtaAtsPreviewDialog
+        open={previewFormato === "participacion_pta_ats"}
         onOpenChange={(open) => !open && setPreviewFormato(null)}
         persona={persona ?? null}
         matricula={matricula}

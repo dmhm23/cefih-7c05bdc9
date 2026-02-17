@@ -4,5 +4,5 @@ export interface FormatoDocumento {
   id: string;
   nombre: string;
   estado: EstadoFormato;
-  tipo: 'info_aprendiz';
+  tipo: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats';
 }

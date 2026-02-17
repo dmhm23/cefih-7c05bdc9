@@ -74,7 +74,7 @@ export default function DocumentHeader({
   );
 }
 
-const border = "1px solid #374151";
+const border = "1px solid #9ca3af";
 
 const styles: Record<string, React.CSSProperties> = {
   header: {
@@ -93,8 +93,8 @@ const styles: Record<string, React.CSSProperties> = {
     borderRight: border,
   },
   logoImg: {
-    maxWidth: "100px",
-    maxHeight: "70px",
+    maxWidth: "105px",
+    maxHeight: "73px",
     objectFit: "contain",
   },
   center: {

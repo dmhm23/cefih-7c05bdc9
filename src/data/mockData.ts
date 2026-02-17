@@ -2,6 +2,7 @@ import { Persona } from '@/types/persona';
 import { Matricula } from '@/types/matricula';
 import { Curso } from '@/types/curso';
 import { AuditLog } from '@/types/audit';
+import { Comentario } from '@/types/comentario';
 
 // ============ PERSONAS ============
 export const mockPersonas: Persona[] = [
@@ -379,5 +380,36 @@ export const mockAuditLogs: AuditLog[] = [
     usuarioId: 'admin1',
     usuarioNombre: 'Administrador Sistema',
     timestamp: '2024-02-28T16:00:00Z',
+  },
+];
+
+// ============ COMENTARIOS ============
+export const mockComentarios: Comentario[] = [
+  {
+    id: 'com1',
+    matriculaId: 'm1',
+    seccion: 'cartera',
+    texto: 'Se realizó seguimiento telefónico. El estudiante confirma pago para la próxima semana.',
+    usuarioId: 'admin1',
+    usuarioNombre: 'Administrador Sistema',
+    creadoEn: '2024-02-16T09:15:00Z',
+  },
+  {
+    id: 'com2',
+    matriculaId: 'm1',
+    seccion: 'cartera',
+    texto: 'Pago recibido por transferencia bancaria. Comprobante verificado.',
+    usuarioId: 'admin1',
+    usuarioNombre: 'Administrador Sistema',
+    creadoEn: '2024-02-18T14:30:00Z',
+  },
+  {
+    id: 'com3',
+    matriculaId: 'm1',
+    seccion: 'observaciones',
+    texto: 'Estudiante enviado por la empresa para formación inicial. Documentación en proceso.',
+    usuarioId: 'admin1',
+    usuarioNombre: 'Administrador Sistema',
+    creadoEn: '2024-02-15T10:00:00Z',
   },
 ];

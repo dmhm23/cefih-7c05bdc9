@@ -1,4 +1,4 @@
-export type TipoEntidad = 'persona' | 'matricula' | 'curso';
+export type TipoEntidad = 'persona' | 'matricula' | 'curso' | 'comentario';
 export type TipoAccion = 'crear' | 'editar' | 'eliminar';
 
 export interface AuditLog {

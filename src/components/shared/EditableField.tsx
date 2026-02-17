@@ -132,7 +132,7 @@ export function EditableField({
       return (
         <div
           onClick={() => setIsEditing(true)}
-          className="cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+          className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 -mx-2 -my-1 transition-colors ring-1 ring-transparent hover:ring-border"
         >
           {renderValue()}
         </div>
@@ -147,13 +147,13 @@ export function EditableField({
             value={value}
             onValueChange={(val) => handleSelectChange(val)}
             placeholder={placeholder}
-            className="h-8 text-sm border-none shadow-none hover:bg-muted/50 px-2 -mx-2"
+            className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors"
           />
         );
       }
       return (
         <Select value={value} onValueChange={handleSelectChange}>
-          <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-muted/50 px-2 -mx-2">
+          <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors">
             <SelectValue placeholder={placeholder}>
               {badge && value ? (
                 <Badge variant={badgeVariant} className="font-normal">
@@ -184,7 +184,7 @@ export function EditableField({
       return (
         <Popover>
           <PopoverTrigger asChild>
-            <div className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 transition-colors">
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 -mx-2 -my-1 transition-colors ring-1 ring-transparent hover:ring-border">
               <span className={cn(!value && "text-muted-foreground italic")}>
                 {displayDate}
               </span>

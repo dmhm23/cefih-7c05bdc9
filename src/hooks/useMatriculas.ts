@@ -166,6 +166,8 @@ export const useUploadDocumento = () => {
         estado: 'cargado',
         fechaCarga: new Date().toISOString().split('T')[0],
         urlDrive: url,
+        archivoNombre: file.name,
+        archivoTamano: file.size,
       });
     },
     onSuccess: (_, { matriculaId }) => {

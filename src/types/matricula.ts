@@ -53,6 +53,8 @@ export interface DocumentoRequerido {
   fechaDocumento?: string;
   fechaInicioCobertura?: string;
   opcional?: boolean;
+  archivoNombre?: string;
+  archivoTamano?: number;
 }
 
 export interface Matricula {

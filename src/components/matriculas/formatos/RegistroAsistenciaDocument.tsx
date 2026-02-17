@@ -90,9 +90,7 @@ export default function RegistroAsistenciaDocument({ persona, matricula, curso, 
           <FieldCell label="Nombres y Apellidos" value={persona ? `${persona.nombres} ${persona.apellidos}` : ""} span />
           <FieldCell label="Tipo de documento" value={getLabel(persona?.tipoDocumento, TIPOS_DOCUMENTO)} />
           <FieldCell label="Número de documento" value={persona?.numeroDocumento} />
-          <FieldCell label="Número de celular" value={persona?.telefono} />
-          <FieldCell label="Tema de la actividad" value={curso?.nombre} />
-          <FieldCell label="Instructor a cargo" value={curso?.entrenadorNombre} span />
+          <FieldCell label="Instructor a cargo" value={curso?.entrenadorNombre} />
         </div>
       </div>
 

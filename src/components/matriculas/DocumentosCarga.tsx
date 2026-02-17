@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, RefreshCw } from "lucide-react";
+import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -71,13 +72,13 @@ export function DocumentosCarga({
   };
 
   const storePreview = (docId: string, file: File) => {
-    const url = URL.createObjectURL(file);
-    const data: PreviewData = { url, name: file.name, type: file.type, size: file.size };
-    setPreviews((prev) => {
-      if (prev[docId]) URL.revokeObjectURL(prev[docId].url);
-      return { ...prev, [docId]: data };
-    });
-    return data;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const data: PreviewData = { url: dataUrl, name: file.name, type: file.type, size: file.size };
+      setPreviews((prev) => ({ ...prev, [docId]: data }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleFileChange = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,8 +102,12 @@ export function DocumentosCarga({
         : documentos.filter((d) => d.estado === "pendiente").map((d) => d.tipo);
       onUploadConsolidado(file, tipos);
     }
-    const url = URL.createObjectURL(file);
-    setConsolidadoPreview({ url, name: file.name, type: file.type, size: file.size });
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setConsolidadoPreview({ url: dataUrl, name: file.name, type: file.type, size: file.size });
+    };
+    reader.readAsDataURL(file);
   };
 
   const closePreview = (docId: string) => {
@@ -110,10 +115,7 @@ export function DocumentosCarga({
   };
 
   const closeConsolidadoPreview = () => {
-    if (consolidadoPreview) {
-      URL.revokeObjectURL(consolidadoPreview.url);
-      setConsolidadoPreview(null);
-    }
+    setConsolidadoPreview(null);
   };
 
   const toggleTipo = (tipo: string) => {
@@ -168,9 +170,15 @@ export function DocumentosCarga({
           <span className="truncate">{data.name}</span>
           <span className="text-muted-foreground shrink-0">· {formatFileSize(data.size)}</span>
         </div>
-        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onClose}>
-          <X className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" className="h-6 px-1.5 text-xs"
+            onClick={() => { const w = window.open(); if (w) { w.document.write(`<iframe src="${data.url}" style="width:100%;height:100%;border:none"></iframe>`); w.document.title = data.name; } }}>
+            <ExternalLink className="h-3 w-3 mr-1" /> Abrir
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onClose}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
       {data.type === "application/pdf" ? (
         <iframe src={data.url} className="w-full h-52 border-0" title="Vista previa" />
@@ -260,12 +268,6 @@ export function DocumentosCarga({
                     <Badge variant="outline" className={cn("text-xs", ESTADO_COLORS[doc.estado])}>
                       {ESTADO_LABELS[doc.estado]}
                     </Badge>
-                    {hasPreview && (
-                      <Button variant="ghost" size="sm" className="h-7 px-1.5 text-xs"
-                        onClick={() => setActivePreview(isActive ? null : doc.id)}>
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
                     {doc.estado === "pendiente" ? (
                       <label className="cursor-pointer">
                         <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
@@ -275,13 +277,28 @@ export function DocumentosCarga({
                         </div>
                       </label>
                     ) : (
-                      <label className="cursor-pointer">
-                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
-                          <RefreshCw className="h-3 w-3" />
-                        </div>
-                      </label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setActivePreview(isActive ? null : doc.id)} disabled={!hasPreview}>
+                            <Eye className="h-3.5 w-3.5 mr-2" /> Vista previa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <label className="cursor-pointer flex items-center">
+                              <Upload className="h-3.5 w-3.5 mr-2" /> Volver a cargar
+                              <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
+                            </label>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>

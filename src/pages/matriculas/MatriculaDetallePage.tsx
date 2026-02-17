@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CreditCard } from "lucide-react";
+import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,7 @@ export default function MatriculaDetallePage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [pagoDialogOpen, setPagoDialogOpen] = useState(false);
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
   const [facturaNumero, setFacturaNumero] = useState("");
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -213,7 +215,7 @@ export default function MatriculaDetallePage() {
       <div className="flex gap-4 text-sm border rounded p-2.5">
         <div
           className="flex-1 cursor-pointer hover:text-primary transition-colors"
-          onClick={() => navigate(`/personas/${matricula.personaId}`)}
+          onClick={() => setPersonaModalOpen(true)}
         >
           <span className="text-xs text-muted-foreground">Estudiante:</span>{" "}
           <span className="font-medium">{persona?.nombres} {persona?.apellidos}</span>
@@ -582,6 +584,77 @@ export default function MatriculaDetallePage() {
             </Button>
             <Button onClick={handleRegistrarPago}>
               Registrar Pago
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Persona */}
+      <Dialog open={personaModalOpen} onOpenChange={setPersonaModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Datos del Estudiante</DialogTitle>
+            <DialogDescription>Información personal del estudiante vinculado a esta matrícula.</DialogDescription>
+          </DialogHeader>
+          {persona ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm py-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Tipo documento</p>
+                <p className="font-medium">{persona.tipoDocumento}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Número documento</p>
+                <p className="font-medium">{persona.numeroDocumento}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Nombres</p>
+                <p className="font-medium">{persona.nombres}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Apellidos</p>
+                <p className="font-medium">{persona.apellidos}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Género</p>
+                <p className="font-medium">{persona.genero === "M" ? "Masculino" : "Femenino"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Fecha nacimiento</p>
+                <p className="font-medium">{persona.fechaNacimiento ? format(new Date(persona.fechaNacimiento), "dd/MM/yyyy") : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="font-medium">{persona.email || "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Teléfono</p>
+                <p className="font-medium">{persona.telefono || "—"}</p>
+              </div>
+              {persona.contactoEmergencia && (
+                <div className="col-span-2 border-t pt-2 mt-1">
+                  <p className="text-xs text-muted-foreground mb-1">Contacto de emergencia</p>
+                  <p className="font-medium">{persona.contactoEmergencia.nombre} · {persona.contactoEmergencia.telefono} <span className="text-muted-foreground text-xs">({persona.contactoEmergencia.parentesco})</span></p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-4">Cargando datos...</p>
+          )}
+          <DialogFooter className="flex-row justify-between sm:justify-between">
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0 gap-1"
+              onClick={() => {
+                setPersonaModalOpen(false);
+                navigate(`/personas/${matricula.personaId}`);
+              }}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Ver perfil completo
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPersonaModalOpen(false)}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

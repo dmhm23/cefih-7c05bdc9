@@ -49,7 +49,23 @@ const PRINT_STYLES = `
   body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 10mm; font-size: 12px; }
   
   .doc-root { max-width: 210mm; margin: 0 auto; position: relative; padding: 16px; background: white; }
-  .doc-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-align: center; margin-bottom: 12px; }
+
+  /* Document Header */
+  .doc-header { display: grid; grid-template-columns: 120px 1fr 1fr; border: 1px solid #374151; break-inside: avoid; font-size: 11px; line-height: 1.4; margin-bottom: 8px; }
+  .doc-header-logo { display: flex; align-items: center; justify-content: center; padding: 8px; border-right: 1px solid #374151; }
+  .doc-header-logo img { max-width: 100px; max-height: 70px; object-fit: contain; }
+  .doc-header-center { display: flex; flex-direction: column; border-right: 1px solid #374151; }
+  .doc-header-center-title { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px; text-align: center; }
+  .doc-header-center-meta { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid #374151; }
+  .doc-header-meta-cell { padding: 4px 8px; display: flex; flex-direction: column; }
+  .doc-header-meta-cell:first-child { border-right: 1px solid #374151; }
+  .doc-header-right { display: flex; flex-direction: column; }
+  .doc-header-empresa { font-weight: 700; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #374151; font-size: 11px; line-height: 1.3; }
+  .doc-header-sgi { padding: 4px 8px; border-bottom: 1px solid #374151; font-weight: 500; }
+  .doc-header-subsistema { padding: 4px 8px; border-bottom: 1px solid #374151; }
+  .doc-header-fechas { display: grid; grid-template-columns: 1fr 1fr; }
+  .doc-header-fecha-cell { padding: 4px 8px; font-size: 10px; font-weight: 500; }
+  .doc-header-fecha-cell:first-child { border-right: 1px solid #374151; }
   .borrador-subtitle { font-size: 10px; color: #d97706; margin-top: 4px; }
 
   .section-group { break-inside: avoid; }

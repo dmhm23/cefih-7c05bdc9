@@ -16,6 +16,7 @@ import {
   NIVELES_FORMACION_EMPRESA,
   PAISES,
 } from "@/data/formOptions";
+import DocumentHeader from "@/components/shared/DocumentHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -181,14 +182,19 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
         </div>
       )}
 
-      <div className="text-center mb-4">
-        <h1 className="doc-title text-base font-bold uppercase tracking-wide">Información del Aprendiz</h1>
-        {isBorrador && (
-          <p className="text-xs text-amber-600 mt-1 borrador-subtitle">
-            BORRADOR — Pendiente autorización y firma del aprendiz
-          </p>
-        )}
-      </div>
+      <DocumentHeader
+        nombreDocumento="INFORMACIÓN DEL APRENDIZ"
+        codigo="FIH04-013"
+        version="021"
+        fechaCreacion="22/03/2018"
+        fechaEdicion="17/02/2025"
+        subsistema="Alturas"
+      />
+      {isBorrador && (
+        <p className="text-xs text-amber-600 mt-1 text-center borrador-subtitle">
+          BORRADOR — Pendiente autorización y firma del aprendiz
+        </p>
+      )}
 
       {/* FICHA DE MATRÍCULA */}
       <div className="section-group">

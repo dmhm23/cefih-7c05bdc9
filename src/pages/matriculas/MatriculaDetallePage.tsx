@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
+import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
 import {
   TIPOS_VINCULACION,
@@ -559,6 +560,15 @@ export default function MatriculaDetallePage() {
             )}
           </div>
 
+          {/* Comentarios de Cartera */}
+          <div className="border rounded-lg p-4 shadow-sm">
+            <ComentariosSection
+              matriculaId={matricula.id}
+              seccion="cartera"
+              titulo="Seguimiento de Cartera"
+            />
+          </div>
+
           {/* Certificado */}
           <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -580,16 +590,12 @@ export default function MatriculaDetallePage() {
             </div>
           </div>
 
-          {/* Observaciones */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Observaciones
-            </h3>
-            <EditableField
-              label=""
-              value={getValue("observaciones")}
-              onChange={(v) => handleFieldChange("observaciones", v)}
-              placeholder="Sin observaciones"
+          {/* Observaciones - Sistema de comentarios */}
+          <div className="border rounded-lg p-4 shadow-sm">
+            <ComentariosSection
+              matriculaId={matricula.id}
+              seccion="observaciones"
+              titulo="Observaciones"
             />
           </div>
         </div>

@@ -21,7 +21,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -60,7 +59,6 @@ export default function MatriculaDetallePage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [pagoDialogOpen, setPagoDialogOpen] = useState(false);
-  const [personaModalOpen, setPersonaModalOpen] = useState(false);
   const [facturaNumero, setFacturaNumero] = useState("");
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -132,13 +130,6 @@ export default function MatriculaDetallePage() {
     setIsPersonaDirty(false);
   };
 
-  const handleClosePersonaModal = (open: boolean) => {
-    setPersonaModalOpen(open);
-    if (!open) {
-      setPersonaFormData({});
-      setIsPersonaDirty(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -296,12 +287,9 @@ export default function MatriculaDetallePage() {
         </div>
       </div>
 
-      {/* Barra resumen: Estudiante + Curso */}
+      {/* Barra resumen */}
       <div className="flex gap-4 text-sm border rounded p-2.5">
-        <div
-          className="flex-1 cursor-pointer hover:text-primary transition-colors"
-          onClick={() => setPersonaModalOpen(true)}
-        >
+        <div className="flex-1">
           <span className="text-xs text-muted-foreground">Estudiante:</span>{" "}
           <span className="font-medium">{persona?.nombres} {persona?.apellidos}</span>
         </div>
@@ -319,6 +307,127 @@ export default function MatriculaDetallePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Panel principal */}
         <div className="lg:col-span-2 space-y-4">
+
+          {/* Datos del Estudiante */}
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Datos del Estudiante
+              </h3>
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 gap-1 h-auto text-xs"
+                onClick={() => navigate(`/personas/${matricula.personaId}`)}
+              >
+                <ExternalLink className="h-3 w-3" />
+                Ver perfil completo
+              </Button>
+            </div>
+            {persona ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <EditableField
+                    label="Nombres"
+                    value={getPersonaValue("nombres")}
+                    onChange={(v) => handlePersonaFieldChange("nombres", v)}
+                  />
+                  <EditableField
+                    label="Apellidos"
+                    value={getPersonaValue("apellidos")}
+                    onChange={(v) => handlePersonaFieldChange("apellidos", v)}
+                  />
+                  <EditableField
+                    label="Tipo Documento"
+                    value={getPersonaValue("tipoDocumento")}
+                    displayValue={getDisplayLabel(getPersonaValue("tipoDocumento"), TIPOS_DOCUMENTO)}
+                    onChange={(v) => handlePersonaFieldChange("tipoDocumento", v)}
+                    type="select"
+                    options={[...TIPOS_DOCUMENTO]}
+                    badge
+                  />
+                  <EditableField
+                    label="No. Documento"
+                    value={getPersonaValue("numeroDocumento")}
+                    onChange={() => {}}
+                    editable={false}
+                  />
+                  <EditableField
+                    label="Género"
+                    value={getPersonaValue("genero")}
+                    displayValue={getDisplayLabel(getPersonaValue("genero"), GENEROS)}
+                    onChange={(v) => handlePersonaFieldChange("genero", v)}
+                    type="select"
+                    options={[...GENEROS]}
+                  />
+                  <EditableField
+                    label="Fecha Nacimiento"
+                    value={getPersonaValue("fechaNacimiento")}
+                    onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
+                    type="date"
+                  />
+                  <EditableField
+                    label="RH"
+                    value={getPersonaValue("rh")}
+                    displayValue={getDisplayLabel(getPersonaValue("rh"), GRUPOS_SANGUINEOS)}
+                    onChange={(v) => handlePersonaFieldChange("rh", v)}
+                    type="select"
+                    options={[...GRUPOS_SANGUINEOS]}
+                    badge
+                  />
+                  <EditableField
+                    label="Nivel Educativo"
+                    value={getPersonaValue("nivelEducativo")}
+                    displayValue={getDisplayLabel(getPersonaValue("nivelEducativo"), NIVELES_EDUCATIVOS)}
+                    onChange={(v) => handlePersonaFieldChange("nivelEducativo", v)}
+                    type="select"
+                    options={[...NIVELES_EDUCATIVOS]}
+                  />
+                  <EditableField
+                    label="País de Nacimiento"
+                    value={getPersonaValue("paisNacimiento")}
+                    displayValue={getDisplayLabel(getPersonaValue("paisNacimiento"), PAISES)}
+                    onChange={(v) => handlePersonaFieldChange("paisNacimiento", v)}
+                    type="select"
+                    options={[...PAISES]}
+                  />
+                  <EditableField
+                    label="Email"
+                    value={getPersonaValue("email")}
+                    onChange={(v) => handlePersonaFieldChange("email", v)}
+                    placeholder="Sin email"
+                  />
+                  <EditableField
+                    label="Teléfono"
+                    value={getPersonaValue("telefono")}
+                    onChange={(v) => handlePersonaFieldChange("telefono", v)}
+                  />
+                </div>
+                <div className="border-t pt-3 mt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Contacto de Emergencia</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <EditableField
+                      label="Nombre"
+                      value={getPersonaEmergencyValue("nombre")}
+                      onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "nombre", v)}
+                    />
+                    <EditableField
+                      label="Teléfono"
+                      value={getPersonaEmergencyValue("telefono")}
+                      onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "telefono", v)}
+                    />
+                    <EditableField
+                      label="Parentesco"
+                      value={getPersonaEmergencyValue("parentesco")}
+                      onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "parentesco", v)}
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Cargando datos del estudiante...</p>
+            )}
+          </div>
 
           {/* Historial de Formación Previa */}
           {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
@@ -600,6 +709,47 @@ export default function MatriculaDetallePage() {
 
         {/* Sidebar - Checklist compacto */}
         <div className="space-y-4">
+          {/* Curso */}
+          <div className="border rounded-lg p-4 shadow-sm space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Curso
+            </h3>
+            {curso ? (
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium">{curso.nombre}</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Fecha inicio</p>
+                    <p>{format(new Date(curso.fechaInicio), "d MMM yyyy", { locale: es })}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Fecha fin</p>
+                    <p>{format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Duración</p>
+                    <p>{curso.horasTotales}h ({curso.duracionDias} días)</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Entrenador</p>
+                    <p>{curso.entrenadorNombre}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="px-0 gap-1 h-auto text-xs"
+                  onClick={() => navigate(`/cursos/${curso.id}`)}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Ver curso
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin curso asignado</p>
+            )}
+          </div>
+
           <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Formatos para Formación
@@ -640,13 +790,13 @@ export default function MatriculaDetallePage() {
       </div>
 
       {/* Barra flotante de guardar */}
-      {isDirty && (
+      {(isDirty || isPersonaDirty) && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 bg-background border rounded-lg shadow-lg p-3">
-          <Button variant="outline" size="sm" onClick={handleCancel}>
+          <Button variant="outline" size="sm" onClick={() => { handleCancel(); handleCancelPersona(); }}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={updateMatricula.isPending}>
-            {updateMatricula.isPending ? "Guardando..." : "Guardar Cambios"}
+          <Button size="sm" onClick={async () => { if (isDirty) await handleSave(); if (isPersonaDirty) await handleSavePersona(); }} disabled={updateMatricula.isPending || updatePersona.isPending}>
+            {(updateMatricula.isPending || updatePersona.isPending) ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </div>
       )}
@@ -678,151 +828,7 @@ export default function MatriculaDetallePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Persona */}
-      <Dialog open={personaModalOpen} onOpenChange={handleClosePersonaModal}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Datos del Estudiante</DialogTitle>
-            <DialogDescription>Edita la información personal del estudiante vinculado a esta matrícula.</DialogDescription>
-          </DialogHeader>
-          {persona ? (
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                <EditableField
-                  label="Nombres"
-                  value={getPersonaValue("nombres")}
-                  onChange={(v) => handlePersonaFieldChange("nombres", v)}
-                />
-                <EditableField
-                  label="Apellidos"
-                  value={getPersonaValue("apellidos")}
-                  onChange={(v) => handlePersonaFieldChange("apellidos", v)}
-                />
-                <EditableField
-                  label="Tipo Documento"
-                  value={getPersonaValue("tipoDocumento")}
-                  displayValue={getDisplayLabel(getPersonaValue("tipoDocumento"), TIPOS_DOCUMENTO)}
-                  onChange={(v) => handlePersonaFieldChange("tipoDocumento", v)}
-                  type="select"
-                  options={[...TIPOS_DOCUMENTO]}
-                  badge
-                />
-                <EditableField
-                  label="No. Documento"
-                  value={getPersonaValue("numeroDocumento")}
-                  onChange={() => {}}
-                  editable={false}
-                />
-                <EditableField
-                  label="Género"
-                  value={getPersonaValue("genero")}
-                  displayValue={getDisplayLabel(getPersonaValue("genero"), GENEROS)}
-                  onChange={(v) => handlePersonaFieldChange("genero", v)}
-                  type="select"
-                  options={[...GENEROS]}
-                />
-                <EditableField
-                  label="Fecha Nacimiento"
-                  value={getPersonaValue("fechaNacimiento")}
-                  onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
-                  type="date"
-                />
-                <EditableField
-                  label="RH"
-                  value={getPersonaValue("rh")}
-                  displayValue={getDisplayLabel(getPersonaValue("rh"), GRUPOS_SANGUINEOS)}
-                  onChange={(v) => handlePersonaFieldChange("rh", v)}
-                  type="select"
-                  options={[...GRUPOS_SANGUINEOS]}
-                  badge
-                />
-                <EditableField
-                  label="Nivel Educativo"
-                  value={getPersonaValue("nivelEducativo")}
-                  displayValue={getDisplayLabel(getPersonaValue("nivelEducativo"), NIVELES_EDUCATIVOS)}
-                  onChange={(v) => handlePersonaFieldChange("nivelEducativo", v)}
-                  type="select"
-                  options={[...NIVELES_EDUCATIVOS]}
-                />
-                <EditableField
-                  label="País de Nacimiento"
-                  value={getPersonaValue("paisNacimiento")}
-                  displayValue={getDisplayLabel(getPersonaValue("paisNacimiento"), PAISES)}
-                  onChange={(v) => handlePersonaFieldChange("paisNacimiento", v)}
-                  type="select"
-                  options={[...PAISES]}
-                />
-                <EditableField
-                  label="Email"
-                  value={getPersonaValue("email")}
-                  onChange={(v) => handlePersonaFieldChange("email", v)}
-                  placeholder="Sin email"
-                />
-                <EditableField
-                  label="Teléfono"
-                  value={getPersonaValue("telefono")}
-                  onChange={(v) => handlePersonaFieldChange("telefono", v)}
-                />
-              </div>
 
-              {/* Contacto de emergencia */}
-              <div className="border-t pt-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Contacto de Emergencia</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <EditableField
-                    label="Nombre"
-                    value={getPersonaEmergencyValue("nombre")}
-                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "nombre", v)}
-                  />
-                  <EditableField
-                    label="Teléfono"
-                    value={getPersonaEmergencyValue("telefono")}
-                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "telefono", v)}
-                  />
-                  <EditableField
-                    label="Parentesco"
-                    value={getPersonaEmergencyValue("parentesco")}
-                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "parentesco", v)}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-4">Cargando datos...</p>
-          )}
-          <DialogFooter className="flex-row justify-between sm:justify-between">
-            <Button
-              variant="link"
-              size="sm"
-              className="px-0 gap-1"
-              onClick={() => {
-                handleClosePersonaModal(false);
-                navigate(`/personas/${matricula.personaId}`);
-              }}
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Ver perfil completo
-            </Button>
-            <div className="flex gap-2">
-              {isPersonaDirty && (
-                <>
-                  <Button variant="outline" size="sm" onClick={handleCancelPersona}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSavePersona} disabled={updatePersona.isPending}>
-                    {updatePersona.isPending ? "Guardando..." : "Guardar"}
-                  </Button>
-                </>
-              )}
-              {!isPersonaDirty && (
-                <Button variant="outline" size="sm" onClick={() => handleClosePersonaModal(false)}>
-                  Cerrar
-                </Button>
-              )}
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Preview de formato */}
       <InfoAprendizPreviewDialog

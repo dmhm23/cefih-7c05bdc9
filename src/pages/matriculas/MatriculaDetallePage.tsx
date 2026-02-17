@@ -178,6 +178,25 @@ export default function MatriculaDetallePage() {
     }
   };
 
+  const handleDeleteDoc = async (documentoId: string) => {
+    try {
+      await updateDocumento.mutateAsync({
+        matriculaId: matricula.id,
+        documentoId,
+        data: {
+          estado: 'pendiente',
+          fechaCarga: undefined,
+          urlDrive: undefined,
+          archivoNombre: undefined,
+          archivoTamano: undefined,
+        } as any,
+      });
+      toast({ title: "Documento eliminado" });
+    } catch {
+      toast({ title: "Error al eliminar documento", variant: "destructive" });
+    }
+  };
+
   const handleDocFechaChange = async (documentoId: string, field: string, value: string) => {
     try {
       await updateDocumento.mutateAsync({
@@ -387,6 +406,7 @@ export default function MatriculaDetallePage() {
             <DocumentosCarga
               documentos={matricula.documentos}
               onUpload={handleUploadDoc}
+              onDelete={handleDeleteDoc}
               onFechaChange={handleDocFechaChange}
               isUploading={uploadDocumento.isPending}
             />

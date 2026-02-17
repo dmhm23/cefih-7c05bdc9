@@ -23,6 +23,7 @@ const formatFileSize = (bytes: number) => {
 interface DocumentosCargaProps {
   documentos: DocumentoRequerido[];
   onUpload: (documentoId: string, file: File) => void;
+  onDelete?: (documentoId: string) => void;
   onUploadConsolidado?: (file: File, tiposIncluidos: string[]) => void;
   onFechaChange?: (documentoId: string, field: string, value: string) => void;
   isUploading?: boolean;
@@ -46,6 +47,7 @@ type PreviewData = { url: string; name: string; type: string; size: number };
 export function DocumentosCarga({
   documentos,
   onUpload,
+  onDelete,
   onUploadConsolidado,
   onFechaChange,
   isUploading,
@@ -294,7 +296,7 @@ export function DocumentosCarga({
                                 onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
                             </label>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem className="text-destructive" onClick={() => onDelete?.(doc.id)}>
                             <Trash2 className="h-3.5 w-3.5 mr-2" /> Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>

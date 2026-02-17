@@ -1,104 +1,70 @@
-## Mejoras en Documentos Requeridos - Claridad, Vista Previa y Simulacion de Carga
+## Tres mejoras en la vista de detalle de Matricula
 
-### Problemas identificados
+### 1. Modal de persona al hacer clic en el nombre del estudiante
 
-1. **Sin vista previa post-carga**: Cuando un documento se marca como "cargado" (con URL simulada de Drive), no hay forma de ver su estado final ni previsualizarlo. Solo aparece un enlace "Ver en Drive" que apunta a una URL ficticia.
-2. **Modo consolidado saturado**: El checklist y el boton de carga estan visualmente apretados, sin separacion clara entre la lista de documentos y la zona de carga del PDF.
-3. **Simulacion de carga opaca**: No se refleja visualmente el resultado de la carga (nombre del archivo, tamano, fecha). El usuario no sabe que paso despues de cargar.
-4. **Sin limite de tamano de archivo**: No hay validacion de tamano maximo.
+**Problema:** Al hacer clic en el nombre del estudiante (linea 214-219 de `MatriculaDetallePage.tsx`), se navega a `/personas/:id`, sacando al usuario de la vista de matricula.
 
----
+**Solucion:** Reemplazar la navegacion por un `Dialog` que muestre los datos personales del estudiante (datos de identificacion, contacto, contacto de emergencia) directamente en un modal, sin salir de la vista actual, en caso que se edite, entonces que le sea redirigido, al guardar cambios que le permita regresar facilmente a la matricula que estaba antes.
 
-### Cambios propuestos
+**Archivo:** `src/pages/matriculas/MatriculaDetallePage.tsx`
 
-**Archivos a modificar:**
-
-- `src/components/matriculas/DocumentosCarga.tsx` (principal)
-- `src/types/matricula.ts` (agregar campos al tipo)
+- Agregar estado `personaModalOpen` (boolean).
+- Cambiar el `onClick` del div del estudiante para abrir el modal en vez de navegar.
+- Agregar un `Dialog` con los datos de la persona (`persona` ya esta disponible via `usePersona`), mostrando: tipo/numero de documento, nombres, apellidos, genero, fecha nacimiento, email, telefono, contacto de emergencia.
+- Incluir un enlace "Ver perfil completo" al final del modal que si lleve a `/personas/:id` si el usuario lo desea.
+- Agregar `DialogTitle` y `DialogDescription` para resolver el error de accesibilidad que aparece en consola.
 
 ---
 
-### 1. Ampliar el tipo `DocumentoRequerido`
+### 2. Reemplazar icono de "actualizar" por texto claro
 
-Agregar campos opcionales para almacenar metadata del archivo cargado:
+**Problema:** En los cards de documentos, el icono `RefreshCw` (linea 281-284 de `DocumentosCarga.tsx`) no comunica su funcion. Parece un boton de "actualizar/refrescar" en vez de "reemplazar archivo".
 
-- `archivoNombre?: string` - Nombre original del archivo
-- `archivoTamano?: number` - Tamano en bytes
+**Solucion:** Agregar texto "Eliminar" junto al icono para que la accion sea explicita.
 
-Esto permite mostrar informacion del archivo tras la carga simulada.
+**Archivo:** `src/components/matriculas/DocumentosCarga.tsx`
 
----
-
-### 2. Validacion de tamano maximo (10 MB)
-
-Antes de llamar a `onUpload` o `onUploadConsolidado`, validar que el archivo no exceda 5 MB. Mostrar un toast o mensaje inline si se excede.
-
-Constante: `const MAX_FILE_SIZE = 10 * 1024 * 1024` (10 MB).
+- En linea 282, cambiar el div que solo muestra `<RefreshCw />` para incluir el texto "Eliminar" al lado del icono de 'x', usando el mismo estilo que el boton "Cargar" de documentos pendientes.
+- Que las opciones estén contenidas en un botón con icono 'dotshorizontales'  que desplegue un dropdown con opcion como eliminar, vista previa.
 
 ---
 
-### 3. Modo Individual - Estado post-carga visible
+### 3. Vista previa de documentos: solucion al bloqueo de Chrome
 
-Para documentos con estado `cargado` o `verificado`:
+**Problema:** La vista previa usa `<iframe src={blobURL}>` para PDFs (linea 176). Chrome bloquea la carga de blob URLs en iframes dentro de contextos sandboxed (como el iframe de preview de Lovable), mostrando "This page has been blocked by Chrome".
 
-- Mostrar una linea con el nombre del archivo y tamano (ej: "cedula_juan.pdf - 1.2 MB").
-- Mantener el enlace "Ver en Drive".
-- Agregar un boton pequeno "Ver" que abre la vista previa si el archivo fue cargado en la sesion actual (usando el blob URL almacenado en estado local).
-- Permitir "Reemplazar" el archivo (mostrar boton en lugar de "Cargar").
+**Solucion tecnica:** Reemplazar el `<iframe>` por un `<object>` con fallback, y para el caso de que tambien falle, convertir el blob a Data URL (base64) que no tiene restricciones de sandboxing. Adicionalmente, agregar un boton "Abrir en nueva pestaña" como alternativa garantizada.
 
----
+**Archivo:** `src/components/matriculas/DocumentosCarga.tsx`
 
-### 4. Modo Consolidado - Separacion visual
+Cambios en la funcion `storePreview`:
 
-- Dividir el contenido en dos bloques visuales claros dentro del borde:
-  - **Bloque 1**: Checklist de documentos con su titulo "Documentos incluidos en el PDF".
-  - **Separador visual**: Una linea `<Separator />` o espacio con borde superior.
-  - **Bloque 2**: Zona de carga del PDF consolidado, con su propio borde/fondo sutil (`bg-muted/30 rounded-lg p-3`), conteniendo el input de carga y la vista previa.
+- Leer el archivo como Data URL (`FileReader.readAsDataURL`) en vez de usar `URL.createObjectURL`.
+- Almacenar el Data URL en el estado `previews`, eliminando la necesidad de blob URLs.
+- Esto resuelve el bloqueo de Chrome ya que los Data URLs no estan sujetos a las mismas restricciones de sandboxing.
 
----
+Cambios en `renderPreviewPanel`:
 
-### 5. Vista previa mejorada
+- Usar el Data URL directamente en el `<iframe>` para PDFs.
+- Agregar un boton "Abrir en nueva pestaña" (`window.open(dataUrl)`) como alternativa.
+- Mantener el fallback para imagenes y otros tipos de archivo.
 
-Mantener la vista previa existente pero mejorarla:
-
-- Almacenar en estado local un mapa de `documentoId -> { url, name, type }` para permitir ver previews de documentos individuales ya cargados en la sesion.
-- En modo consolidado, la vista previa del PDF se muestra en el Bloque 2.
-- Agregar indicador de tamano del archivo en la barra de preview.
-
----
-
-### 6. Feedback de carga simulada
-
-Agregar un estado transitorio `uploading` por documento:
-
-- Mientras se sube (durante el `delay` del mock service), mostrar un spinner o indicador de progreso junto al documento.
-- Al completarse, actualizar la fila mostrando nombre, tamano y estado "Cargado" con animacion sutil de transicion.
-
----
-
-### 7. Pasar metadata del archivo al servicio
-
-Modificar `useUploadDocumento` en `src/hooks/useMatriculas.ts` para incluir `archivoNombre` y `archivoTamano` en la llamada a `updateDocumento`, de modo que queden persistidos en el mock.
+Limpiar el `URL.revokeObjectURL` ya que con Data URLs no es necesario.
 
 ---
 
 ### Detalle tecnico
 
-`**src/types/matricula.ts**`:
+`**src/pages/matriculas/MatriculaDetallePage.tsx`:**
 
-- Agregar `archivoNombre?: string` y `archivoTamano?: number` a la interfaz `DocumentoRequerido`.
+- Nuevo estado: `personaModalOpen`.
+- Nuevo `Dialog` con `DialogTitle` + `DialogDescription` (resuelve los warnings de accesibilidad de consola).
+- Contenido del modal: grid con los campos de la persona usando etiquetas y valores (solo lectura, no editable desde aqui).
 
-`**src/components/matriculas/DocumentosCarga.tsx**`:
+`**src/components/matriculas/DocumentosCarga.tsx`:**
 
-- Agregar constante `MAX_FILE_SIZE = 5 * 1024 * 1024`.
-- Funcion helper `formatFileSize(bytes: number)` para mostrar tamano legible.
-- Validacion de tamano en `handleFileChange` y `handleConsolidadoUpload`.
-- Estado local `uploadingDocId` para mostrar spinner en el documento que se esta subiendo.
-- Estado local `previews: Record<string, {url, name, type}>` para mapear previews por documento.
-- En modo individual: mostrar info del archivo cargado (nombre + tamano) y boton "Ver" para documentos no pendientes.
-- En modo consolidado: separar visualmente checklist y zona de carga con `Separator` y fondo diferenciado.
-- Vista previa con indicador de tamano.
-
-`**src/hooks/useMatriculas.ts**`:
-
-- En `useUploadDocumento`, agregar `archivoNombre: file.name` y `archivoTamano: file.size` al payload de `updateDocumento`.
+- Linea 282: agregar texto "Reemplazar" al icono.
+- Funcion `storePreview`: cambiar de `URL.createObjectURL` a `FileReader.readAsDataURL`.
+- Eliminar llamadas a `URL.revokeObjectURL` (no aplican con Data URLs).
+- Actualizar `renderPreviewPanel` para usar Data URLs y agregar boton de abrir en nueva pestana.
+- Aplicar el mismo cambio para `consolidadoPreview`.

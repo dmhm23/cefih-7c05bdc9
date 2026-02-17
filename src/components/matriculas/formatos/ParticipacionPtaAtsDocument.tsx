@@ -1,7 +1,6 @@
 import { Persona } from "@/types/persona";
 import { Matricula } from "@/types/matricula";
 import { Curso } from "@/types/curso";
-import { Input } from "@/components/ui/input";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { TIPOS_DOCUMENTO } from "@/data/formOptions";
 
@@ -9,8 +8,6 @@ interface Props {
   persona: Persona | null;
   matricula: Matricula;
   curso: Curso | null;
-  fechaDiligenciamiento: string;
-  onFechaChange: (fecha: string) => void;
 }
 
 function getLabel(value: string | undefined, options: readonly { value: string; label: string }[]): string {
@@ -18,9 +15,19 @@ function getLabel(value: string | undefined, options: readonly { value: string; 
   return options.find((o) => o.value === value)?.label || value;
 }
 
-const TEXTO_NORMATIVO = `En cumplimiento de lo establecido en la Resolución 4272 de 2021 del Ministerio del Trabajo, por la cual se establecen los requisitos mínimos de seguridad para el desarrollo de trabajo en alturas, declaro que he participado activamente en el diligenciamiento del Permiso de Trabajo en Alturas (PTA) y el Análisis de Trabajo Seguro (ATS), previo al inicio de las actividades de formación y entrenamiento en trabajo en alturas.`;
+const TEXTO_NORMATIVO_P1 = `En cumplimiento de la Resolución 4272 de 2021, por la cual se reglamenta el trabajo seguro en alturas en Colombia, y como parte de las actividades prácticas del curso, yo, el abajo firmante, dejo constancia de que participé activamente en el diligenciamiento del Permiso de Trabajo en Alturas (PTS) y del Análisis de Trabajo Seguro (ATS) correspondientes a la práctica desarrollada en la fecha indicada.`;
 
-export default function ParticipacionPtaAtsDocument({ persona, matricula, curso, fechaDiligenciamiento, onFechaChange }: Props) {
+const TEXTO_NORMATIVO_P2 = `Durante esta actividad, participé en la identificación de peligros, evaluación de riesgos y definición de medidas preventivas y controles relacionados con las tareas en alturas, comprendiendo la importancia de aplicar estos procedimientos antes, durante y después de la ejecución del trabajo.`;
+
+const TEXTO_NORMATIVO_P3 = `Reconozco que esta práctica forma parte del proceso formativo obligatorio establecido por la normativa vigente, y que su finalidad es fortalecer mis competencias técnicas y mi compromiso con la seguridad y la prevención de accidentes durante la ejecución de labores en alturas.`;
+
+const DECLARACION_ITEMS = [
+  "Comprendí el objetivo y contenido del Permiso de Trabajo en Alturas (PTS) y el Análisis de Trabajo Seguro (ATS).",
+  "Participé en el diligenciamiento real del formato junto con mis compañeros de curso.",
+  "Asumo el compromiso de aplicar este conocimiento en cualquier labor en alturas, conforme a la legislación vigente.",
+];
+
+export default function ParticipacionPtaAtsDocument({ persona, matricula }: Props) {
   const isBorrador = !matricula.firmaCapturada || !matricula.autorizacionDatos;
 
   return (
@@ -52,25 +59,25 @@ export default function ParticipacionPtaAtsDocument({ persona, matricula, curso,
         <div className="section-title border-b pb-1 mb-3">
           <h2 className="text-base font-bold uppercase tracking-widest">Declaración</h2>
         </div>
-        <p className="text-sm leading-relaxed text-justify normative-text">{TEXTO_NORMATIVO}</p>
+        <div className="space-y-3">
+          <p className="text-sm leading-relaxed text-justify normative-text">{TEXTO_NORMATIVO_P1}</p>
+          <p className="text-sm leading-relaxed text-justify normative-text">{TEXTO_NORMATIVO_P2}</p>
+          <p className="text-sm leading-relaxed text-justify normative-text">{TEXTO_NORMATIVO_P3}</p>
+          <p className="text-sm font-semibold mt-4">Con mi firma digital, declaro que:</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm leading-relaxed">
+            {DECLARACION_ITEMS.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* Fecha de diligenciamiento */}
+      {/* Datos del participante */}
       <div className="section-group">
         <div className="section-title border-b pb-1 mb-3">
           <h2 className="text-base font-bold uppercase tracking-widest">Datos del Participante</h2>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-4 grid-2">
-          <div className="field-cell">
-            <p className="field-label text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">Fecha de diligenciamiento</p>
-            <Input
-              type="date"
-              value={fechaDiligenciamiento}
-              onChange={(e) => onFechaChange(e.target.value)}
-              className="h-7 text-sm w-44 fecha-input"
-            />
-          </div>
-          <div className="field-cell" />
           <div className="field-cell col-span-2 field-span">
             <p className="field-label text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">Nombres y Apellidos</p>
             <p className="field-value text-sm font-medium leading-snug">

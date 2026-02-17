@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -65,7 +65,6 @@ const PRINT_STYLES = `
 `;
 
 export default function ParticipacionPtaAtsPreviewDialog({ open, onOpenChange, persona, matricula, curso }: Props) {
-  const [fechaDiligenciamiento, setFechaDiligenciamiento] = useState(curso?.fechaInicio || "");
   const documentRef = useRef<HTMLDivElement>(null);
   const isBlocked = !matricula.firmaCapturada || !matricula.autorizacionDatos;
   const pdfFilename = buildPdfFilename("participacion-pta-ats", persona);
@@ -118,8 +117,6 @@ export default function ParticipacionPtaAtsPreviewDialog({ open, onOpenChange, p
                   persona={persona}
                   matricula={matricula}
                   curso={curso}
-                  fechaDiligenciamiento={fechaDiligenciamiento}
-                  onFechaChange={setFechaDiligenciamiento}
                 />
               </div>
             </div>

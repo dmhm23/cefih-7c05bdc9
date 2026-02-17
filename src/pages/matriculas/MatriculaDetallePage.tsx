@@ -558,15 +558,13 @@ export default function MatriculaDetallePage() {
                 Registrar Pago
               </Button>
             )}
-          </div>
-
-          {/* Comentarios de Cartera */}
-          <div className="border rounded-lg p-4 shadow-sm">
-            <ComentariosSection
-              matriculaId={matricula.id}
-              seccion="cartera"
-              titulo="Seguimiento de Cartera"
-            />
+            <div className="mt-4 pt-4 border-t">
+              <ComentariosSection
+                matriculaId={matricula.id}
+                seccion="cartera"
+                titulo="Seguimiento de Cartera"
+              />
+            </div>
           </div>
 
           {/* Certificado */}

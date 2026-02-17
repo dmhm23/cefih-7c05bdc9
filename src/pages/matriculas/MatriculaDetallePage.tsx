@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
 import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
-import { usePersona } from "@/hooks/usePersonas";
+import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
+import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
 import { TIPO_FORMACION_LABELS, FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
@@ -37,6 +38,11 @@ import {
   NIVELES_FORMACION_EMPRESA,
   EPS_OPTIONS,
   ARL_OPTIONS,
+  TIPOS_DOCUMENTO,
+  GENEROS,
+  NIVELES_EDUCATIVOS,
+  GRUPOS_SANGUINEOS,
+  PAISES,
 } from "@/data/formOptions";
 
 interface ChecklistItem {
@@ -58,6 +64,8 @@ export default function MatriculaDetallePage() {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
+  const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
+  const [isPersonaDirty, setIsPersonaDirty] = useState(false);
 
   const { data: matricula, isLoading } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
@@ -68,11 +76,68 @@ export default function MatriculaDetallePage() {
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
   const uploadDocumento = useUploadDocumento();
+  const updatePersona = useUpdatePersona();
 
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
+    setPersonaFormData({});
+    setIsPersonaDirty(false);
   }, [matricula?.id]);
+
+  const handlePersonaFieldChange = (field: string, value: string) => {
+    setPersonaFormData((prev) => ({ ...prev, [field]: value }));
+    setIsPersonaDirty(true);
+  };
+
+  const handlePersonaNestedFieldChange = (parent: "contactoEmergencia", field: string, value: string) => {
+    setPersonaFormData((prev) => {
+      const existing = prev[parent] || persona?.[parent] || { nombre: "", telefono: "", parentesco: "" };
+      return {
+        ...prev,
+        [parent]: {
+          ...existing,
+          [field]: value,
+        },
+      };
+    });
+    setIsPersonaDirty(true);
+  };
+
+  const getPersonaValue = (field: keyof PersonaFormData): string => {
+    const val = (personaFormData[field] ?? persona?.[field]) as string | undefined;
+    return val?.toString() ?? "";
+  };
+
+  const getPersonaEmergencyValue = (field: string): string => {
+    const ce = personaFormData.contactoEmergencia || persona?.contactoEmergencia;
+    return (ce as any)?.[field] ?? "";
+  };
+
+  const handleSavePersona = async () => {
+    if (!persona) return;
+    try {
+      await updatePersona.mutateAsync({ id: persona.id, data: personaFormData });
+      toast({ title: "Datos del estudiante actualizados" });
+      setPersonaFormData({});
+      setIsPersonaDirty(false);
+    } catch {
+      toast({ title: "Error al guardar datos del estudiante", variant: "destructive" });
+    }
+  };
+
+  const handleCancelPersona = () => {
+    setPersonaFormData({});
+    setIsPersonaDirty(false);
+  };
+
+  const handleClosePersonaModal = (open: boolean) => {
+    setPersonaModalOpen(open);
+    if (!open) {
+      setPersonaFormData({});
+      setIsPersonaDirty(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -610,52 +675,113 @@ export default function MatriculaDetallePage() {
       </Dialog>
 
       {/* Modal de Persona */}
-      <Dialog open={personaModalOpen} onOpenChange={setPersonaModalOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={personaModalOpen} onOpenChange={handleClosePersonaModal}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Datos del Estudiante</DialogTitle>
-            <DialogDescription>Información personal del estudiante vinculado a esta matrícula.</DialogDescription>
+            <DialogDescription>Edita la información personal del estudiante vinculado a esta matrícula.</DialogDescription>
           </DialogHeader>
           {persona ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm py-2">
-              <div>
-                <p className="text-xs text-muted-foreground">Tipo documento</p>
-                <p className="font-medium">{persona.tipoDocumento}</p>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <EditableField
+                  label="Nombres"
+                  value={getPersonaValue("nombres")}
+                  onChange={(v) => handlePersonaFieldChange("nombres", v)}
+                />
+                <EditableField
+                  label="Apellidos"
+                  value={getPersonaValue("apellidos")}
+                  onChange={(v) => handlePersonaFieldChange("apellidos", v)}
+                />
+                <EditableField
+                  label="Tipo Documento"
+                  value={getPersonaValue("tipoDocumento")}
+                  displayValue={getDisplayLabel(getPersonaValue("tipoDocumento"), TIPOS_DOCUMENTO)}
+                  onChange={(v) => handlePersonaFieldChange("tipoDocumento", v)}
+                  type="select"
+                  options={[...TIPOS_DOCUMENTO]}
+                  badge
+                />
+                <EditableField
+                  label="No. Documento"
+                  value={getPersonaValue("numeroDocumento")}
+                  onChange={() => {}}
+                  editable={false}
+                />
+                <EditableField
+                  label="Género"
+                  value={getPersonaValue("genero")}
+                  displayValue={getDisplayLabel(getPersonaValue("genero"), GENEROS)}
+                  onChange={(v) => handlePersonaFieldChange("genero", v)}
+                  type="select"
+                  options={[...GENEROS]}
+                />
+                <EditableField
+                  label="Fecha Nacimiento"
+                  value={getPersonaValue("fechaNacimiento")}
+                  onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
+                  type="date"
+                />
+                <EditableField
+                  label="RH"
+                  value={getPersonaValue("rh")}
+                  displayValue={getDisplayLabel(getPersonaValue("rh"), GRUPOS_SANGUINEOS)}
+                  onChange={(v) => handlePersonaFieldChange("rh", v)}
+                  type="select"
+                  options={[...GRUPOS_SANGUINEOS]}
+                  badge
+                />
+                <EditableField
+                  label="Nivel Educativo"
+                  value={getPersonaValue("nivelEducativo")}
+                  displayValue={getDisplayLabel(getPersonaValue("nivelEducativo"), NIVELES_EDUCATIVOS)}
+                  onChange={(v) => handlePersonaFieldChange("nivelEducativo", v)}
+                  type="select"
+                  options={[...NIVELES_EDUCATIVOS]}
+                />
+                <EditableField
+                  label="País de Nacimiento"
+                  value={getPersonaValue("paisNacimiento")}
+                  displayValue={getDisplayLabel(getPersonaValue("paisNacimiento"), PAISES)}
+                  onChange={(v) => handlePersonaFieldChange("paisNacimiento", v)}
+                  type="select"
+                  options={[...PAISES]}
+                />
+                <EditableField
+                  label="Email"
+                  value={getPersonaValue("email")}
+                  onChange={(v) => handlePersonaFieldChange("email", v)}
+                  placeholder="Sin email"
+                />
+                <EditableField
+                  label="Teléfono"
+                  value={getPersonaValue("telefono")}
+                  onChange={(v) => handlePersonaFieldChange("telefono", v)}
+                />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Número documento</p>
-                <p className="font-medium">{persona.numeroDocumento}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Nombres</p>
-                <p className="font-medium">{persona.nombres}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Apellidos</p>
-                <p className="font-medium">{persona.apellidos}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Género</p>
-                <p className="font-medium">{persona.genero === "M" ? "Masculino" : "Femenino"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Fecha nacimiento</p>
-                <p className="font-medium">{persona.fechaNacimiento ? format(new Date(persona.fechaNacimiento), "dd/MM/yyyy") : "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="font-medium">{persona.email || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Teléfono</p>
-                <p className="font-medium">{persona.telefono || "—"}</p>
-              </div>
-              {persona.contactoEmergencia && (
-                <div className="col-span-2 border-t pt-2 mt-1">
-                  <p className="text-xs text-muted-foreground mb-1">Contacto de emergencia</p>
-                  <p className="font-medium">{persona.contactoEmergencia.nombre} · {persona.contactoEmergencia.telefono} <span className="text-muted-foreground text-xs">({persona.contactoEmergencia.parentesco})</span></p>
+
+              {/* Contacto de emergencia */}
+              <div className="border-t pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Contacto de Emergencia</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <EditableField
+                    label="Nombre"
+                    value={getPersonaEmergencyValue("nombre")}
+                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "nombre", v)}
+                  />
+                  <EditableField
+                    label="Teléfono"
+                    value={getPersonaEmergencyValue("telefono")}
+                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "telefono", v)}
+                  />
+                  <EditableField
+                    label="Parentesco"
+                    value={getPersonaEmergencyValue("parentesco")}
+                    onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "parentesco", v)}
+                  />
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground py-4">Cargando datos...</p>
@@ -666,16 +792,30 @@ export default function MatriculaDetallePage() {
               size="sm"
               className="px-0 gap-1"
               onClick={() => {
-                setPersonaModalOpen(false);
+                handleClosePersonaModal(false);
                 navigate(`/personas/${matricula.personaId}`);
               }}
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Ver perfil completo
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setPersonaModalOpen(false)}>
-              Cerrar
-            </Button>
+            <div className="flex gap-2">
+              {isPersonaDirty && (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleCancelPersona}>
+                    Cancelar
+                  </Button>
+                  <Button size="sm" onClick={handleSavePersona} disabled={updatePersona.isPending}>
+                    {updatePersona.isPending ? "Guardando..." : "Guardar"}
+                  </Button>
+                </>
+              )}
+              {!isPersonaDirty && (
+                <Button variant="outline" size="sm" onClick={() => handleClosePersonaModal(false)}>
+                  Cerrar
+                </Button>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

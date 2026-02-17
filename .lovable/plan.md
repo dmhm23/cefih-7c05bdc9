@@ -1,57 +1,84 @@
 
 
-## Modal de Estudiante editable en /matriculas/:id
+## Sistema de Comentarios para Matriculas
 
-### Situacion actual
+### Resumen
 
-El modal que se abre al hacer clic en el nombre del estudiante muestra datos en modo solo lectura (texto estatico). Sin embargo, el panel lateral en /matriculas ya tiene toda la logica de edicion de persona implementada con `EditableField`, `handlePersonaFieldChange`, `handlePersonaNestedFieldChange` y guardado via `useUpdatePersona`.
+Reemplazar el campo estatico "Observaciones" y agregar un sistema de comentarios con historial en dos secciones de la vista `/matriculas/:id`:
 
-### Cambios propuestos
+1. **Cobros / Cartera** -- nuevo bloque de comentarios de seguimiento de cartera
+2. **Observaciones finales** -- convertir de campo de texto estatico a sistema de comentarios
 
-**Archivo unico a modificar:** `src/pages/matriculas/MatriculaDetallePage.tsx`
+Ambas secciones compartiran el mismo componente reutilizable de comentarios.
 
-### 1. Agregar imports y hooks necesarios
+### Archivos nuevos
 
-- Importar `useUpdatePersona` desde `@/hooks/usePersonas`.
-- Importar las opciones de formulario necesarias: `TIPOS_DOCUMENTO`, `GENEROS`, `NIVELES_EDUCATIVOS`, `GRUPOS_SANGUINEOS`, `PAISES` desde `@/data/formOptions`.
-- Importar iconos adicionales: `User`, `FileText`, `Mail`, `Phone`, `UserCircle`, `Droplet`, `Globe`, `AlertCircle`, `GraduationCap`, `Calendar` (los que no esten ya importados).
-- Importar `PersonaFormData` desde `@/types/persona`.
+**`src/types/comentario.ts`**
+- Interfaz `Comentario`: id, matriculaId, seccion (`'cartera' | 'observaciones'`), texto, usuarioId, usuarioNombre, creadoEn, editadoEn (opcional)
+- Type `SeccionComentario`
 
-### 2. Agregar estado y logica de edicion de persona
+**`src/components/shared/ComentariosSection.tsx`**
+- Componente reutilizable que recibe: lista de comentarios, seccion, matriculaId, callbacks (agregar, editar, eliminar)
+- Input de texto + boton "Agregar" para nuevos comentarios
+- Lista cronologica de comentarios, cada uno mostrando: usuario, fecha/hora formateada, texto, botones de editar y eliminar
+- Collapsible: si hay mas de 3 comentarios, mostrar los 3 mas recientes y un boton "Ver todos (N)" que expande el historial completo usando el componente Collapsible ya disponible
+- Modo edicion inline: al hacer clic en editar, el texto se convierte en input editable con botones guardar/cancelar
+- Confirmacion al eliminar usando el toast o un mini-confirm inline
 
-- Nuevo estado: `personaFormData` (`Partial<PersonaFormData>`) para acumular cambios.
-- Nuevo estado: `isPersonaDirty` (boolean) para saber si hay cambios pendientes.
-- Instanciar `useUpdatePersona()`.
-- Funcion `handlePersonaFieldChange(field, value)`: actualiza `personaFormData` y marca `isPersonaDirty`.
-- Funcion `handlePersonaNestedFieldChange("contactoEmergencia", field, value)`: para campos anidados del contacto de emergencia.
-- Helper `getPersonaValue(field)`: retorna el valor editado si existe, o el valor original de `persona`.
-- Al cerrar el modal o cancelar: resetear `personaFormData` e `isPersonaDirty`.
+**`src/services/comentarioService.ts`**
+- Almacen en memoria (`mockComentarios` array en `mockData.ts`)
+- Metodos: `getByMatriculaSeccion(matriculaId, seccion)`, `create(data)`, `update(id, texto)`, `delete(id)`
+- Cada operacion crea un registro en `mockAuditLogs` con accion crear/editar/eliminar, incluyendo usuario y timestamp
 
-### 3. Transformar el modal de solo lectura a editable
+**`src/hooks/useComentarios.ts`**
+- `useComentarios(matriculaId, seccion)` -- query
+- `useCreateComentario()` -- mutation
+- `useUpdateComentario()` -- mutation
+- `useDeleteComentario()` -- mutation
+- Todos invalidan el query de comentarios al completarse
 
-Reemplazar el contenido del `Dialog` (lineas 619-659) por campos `EditableField`, replicando la estructura del panel lateral:
+### Archivos modificados
 
-- **Nombres** - `EditableField` tipo texto, editable
-- **Apellidos** - `EditableField` tipo texto, editable
-- **Tipo Documento** - `EditableField` tipo select con `TIPOS_DOCUMENTO`, editable
-- **No. Documento** - `EditableField` tipo texto, **`editable={false}`** (restriccion solicitada)
-- **Genero** - `EditableField` tipo select con `GENEROS`
-- **Fecha Nacimiento** - `EditableField` tipo date
-- **RH** - `EditableField` tipo select con `GRUPOS_SANGUINEOS`
-- **Nivel Educativo** - `EditableField` tipo select con `NIVELES_EDUCATIVOS`
-- **Pais Nacimiento** - `EditableField` tipo select con `PAISES`
-- **Email** - `EditableField` tipo texto
-- **Telefono** - `EditableField` tipo texto
-- **Contacto de Emergencia** (subseccion): nombre, telefono, parentesco
+**`src/data/mockData.ts`**
+- Agregar array `mockComentarios` exportado (puede iniciar vacio o con 2-3 comentarios de ejemplo para m1)
 
-### 4. Guardar y cancelar dentro del modal
+**`src/types/audit.ts`**
+- Agregar `'comentario'` al tipo `TipoEntidad`
 
-- Si `isPersonaDirty` es true, mostrar botones "Guardar" y "Cancelar" en el `DialogFooter`.
-- Al guardar: llamar `updatePersona.mutateAsync({ id: persona.id, data: personaFormData })`, mostrar toast de exito, resetear estado.
-- Al cancelar: resetear `personaFormData` e `isPersonaDirty`.
-- Mantener el enlace "Ver perfil completo" siempre visible.
+**`src/pages/matriculas/MatriculaDetallePage.tsx`**
+- En la seccion "Cobros / Cartera" (linea 480-560): agregar `<ComentariosSection>` despues de los campos de pago, con seccion `'cartera'`
+- Reemplazar la seccion "Observaciones" (lineas 583-594): eliminar el `EditableField` estatico y colocar `<ComentariosSection>` con seccion `'observaciones'`
+- Importar el nuevo componente
 
-### 5. Reset al cambiar de matricula o cerrar
+### Detalle del componente ComentariosSection
 
-- Resetear `personaFormData` e `isPersonaDirty` cuando `personaModalOpen` cambia a `false`.
+```text
++------------------------------------------+
+| Comentarios                    [Colapsar] |
++------------------------------------------+
+| [Escriba un comentario...] [Agregar]     |
++------------------------------------------+
+| Usuario Actual - 17 feb 2026, 14:30      |
+| Texto del comentario aqui...             |
+|                          [Editar] [Eliminar]|
++------------------------------------------+
+| Usuario Actual - 16 feb 2026, 09:15      |
+| Otro comentario...                       |
+|                          [Editar] [Eliminar]|
++------------------------------------------+
+| > Ver todos los comentarios (5)          |
++------------------------------------------+
+```
 
+- Los comentarios se muestran del mas reciente al mas antiguo
+- El boton "Colapsar/Expandir" minimiza toda la seccion
+- Cada accion (crear, editar, eliminar) genera un audit log automaticamente desde el servicio
+
+### Registro en logs (audit)
+
+Cada operacion en `comentarioService` registra en `mockAuditLogs`:
+- **Crear**: entidadTipo `'comentario'`, accion `'crear'`, valorNuevo con el texto
+- **Editar**: accion `'editar'`, valorAnterior con texto viejo, valorNuevo con texto nuevo
+- **Eliminar**: accion `'eliminar'`, valorAnterior con el comentario eliminado
+
+Todos incluyen usuarioId, usuarioNombre y timestamp. La vista de logs del administrador se implementara posteriormente.

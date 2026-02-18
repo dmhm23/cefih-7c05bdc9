@@ -14,18 +14,17 @@ import {
   Building2,
   GraduationCap,
   Briefcase,
-  HeartPulse,
   Check,
   X,
   Wallet,
   Award,
-  MessageSquareText,
   Mail,
   Phone,
   UserCircle,
   Droplet,
   Globe,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
@@ -33,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago, useUploadDocumento } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { PersonaFormData } from "@/types/persona";
@@ -45,6 +44,11 @@ import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
+import FormatosList from "@/components/matriculas/formatos/FormatosList";
+import { ComentariosSection } from "@/components/shared/ComentariosSection";
+import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
+import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
+import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
 import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
@@ -60,6 +64,8 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+
+type PreviewFormatoId = string | null;
 
 interface MatriculaDetailSheetProps {
   open: boolean;
@@ -99,6 +105,7 @@ export function MatriculaDetailSheet({
   const cambiarEstado = useCambiarEstadoMatricula();
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
+  const updateDocumento = useUpdateDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
   const updatePersona = useUpdatePersona();
@@ -106,6 +113,7 @@ export function MatriculaDetailSheet({
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
+  const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
 
   useEffect(() => {
     setFormData({});
@@ -197,7 +205,26 @@ export function MatriculaDetailSheet({
     }
   };
 
-  const getValue = <K extends keyof Matricula>(field: K): Matricula[K] => {
+  const handleDeleteDoc = async (documentoId: string) => {
+    try {
+      await updateDocumento.mutateAsync({
+        matriculaId: matricula.id,
+        documentoId,
+        data: { estado: 'pendiente', fechaCarga: undefined, urlDrive: undefined, archivoNombre: undefined, archivoTamano: undefined } as any,
+      });
+      toast({ title: "Documento eliminado" });
+    } catch {
+      toast({ title: "Error al eliminar documento", variant: "destructive" });
+    }
+  };
+
+  const handleDocFechaChange = async (documentoId: string, field: string, value: string) => {
+    try {
+      await updateDocumento.mutateAsync({ matriculaId: matricula.id, documentoId, data: { [field]: value } as any });
+    } catch {
+      toast({ title: "Error al actualizar fecha", variant: "destructive" });
+    }
+  };
     return (formData[field] as Matricula[K]) ?? matricula[field];
   };
 
@@ -233,6 +260,7 @@ export function MatriculaDetailSheet({
   };
 
   return (
+    <>
     <DetailSheet
       open={open}
       onOpenChange={onOpenChange}
@@ -332,20 +360,39 @@ export function MatriculaDetailSheet({
 
         {/* Curso */}
         <DetailSection title="Curso">
-          <EditableField
-            label="Curso"
-            value={getValue("cursoId")}
-            displayValue={cursoName}
-            onChange={(v) => handleFieldChange("cursoId", v)}
-            type="select"
-            options={cursos.map((c) => ({ value: c.id, label: c.nombre }))}
-            icon={BookOpen}
-          />
-          {curso && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {format(new Date(curso.fechaInicio), "d MMM", { locale: es })} -{" "}
-              {format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}
-            </p>
+          {curso ? (
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">{curso.nombre}</p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha inicio</p>
+                  <p>{format(new Date(curso.fechaInicio), "d MMM yyyy", { locale: es })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Fecha fin</p>
+                  <p>{format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Duración</p>
+                  <p>{curso.horasTotales}h ({curso.duracionDias} días)</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Entrenador</p>
+                  <p>{curso.entrenadorNombre}</p>
+                </div>
+              </div>
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 gap-1 h-auto text-xs"
+                onClick={() => { onOpenChange(false); navigate(`/cursos/${curso.id}`); }}
+              >
+                <ExternalLink className="h-3 w-3" />
+                Ver curso
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sin curso asignado</p>
           )}
         </DetailSection>
 
@@ -504,6 +551,8 @@ export function MatriculaDetailSheet({
           <DocumentosCarga
             documentos={matricula.documentos}
             onUpload={handleUploadDoc}
+            onDelete={handleDeleteDoc}
+            onFechaChange={handleDocFechaChange}
             isUploading={uploadDocumento.isPending}
             compact
           />
@@ -511,20 +560,17 @@ export function MatriculaDetailSheet({
 
         <Separator />
 
-        {/* Checklist */}
-        <DetailSection title="Checklist de Requisitos">
-          <div className="space-y-3">
-            <ChecklistItem
-              label="Documentos verificados"
-              completed={matricula.documentos.every((d) => d.estado === "verificado")}
-              icon={FileText}
-              sublabel={`${matricula.documentos.filter((d) => d.estado === "verificado").length}/${matricula.documentos.length} documentos`}
-            />
-            <ChecklistItem label="Evaluación completada" completed={matricula.evaluacionCompletada} icon={ClipboardList}
-              sublabel={matricula.evaluacionPuntaje ? `Puntaje: ${matricula.evaluacionPuntaje}%` : undefined}
-            />
-            <ChecklistItem label="Encuesta completada" completed={matricula.encuestaCompletada} icon={FileCheck} />
-          </div>
+        {/* Formatos para Formación */}
+        <DetailSection title="Formatos para Formación">
+          <FormatosList
+            formatos={[
+              { id: "info_aprendiz", nombre: "Información del Aprendiz", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
+              { id: "registro_asistencia", nombre: "Registro de Asistencia", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
+              { id: "participacion_pta_ats", nombre: "Participación PTA - ATS", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
+            ]}
+            onPreview={(id) => setPreviewFormato(id)}
+            onDownload={(id) => setPreviewFormato(id)}
+          />
         </DetailSection>
 
         <Separator />
@@ -645,12 +691,10 @@ export function MatriculaDetailSheet({
 
         {/* Observaciones */}
         <DetailSection title="Observaciones">
-          <EditableField
-            label=""
-            value={getValue("observaciones") || ""}
-            onChange={(v) => handleFieldChange("observaciones", v)}
-            type="text"
-            icon={MessageSquareText}
+          <ComentariosSection
+            matriculaId={matricula.id}
+            seccion="observaciones"
+            titulo="Observaciones"
           />
         </DetailSection>
 
@@ -661,30 +705,27 @@ export function MatriculaDetailSheet({
         </div>
       </div>
     </DetailSheet>
-  );
-}
-
-interface ChecklistItemProps {
-  label: string;
-  completed: boolean;
-  icon: React.ElementType;
-  sublabel?: string;
-}
-
-function ChecklistItem({ label, completed, icon: Icon, sublabel }: ChecklistItemProps) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${completed ? "bg-emerald-500/10" : "bg-muted"}`}>
-        {completed ? (
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-        ) : (
-          <Circle className="h-4 w-4 text-muted-foreground" />
-        )}
-      </div>
-      <div>
-        <p className={`text-sm ${completed ? "font-medium" : "text-muted-foreground"}`}>{label}</p>
-        {sublabel && <p className="text-xs text-muted-foreground">{sublabel}</p>}
-      </div>
-    </div>
+    <InfoAprendizPreviewDialog
+      open={previewFormato === "info_aprendiz"}
+      onOpenChange={(open) => !open && setPreviewFormato(null)}
+      persona={persona ?? null}
+      matricula={matricula}
+      curso={curso ?? null}
+    />
+    <RegistroAsistenciaPreviewDialog
+      open={previewFormato === "registro_asistencia"}
+      onOpenChange={(open) => !open && setPreviewFormato(null)}
+      persona={persona ?? null}
+      matricula={matricula}
+      curso={curso ?? null}
+    />
+    <ParticipacionPtaAtsPreviewDialog
+      open={previewFormato === "participacion_pta_ats"}
+      onOpenChange={(open) => !open && setPreviewFormato(null)}
+      persona={persona ?? null}
+      matricula={matricula}
+      curso={curso ?? null}
+    />
+    </>
   );
 }

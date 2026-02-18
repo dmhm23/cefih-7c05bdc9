@@ -1,94 +1,132 @@
 
 
-## Modal para Agregar Estudiantes a un Curso
+## Reorganizacion del Modulo de Cursos: Secciones "Todos los cursos" + "Calendario"
 
 ### Resumen
 
-Reemplazar el boton "Agregar" actual (que navega a `/matriculas/nueva?cursoId=...`) por un modal que muestra todas las matriculas existentes que aun no estan asignadas al curso. Permite buscar por cedula, seleccionar multiples estudiantes, revisar la seleccion y confirmar. Tambien se agrega funcionalidad para eliminar estudiantes ya asignados al curso.
+Reorganizar la ruta `/cursos` para que contenga dos secciones internas navegables mediante tabs: **"Todos los cursos"** (la vista actual de listado/gestion) y **"Calendario"** (nueva vista tipo Google Calendar). La vista Calendario mostrara los cursos como eventos en una grilla temporal con modos Mes/Semana/Dia, filtros por entrenador y supervisor, y un panel de resumen de horas ejecutadas por entrenador.
 
 ---
 
-### Componente nuevo
+### 1. Crear pagina contenedora con Tabs
 
-**`src/components/cursos/AgregarEstudiantesModal.tsx`**
+**Archivo**: `src/pages/cursos/CursosPage.tsx` (modificar)
 
-Un Dialog con las siguientes secciones:
+Convertir la pagina actual en un contenedor con dos tabs usando `@radix-ui/react-tabs`:
 
-1. **Barra de busqueda**: Input para filtrar por numero de cedula
-2. **Listado de matriculas disponibles**: Muestra todas las matriculas cuyo `cursoId` sea diferente al curso actual o que no tengan curso asignado. Cada fila muestra:
-   - Checkbox de seleccion
-   - Nombre completo (desde Persona)
-   - Tipo y numero de documento
-   - Estado de la matricula
-3. **Contador de seleccionados**: Badge o texto que muestra "X seleccionados"
-4. **Panel de seleccionados**: Seccion inferior o lateral que lista las personas seleccionadas con opcion de quitar individualmente (boton X)
-5. **Footer**: Boton "Cancelar" y "Agregar X estudiantes"
+- **Tab "Todos los cursos"**: Contiene todo el contenido actual de CursosPage (tabla, filtros, toolbar, detail sheet). Se extrae a un componente interno `CursosListView`.
+- **Tab "Calendario"**: Renderiza el nuevo componente `CursosCalendarioView`.
 
-Props:
-- `open: boolean`
-- `onOpenChange: (open: boolean) => void`
-- `cursoId: string`
-- `matriculasActuales: string[]` (IDs de matriculas ya en el curso)
-
-Usa `useMatriculas()` y `usePersonas()` para obtener los datos. Filtra las matriculas que no pertenecen al curso actual.
+El tab activo se controlara con estado local. El encabezado ("Cursos" + descripcion) permanece fuera de los tabs como titulo del modulo.
 
 ---
 
-### Servicio: agregar/quitar matricula de curso
+### 2. Extraer vista de listado
 
-**`src/services/cursoService.ts`** - Agregar metodo `agregarEstudiantes`:
-- Recibe `cursoId` y `matriculaIds: string[]`
-- Actualiza `curso.matriculasIds` agregando los nuevos IDs
-- Actualiza cada matricula con `cursoId = cursoId`
+**Archivo**: `src/components/cursos/CursosListView.tsx` (crear)
 
-**`src/services/cursoService.ts`** - Agregar metodo `removerEstudiante`:
-- Recibe `cursoId` y `matriculaId: string`
-- Quita el ID de `curso.matriculasIds`
-- Limpia `cursoId` de la matricula
+Mover toda la logica actual de `CursosPage` (tabla, filtros, busqueda, column selector, detail sheet, bulk actions) a este componente. No cambia funcionalidad, solo se encapsula.
 
 ---
 
-### Hooks nuevos
+### 3. Crear componente de Calendario
 
-**`src/hooks/useCursos.ts`** - Agregar:
-- `useAgregarEstudiantesCurso()`: mutation que llama a `cursoService.agregarEstudiantes` e invalida queries de cursos, matriculas
-- `useRemoverEstudianteCurso()`: mutation que llama a `cursoService.removerEstudiante` e invalida queries
+**Archivo**: `src/components/cursos/CursosCalendarioView.tsx` (crear)
+
+Calendario construido desde cero (sin libreria externa) con la siguiente estructura:
+
+**3.1. Toolbar del calendario**
+- Selector de modo: Mes / Semana / Dia (botones tipo toggle group)
+- Navegacion temporal: botones "<" y ">" para avanzar/retroceder, boton "Hoy" para volver al periodo actual
+- Etiqueta del periodo actual (ej: "Marzo 2024", "10-16 Mar 2024", "Lunes 11 Mar")
+
+**3.2. Filtros**
+- Filtro por entrenador (principal): dropdown multi-select con checkboxes. Opciones: "Todos", y cada entrenador unico extraido de los cursos. Colores asignados por entrenador.
+- Filtro por supervisor: dropdown simple (preparado para datos futuros, por ahora vacio con placeholder)
+
+**3.3. Grilla del calendario**
+
+- **Vista Mes**: Grilla 7 columnas (Lun-Dom) x 5-6 filas. Cada celda muestra el dia y los cursos que caen en ese rango de fechas como barras de color (color por entrenador). Si un curso dura multiples dias, la barra se extiende horizontalmente.
+- **Vista Semana**: 7 columnas con franjas horarias verticales (8:00-18:00). Los cursos se muestran como bloques en la franja correspondiente. Dado que los cursos no tienen hora especifica, se mostraran como bloques de dia completo en la parte superior.
+- **Vista Dia**: Una sola columna con la franja horaria del dia. Cursos del dia como bloques.
+
+Cada bloque/evento muestra:
+- Nombre del curso (truncado si es largo)
+- Nombre del entrenador
+- Color asignado al entrenador
+
+Al hacer clic en un evento, navegar a `/cursos/:id`.
+
+**3.4. Panel de resumen de horas por entrenador**
+
+Sidebar o seccion inferior que muestra para el mes actual (o periodo seleccionado):
+- Lista de entrenadores con:
+  - Nombre
+  - Cantidad de cursos asignados
+  - Horas ejecutadas (suma de `horasTotales` de cursos en el periodo)
+  - Barra de progreso visual (preparada para un tope mensual que se definira despues, por ahora se muestra solo el total)
 
 ---
 
-### Modificaciones en CursoDetallePage
+### 4. Logica de colores por entrenador
 
-**`src/pages/cursos/CursoDetallePage.tsx`**:
-
-1. Importar `AgregarEstudiantesModal`
-2. Agregar estado `modalAgregarOpen`
-3. Cambiar el boton "Agregar" para abrir el modal en lugar de navegar
-4. En la lista de estudiantes inscritos, agregar un boton de eliminar (icono X o Trash) en cada fila con confirmacion via `ConfirmDialog`
-5. Importar y usar `useRemoverEstudianteCurso` para la eliminacion
-
----
-
-### Flujo de usuario
+Definir un array de colores predefinidos y asignarlos ciclicamente a cada entrenador unico. Esto se usara tanto en los eventos del calendario como en el filtro para diferenciar visualmente.
 
 ```text
-1. Usuario entra a /cursos/:id
-2. Hace clic en "Agregar" (seccion Estudiantes Inscritos)
-3. Se abre modal con listado de matriculas disponibles
-4. Escribe cedula para filtrar
-5. Selecciona uno o varios estudiantes con checkboxes
-6. Ve contador "3 seleccionados" y lista de seleccionados
-7. Clic en "Agregar 3 estudiantes" -> se asignan al curso
-8. Para eliminar, clic en icono basura junto a cada estudiante -> confirmacion -> se remueve
+Colores: azul, verde, naranja, morado, rosa, teal, rojo, amarillo
 ```
 
 ---
 
-### Archivos afectados
+### 5. Agregar campo `supervisorId`/`supervisorNombre` al tipo Curso (preparacion)
+
+**Archivo**: `src/types/curso.ts` (modificar)
+
+Agregar campos opcionales:
+- `supervisorId?: string`
+- `supervisorNombre?: string`
+
+Esto permite que el filtro por supervisor funcione cuando se agreguen datos. No se modifican los mock data por ahora.
+
+---
+
+### 6. Mock data: agregar mas variedad de cursos
+
+**Archivo**: `src/data/mockData.ts` (modificar)
+
+Agregar 3-4 cursos adicionales con diferentes entrenadores, fechas y estados para que la vista calendario tenga contenido visual significativo. Incluir cursos en diferentes meses para probar navegacion temporal.
+
+---
+
+### Resumen de archivos
 
 | Archivo | Accion |
 |---------|--------|
-| `src/components/cursos/AgregarEstudiantesModal.tsx` | Crear |
-| `src/services/cursoService.ts` | Agregar `agregarEstudiantes` y `removerEstudiante` |
-| `src/hooks/useCursos.ts` | Agregar `useAgregarEstudiantesCurso` y `useRemoverEstudianteCurso` |
-| `src/pages/cursos/CursoDetallePage.tsx` | Integrar modal y boton eliminar |
+| `src/pages/cursos/CursosPage.tsx` | Refactorizar: tabs contenedoras |
+| `src/components/cursos/CursosListView.tsx` | Crear: extraer listado actual |
+| `src/components/cursos/CursosCalendarioView.tsx` | Crear: calendario completo |
+| `src/types/curso.ts` | Agregar campos supervisor opcionales |
+| `src/data/mockData.ts` | Agregar cursos adicionales para demo |
+
+---
+
+### Seccion tecnica
+
+**Calendario sin librerias externas**: Se construira con CSS Grid y logica de fechas usando `date-fns` (ya instalado). Las funciones clave son:
+- `startOfMonth`, `endOfMonth`, `startOfWeek`, `endOfWeek` para calcular la grilla mensual
+- `eachDayOfInterval` para generar los dias de la grilla
+- `isWithinInterval`, `isSameDay` para determinar que cursos caen en cada celda
+- `format` para etiquetas de fecha
+
+**Rendimiento**: Los cursos se filtran una sola vez por periodo visible y se distribuyen en las celdas mediante un `useMemo`.
+
+**Estructura del evento en la grilla**:
+```text
++------------------------------------------+
+| Lun 11  | Mar 12  | Mie 13  | Jue 14 ...
+|---------|---------|---------|--------
+| [== Trabajo en Alturas - Carlos ==]      |
+|         | [Reentrenamiento - Maria]       |
++------------------------------------------+
+```
 

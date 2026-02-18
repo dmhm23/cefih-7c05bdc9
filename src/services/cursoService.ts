@@ -177,4 +177,76 @@ export const cursoService = {
 
     mockCursos.splice(index, 1);
   },
+
+  async agregarEstudiantes(cursoId: string, matriculaIds: string[]): Promise<Curso> {
+    await delay(800);
+
+    const index = mockCursos.findIndex(c => c.id === cursoId);
+    if (index === -1) {
+      throw new ApiError('Curso no encontrado', 404, 'NOT_FOUND');
+    }
+
+    const now = new Date().toISOString();
+
+    // Agregar matriculas al curso
+    const nuevosIds = matriculaIds.filter(id => !mockCursos[index].matriculasIds.includes(id));
+    mockCursos[index].matriculasIds.push(...nuevosIds);
+    mockCursos[index].updatedAt = now;
+
+    // Actualizar cursoId en cada matrícula
+    for (const mId of nuevosIds) {
+      const mIndex = mockMatriculas.findIndex(m => m.id === mId);
+      if (mIndex !== -1) {
+        mockMatriculas[mIndex].cursoId = cursoId;
+      }
+    }
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'curso',
+      entidadId: cursoId,
+      accion: 'editar',
+      camposModificados: ['matriculasIds'],
+      valorNuevo: { agregados: nuevosIds },
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return mockCursos[index];
+  },
+
+  async removerEstudiante(cursoId: string, matriculaId: string): Promise<Curso> {
+    await delay(600);
+
+    const index = mockCursos.findIndex(c => c.id === cursoId);
+    if (index === -1) {
+      throw new ApiError('Curso no encontrado', 404, 'NOT_FOUND');
+    }
+
+    const now = new Date().toISOString();
+
+    mockCursos[index].matriculasIds = mockCursos[index].matriculasIds.filter(id => id !== matriculaId);
+    mockCursos[index].updatedAt = now;
+
+    // Limpiar cursoId de la matrícula
+    const mIndex = mockMatriculas.findIndex(m => m.id === matriculaId);
+    if (mIndex !== -1) {
+      mockMatriculas[mIndex].cursoId = '';
+    }
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'curso',
+      entidadId: cursoId,
+      accion: 'editar',
+      camposModificados: ['matriculasIds'],
+      valorNuevo: { removido: matriculaId },
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return mockCursos[index];
+  },
 };

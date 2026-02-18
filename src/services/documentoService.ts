@@ -23,7 +23,7 @@ export function getDocumentosRequeridos(
       {
         id: uuid(),
         tipo: 'arl',
-        nombre: 'ARL (Aseguradora de Riesgos Laborales)',
+        nombre: 'ARL',
         estado: 'pendiente',
       },
       {
@@ -54,7 +54,7 @@ export function getDocumentosRequeridos(
     {
       id: uuid(),
       tipo: 'arl',
-      nombre: 'ARL (Aseguradora de Riesgos Laborales)',
+      nombre: 'ARL',
       estado: 'pendiente',
     },
     {

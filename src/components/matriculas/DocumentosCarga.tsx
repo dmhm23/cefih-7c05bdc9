@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2, Info } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -129,24 +130,42 @@ export function DocumentosCarga({
   const renderFechaFields = (doc: DocumentoRequerido) => {
     if ((doc.tipo !== "examen_medico" && doc.tipo !== "arl") || !onFechaChange) return null;
     return (
-      <div className="flex gap-2 mt-1">
-        {doc.tipo === "examen_medico" && (
-          <div className="flex items-center gap-1">
-            <Label className="text-xs text-muted-foreground whitespace-nowrap">Fecha examen:</Label>
-            <Input type="date" className="h-6 text-xs w-32 px-1"
-              value={doc.fechaDocumento || ""}
-              onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
-          </div>
-        )}
-        {doc.tipo === "arl" && (
-          <div className="flex items-center gap-1">
-            <Label className="text-xs text-muted-foreground whitespace-nowrap">Inicio cobertura:</Label>
-            <Input type="date" className="h-6 text-xs w-32 px-1"
-              value={doc.fechaInicioCobertura || ""}
-              onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
-          </div>
-        )}
-      </div>
+      <TooltipProvider>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1">
+          {doc.tipo === "examen_medico" && (
+            <div className="flex items-center gap-1 min-w-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-0.5 cursor-default">
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Examen</Label>
+                    <Info className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Fecha del examen médico ocupacional</TooltipContent>
+              </Tooltip>
+              <Input type="date" className="h-6 text-xs w-[7.5rem] px-1"
+                value={doc.fechaDocumento || ""}
+                onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
+            </div>
+          )}
+          {doc.tipo === "arl" && (
+            <div className="flex items-center gap-1 min-w-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-0.5 cursor-default">
+                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Cobertura</Label>
+                    <Info className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">Inicio de cobertura ARL (Aseguradora de Riesgos Laborales)</TooltipContent>
+              </Tooltip>
+              <Input type="date" className="h-6 text-xs w-[7.5rem] px-1"
+                value={doc.fechaInicioCobertura || ""}
+                onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
+            </div>
+          )}
+        </div>
+      </TooltipProvider>
     );
   };
 
@@ -197,7 +216,7 @@ export function DocumentosCarga({
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0 overflow-hidden">
       {/* Progress */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

@@ -87,3 +87,31 @@ export const useDeleteCurso = () => {
     },
   });
 };
+
+export const useAgregarEstudiantesCurso = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ cursoId, matriculaIds }: { cursoId: string; matriculaIds: string[] }) =>
+      cursoService.agregarEstudiantes(cursoId, matriculaIds),
+    onSuccess: (_, { cursoId }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId] });
+      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+};
+
+export const useRemoverEstudianteCurso = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ cursoId, matriculaId }: { cursoId: string; matriculaId: string }) =>
+      cursoService.removerEstudiante(cursoId, matriculaId),
+    onSuccess: (_, { cursoId }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId] });
+      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+};

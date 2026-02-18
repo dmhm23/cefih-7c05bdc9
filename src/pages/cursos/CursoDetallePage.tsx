@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, Unlock, FileText } from "lucide-react";
+import { ArrowLeft, Lock, Unlock, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
-import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { AgregarEstudiantesModal } from "@/components/cursos/AgregarEstudiantesModal";
+import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso, useRemoverEstudianteCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { ESTADO_CURSO_LABELS, EstadoMatricula } from "@/types";
@@ -33,6 +35,10 @@ export default function CursoDetallePage() {
   const { data: personas = [] } = usePersonas();
   const cambiarEstado = useCambiarEstadoCurso();
   const updateCurso = useUpdateCurso();
+  const removerEstudiante = useRemoverEstudianteCurso();
+
+  const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
+  const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
 
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -212,7 +218,7 @@ export default function CursoDetallePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/matriculas/nueva?cursoId=${curso.id}`)}
+                  onClick={() => setModalAgregarOpen(true)}
                 >
                   Agregar
                 </Button>
@@ -251,17 +257,25 @@ export default function CursoDetallePage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right text-xs">
-                          <p className={m.pagado ? "text-emerald-600" : "text-amber-600"}>
-                            {m.pagado ? "Pagado" : "Sin pago"}
-                          </p>
-                          <p className="text-muted-foreground">
-                            Docs: {m.documentos.filter((d) => d.estado !== "pendiente").length}/{m.documentos.length}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={m.estado} />
+                          {curso.estado === "abierto" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEstudianteAEliminar({
+                                  id: m.id,
+                                  nombre: `${persona?.nombres} ${persona?.apellidos}`,
+                                });
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
-                        <StatusBadge status={m.estado} />
-                      </div>
                     </div>
                   );
                 })}
@@ -337,6 +351,36 @@ export default function CursoDetallePage() {
           </Button>
         </div>
       )}
+      {/* Modal agregar estudiantes */}
+      <AgregarEstudiantesModal
+        open={modalAgregarOpen}
+        onOpenChange={setModalAgregarOpen}
+        cursoId={curso.id}
+        matriculasActuales={curso.matriculasIds}
+      />
+
+      {/* Confirmar eliminación */}
+      <ConfirmDialog
+        open={!!estudianteAEliminar}
+        onOpenChange={(open) => !open && setEstudianteAEliminar(null)}
+        title="Remover estudiante"
+        description={`¿Estás seguro de remover a ${estudianteAEliminar?.nombre} de este curso?`}
+        confirmText="Remover"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!estudianteAEliminar) return;
+          try {
+            await removerEstudiante.mutateAsync({
+              cursoId: curso.id,
+              matriculaId: estudianteAEliminar.id,
+            });
+            toast({ title: "Estudiante removido del curso" });
+          } catch {
+            toast({ title: "Error al remover estudiante", variant: "destructive" });
+          }
+          setEstudianteAEliminar(null);
+        }}
+      />
     </div>
   );
 }

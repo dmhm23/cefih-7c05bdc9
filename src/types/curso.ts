@@ -10,6 +10,8 @@ export interface Curso {
   horasTotales: number;
   entrenadorId: string;
   entrenadorNombre: string;
+  supervisorId?: string;
+  supervisorNombre?: string;
   capacidadMaxima: number;
   estado: EstadoCurso;
   matriculasIds: string[];

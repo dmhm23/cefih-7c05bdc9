@@ -244,7 +244,7 @@ export const mockMatriculas: Matricula[] = [
     documentos: [
       { id: 'd1', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'verificado', fechaCarga: '2024-02-20' },
       { id: 'd2', tipo: 'examen_medico', nombre: 'Examen Médico Ocupacional', estado: 'cargado', fechaCarga: '2024-02-21', fechaDocumento: '2024-02-15' },
-      { id: 'd3', tipo: 'arl', nombre: 'ARL (Aseguradora de Riesgos Laborales)', estado: 'pendiente' },
+      { id: 'd3', tipo: 'arl', nombre: 'Afiliación ARL', estado: 'pendiente' },
       { id: 'd3b', tipo: 'certificado_eps', nombre: 'Certificado EPS', estado: 'pendiente' },
       { id: 'd3c', tipo: 'planilla_seguridad_social', nombre: 'Planilla de Seguridad Social', estado: 'pendiente', opcional: true },
     ],
@@ -289,7 +289,7 @@ export const mockMatriculas: Matricula[] = [
     documentos: [
       { id: 'd4', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'verificado', fechaCarga: '2024-02-16' },
       { id: 'd5', tipo: 'examen_medico', nombre: 'Examen Médico Ocupacional', estado: 'verificado', fechaCarga: '2024-02-17', fechaDocumento: '2024-02-10' },
-      { id: 'd5b', tipo: 'arl', nombre: 'ARL (Aseguradora de Riesgos Laborales)', estado: 'verificado', fechaCarga: '2024-02-17', fechaInicioCobertura: '2024-01-01' },
+      { id: 'd5b', tipo: 'arl', nombre: 'Afiliación ARL', estado: 'verificado', fechaCarga: '2024-02-17', fechaInicioCobertura: '2024-01-01' },
       { id: 'd6', tipo: 'certificado_eps', nombre: 'Certificado EPS', estado: 'verificado', fechaCarga: '2024-02-17' },
     ],
     firmaCapturada: true,
@@ -340,7 +340,7 @@ export const mockMatriculas: Matricula[] = [
     documentos: [
       { id: 'd7', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
       { id: 'd8', tipo: 'examen_medico', nombre: 'Examen Médico Ocupacional', estado: 'pendiente' },
-      { id: 'd8b', tipo: 'arl', nombre: 'ARL (Aseguradora de Riesgos Laborales)', estado: 'pendiente' },
+      { id: 'd8b', tipo: 'arl', nombre: 'Afiliación ARL', estado: 'pendiente' },
       { id: 'd8c', tipo: 'certificado_eps', nombre: 'Certificado EPS', estado: 'pendiente' },
     ],
     firmaCapturada: false,
@@ -383,7 +383,7 @@ export const mockMatriculas: Matricula[] = [
     documentos: [
       { id: 'd9', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'verificado', fechaCarga: '2024-01-12' },
       { id: 'd10', tipo: 'examen_medico', nombre: 'Examen Médico Ocupacional', estado: 'verificado', fechaCarga: '2024-01-13', fechaDocumento: '2024-01-05' },
-      { id: 'd10b', tipo: 'arl', nombre: 'ARL (Aseguradora de Riesgos Laborales)', estado: 'verificado', fechaCarga: '2024-01-13', fechaInicioCobertura: '2024-01-01' },
+      { id: 'd10b', tipo: 'arl', nombre: 'Afiliación ARL', estado: 'verificado', fechaCarga: '2024-01-13', fechaInicioCobertura: '2024-01-01' },
       { id: 'd11', tipo: 'certificado_eps', nombre: 'Certificado EPS', estado: 'verificado', fechaCarga: '2024-01-13' },
       { id: 'd12', tipo: 'curso_previo', nombre: 'Certificado de Curso Previo', estado: 'verificado', fechaCarga: '2024-01-13' },
     ],

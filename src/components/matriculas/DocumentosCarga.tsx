@@ -33,14 +33,12 @@ interface DocumentosCargaProps {
 
 const ESTADO_COLORS: Record<string, string> = {
   pendiente: "bg-amber-500/10 text-amber-600 border-amber-200",
-  cargado: "bg-blue-500/10 text-blue-600 border-blue-200",
-  verificado: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+  cargado: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
 };
 
 const ESTADO_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
   cargado: "Cargado",
-  verificado: "Verificado",
 };
 
 type PreviewData = { url: string; name: string; type: string; size: number };
@@ -261,14 +259,12 @@ export function DocumentosCarga({
               <div key={doc.id} className="space-y-0">
                 <div className="flex items-start gap-2 p-2.5 border rounded-lg overflow-hidden">
                   <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5",
-                    doc.estado === "verificado" ? "bg-emerald-500/10" :
-                    doc.estado === "cargado" ? "bg-blue-500/10" : "bg-muted")}>
+                    doc.estado === "cargado" ? "bg-emerald-500/10" : "bg-muted")}>
                     {isUploading_ ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
                     ) : (
                       <FileCheck className={cn("h-3.5 w-3.5",
-                        doc.estado === "verificado" ? "text-emerald-600" :
-                        doc.estado === "cargado" ? "text-blue-600" : "text-muted-foreground")} />
+                        doc.estado === "cargado" ? "text-emerald-600" : "text-muted-foreground")} />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

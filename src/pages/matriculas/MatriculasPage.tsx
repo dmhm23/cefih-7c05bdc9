@@ -78,7 +78,7 @@ export default function MatriculasPage() {
   const getEstadoDocumental = (matricula: Matricula): "Completo" | "Pendiente" => {
     const docsObligatorios = (matricula.documentos || []).filter((d) => !d.opcional);
     if (docsObligatorios.length === 0) return "Pendiente";
-    return docsObligatorios.every((d) => d.estado === "cargado" || d.estado === "verificado")
+    return docsObligatorios.every((d) => d.estado === "cargado")
       ? "Completo"
       : "Pendiente";
   };

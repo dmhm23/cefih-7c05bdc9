@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,6 +59,8 @@ type PreviewFormatoId = string | null;
 export default function MatriculaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: string })?.from || "/matriculas";
   const { toast } = useToast();
   const [pagoDialogOpen, setPagoDialogOpen] = useState(false);
   const [facturaNumero, setFacturaNumero] = useState("");
@@ -272,7 +274,7 @@ export default function MatriculaDetallePage() {
     <div className="space-y-4">
       {/* Header compacto */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/matriculas")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -304,7 +306,7 @@ export default function MatriculaDetallePage() {
                 variant="link"
                 size="sm"
                 className="px-0 gap-1 h-auto text-xs"
-                onClick={() => navigate(`/personas/${matricula.personaId}`)}
+                onClick={() => navigate(`/personas/${matricula.personaId}`, { state: { from: `/matriculas/${matricula.id}`, fromLabel: "Matrícula" } })}
               >
                 <ExternalLink className="h-3 w-3" />
                 Ver perfil completo

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,8 @@ import { format } from "date-fns";
 export default function PersonaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: string })?.from || "/personas";
   const { toast } = useToast();
 
   const { data: persona, isLoading } = usePersona(id || "");
@@ -113,7 +115,7 @@ export default function PersonaDetallePage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/personas")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -280,7 +282,7 @@ export default function PersonaDetallePage() {
                 <div
                   key={m.id}
                   className="p-2 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/matriculas/${m.id}`)}
+                  onClick={() => navigate(`/matriculas/${m.id}`, { state: { from: `/personas/${id}`, fromLabel: "Persona" } })}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium capitalize">

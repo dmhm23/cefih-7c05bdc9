@@ -1,46 +1,37 @@
 
 
-## Plan: Optimizar seccion de documentos en panel deslizante
+## Plan: Fix preview dialog closing sheet and stale state bug
 
-### Problemas identificados
+### Root Cause
 
-1. **Desbordamiento de margenes**: La fila de cada documento usa `flex items-center gap-3 p-2.5` con el nombre, badge de estado y boton de accion en linea. En paneles estrechos, estos elementos no tienen restriccion de ancho y se salen del contenedor.
-2. **Superposicion de etiquetas de estado**: El Badge de estado y el boton "Cargar" / menu de acciones estan en la misma linea que el nombre del documento sin `flex-wrap`, causando que se superpongan cuando el nombre es largo.
-3. **Nombre "ARL (Aseguradora de Riesgos Laborales)"**: Aparece en `mockData.ts` (datos de prueba) y en el tooltip de `DocumentosCarga.tsx`. El servicio `documentoService.ts` ya usa "ARL" corto, pero los datos mock existentes tienen el nombre largo.
+Two issues work together to create this bug:
 
-### Cambios propuestos
+1. **DetailSheet's outside-click handler** (`src/components/shared/DetailSheet.tsx`, line 48-63) checks for Radix popper/select/menu portals but does NOT detect open **Dialog** portals. When clicking inside a preview dialog, the handler sees the click is outside the sheet and closes it.
 
-#### 1. Renombrar ARL en datos mock (`src/data/mockData.ts`)
-- Cambiar todas las ocurrencias de `'ARL (Aseguradora de Riesgos Laborales)'` por `'Afiliacion ARL'`.
+2. **Stale `previewFormato` state** (`src/components/matriculas/MatriculaDetailSheet.tsx`, line 110): When the sheet closes, `previewFormato` is never reset to `null`. On the next row click, the sheet reopens with the old value, immediately re-opening the dialog.
 
-#### 2. Renombrar ARL en servicio de documentos (`src/services/documentoService.ts`)
-- Cambiar el nombre `'ARL'` por `'Afiliacion ARL'` en las dos ocurrencias donde se genera el documento de tipo `arl`.
+### Changes
 
-#### 3. Optimizar layout de filas individuales (`src/components/matriculas/DocumentosCarga.tsx`)
+#### 1. Add Dialog portal detection to outside-click handler (`src/components/shared/DetailSheet.tsx`)
 
-Cambios en la fila de cada documento (lineas 261-325):
-- Reestructurar el layout para que el nombre del documento y el badge de estado se manejen correctamente en espacio reducido.
-- Mover el Badge de estado debajo del nombre del documento (junto a la info del archivo) en lugar de tenerlo al lado derecho compitiendo por espacio con el boton de accion.
-- Aplicar `overflow-hidden` al contenedor de la fila para prevenir desbordamientos.
-- Reducir el `gap` entre elementos para aprovechar mejor el espacio.
-- Asegurar que el nombre del documento tenga `truncate` y `min-w-0` en su contenedor padre.
+Update the `handleClickOutside` function to also detect open Radix Dialog portals by checking for `[role="dialog"]` elements or `[data-radix-dialog-overlay]`. If a dialog is open, skip the close action.
 
-Estructura propuesta por fila:
 ```
-[Icono] [Nombre (truncate) + (opcional)]   [Cargar / Menu ...]
-        [Badge estado]
-        [Info archivo si existe]
-        [Campos fecha si aplica]
+Line ~52-55: Add dialog portal selectors to the hasOpenPortal check
 ```
 
-#### 4. Tooltip ARL en DocumentosCarga
-- Mantener el tooltip con la descripcion completa "Inicio de cobertura ARL" (ya esta correcto, sin el parentesis largo).
+#### 2. Reset preview state when sheet closes (`src/components/matriculas/MatriculaDetailSheet.tsx`)
 
-### Archivos a modificar
+In the existing `useEffect` that resets state when `matricula.id` changes (line 112-117), also reset `previewFormato` to `null`. Additionally, reset it when `open` changes to `false`.
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/data/mockData.ts` | Renombrar "ARL (Aseguradora de Riesgos Laborales)" a "Afiliacion ARL" (5 ocurrencias) |
-| `src/services/documentoService.ts` | Renombrar "ARL" a "Afiliacion ARL" (2 ocurrencias) |
-| `src/components/matriculas/DocumentosCarga.tsx` | Reestructurar layout de filas para evitar desbordamientos y superposiciones |
+```
+Line ~112-117: Add previewFormato reset when sheet closes or matricula changes
+```
+
+### Files to modify
+
+| File | Change |
+|------|--------|
+| `src/components/shared/DetailSheet.tsx` | Add `[role="dialog"]` to the portal detection query in `handleClickOutside` |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Reset `previewFormato` to `null` when sheet closes and on matricula change |
 

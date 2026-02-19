@@ -103,14 +103,6 @@ export default function CursoDetallePage() {
         onCloseCourse={() => setCloseDialogOpen(true)}
       />
 
-      {/* State transitions for non-close actions */}
-      {curso.estado === "abierto" && (
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleCambiarEstado("en_progreso")}>
-            Iniciar Curso
-          </Button>
-        </div>
-      )}
 
       {/* Card 1 — Info */}
       <CourseInfoCard

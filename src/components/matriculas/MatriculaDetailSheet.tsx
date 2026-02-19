@@ -114,7 +114,12 @@ export function MatriculaDetailSheet({
     setPersonaFormData({});
     setIsDirty(false);
     setIsPersonaDirty(false);
+    setPreviewFormato(null);
   }, [matricula?.id]);
+
+  useEffect(() => {
+    if (!open) setPreviewFormato(null);
+  }, [open]);
 
   if (!matricula) return null;
 

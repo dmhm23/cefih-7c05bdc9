@@ -239,7 +239,7 @@ export function MatriculaDetailSheet({
   };
 
   const completedSteps = [
-    matricula.documentos.every((d) => d.estado === "verificado"),
+    matricula.documentos.every((d) => d.estado === "cargado"),
     matricula.evaluacionCompletada,
     matricula.encuestaCompletada,
     matricula.pagado,

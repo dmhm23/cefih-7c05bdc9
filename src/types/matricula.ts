@@ -34,8 +34,7 @@ export type TipoDocumento =
 
 export type EstadoDocumento = 
   | 'pendiente' 
-  | 'cargado' 
-  | 'verificado';
+  | 'cargado';
 
 export interface DocumentoRequerido {
   id: string;

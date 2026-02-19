@@ -263,7 +263,7 @@ export function MatriculaDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={personaName}
-      subtitle={[nivelFormacionLabel, cursoName].filter(Boolean).join(" · ")}
+      subtitle={nivelFormacionLabel}
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}

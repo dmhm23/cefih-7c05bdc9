@@ -22,7 +22,7 @@ export function getDocumentosRequeridos(
       {
         id: uuid(),
         tipo: 'arl',
-        nombre: 'ARL',
+        nombre: 'Afiliación ARL',
         estado: 'pendiente',
       },
       {
@@ -53,7 +53,7 @@ export function getDocumentosRequeridos(
     {
       id: uuid(),
       tipo: 'arl',
-      nombre: 'ARL',
+      nombre: 'Afiliación ARL',
       estado: 'pendiente',
     },
     {

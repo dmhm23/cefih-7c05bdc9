@@ -157,7 +157,7 @@ export function DocumentosCarga({
                     <Info className="h-3 w-3 text-muted-foreground/60 shrink-0" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">Inicio de cobertura ARL (Aseguradora de Riesgos Laborales)</TooltipContent>
+                <TooltipContent side="top" className="text-xs">Inicio de cobertura ARL</TooltipContent>
               </Tooltip>
               <Input type="date" className="h-6 text-xs w-[7.5rem] px-1"
                 value={doc.fechaInicioCobertura || ""}
@@ -259,8 +259,8 @@ export function DocumentosCarga({
 
             return (
               <div key={doc.id} className="space-y-0">
-                <div className="flex items-center gap-3 p-2.5 border rounded-lg">
-                  <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0",
+                <div className="flex items-start gap-2 p-2.5 border rounded-lg overflow-hidden">
+                  <div className={cn("h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5",
                     doc.estado === "verificado" ? "bg-emerald-500/10" :
                     doc.estado === "cargado" ? "bg-blue-500/10" : "bg-muted")}>
                     {isUploading_ ? (
@@ -272,10 +272,13 @@ export function DocumentosCarga({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <p className="text-sm font-medium truncate">{doc.nombre}</p>
-                      {doc.opcional && <span className="text-xs text-muted-foreground">(opcional)</span>}
+                      {doc.opcional && <span className="text-[11px] text-muted-foreground shrink-0">(opcional)</span>}
                     </div>
+                    <Badge variant="outline" className={cn("text-[10px] mt-1", ESTADO_COLORS[doc.estado])}>
+                      {ESTADO_LABELS[doc.estado]}
+                    </Badge>
                     {renderFileInfo(doc, doc.id)}
                     {doc.urlDrive && (
                       <a href={doc.urlDrive} target="_blank" rel="noopener noreferrer"
@@ -285,10 +288,7 @@ export function DocumentosCarga({
                     )}
                     {renderFechaFields(doc)}
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge variant="outline" className={cn("text-xs", ESTADO_COLORS[doc.estado])}>
-                      {ESTADO_LABELS[doc.estado]}
-                    </Badge>
+                  <div className="shrink-0 mt-0.5">
                     {doc.estado === "pendiente" ? (
                       <label className="cursor-pointer">
                         <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"

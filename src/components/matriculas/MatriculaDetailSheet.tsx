@@ -249,6 +249,9 @@ export function MatriculaDetailSheet({
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "Sin curso asignado";
+  const nivelFormacionLabel = matricula.empresaNivelFormacion 
+    ? NIVEL_FORMACION_EMPRESA_LABELS[matricula.empresaNivelFormacion] 
+    : undefined;
 
   const handleFullScreen = () => {
     if (matricula) { onOpenChange(false); navigate(`/matriculas/${matricula.id}`); }
@@ -260,7 +263,7 @@ export function MatriculaDetailSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={personaName}
-      subtitle={cursoName}
+      subtitle={[nivelFormacionLabel, cursoName].filter(Boolean).join(" · ")}
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}

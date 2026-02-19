@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, Trash2, Download, Filter } from "lucide-react";
+import { Users, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
@@ -13,6 +13,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { Curso } from "@/types";
+import { TIPO_FORMACION_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -25,7 +26,7 @@ const ESTADO_OPTIONS = [
 ];
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: "nombre", header: "Nombre del Curso", visible: true },
+  { key: "curso", header: "Curso", visible: true },
   { key: "entrenador", header: "Entrenador", visible: true },
   { key: "fechas", header: "Fechas", visible: true },
   { key: "duracion", header: "Duración", visible: true },
@@ -69,10 +70,14 @@ export default function CursosListView() {
     return value && value !== "todos";
   }).length;
 
+  const getCursoLabel = (c: Curso) =>
+    `${TIPO_FORMACION_LABELS[c.tipoFormacion]} — #${c.numeroCurso}`;
+
   const filteredCursos = cursos.filter((c) => {
+    const label = getCursoLabel(c).toLowerCase();
     const matchesSearch =
       !searchQuery ||
-      c.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      label.includes(searchQuery.toLowerCase()) ||
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
@@ -131,10 +136,12 @@ export default function CursosListView() {
 
   const columns: Column<Curso>[] = [
     {
-      key: "nombre",
-      header: "Nombre del Curso",
+      key: "curso",
+      header: "Curso",
       render: (c: Curso) => (
-        <span className="font-medium max-w-[300px] truncate block">{c.nombre}</span>
+        <span className="font-medium max-w-[300px] truncate block">
+          {getCursoLabel(c)}
+        </span>
       ),
     },
     {
@@ -227,7 +234,7 @@ export default function CursosListView() {
           <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
         </div>
         <SearchInput
-          placeholder="Buscar por nombre o entrenador..."
+          placeholder="Buscar por tipo, número o entrenador..."
           value={searchQuery}
           onChange={setSearchQuery}
           className="w-72"

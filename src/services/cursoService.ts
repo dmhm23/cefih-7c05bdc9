@@ -36,6 +36,7 @@ export const cursoService = {
       ...data,
       id: uuid(),
       matriculasIds: [],
+      minTrabajoFechasAdicionales: data.minTrabajoFechasAdicionales || [],
       createdAt: now,
       updatedAt: now,
     };
@@ -100,6 +101,16 @@ export const cursoService = {
 
     // Validaciones para cerrar curso
     if (nuevoEstado === 'cerrado') {
+      // 1. Validar MinTrabajo
+      if (!mockCursos[index].minTrabajoRegistro || !mockCursos[index].minTrabajoFechaCierrePrincipal) {
+        throw new ApiError(
+          'Debe registrar el número MinTrabajo y la fecha de cierre MinTrabajo antes de cerrar el curso.',
+          400,
+          'MINTRABAJO_REQUERIDO'
+        );
+      }
+
+      // 2. Validar matrículas pendientes
       const matriculas = mockMatriculas.filter(m => m.cursoId === id);
       const matriculasPendientes = matriculas.filter(
         m => m.estado === 'pendiente' || m.estado === 'creada'
@@ -136,6 +147,79 @@ export const cursoService = {
       usuarioNombre: 'Usuario Actual',
       timestamp: now,
     });
+
+    return mockCursos[index];
+  },
+
+  async actualizarMinTrabajo(id: string, data: { minTrabajoRegistro?: string; minTrabajoResponsable?: string; minTrabajoFechaCierrePrincipal?: string }): Promise<Curso> {
+    await delay(600);
+
+    const index = mockCursos.findIndex(c => c.id === id);
+    if (index === -1) {
+      throw new ApiError('Curso no encontrado', 404, 'NOT_FOUND');
+    }
+
+    const now = new Date().toISOString();
+    const valorAnterior = {
+      minTrabajoRegistro: mockCursos[index].minTrabajoRegistro,
+      minTrabajoResponsable: mockCursos[index].minTrabajoResponsable,
+      minTrabajoFechaCierrePrincipal: mockCursos[index].minTrabajoFechaCierrePrincipal,
+    };
+
+    if (data.minTrabajoRegistro !== undefined) mockCursos[index].minTrabajoRegistro = data.minTrabajoRegistro;
+    if (data.minTrabajoResponsable !== undefined) mockCursos[index].minTrabajoResponsable = data.minTrabajoResponsable;
+    if (data.minTrabajoFechaCierrePrincipal !== undefined) mockCursos[index].minTrabajoFechaCierrePrincipal = data.minTrabajoFechaCierrePrincipal;
+    mockCursos[index].updatedAt = now;
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'curso',
+      entidadId: id,
+      accion: 'editar',
+      camposModificados: Object.keys(data),
+      valorAnterior,
+      valorNuevo: data,
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return mockCursos[index];
+  },
+
+  async agregarFechaAdicional(id: string, data: { fecha: string; motivo: string }): Promise<Curso> {
+    await delay(400);
+
+    const index = mockCursos.findIndex(c => c.id === id);
+    if (index === -1) {
+      throw new ApiError('Curso no encontrado', 404, 'NOT_FOUND');
+    }
+
+    const now = new Date().toISOString();
+    const nuevaFecha = {
+      id: uuid(),
+      fecha: data.fecha,
+      motivo: data.motivo,
+      createdBy: 'Usuario Actual',
+      createdAt: now,
+    };
+
+    mockCursos[index].minTrabajoFechasAdicionales.push(nuevaFecha);
+    mockCursos[index].updatedAt = now;
+
+    return mockCursos[index];
+  },
+
+  async eliminarFechaAdicional(id: string, fechaId: string): Promise<Curso> {
+    await delay(400);
+
+    const index = mockCursos.findIndex(c => c.id === id);
+    if (index === -1) {
+      throw new ApiError('Curso no encontrado', 404, 'NOT_FOUND');
+    }
+
+    mockCursos[index].minTrabajoFechasAdicionales = mockCursos[index].minTrabajoFechasAdicionales.filter(f => f.id !== fechaId);
+    mockCursos[index].updatedAt = new Date().toISOString();
 
     return mockCursos[index];
   },

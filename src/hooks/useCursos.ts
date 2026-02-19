@@ -115,3 +115,42 @@ export const useRemoverEstudianteCurso = () => {
     },
   });
 };
+
+export const useActualizarMinTrabajo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { minTrabajoRegistro?: string; minTrabajoResponsable?: string; minTrabajoFechaCierrePrincipal?: string } }) =>
+      cursoService.actualizarMinTrabajo(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', id] });
+    },
+  });
+};
+
+export const useAgregarFechaAdicional = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { fecha: string; motivo: string } }) =>
+      cursoService.agregarFechaAdicional(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', id] });
+    },
+  });
+};
+
+export const useEliminarFechaAdicional = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ cursoId, fechaId }: { cursoId: string; fechaId: string }) =>
+      cursoService.eliminarFechaAdicional(cursoId, fechaId),
+    onSuccess: (_, { cursoId }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId] });
+    },
+  });
+};

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  BookOpen,
   Calendar,
   Clock,
   Users,
@@ -12,12 +11,11 @@ import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso } from "@/types/curso";
+import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso, TIPO_FORMACION_LABELS } from "@/types/curso";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -53,16 +51,17 @@ export function CursoDetailSheet({
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
-  // Get matriculas for this curso
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
 
-  // Reset form data when curso changes
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
   }, [curso?.id]);
 
   if (!curso) return null;
+
+  const title = `${TIPO_FORMACION_LABELS[curso.tipoFormacion]} — #${curso.numeroCurso}`;
+  const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -71,7 +70,6 @@ export function CursoDetailSheet({
 
   const handleSave = async () => {
     try {
-      // Handle estado change separately
       if (formData.estado && formData.estado !== curso.estado) {
         await cambiarEstado.mutateAsync({
           id: curso.id,
@@ -79,7 +77,6 @@ export function CursoDetailSheet({
         });
       }
 
-      // Handle other changes
       const otherChanges = { ...formData };
       delete otherChanges.estado;
 
@@ -93,12 +90,8 @@ export function CursoDetailSheet({
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);
-    } catch (error) {
-      toast({
-        title: "Error al guardar",
-        description: "No se pudieron guardar los cambios",
-        variant: "destructive",
-      });
+    } catch {
+      toast({ title: "Error al guardar", variant: "destructive" });
     }
   };
 
@@ -111,42 +104,26 @@ export function CursoDetailSheet({
     return (formData[field as keyof CursoFormData] as Curso[K]) ?? curso[field];
   };
 
-  // Calculate capacity
-  const ocupacion = curso.matriculasIds.length / curso.capacidadMaxima;
-  const ocupacionPercent = ocupacion * 100;
-
-  const getOcupacionColor = () => {
-    if (ocupacion >= 0.9) return "text-red-600";
-    if (ocupacion >= 0.7) return "text-amber-600";
-    return "text-emerald-600";
-  };
-
   const getEstadoBadgeVariant = (estado: EstadoCurso) => {
     switch (estado) {
-      case "abierto":
-        return "default" as const;
-      case "en_progreso":
-        return "secondary" as const;
-      case "cerrado":
-        return "outline" as const;
-      default:
-        return "secondary" as const;
+      case "abierto": return "default" as const;
+      case "en_progreso": return "secondary" as const;
+      case "cerrado": return "outline" as const;
+      default: return "secondary" as const;
     }
   };
 
   const handleFullScreen = () => {
-    if (curso) {
-      onOpenChange(false);
-      navigate(`/cursos/${curso.id}`);
-    }
+    onOpenChange(false);
+    navigate(`/cursos/${curso.id}`);
   };
 
   return (
     <DetailSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={curso.nombre}
-      subtitle={`Entrenador: ${curso.entrenadorNombre}`}
+      title={title}
+      subtitle={subtitle}
       currentIndex={currentIndex}
       totalCount={totalCount}
       onNavigate={onNavigate}
@@ -166,21 +143,16 @@ export function CursoDetailSheet({
       }
     >
       <div className="space-y-6">
-        {/* Capacity Overview */}
-        <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className={`h-5 w-5 ${getOcupacionColor()}`} />
-              <span className="font-medium">Capacidad del Curso</span>
-            </div>
-            <span className={`font-semibold ${getOcupacionColor()}`}>
-              {curso.matriculasIds.length}/{curso.capacidadMaxima}
-            </span>
-          </div>
-          <Progress value={ocupacionPercent} className="h-2" />
-          <p className="text-xs text-muted-foreground">
+        {/* Capacity compact */}
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">
+            <span className="font-medium">{curso.matriculasIds.length}</span>
+            <span className="text-muted-foreground">/{curso.capacidadMaxima} inscritos</span>
+          </span>
+          <span className="text-xs text-muted-foreground ml-auto">
             {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles
-          </p>
+          </span>
         </div>
 
         <Separator />
@@ -202,32 +174,35 @@ export function CursoDetailSheet({
 
         <Separator />
 
-        {/* Información General */}
+        {/* Info */}
         <DetailSection title="Información General">
           <div className="space-y-4">
-            <EditableField
-              label="Nombre del Curso"
-              value={getValue("nombre")}
-              onChange={(v) => handleFieldChange("nombre", v)}
-              icon={BookOpen}
-            />
-            <EditableField
-              label="Descripción"
-              value={getValue("descripcion")}
-              onChange={(v) => handleFieldChange("descripcion", v)}
-            />
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Tipo de Formación</p>
+              <p className="text-sm font-medium">{TIPO_FORMACION_LABELS[curso.tipoFormacion]}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Número del Curso</p>
+              <p className="text-sm font-medium">#{curso.numeroCurso}</p>
+            </div>
             <EditableField
               label="Entrenador"
               value={getValue("entrenadorNombre")}
               onChange={(v) => handleFieldChange("entrenadorNombre", v)}
               icon={User}
             />
+            {curso.supervisorNombre && (
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Supervisor</p>
+                <p className="text-sm">{curso.supervisorNombre}</p>
+              </div>
+            )}
           </div>
         </DetailSection>
 
         <Separator />
 
-        {/* Fechas y Duración */}
+        {/* Fechas */}
         <DetailSection title="Fechas y Duración">
           <div className="grid grid-cols-2 gap-4">
             <EditableField
@@ -254,7 +229,27 @@ export function CursoDetailSheet({
 
         <Separator />
 
-        {/* Estudiantes Inscritos */}
+        {/* MinTrabajo summary */}
+        <DetailSection title="Registro MinTrabajo">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Registro:</span>
+              <span className="font-medium">{curso.minTrabajoRegistro || "—"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Fecha Cierre:</span>
+              <span>{curso.minTrabajoFechaCierrePrincipal || "—"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Responsable:</span>
+              <span>{curso.minTrabajoResponsable || "—"}</span>
+            </div>
+          </div>
+        </DetailSection>
+
+        <Separator />
+
+        {/* Students */}
         <DetailSection title="Estudiantes Inscritos">
           {matriculas.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hay estudiantes inscritos</p>
@@ -263,10 +258,7 @@ export function CursoDetailSheet({
               {matriculas.slice(0, 5).map((m) => {
                 const persona = personas.find((p) => p.id === m.personaId);
                 return (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between p-2 bg-muted/30 rounded"
-                  >
+                  <div key={m.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                         <User className="h-4 w-4 text-primary" />
@@ -275,14 +267,10 @@ export function CursoDetailSheet({
                         <p className="text-sm font-medium">
                           {persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {persona?.numeroDocumento}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{persona?.numeroDocumento}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {m.estado}
-                    </Badge>
+                    <Badge variant="outline" className="text-xs">{m.estado}</Badge>
                   </div>
                 );
               })}

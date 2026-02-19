@@ -6,7 +6,6 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -24,63 +23,97 @@ import {
 } from "@/components/ui/select";
 import { useCreateCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
+import { TIPOS_FORMACION_CURSO, ENTRENADORES_MOCK, SUPERVISORES_MOCK } from "@/data/formOptions";
+import { TIPO_FORMACION_LABELS } from "@/types/curso";
 
 const cursoSchema = z.object({
-  nombre: z.string().min(5, "El nombre debe tener al menos 5 caracteres"),
-  descripcion: z.string().min(10, "Agregue una descripción"),
+  tipoFormacion: z.enum(["jefe_area", "trabajador_autorizado", "reentrenamiento", "coordinador_ta"], {
+    required_error: "Seleccione el tipo de formación",
+  }),
+  numeroCurso: z.string().min(1, "Ingrese el número del curso"),
   fechaInicio: z.string().min(1, "Seleccione la fecha de inicio"),
   fechaFin: z.string().min(1, "Seleccione la fecha de fin"),
   duracionDias: z.coerce.number().min(1, "Mínimo 1 día"),
   horasTotales: z.coerce.number().min(1, "Mínimo 1 hora"),
   entrenadorId: z.string().min(1, "Seleccione un entrenador"),
-  entrenadorNombre: z.string().min(1, "Nombre del entrenador"),
-  capacidadMaxima: z.coerce.number().min(1, "Mínimo 1 estudiante").max(50, "Máximo 50 estudiantes"),
-  estado: z.enum(["abierto", "en_progreso", "cerrado"]),
+  entrenadorNombre: z.string(),
+  supervisorId: z.string().optional(),
+  supervisorNombre: z.string().optional(),
+  capacidadMaxima: z.coerce.number().min(1, "Mínimo 1").max(50, "Máximo 50").optional(),
 });
 
-type CursoFormData = z.infer<typeof cursoSchema>;
-
-// Mock de entrenadores (después vendría de un servicio)
-const entrenadores = [
-  { id: "e1", nombre: "Carlos Entrenador" },
-  { id: "e2", nombre: "Maria Instructora" },
-  { id: "e3", nombre: "Pedro Capacitador" },
-];
+type FormValues = z.infer<typeof cursoSchema>;
 
 export default function CursoFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const createCurso = useCreateCurso();
 
-  const form = useForm<CursoFormData>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(cursoSchema),
     defaultValues: {
-      nombre: "",
-      descripcion: "",
+      tipoFormacion: undefined,
+      numeroCurso: "",
       fechaInicio: "",
       fechaFin: "",
       duracionDias: 3,
       horasTotales: 24,
       entrenadorId: "",
       entrenadorNombre: "",
+      supervisorId: "",
+      supervisorNombre: "",
       capacidadMaxima: 20,
-      estado: "abierto",
     },
   });
 
-  const onSubmit = async (data: CursoFormData) => {
+  const handleTipoFormacionChange = (value: string) => {
+    form.setValue("tipoFormacion", value as FormValues["tipoFormacion"]);
+    const tipo = TIPOS_FORMACION_CURSO.find((t) => t.value === value);
+    if (tipo) {
+      form.setValue("duracionDias", tipo.duracionDias);
+      form.setValue("horasTotales", tipo.horasTotales);
+    }
+  };
+
+  const handleEntrenadorChange = (entrenadorId: string) => {
+    const e = ENTRENADORES_MOCK.find((x) => x.id === entrenadorId);
+    if (e) {
+      form.setValue("entrenadorId", entrenadorId);
+      form.setValue("entrenadorNombre", e.nombre);
+    }
+  };
+
+  const handleSupervisorChange = (supervisorId: string) => {
+    if (supervisorId === "_none") {
+      form.setValue("supervisorId", "");
+      form.setValue("supervisorNombre", "");
+      return;
+    }
+    const s = SUPERVISORES_MOCK.find((x) => x.id === supervisorId);
+    if (s) {
+      form.setValue("supervisorId", supervisorId);
+      form.setValue("supervisorNombre", s.nombre);
+    }
+  };
+
+  const onSubmit = async (data: FormValues) => {
     try {
+      const label = TIPO_FORMACION_LABELS[data.tipoFormacion];
       await createCurso.mutateAsync({
-        nombre: data.nombre,
-        descripcion: data.descripcion,
+        nombre: `${label} - #${data.numeroCurso}`,
+        descripcion: "",
+        tipoFormacion: data.tipoFormacion,
+        numeroCurso: data.numeroCurso,
         fechaInicio: data.fechaInicio,
         fechaFin: data.fechaFin,
         duracionDias: data.duracionDias,
         horasTotales: data.horasTotales,
         entrenadorId: data.entrenadorId,
         entrenadorNombre: data.entrenadorNombre,
-        capacidadMaxima: data.capacidadMaxima,
-        estado: data.estado,
+        supervisorId: data.supervisorId,
+        supervisorNombre: data.supervisorNombre,
+        capacidadMaxima: data.capacidadMaxima || 20,
+        estado: "abierto",
       });
       toast({ title: "Curso creado correctamente" });
       navigate("/cursos");
@@ -93,199 +126,211 @@ export default function CursoFormPage() {
     }
   };
 
-  const handleEntrenadorChange = (entrenadorId: string) => {
-    const entrenador = entrenadores.find((e) => e.id === entrenadorId);
-    if (entrenador) {
-      form.setValue("entrenadorId", entrenadorId);
-      form.setValue("entrenadorNombre", entrenador.nombre);
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate("/cursos")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Nuevo Curso</h1>
-          <p className="text-muted-foreground">Crear un nuevo curso de formación</p>
+          <h1 className="text-2xl font-bold">Nuevo Curso</h1>
+          <p className="text-sm text-muted-foreground">Crear un nuevo curso de formación</p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          {/* Card A — Identificación */}
           <Card>
-            <CardHeader>
-              <CardTitle>Información General</CardTitle>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Identificación del Curso</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="nombre"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del Curso *</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Trabajo Seguro en Alturas - Nivel Inicial" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="tipoFormacion"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo / Nivel de Formación *</FormLabel>
+                      <Select onValueChange={handleTipoFormacionChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar tipo..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TIPOS_FORMACION_CURSO.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="descripcion"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Descripción del curso y objetivos..."
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="entrenadorId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Entrenador *</FormLabel>
-                    <Select onValueChange={handleEntrenadorChange} value={field.value}>
+                <FormField
+                  control={form.control}
+                  name="numeroCurso"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número del Curso *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar entrenador..." />
-                        </SelectTrigger>
+                        <Input {...field} placeholder="Ej: TA-2026-001" />
                       </FormControl>
-                      <SelectContent>
-                        {entrenadores.map((e) => (
-                          <SelectItem key={e.id} value={e.id}>
-                            {e.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Fechas y Duración</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="fechaInicio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Inicio *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="fechaFin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fecha de Fin *</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="duracionDias"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duración (días) *</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} min={1} max={30} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="horasTotales"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horas Totales *</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} min={1} max={200} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="capacidadMaxima"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Capacidad Máxima *</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} min={1} max={50} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="estado"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estado Inicial *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                <FormField
+                  control={form.control}
+                  name="fechaInicio"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha de Inicio *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                        <Input type="date" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="abierto">Abierto</SelectItem>
-                        <SelectItem value="en_progreso">En Progreso</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="fechaFin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fecha de Fin *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-end gap-4">
+          {/* Card B — Duración */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Duración</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="duracionDias"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duración (días) *</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min={1} max={30} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="horasTotales"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Horas Totales *</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min={1} max={200} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card C — Operación */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Operación</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="entrenadorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Entrenador *</FormLabel>
+                      <Select onValueChange={handleEntrenadorChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ENTRENADORES_MOCK.map((e) => (
+                            <SelectItem key={e.id} value={e.id}>
+                              {e.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="supervisorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supervisor</FormLabel>
+                      <Select onValueChange={handleSupervisorChange} value={field.value || "_none"}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Opcional..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="_none">Sin supervisor</SelectItem>
+                          {SUPERVISORES_MOCK.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="capacidadMaxima"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacidad Máxima</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min={1} max={50} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate("/cursos")}>
               Cancelar
             </Button>

@@ -210,3 +210,24 @@ export const ARL_OPTIONS = [
 
 export type EpsOption = typeof EPS_OPTIONS[number];
 export type ArlOption = typeof ARL_OPTIONS[number];
+
+// ============ CURSOS ============
+
+export const TIPOS_FORMACION_CURSO = [
+  { value: 'jefe_area', label: 'Jefe de Área', duracionDias: 1, horasTotales: 8 },
+  { value: 'trabajador_autorizado', label: 'Trabajador Autorizado', duracionDias: 3, horasTotales: 24 },
+  { value: 'reentrenamiento', label: 'Reentrenamiento', duracionDias: 2, horasTotales: 16 },
+  { value: 'coordinador_ta', label: 'Coordinador T.A.', duracionDias: 5, horasTotales: 40 },
+] as const;
+
+export const ENTRENADORES_MOCK = [
+  { id: 'e1', nombre: 'Carlos Entrenador' },
+  { id: 'e2', nombre: 'Maria Instructora' },
+  { id: 'e3', nombre: 'Jorge Capacitador' },
+] as const;
+
+export const SUPERVISORES_MOCK = [
+  { id: 's1', nombre: 'Roberto Supervisor' },
+  { id: 's2', nombre: 'Diana Coordinadora' },
+  { id: 's3', nombre: 'Felipe Morales' },
+] as const;

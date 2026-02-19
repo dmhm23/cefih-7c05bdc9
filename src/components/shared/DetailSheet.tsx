@@ -50,7 +50,7 @@ export function DetailSheet({
 
       // Check if a Radix portal is currently open (dropdown/select/popover)
       const hasOpenPortal = !!document.querySelector(
-        '[data-radix-popper-content-wrapper], [data-radix-select-viewport], [role="listbox"], [role="menu"]'
+        '[data-radix-popper-content-wrapper], [data-radix-select-viewport], [role="listbox"], [role="menu"], [role="dialog"], [data-radix-dialog-overlay]'
       );
       if (hasOpenPortal) return;
 

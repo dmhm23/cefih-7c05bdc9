@@ -225,6 +225,7 @@ export function MatriculaDetailSheet({
       toast({ title: "Error al actualizar fecha", variant: "destructive" });
     }
   };
+  const getValue = <K extends keyof Matricula>(field: K): Matricula[K] => {
     return (formData[field] as Matricula[K]) ?? matricula[field];
   };
 

@@ -12,12 +12,6 @@ export type FormaPago =
   | 'tarjeta'
   | 'otro';
 
-export type TipoFormacion = 
-  | 'inicial' 
-  | 'reentrenamiento' 
-  | 'avanzado' 
-  | 'coordinador';
-
 export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
 
 export type TipoVinculacion = 'empresa' | 'independiente';
@@ -61,7 +55,6 @@ export interface Matricula {
   id: string;
   personaId: string;
   cursoId: string;
-  tipoFormacion: TipoFormacion;
   estado: EstadoMatricula;
   
   // Fechas autocompletadas desde curso
@@ -151,12 +144,6 @@ export const ESTADO_MATRICULA_LABELS: Record<EstadoMatricula, string> = {
   cerrada: 'Cerrada',
 };
 
-export const TIPO_FORMACION_LABELS: Record<TipoFormacion, string> = {
-  inicial: 'Formación Inicial',
-  reentrenamiento: 'Reentrenamiento',
-  avanzado: 'Nivel Avanzado',
-  coordinador: 'Coordinador de Alturas',
-};
 
 export const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
   efectivo: 'Efectivo',

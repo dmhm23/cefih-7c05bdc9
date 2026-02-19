@@ -26,7 +26,7 @@ import { useSearchPersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas";
 import { useToast } from "@/hooks/use-toast";
-import { TIPO_FORMACION_LABELS } from "@/types";
+import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types";
 import { useState, useEffect } from "react";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
@@ -53,7 +53,6 @@ import {
 const matriculaSchema = z.object({
   personaId: z.string().min(1, "Seleccione una persona"),
   cursoId: z.string().optional(),
-  tipoFormacion: z.enum(["inicial", "reentrenamiento", "avanzado", "coordinador"]),
   // Historial
   nivelPrevio: z.string().optional(),
   centroFormacionPrevio: z.string().optional(),
@@ -110,7 +109,6 @@ export default function MatriculaFormPage() {
     defaultValues: {
       personaId: "",
       cursoId: "",
-      tipoFormacion: "inicial",
       nivelPrevio: "",
       centroFormacionPrevio: "",
       fechaCertificacionPrevia: "",
@@ -254,7 +252,6 @@ export default function MatriculaFormPage() {
       await createMatricula.mutateAsync({
         personaId: data.personaId,
         cursoId: data.cursoId || '',
-        tipoFormacion: data.tipoFormacion,
         nivelPrevio: (data.nivelPrevio as any) || undefined,
         centroFormacionPrevio: data.centroFormacionPrevio || undefined,
         fechaCertificacionPrevia: data.fechaCertificacionPrevia || undefined,
@@ -600,30 +597,6 @@ export default function MatriculaFormPage() {
                           {cursosAbiertos.map((c) => (
                             <SelectItem key={c.id} value={c.id}>
                               {c.nombre} ({c.fechaInicio})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tipoFormacion"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Formación *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(TIPO_FORMACION_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
                             </SelectItem>
                           ))}
                         </SelectContent>

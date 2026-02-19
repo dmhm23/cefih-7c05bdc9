@@ -69,8 +69,7 @@ export const matriculaService = {
 
     // Documentos requeridos dinámicos según nivel de formación
     const documentosRequeridos = getDocumentosRequeridos(
-      data.empresaNivelFormacion as any,
-      data.tipoFormacion
+      data.empresaNivelFormacion as any
     );
 
     const newMatricula: Matricula = {

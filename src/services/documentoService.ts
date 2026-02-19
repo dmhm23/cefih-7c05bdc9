@@ -1,12 +1,11 @@
 import { v4 as uuid } from 'uuid';
-import { DocumentoRequerido, TipoFormacion, NivelFormacionEmpresa } from '@/types/matricula';
+import { DocumentoRequerido, NivelFormacionEmpresa } from '@/types/matricula';
 
 /**
  * Genera la lista dinámica de documentos requeridos según el nivel de formación.
  */
 export function getDocumentosRequeridos(
-  nivelFormacion?: NivelFormacionEmpresa,
-  tipoFormacion?: TipoFormacion
+  nivelFormacion?: NivelFormacionEmpresa
 ): DocumentoRequerido[] {
   const docs: DocumentoRequerido[] = [
     {
@@ -73,7 +72,7 @@ export function getDocumentosRequeridos(
   );
 
   // Coordinador T.A.: todo lo anterior + Curso previo
-  if (nivelFormacion === 'coordinador_ta' || tipoFormacion === 'coordinador') {
+  if (nivelFormacion === 'coordinador_ta') {
     docs.push({
       id: uuid(),
       tipo: 'curso_previo',

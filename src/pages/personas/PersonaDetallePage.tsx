@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { useMatriculasByPersona } from "@/hooks/useMatriculas";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types/matricula";
 import { EditableField } from "@/components/shared/EditableField";
 import { useToast } from "@/hooks/use-toast";
 import { Persona, PersonaFormData } from "@/types/persona";
@@ -283,7 +284,7 @@ export default function PersonaDetallePage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium capitalize">
-                      {m.tipoFormacion.replace("_", " ")}
+                      {m.empresaNivelFormacion ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion] : 'Sin nivel'}
                     </span>
                     <StatusBadge status={m.estado} />
                   </div>

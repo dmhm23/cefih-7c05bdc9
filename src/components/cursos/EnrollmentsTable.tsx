@@ -153,7 +153,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7"
-                              onClick={() => navigate(`/matriculas/${m.id}`)}
+                              onClick={() => navigate(`/matriculas/${m.id}`, { state: { from: `/cursos/${curso.id}`, fromLabel: "Curso" } })}
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                             </Button>

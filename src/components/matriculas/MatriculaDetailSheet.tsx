@@ -37,7 +37,7 @@ import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { PersonaFormData } from "@/types/persona";
 import {
-  Matricula, ESTADO_MATRICULA_LABELS, TIPO_FORMACION_LABELS, EstadoMatricula, TipoFormacion,
+  Matricula, ESTADO_MATRICULA_LABELS, EstadoMatricula,
   NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
@@ -84,12 +84,6 @@ const ESTADO_OPTIONS = [
   { value: "cerrada", label: "Cerrada" },
 ];
 
-const TIPO_FORMACION_OPTIONS = [
-  { value: "inicial", label: "Formación Inicial" },
-  { value: "reentrenamiento", label: "Reentrenamiento" },
-  { value: "avanzado", label: "Nivel Avanzado" },
-  { value: "coordinador", label: "Coordinador de Alturas" },
-];
 
 export function MatriculaDetailSheet({
   open,
@@ -295,32 +289,19 @@ export function MatriculaDetailSheet({
 
         <Separator />
 
-        {/* Estado y Tipo */}
+        {/* Estado */}
         <DetailSection title="Estado de la Matrícula">
-          <div className="grid grid-cols-2 gap-4">
-            <EditableField
-              label="Estado"
-              value={getValue("estado")}
-              displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
-              onChange={(v) => handleFieldChange("estado", v)}
-              type="select"
-              options={ESTADO_OPTIONS}
-              icon={FileCheck}
-              badge
-              badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
-            />
-            <EditableField
-              label="Tipo de Formación"
-              value={getValue("tipoFormacion")}
-              displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion")]}
-              onChange={(v) => handleFieldChange("tipoFormacion", v)}
-              type="select"
-              options={TIPO_FORMACION_OPTIONS}
-              icon={BookOpen}
-              badge
-              badgeVariant="outline"
-            />
-          </div>
+          <EditableField
+            label="Estado"
+            value={getValue("estado")}
+            displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
+            onChange={(v) => handleFieldChange("estado", v)}
+            type="select"
+            options={ESTADO_OPTIONS}
+            icon={FileCheck}
+            badge
+            badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
+          />
         </DetailSection>
 
         <Separator />

@@ -10,7 +10,7 @@ import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago,
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
-import { TIPO_FORMACION_LABELS, FORMA_PAGO_LABELS } from "@/types";
+import { FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

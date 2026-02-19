@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
+import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types/matricula";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -142,7 +143,7 @@ const Dashboard = () => {
                   >
                     <div>
                       <p className="text-sm font-medium">
-                        {m.tipoFormacion.replace("_", " ").toUpperCase()}
+                        {m.empresaNivelFormacion ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion] : 'Sin nivel'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         ID: {m.id.slice(0, 8)}...

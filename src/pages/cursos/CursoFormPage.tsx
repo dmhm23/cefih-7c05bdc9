@@ -113,7 +113,7 @@ export default function CursoFormPage() {
         supervisorId: data.supervisorId,
         supervisorNombre: data.supervisorNombre,
         capacidadMaxima: data.capacidadMaxima || 20,
-        estado: "abierto",
+        estado: "en_progreso",
       });
       toast({ title: "Curso creado correctamente" });
       navigate("/cursos");

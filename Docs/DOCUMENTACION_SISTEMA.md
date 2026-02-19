@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.0  
-> Última actualización: Febrero 2026  
+> Versión: 1.1  
+> Última actualización: 19 de Febrero 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -284,7 +284,7 @@ Los documentos se generan **dinámicamente** según el nivel de formación del t
 └─────────────────────┴─────────┴──────────────────────┴──────────────────┴──────────────┘
 ```
 
-**Estados de documento:** `pendiente` → `cargado` → `verificado`
+**Estados de documento:** `pendiente` → `cargado` (ciclo binario, sin estado de verificación intermedio). El estado `cargado` se muestra con estilo esmeralda (verde) indicando completitud.
 
 **Modos de carga:**
 - **Individual**: Archivo por archivo, con campos de fecha específicos por tipo (fecha de examen médico, inicio de cobertura ARL).
@@ -426,7 +426,7 @@ Se captura mediante un canvas interactivo (`react-signature-canvas`).
    └── /matriculas/:id (sección Documentos)
        ├── Modo Individual: Cargar archivo por archivo
        │   ├── Campos de fecha por tipo (examen médico, ARL)
-       │   └── Estados: pendiente → cargado → verificado
+       │   └── Estados: pendiente → cargado
        └── Modo Consolidado: PDF único con checklist
            └── Marcar qué documentos incluye
 
@@ -589,6 +589,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Contador de posición ("3 de 15 matrículas")
 - Botón de pantalla completa
 - Footer configurable (para botones de guardar/cancelar)
+- **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
 ### 7.3 EditableField
 

@@ -1,133 +1,159 @@
 
-## Plan: Navegación con Contexto de Origen
+## Plan: Formato de Evaluación Reentrenamiento (FIH04-019) en Formatos para Formación
 
-### Problema raíz
-Los botones "volver" usan `navigate("/ruta-raiz")` en lugar de regresar al punto real de origen. La solución es pasar el contexto de origen como `state` de React Router al navegar hacia adelante, y leerlo al volver.
+### Diagnóstico del sistema actual
 
-Este patrón ya es nativo en React Router (`useLocation` + `navigate` con `state`) y no requiere librerías adicionales.
+El motor de formatos funciona así hoy:
 
----
+1. **Registro** — `FormatosList` en `MatriculaDetailSheet` y `MatriculaDetallePage` recibe un array hardcodeado de 3 formatos con id string y estado calculado en línea.
+2. **Estado** — calculado inline: `(!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo"`.
+3. **Preview** — cada formato tiene un `*PreviewDialog` propio que abre un `Dialog` con `window.print()` para descarga PDF.
+4. **Documento renderer** — componente puro que recibe `{ persona, matricula, curso }` y renderiza HTML estilado.
+5. **Persistencia de respuestas** — `matricula.autoevaluacionRespuestas` y `matricula.evaluacionCompetenciasRespuestas` ya existen en el tipo `Matricula`. Para la evaluación nueva se usarán campos análogos: `evaluacionCompletada: boolean` y `evaluacionPuntaje?: number` que ya existen en `Matricula`.
 
-### Flujo que se corrige
-
-**Caso 1: Matrículas → Perfil del matriculado**
-
-```text
-/matriculas/m1  --[Ver perfil completo]--> /personas/p1  --[← Atrás]--> /matriculas/m1  ✓
-```
-
-Actualmente el botón "← Atrás" en `/personas/:id` siempre va a `/personas`.
-
-**Caso 2: Cursos → Matrícula del estudiante**
-
-```text
-/cursos/c1  --[ExternalLink]--> /matriculas/m1  --[← Atrás]--> /cursos/c1  ✓
-```
-
-Actualmente el botón "← Atrás" en `/matriculas/:id` siempre va a `/matriculas`.
+**Lo que no existe aún**: un formato de evaluación real con preguntas, puntaje, resultado aprueba/no aprueba y estado derivado del puntaje.
 
 ---
 
-### Implementación
+### Decisiones de diseño
 
-El patrón es de dos partes: **quien navega** pasa `state: { from: currentPath }`, y **quien recibe** lee ese state para volver.
-
-#### Parte A — Pasar el contexto al navegar (3 puntos de salida)
-
-**1. `src/pages/matriculas/MatriculaDetallePage.tsx` — línea 307**
-
-El botón "Ver perfil completo" navega a `/personas/:id`. Cambiar para pasar el origen:
-
-```tsx
-// Antes:
-onClick={() => navigate(`/personas/${matricula.personaId}`)}
-
-// Después:
-onClick={() => navigate(`/personas/${matricula.personaId}`, {
-  state: { from: `/matriculas/${matricula.id}`, fromLabel: "Matrícula" }
-})}
-```
-
-**2. `src/components/cursos/EnrollmentsTable.tsx` — línea 156**
-
-El botón ExternalLink navega a `/matriculas/:id`. Cambiar para pasar el origen:
-
-```tsx
-// Antes:
-onClick={() => navigate(`/matriculas/${m.id}`)}
-
-// Después:
-onClick={() => navigate(`/matriculas/${m.id}`, {
-  state: { from: `/cursos/${curso.id}`, fromLabel: "Curso" }
-})}
-```
-
-**3. `src/pages/personas/PersonaDetallePage.tsx` — línea 283**
-
-El click en una matrícula de la lista lateral navega a `/matriculas/:id`. Cambiar:
-
-```tsx
-// Antes:
-onClick={() => navigate(`/matriculas/${m.id}`)}
-
-// Después:
-onClick={() => navigate(`/matriculas/${m.id}`, {
-  state: { from: `/personas/${id}`, fromLabel: "Persona" }
-})}
-```
+- **Sin nuevas rutas ni tipos de formato nuevos** — el nuevo formato se agrega al array existente de `FormatosList` como cuarta entrada.
+- **Estado del formato evaluación** — `"completo"` cuando `matricula.evaluacionCompletada === true`, `"borrador"` en caso contrario. Reutiliza el campo existente.
+- **Persistencia** — al enviar la evaluación se llama `updateMatricula` con `{ evaluacionCompletada: true, evaluacionPuntaje: puntaje }` usando el hook existente `useUpdateMatricula`.
+- **Preguntas hardcodeadas** — 15 preguntas de selección única (Verdadero/Falso o A/B/C/D) con respuestas correctas definidas en la constante del documento. El umbral de aprobación es 70%.
+- **Renderer** — sigue el patrón exacto de `RegistroAsistenciaDocument` y `InfoAprendizDocument`: componente puro, `DocumentHeader` reutilizado, estilos inline + clases CSS para print.
+- **Dialog de preview** — sigue el patrón de `InfoAprendizPreviewDialog`: `Dialog` con `ScrollArea`, botón imprimir, `useRef` para contenido.
+- **Interactividad en preview** — igual que `InfoAprendizDocument`: RadioGroups visibles en pantalla, ocultos en print; texto plano visible en print.
+- **Preparado para Vista del Estudiante** — el renderer no asume contexto admin, recibe props puras `{ persona, matricula, curso }` y un callback `onSubmit` opcional para desacoplar la lógica de guardado.
 
 ---
 
-#### Parte B — Leer el contexto al volver (2 páginas de destino)
+### Archivos a crear
 
-**4. `src/pages/personas/PersonaDetallePage.tsx` — botón ← Atrás (línea 116)**
+#### 1. `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx`
 
-Leer `location.state.from` y usarlo si existe:
+Renderer puro del documento. Contenido:
+
+- **Encabezado**: `DocumentHeader` con código `FIH04-019`, versión `004`, subsistema `SSTA`, fecha creación `03/24`, fecha edición `03/24`.
+- **Sección datos del estudiante**: fecha, tipo/número documento, nombre completo, nivel de formación (autocompletados desde `persona` y `matricula`).
+- **15 preguntas hardcodeadas** de la evaluación de Reentrenamiento Trabajo en Alturas (preguntas de Verdadero/Falso y selección única relevantes a la Res. 4272/2021, uso de EPP, sistemas de anclaje, etc.).
+- **Modo pantalla**: `RadioGroup` interactivo por pregunta (opciones: Verdadero / Falso o A/B/C según corresponda).
+- **Modo print**: texto plano de la respuesta seleccionada, oculta los controles interactivos con clase CSS `.screen-only-eval { display: none } .print-only-eval { display: block }`.
+- **Botón "Enviar evaluación"** (solo visible si `!matricula.evaluacionCompletada`): calcula puntaje, determina aprueba (≥70%) / no aprueba, llama `onSubmit({ evaluacionCompletada: true, evaluacionPuntaje: puntaje })`.
+- **Resultado** (visible si `matricula.evaluacionCompletada`): muestra puntaje y badge "Aprobado" / "No aprobado" con colores emerald/destructive.
+- **Props interface**:
+  ```ts
+  interface Props {
+    persona: Persona | null;
+    matricula: Matricula;
+    curso: Curso | null;
+    // Callback desacoplado — el contexto admin lo conecta a updateMatricula,
+    // la futura Vista del Estudiante puede conectarlo a su propio endpoint.
+    onSubmit?: (data: { evaluacionCompletada: boolean; evaluacionPuntaje: number }) => void;
+  }
+  ```
+
+#### 2. `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx`
+
+Dialog de preview, siguiendo el patrón de `InfoAprendizPreviewDialog`:
 
 ```tsx
-const location = useLocation();
-const fromPath = location.state?.from || "/personas";
-const fromLabel = location.state?.fromLabel;
-
-// Botón:
-<Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
-  <ArrowLeft className="h-4 w-4" />
-</Button>
+// Patrón del Dialog
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
+    <DialogHeader>
+      <DialogTitle>Vista Previa — Evaluación Reentrenamiento (FIH04-019)</DialogTitle>
+      <Button onClick={handlePrint}><Download /> Descargar PDF</Button>
+    </DialogHeader>
+    <ScrollArea>
+      <div ref={documentRef}>
+        <EvaluacionReentrenamientoDocument
+          persona={persona}
+          matricula={matricula}
+          curso={curso}
+          onSubmit={handleSubmit} // Conectado a updateMatricula
+        />
+      </div>
+    </ScrollArea>
+  </DialogContent>
+</Dialog>
 ```
 
-**5. `src/pages/matriculas/MatriculaDetallePage.tsx` — botón ← Atrás (línea 275)**
+`handleSubmit` llama `updateMatricula.mutate(...)` igual que hace `handleAutoSave` en `InfoAprendizPreviewDialog`.
 
-Igual:
-
-```tsx
-const location = useLocation();
-const fromPath = location.state?.from || "/matriculas";
-const fromLabel = location.state?.fromLabel;
-
-// Botón:
-<Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
-  <ArrowLeft className="h-4 w-4" />
-</Button>
-```
-
----
-
-### Casos edge cubiertos
-
-| Escenario | Comportamiento |
-|-----------|----------------|
-| Acceso directo por URL (sin state) | `fromPath` cae al fallback genérico (`/personas` o `/matriculas`) |
-| Navegar desde Matrículas → Perfil | Vuelve a `/matriculas/:id` |
-| Navegar desde Cursos → Matrícula | Vuelve a `/cursos/:id` |
-| Navegar desde Personas → Matrícula | Vuelve a `/personas/:id` |
-| Refrescar la página | `location.state` se pierde → usa fallback genérico (comportamiento aceptable) |
+Los `PRINT_STYLES` incluyen las mismas reglas CSS de `.screen-only-eval / .print-only-eval` del InfoAprendiz.
 
 ---
 
 ### Archivos a modificar
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/personas/PersonaDetallePage.tsx` | Leer `state.from` en back button + pasar `state.from` al navegar a matrícula |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Leer `state.from` en back button + pasar `state.from` al navegar a persona |
-| `src/components/cursos/EnrollmentsTable.tsx` | Pasar `state.from` al navegar a matrícula |
+#### 3. `src/pages/matriculas/MatriculaDetallePage.tsx`
+
+Agregar el cuarto formato al array de `FormatosList` (línea ~746):
+
+```tsx
+{
+  id: "evaluacion_reentrenamiento",
+  nombre: "Evaluación Reentrenamiento (FIH04-019)",
+  estado: matricula.evaluacionCompletada ? "completo" : "borrador",
+},
+```
+
+Importar `EvaluacionReentrenamientoPreviewDialog` y agregarlo al final junto a los otros tres dialogs de preview.
+
+#### 4. `src/components/matriculas/MatriculaDetailSheet.tsx`
+
+Mismo cambio que en `MatriculaDetallePage` — agregar el cuarto formato al array de `FormatosList` (línea ~556) e importar + usar `EvaluacionReentrenamientoPreviewDialog`.
+
+---
+
+### Preguntas de la evaluación (15 preguntas hardcodeadas)
+
+Serán preguntas representativas sobre Reentrenamiento Trabajo en Alturas conforme a la Res. 4272/2021. Ejemplo de estructura interna:
+
+```ts
+const PREGUNTAS = [
+  {
+    id: 1,
+    texto: "La Resolución 4272 de 2021 establece los requisitos mínimos de seguridad para el trabajo en alturas en Colombia.",
+    opciones: ["Verdadero", "Falso"],
+    correcta: 0, // índice de la opción correcta
+  },
+  {
+    id: 2,
+    texto: "Se considera trabajo en alturas toda actividad que se realice a más de...",
+    opciones: ["1 metro", "1.5 metros", "2 metros", "3 metros"],
+    correcta: 2,
+  },
+  // ... 13 preguntas más
+];
+```
+
+---
+
+### Flujo de estado del formato
+
+```text
+matricula.evaluacionCompletada = false  →  estado: "borrador"  →  el formato muestra las preguntas con RadioGroups
+                                                                    el botón "Enviar" es visible
+Usuario responde y hace clic "Enviar"
+  → se calcula puntaje (correctas / total * 100)
+  → updateMatricula({ evaluacionCompletada: true, evaluacionPuntaje: puntaje })
+  → toast de éxito
+
+matricula.evaluacionCompletada = true   →  estado: "completo"  →  el formato muestra resultado y respuestas en modo lectura
+                                                                    el botón "Enviar" está oculto
+```
+
+---
+
+### Archivos a crear/modificar (resumen)
+
+| Acción | Archivo |
+|--------|---------|
+| Crear | `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` |
+| Crear | `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx` |
+| Modificar | `src/pages/matriculas/MatriculaDetallePage.tsx` — agregar 4to formato en lista + dialog |
+| Modificar | `src/components/matriculas/MatriculaDetailSheet.tsx` — agregar 4to formato en lista + dialog |
+
+**Sin cambios en**: `src/types/matricula.ts` (campos `evaluacionCompletada` y `evaluacionPuntaje` ya existen), `src/services/matriculaService.ts`, `src/data/mockData.ts`, `FormatosList.tsx`, `DocumentHeader.tsx`.

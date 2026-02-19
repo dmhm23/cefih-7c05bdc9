@@ -49,6 +49,7 @@ import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
 import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
 import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
+import EvaluacionReentrenamientoPreviewDialog from "@/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog";
 import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
@@ -557,6 +558,7 @@ export function MatriculaDetailSheet({
               { id: "info_aprendiz", nombre: "Información del Aprendiz", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
               { id: "registro_asistencia", nombre: "Registro de Asistencia", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
               { id: "participacion_pta_ats", nombre: "Participación PTA - ATS", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
+              { id: "evaluacion_reentrenamiento", nombre: "Evaluación Reentrenamiento (FIH04-019)", estado: matricula.evaluacionCompletada ? "completo" : "borrador" },
             ]}
             onPreview={(id) => setPreviewFormato(id)}
             onDownload={(id) => setPreviewFormato(id)}
@@ -711,6 +713,13 @@ export function MatriculaDetailSheet({
     />
     <ParticipacionPtaAtsPreviewDialog
       open={previewFormato === "participacion_pta_ats"}
+      onOpenChange={(open) => !open && setPreviewFormato(null)}
+      persona={persona ?? null}
+      matricula={matricula}
+      curso={curso ?? null}
+    />
+    <EvaluacionReentrenamientoPreviewDialog
+      open={previewFormato === "evaluacion_reentrenamiento"}
       onOpenChange={(open) => !open && setPreviewFormato(null)}
       persona={persona ?? null}
       matricula={matricula}

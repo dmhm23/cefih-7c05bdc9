@@ -33,7 +33,7 @@ const cursoSchema = z.object({
   }),
   numeroCurso: z.string().min(1, "Ingrese el número del curso"),
   fechaInicio: z.string().min(1, "Seleccione la fecha de inicio"),
-  fechaFin: z.string().min(1, "Seleccione la fecha de fin"),
+  fechaFin: z.string().optional(),
   duracionDias: z.coerce.number().min(1, "Mínimo 1 día"),
   horasTotales: z.coerce.number().min(1, "Mínimo 1 hora"),
   entrenadorId: z.string().min(1, "Seleccione un entrenador"),
@@ -112,7 +112,7 @@ export default function CursoFormPage() {
         tipoFormacion: data.tipoFormacion,
         numeroCurso: data.numeroCurso,
         fechaInicio: data.fechaInicio,
-        fechaFin: data.fechaFin,
+        fechaFin: data.fechaFin ?? "",
         duracionDias: data.duracionDias,
         horasTotales: data.horasTotales,
         entrenadorId: data.entrenadorId,
@@ -219,7 +219,7 @@ export default function CursoFormPage() {
                   name="fechaFin"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fecha de Fin *</FormLabel>
+                      <FormLabel>Fecha de Fin</FormLabel>
                       <FormControl>
                         <Input
                           type="date"

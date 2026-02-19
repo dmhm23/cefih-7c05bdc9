@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { differenceInCalendarDays } from "date-fns";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +66,12 @@ export default function CursoFormPage() {
       capacidadMaxima: 20,
     },
   });
+
+  const recalcularDuracion = (inicio: string, fin: string) => {
+    if (!inicio || !fin) return;
+    const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+    if (dias >= 1) form.setValue("duracionDias", dias);
+  };
 
   const handleTipoFormacionChange = (value: string) => {
     form.setValue("tipoFormacion", value as FormValues["tipoFormacion"]);
@@ -193,7 +200,14 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Inicio *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input
+                          type="date"
+                          value={field.value}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            recalcularDuracion(e.target.value, form.getValues("fechaFin"));
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -207,7 +221,14 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Fin *</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input
+                          type="date"
+                          value={field.value}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            recalcularDuracion(form.getValues("fechaInicio"), e.target.value);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

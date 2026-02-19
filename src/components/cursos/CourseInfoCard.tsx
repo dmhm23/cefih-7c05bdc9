@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
 import { Curso, CursoFormData, TIPO_FORMACION_LABELS } from "@/types/curso";
-import { format } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface CourseInfoCardProps {
@@ -12,6 +12,16 @@ interface CourseInfoCardProps {
 }
 
 export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: CourseInfoCardProps) {
+  const handleFechaChange = (campo: "fechaInicio" | "fechaFin", nuevoValor: string) => {
+    onFieldChange(campo, nuevoValor);
+    const inicio = campo === "fechaInicio" ? nuevoValor : (formData.fechaInicio ?? curso.fechaInicio);
+    const fin    = campo === "fechaFin"    ? nuevoValor : (formData.fechaFin    ?? curso.fechaFin);
+    if (inicio && fin) {
+      const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+      if (dias >= 1) onFieldChange("duracionDias", dias);
+    }
+  };
+
   const getValue = (field: keyof Curso): string => {
     const val = (formData[field as keyof CursoFormData] ?? curso[field]) as string | number | undefined;
     return val?.toString() ?? "";
@@ -37,14 +47,14 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
           <EditableField
             label="Fecha Inicio"
             value={getValue("fechaInicio")}
-            onChange={(v) => onFieldChange("fechaInicio", v)}
+            onChange={(v) => handleFechaChange("fechaInicio", v)}
             type="date"
             editable={!readOnly}
           />
           <EditableField
             label="Fecha Fin"
             value={getValue("fechaFin")}
-            onChange={(v) => onFieldChange("fechaFin", v)}
+            onChange={(v) => handleFechaChange("fechaFin", v)}
             type="date"
             editable={!readOnly}
           />

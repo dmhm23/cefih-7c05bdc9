@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.1  
-> Última actualización: 19 de Febrero 2026  
+> Versión: 1.2  
+> Última actualización: 20 de Febrero 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -22,6 +22,7 @@
 10. [Relación entre Módulos](#10-relación-entre-módulos)
 11. [Catálogos y Datos de Referencia](#11-catálogos-y-datos-de-referencia)
 12. [Auditoría y Trazabilidad](#12-auditoría-y-trazabilidad)
+13. [Historial de Cambios](#13-historial-de-cambios)
 
 ---
 
@@ -342,25 +343,95 @@ AÑO / ID_CURSO / NOMBRE_CEDULA / TIPO_DOCUMENTO_ID
 
 | Campo | Descripción |
 |-------|-------------|
-| `evaluacionCompletada` | Boolean: evaluación de competencias completada |
-| `evaluacionPuntaje` | Puntaje obtenido (0-100) |
+| `evaluacionCompletada` | Boolean: evaluación de reentrenamiento completada |
+| `evaluacionPuntaje` | Puntaje obtenido (0–100). Umbral de aprobación: **70%** |
+| `evaluacionRespuestas` | Array de enteros: índice de la opción seleccionada por pregunta (0–3) |
 | `encuestaCompletada` | Boolean: encuesta de satisfacción completada |
-| `autoevaluacionRespuestas` | Array de respuestas de autoevaluación |
-| `evaluacionCompetenciasRespuestas` | Array de respuestas de evaluación |
+| `encuestaRespuestas` | Array de strings: 4 escalas de satisfacción + 1 pregunta Sí/No |
+| `autoevaluacionRespuestas` | Array de respuestas de autoevaluación (otros formatos) |
+| `evaluacionCompetenciasRespuestas` | Array de respuestas de evaluación de competencias (otros formatos) |
 
-### 4.10 Formatos para Formación
+**Lógica de aprobación:** `evaluacionPuntaje >= 70` → Aprobado. El puntaje se calcula como `(correctas / 15) * 100`, redondeado a entero.
 
-El sistema genera tres tipos de documentos PDF previsualizables:
+**Persistencia de respuestas individuales:** Cada respuesta se almacena como el índice de la opción elegida (0 = a, 1 = b, 2 = c, 3 = d), permitiendo reconstruir la tabla pregunta/respuesta en cualquier momento.
 
-| Formato | Descripción | Datos que incluye |
-|---------|-------------|-------------------|
-| **Información del Aprendiz** | Ficha con datos personales y laborales | Persona + Matrícula + Empresa + Consentimiento |
-| **Registro de Asistencia** | Planilla de asistencia por día/hora | Curso + Persona + Fechas |
-| **Participación PTA - ATS** | Permiso de Trabajo en Alturas / Análisis de Trabajo Seguro | Persona + Empresa + Curso |
+### 4.10 Formato: Evaluación Reentrenamiento (FIH04-019)
 
-**Estado del formato:** Se calcula automáticamente como `completo` si la matrícula tiene `autorizacionDatos` y `firmaCapturada`, de lo contrario es `borrador`.
+El formato `EvaluacionReentrenamientoDocument` es el documento más complejo del sistema. Opera en dos modos controlados por la prop `modo`:
 
-### 4.11 Historial de Formación Previa
+#### Modos de operación
+
+| Modo | Uso | Comportamiento |
+|------|-----|----------------|
+| `"diligenciamiento"` | Vista del Estudiante (futuro) | RadioGroups interactivos + botón Enviar |
+| `"resultados"` | Vista administrativa actual | Bloque compacto de resultado + tabla pregunta/respuesta + encuesta solo lectura |
+
+#### Estructura del documento (modo "resultados")
+
+1. **Encabezado institucional** (`DocumentHeader`) — logo, nombre documento, código FIH04-019, versión y fechas.
+2. **Datos del Participante** — grid de **3 columnas**:
+   - Fila 1: Fecha / Tipo de documento / Número de documento
+   - Fila 2: Nombre completo (span 3 columnas)
+   - Fila 3: Nivel de formación / Empresa (`"Independiente"` si no hay empresa asociada)
+3. **Resultado de la Evaluación** — bloque compacto con:
+   - Ratio `X/15` + porcentaje, en **verde** si aprobado, **rojo** si no aprobado
+   - Badge `✓ Aprobado` / `✗ No aprobado` con color semántico
+   - Fila secundaria (solo en pantalla, oculta en PDF): "Respuestas correctas X de 15 — Mínimo requerido: 70%"
+4. **Preguntas y Respuestas** — tabla con columnas: #, Pregunta, Respuesta seleccionada (letra + texto), Calificación (✓/✗)
+5. **Encuesta de Satisfacción** — tabla con 4 preguntas de escala + 1 Sí/No
+
+#### Preguntas de evaluación
+
+15 preguntas sobre la Resolución 4272/2021 (trabajo seguro en alturas):
+- 5 preguntas Verdadero/Falso (opciones: a. Verdadero / b. Falso)
+- 10 preguntas de selección múltiple con 4 opciones (a, b, c, d)
+
+Hardcodeadas en la constante `PREGUNTAS` del componente. La respuesta correcta se indica con el índice `correcta`.
+
+#### Componente `FieldCell` — soporte de span
+
+```tsx
+function FieldCell({ label, value, span, span3 }: {
+  label: string;
+  value?: string;
+  span?: boolean;   // col-span-2 (grid de 2 o 3 columnas)
+  span3?: boolean;  // col-span-3 (solo en grid de 3 columnas)
+})
+```
+
+#### Generación de PDF (impresión)
+
+El dialog `EvaluacionReentrenamientoPreviewDialog` abre una ventana del navegador con `PRINT_STYLES` autocontenidos. Las reglas de impresión aplicadas:
+
+- **Color semántico**: `.resultado-ratio.aprobado { color: #059669 }` / `.resultado-ratio.no-aprobado { color: #dc2626 }`. Se inyectan las clases dinámicamente en el HTML antes de imprimir.
+- **Contenido filtrado**: `.resultado-compacto > div:nth-child(3), > div:nth-child(4) { display: none }` — oculta la fila de "Mínimo requerido" en el PDF.
+- **Optimización de espacio**: `body { padding: 6mm; font-size: 11px }`, `.section-group { margin-top: 14px }`, `.tabla-preguntas td { padding: 5px 4px }`.
+- **Flujo de página**: `break-inside: auto` en `.section-group` permite que las secciones se dividan entre páginas, minimizando hojas impresas. El bloque `.resultado-compacto` mantiene `break-inside: avoid` para no fragmentarse.
+- **Fallback de íconos**: Los SVG de ✓/✗ se reemplazan por `<span class="icon-check/icon-x">` con `::before { content: "✓"/"✗" }` para asegurar visibilidad en print.
+
+#### Encuesta de Satisfacción
+
+| # | Pregunta | Tipo de respuesta |
+|---|----------|-------------------|
+| 1–4 | Satisfacción con: capacitación / servicio al cliente / trato / calidad | Escala: Muy satisfecho, Satisfecho, Poco satisfecho, Insatisfecho |
+| 5 | ¿Volvería a contratar y recomendaría el servicio? | Sí / No |
+
+### 4.11 Formatos para Formación
+
+El sistema genera cuatro tipos de documentos PDF previsualizables:
+
+| Formato | Código | Descripción | Datos que incluye |
+|---------|--------|-------------|-------------------|
+| **Información del Aprendiz** | — | Ficha con datos personales y laborales | Persona + Matrícula + Empresa + Consentimiento |
+| **Registro de Asistencia** | — | Planilla de asistencia por día/hora | Curso + Persona + Fechas |
+| **Participación PTA - ATS** | — | Permiso de Trabajo en Alturas / Análisis de Trabajo Seguro | Persona + Empresa + Curso |
+| **Evaluación Reentrenamiento** | FIH04-019 | Evaluación de conocimientos + Encuesta de satisfacción | Persona + Matrícula + Respuestas + Resultado |
+
+**Estado del formato (InfoAprendiz, RegistroAsistencia, PtaAts):** Se calcula como `completo` si la matrícula tiene `autorizacionDatos` y `firmaCapturada`, de lo contrario es `borrador`.
+
+**Estado del formato (EvaluaciónReentrenamiento):** Se calcula como `completo` si `evaluacionCompletada === true`, de lo contrario es `pendiente`.
+
+### 4.13 Historial de Formación Previa
 
 Para matrículas de tipo `reentrenamiento` o `coordinador`:
 
@@ -372,7 +443,7 @@ Para matrículas de tipo `reentrenamiento` o `coordinador`:
 
 **Pre-llenado automático:** Al crear una nueva matrícula para una persona que ya tiene matrículas completadas/certificadas/cerradas, el sistema ofrece prellenar datos desde la matrícula más reciente (`getHistorialByPersona`).
 
-### 4.12 Firma Digital
+### 4.14 Firma Digital
 
 | Campo | Descripción |
 |-------|-------------|
@@ -381,7 +452,7 @@ Para matrículas de tipo `reentrenamiento` o `coordinador`:
 
 Se captura mediante un canvas interactivo (`react-signature-canvas`).
 
-### 4.13 Operaciones y Reglas de Negocio
+### 4.15 Operaciones y Reglas de Negocio
 
 | Operación | Regla de Negocio |
 |-----------|-----------------|
@@ -393,7 +464,7 @@ Se captura mediante un canvas interactivo (`react-signature-canvas`).
 | **Actualizar documento** | Actualización parcial de un documento específico dentro de la matrícula. |
 | **Eliminar** | Remueve la matrícula del array `matriculasIds` del curso asociado. |
 
-### 4.14 Componentes
+### 4.16 Componentes
 
 | Componente | Función |
 |------------|---------|
@@ -409,8 +480,10 @@ Se captura mediante un canvas interactivo (`react-signature-canvas`).
 | `InfoAprendizDocument` | Documento PDF de Información del Aprendiz |
 | `RegistroAsistenciaDocument` | Documento PDF de Registro de Asistencia |
 | `ParticipacionPtaAtsDocument` | Documento PDF de Participación PTA-ATS |
+| `EvaluacionReentrenamientoDocument` | Documento PDF interactivo de Evaluación Reentrenamiento FIH04-019 |
+| `EvaluacionReentrenamientoPreviewDialog` | Dialog de previsualización y descarga PDF del formato FIH04-019 |
 
-### 4.15 Flujo Funcional Completo
+### 4.17 Flujo Funcional Completo
 
 ```
 1. CREACIÓN
@@ -454,7 +527,10 @@ Se captura mediante un canvas interactivo (`react-signature-canvas`).
    └── /matriculas/:id (sección Formatos)
        ├── InfoAprendiz → Preview/Descarga
        ├── RegistroAsistencia → Preview/Descarga
-       └── ParticipacionPtaAts → Preview/Descarga
+       ├── ParticipacionPtaAts → Preview/Descarga
+       └── EvaluaciónReentrenamiento (FIH04-019)
+           ├── modo="resultados" → Preview admin: bloque resultado + tabla preguntas + encuesta
+           └── Descargar PDF → ventana print con estilos autocontenidos (colores semánticos, espacio optimizado)
 ```
 
 ---
@@ -895,6 +971,56 @@ interface AuditLog {
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.
 - **Edición de campos**: Se registra el objeto completo anterior y los campos nuevos modificados.
+
+---
+
+## 13. Historial de Cambios
+
+### v1.2 — 20 de Febrero 2026
+
+#### Formato Evaluación Reentrenamiento (FIH04-019)
+
+**Sección de Datos del Participante — Layout 3 columnas**
+- El grid de datos del participante se reorganizó de 2 a **3 columnas** para lectura más compacta.
+- Distribución de campos:
+  - Fila 1: Fecha / Tipo de documento / Número de documento
+  - Fila 2: Nombre completo (span 3 columnas)
+  - Fila 3: Nivel de formación / Empresa
+- El campo **Empresa** muestra `"Independiente"` cuando `matricula.empresaNombre` está vacío o ausente.
+- El campo **Nivel de formación** se toma siempre de `matricula.empresaNivelFormacion` (sin redefinición).
+- El componente `FieldCell` ahora soporta prop `span3?: boolean` que aplica `col-span-3 field-span3`.
+- Se agregaron reglas CSS `.grid-3` y `.field-span3` a `PRINT_STYLES` para la impresión.
+
+**Tabla de Preguntas y Respuestas — Letra de opción**
+- La columna "Respuesta seleccionada" ahora incluye la **letra correspondiente** prefijada al texto de la opción.
+- Formato: `a. Verdadero`, `b. Falso`, `a. Texto opción`, `b. Texto opción`, etc.
+- Las preguntas Verdadero/Falso muestran `a. Verdadero` o `b. Falso`.
+- Las preguntas de 4 opciones muestran `a.`, `b.`, `c.` o `d.` según el índice seleccionado.
+
+**Colores semánticos en PDF**
+- El ratio `X/15` y el porcentaje se muestran en **verde** (`#059669`) si aprobado, **rojo** (`#dc2626`) si no aprobado.
+- El badge `✓ Aprobado` / `✗ No aprobado` tiene fondo verde o rojo respectivamente en el PDF impreso.
+- Se implementa inyectando las clases `.aprobado` / `.no-aprobado` dinámicamente en el HTML antes de llamar a `window.print()`.
+
+**Filtrado de contenido en PDF**
+- Se ocultó la fila "Respuestas correctas X de 15 — Mínimo requerido: 70%" en el PDF impreso mediante:
+  ```css
+  .resultado-compacto > div:nth-child(3),
+  .resultado-compacto > div:nth-child(4) { display: none; }
+  ```
+- En pantalla (vista administrativa) esa fila permanece visible.
+
+**Optimización de espacio en impresión**
+- Reducción de `body { padding: 10mm }` → `6mm` en `@media print`.
+- Reducción de `font-size: 12px` → `11px` en `@media print`.
+- Reducción de márgenes de sección: `margin-top: 24px` → `14px` en `@media print`.
+- Reducción de padding de celdas de tabla: `7px 4px` → `5px 4px` en `@media print`.
+- El `.section-group` ya no tiene `break-inside: avoid` en print, permitiendo que las secciones se dividan entre páginas y se reduzca el número de hojas.
+- El bloque `.resultado-compacto` mantiene `break-inside: avoid` para no fragmentarse entre páginas.
+
+**Archivos modificados:**
+- `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx`
+- `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx`
 
 ---
 

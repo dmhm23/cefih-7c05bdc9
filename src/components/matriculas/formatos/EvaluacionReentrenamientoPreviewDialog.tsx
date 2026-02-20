@@ -74,17 +74,19 @@ const PRINT_STYLES = `
   .doc-header-fecha-cell { padding: 4px 8px; font-size: 10px; font-weight: 500; }
   .doc-header-fecha-cell:first-child { border-right: 1px solid #9ca3af; }
 
-  .section-group { break-inside: avoid; margin-top: 24px; }
+  .section-group { margin-top: 24px; }
 
   .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #d4d4d4; padding-bottom: 6px; margin-bottom: 14px; }
   .section-title h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
 
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 24px; }
 
   .field-cell .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #737373; line-height: 1.2; }
   .field-cell .field-value { font-size: 12px; font-weight: 500; line-height: 1.4; margin-top: 2px; }
   .field-cell .field-empty { color: #a3a3a3; font-style: italic; }
   .field-span { grid-column: span 2; }
+  .field-span3 { grid-column: span 3; }
 
   /* ── Bloque compacto de resultado ── */
   .resultado-compacto {
@@ -184,9 +186,14 @@ const PRINT_STYLES = `
   /* Show print-only elements */
   .print-only-eval { display: block !important; }
 
+  /* Ocultar fila de detalle en print — solo mostrar X/Y + badge */
+  .resultado-compacto > div:nth-child(3),
+  .resultado-compacto > div:nth-child(4) { display: none; }
+
   @media print { 
-    body { padding: 5mm; }
-    .section-group { break-inside: avoid; }
+    body { padding: 6mm; font-size: 11px; }
+    .section-group { margin-top: 14px; }
+    .tabla-preguntas td { padding: 5px 4px; }
   }
 `;
 

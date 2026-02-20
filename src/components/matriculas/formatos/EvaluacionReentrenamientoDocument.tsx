@@ -238,10 +238,10 @@ function getLabel(value: string | undefined, options: readonly { value: string; 
   return options.find((o) => o.value === value)?.label || value;
 }
 
-function FieldCell({ label, value, span }: { label: string; value?: string; span?: boolean }) {
+function FieldCell({ label, value, span, span3 }: { label: string; value?: string; span?: boolean; span3?: boolean }) {
   const isEmpty = !value || value.trim() === "";
   return (
-    <div className={`field-cell ${span ? "col-span-2 field-span" : ""}`}>
+    <div className={`field-cell ${span3 ? "col-span-3 field-span3" : span ? "col-span-2 field-span" : ""}`}>
       <p className="field-label text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">{label}</p>
       <p className={`field-value text-sm font-medium leading-snug ${isEmpty ? "text-muted-foreground/50 italic field-empty" : ""}`}>
         {isEmpty ? "Pendiente" : value}
@@ -327,7 +327,9 @@ function TablaRespuestas({ evaluacionRespuestas }: { evaluacionRespuestas: numbe
               <td className="py-2.5 text-muted-foreground align-top">{p.id}</td>
               <td className="py-2.5 align-top leading-snug pr-3">{p.texto}</td>
               <td className={`py-2.5 align-top ${!esCorrecto ? "text-destructive/70" : ""}`}>
-                {respIdx !== undefined ? p.opciones[respIdx] : "—"}
+                {respIdx !== undefined
+                  ? `${["a", "b", "c", "d"][respIdx]}. ${p.opciones[respIdx]}`
+                  : "—"}
               </td>
               <td className="py-2.5 text-center align-top">
                 {esCorrecto ? (
@@ -510,7 +512,7 @@ export default function EvaluacionReentrenamientoDocument({
       {/* Datos del participante — común en ambos modos */}
       <div className="section-group">
         <SectionTitle title="Datos del Participante" />
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 grid-2">
+        <div className="grid grid-cols-3 gap-x-6 gap-y-4 grid-3">
           <FieldCell label="Fecha" value={fechaHoy} />
           <FieldCell
             label="Tipo de documento"
@@ -520,13 +522,13 @@ export default function EvaluacionReentrenamientoDocument({
           <FieldCell
             label="Nombre completo"
             value={[persona?.nombres, persona?.apellidos].filter(Boolean).join(" ")}
-            span
+            span3
           />
           <FieldCell
             label="Nivel de formación"
             value={getLabel(matricula.empresaNivelFormacion, NIVELES_FORMACION_EMPRESA)}
           />
-          <FieldCell label="Empresa" value={matricula.empresaNombre} />
+          <FieldCell label="Empresa" value={matricula.empresaNombre || "Independiente"} />
         </div>
       </div>
 

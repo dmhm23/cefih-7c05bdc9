@@ -32,6 +32,12 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "duracion", header: "Duración", visible: true },
   { key: "capacidad", header: "Inscritos", visible: true },
   { key: "estado", header: "Estado", visible: true },
+  { key: "supervisor", header: "Supervisor", visible: false },
+  { key: "numeroCurso", header: "N° Curso", visible: false },
+  { key: "tipoFormacion", header: "Tipo Formación", visible: false },
+  { key: "minTrabajoRegistro", header: "Registro Min. Trabajo", visible: false },
+  { key: "minTrabajoResponsable", header: "Responsable Min. Trabajo", visible: false },
+  { key: "horasTotales", header: "Horas Totales", visible: false },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -190,6 +196,36 @@ export default function CursosListView() {
       key: "estado",
       header: "Estado",
       render: (c: Curso) => <StatusBadge status={c.estado} />,
+    },
+    {
+      key: "supervisor",
+      header: "Supervisor",
+      render: (c: Curso) => c.supervisorNombre || "-",
+    },
+    {
+      key: "numeroCurso",
+      header: "N° Curso",
+      render: (c: Curso) => c.numeroCurso,
+    },
+    {
+      key: "tipoFormacion",
+      header: "Tipo Formación",
+      render: (c: Curso) => TIPO_FORMACION_LABELS[c.tipoFormacion],
+    },
+    {
+      key: "minTrabajoRegistro",
+      header: "Registro Min. Trabajo",
+      render: (c: Curso) => c.minTrabajoRegistro || "-",
+    },
+    {
+      key: "minTrabajoResponsable",
+      header: "Responsable Min. Trabajo",
+      render: (c: Curso) => c.minTrabajoResponsable || "-",
+    },
+    {
+      key: "horasTotales",
+      header: "Horas Totales",
+      render: (c: Curso) => `${c.horasTotales}h`,
     },
     {
       key: "actions",

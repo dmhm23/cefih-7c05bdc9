@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, SECTORES_ECONOMICOS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
+import { format } from "date-fns";
 
 const STORAGE_KEY = "personas_visible_columns";
 
@@ -27,6 +29,12 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "email", header: "Email", visible: false },
   { key: "genero", header: "Género", visible: false },
   { key: "nivelEducativo", header: "Nivel Educativo", visible: false },
+  { key: "tipoDocumento", header: "Tipo Doc.", visible: false },
+  { key: "fechaNacimiento", header: "Fecha Nac.", visible: false },
+  { key: "paisNacimiento", header: "País Nacimiento", visible: false },
+  { key: "rh", header: "RH", visible: false },
+  { key: "areaTrabajo", header: "Área de Trabajo", visible: false },
+  { key: "contactoEmergencia", header: "Contacto Emergencia", visible: false },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -227,6 +235,35 @@ export default function PersonasPage() {
       key: "nivelEducativo",
       header: "Nivel Educativo",
       render: (p: Persona) => getNivelLabel(p.nivelEducativo),
+    },
+    {
+      key: "tipoDocumento",
+      header: "Tipo Doc.",
+      render: (p: Persona) => p.tipoDocumento,
+    },
+    {
+      key: "fechaNacimiento",
+      header: "Fecha Nac.",
+      render: (p: Persona) =>
+        p.fechaNacimiento
+          ? format(new Date(p.fechaNacimiento), "dd/MM/yyyy")
+          : "-",
+    },
+    { key: "paisNacimiento", header: "País Nacimiento" },
+    { key: "rh", header: "RH" },
+    {
+      key: "areaTrabajo",
+      header: "Área de Trabajo",
+      render: (p: Persona) =>
+        p.areaTrabajo === "administrativo" ? "Administrativo" : "Operativa",
+    },
+    {
+      key: "contactoEmergencia",
+      header: "Contacto Emergencia",
+      render: (p: Persona) =>
+        p.contactoEmergencia
+          ? `${p.contactoEmergencia.nombre} (${p.contactoEmergencia.telefono})`
+          : "-",
     },
     {
       key: "actions",

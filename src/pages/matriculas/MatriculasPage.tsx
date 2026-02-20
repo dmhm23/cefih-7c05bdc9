@@ -16,7 +16,7 @@ import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula } from "@/types";
-import { TipoDocumento } from "@/types/matricula";
+import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -40,6 +40,19 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaExamen", header: "Fecha Examen", visible: true },
   { key: "estadoDocumental", header: "Estado Documental", visible: true },
   { key: "estadoFinanciero", header: "Estado Financiero", visible: true },
+  { key: "tipoVinculacion", header: "Vinculación", visible: false },
+  { key: "nit", header: "NIT Empresa", visible: false },
+  { key: "cargo", header: "Cargo", visible: false },
+  { key: "nivelFormacion", header: "Nivel Formación", visible: false },
+  { key: "eps", header: "EPS", visible: false },
+  { key: "arl", header: "ARL", visible: false },
+  { key: "valorCupo", header: "Valor Cupo", visible: false },
+  { key: "abono", header: "Abono", visible: false },
+  { key: "saldo", header: "Saldo", visible: false },
+  { key: "formaPago", header: "Forma de Pago", visible: false },
+  { key: "fechaPago", header: "Fecha Pago", visible: false },
+  { key: "ctaFactNumero", header: "No. CTA-FACT", visible: false },
+  { key: "nivelPrevio", header: "Nivel Previo", visible: false },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -251,6 +264,86 @@ export default function MatriculasPage() {
           {m.pagado ? "Pagado" : "Pendiente"}
         </Badge>
       ),
+    },
+    {
+      key: "tipoVinculacion",
+      header: "Vinculación",
+      render: (m: Matricula) =>
+        m.tipoVinculacion ? TIPO_VINCULACION_LABELS[m.tipoVinculacion] : "-",
+    },
+    {
+      key: "nit",
+      header: "NIT Empresa",
+      render: (m: Matricula) => m.empresaNit || "-",
+    },
+    {
+      key: "cargo",
+      header: "Cargo",
+      render: (m: Matricula) => m.empresaCargo || "-",
+    },
+    {
+      key: "nivelFormacion",
+      header: "Nivel Formación",
+      render: (m: Matricula) =>
+        m.empresaNivelFormacion
+          ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion]
+          : "-",
+    },
+    {
+      key: "eps",
+      header: "EPS",
+      render: (m: Matricula) => m.epsOtra || m.eps || "-",
+    },
+    {
+      key: "arl",
+      header: "ARL",
+      render: (m: Matricula) => m.arlOtra || m.arl || "-",
+    },
+    {
+      key: "valorCupo",
+      header: "Valor Cupo",
+      render: (m: Matricula) =>
+        m.valorCupo != null
+          ? `$${m.valorCupo.toLocaleString("es-CO")}`
+          : "-",
+    },
+    {
+      key: "abono",
+      header: "Abono",
+      render: (m: Matricula) =>
+        m.abono != null ? `$${m.abono.toLocaleString("es-CO")}` : "-",
+    },
+    {
+      key: "saldo",
+      header: "Saldo",
+      render: (m: Matricula) => {
+        if (m.valorCupo == null) return "-";
+        const saldo = (m.valorCupo ?? 0) - (m.abono ?? 0);
+        return `$${saldo.toLocaleString("es-CO")}`;
+      },
+    },
+    {
+      key: "formaPago",
+      header: "Forma de Pago",
+      render: (m: Matricula) =>
+        m.formaPago ? FORMA_PAGO_LABELS[m.formaPago] : "-",
+    },
+    {
+      key: "fechaPago",
+      header: "Fecha Pago",
+      render: (m: Matricula) =>
+        m.fechaPago ? format(new Date(m.fechaPago), "dd/MM/yyyy") : "-",
+    },
+    {
+      key: "ctaFactNumero",
+      header: "No. CTA-FACT",
+      render: (m: Matricula) => m.ctaFactNumero || "-",
+    },
+    {
+      key: "nivelPrevio",
+      header: "Nivel Previo",
+      render: (m: Matricula) =>
+        m.nivelPrevio ? NIVEL_PREVIO_LABELS[m.nivelPrevio] : "-",
     },
     {
       key: "actions",

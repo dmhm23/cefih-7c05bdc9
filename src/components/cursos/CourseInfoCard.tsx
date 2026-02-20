@@ -1,8 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
-import { Curso, CursoFormData, TIPO_FORMACION_LABELS } from "@/types/curso";
+import { Curso, CursoFormData, TIPO_FORMACION_LABELS, TipoFormacion } from "@/types/curso";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
+
+const TIPO_FORMACION_OPTIONS = (Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][]).map(
+  ([value, label]) => ({ value, label })
+);
 
 interface CourseInfoCardProps {
   curso: Curso;
@@ -36,14 +40,21 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Tipo de Formación</p>
-            <p className="text-sm font-medium">{TIPO_FORMACION_LABELS[curso.tipoFormacion]}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Número del Curso</p>
-            <p className="text-sm font-medium">#{curso.numeroCurso}</p>
-          </div>
+          <EditableField
+            label="Tipo de Formación"
+            value={getValue("tipoFormacion")}
+            displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion") as TipoFormacion]}
+            onChange={(v) => onFieldChange("tipoFormacion", v)}
+            type="select"
+            options={TIPO_FORMACION_OPTIONS}
+            editable={!readOnly}
+          />
+          <EditableField
+            label="Número del Curso"
+            value={getValue("numeroCurso")}
+            onChange={(v) => onFieldChange("numeroCurso", v)}
+            editable={!readOnly}
+          />
           <EditableField
             label="Fecha Inicio"
             value={getValue("fechaInicio")}
@@ -76,10 +87,12 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             onChange={(v) => onFieldChange("entrenadorNombre", v)}
             editable={!readOnly}
           />
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Supervisor</p>
-            <p className="text-sm">{curso.supervisorNombre || "—"}</p>
-          </div>
+          <EditableField
+            label="Supervisor"
+            value={getValue("supervisorNombre")}
+            onChange={(v) => onFieldChange("supervisorNombre", v)}
+            editable={!readOnly}
+          />
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground">Última actualización</p>
             <p className="text-sm">{format(new Date(curso.updatedAt), "d MMM yyyy, HH:mm", { locale: es })}</p>

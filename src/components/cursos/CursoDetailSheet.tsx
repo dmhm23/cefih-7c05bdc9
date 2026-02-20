@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso, TIPO_FORMACION_LABELS } from "@/types/curso";
+import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso, TIPO_FORMACION_LABELS, TipoFormacion } from "@/types/curso";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,6 +34,10 @@ const ESTADO_OPTIONS = [
   { value: "en_progreso", label: "En Progreso" },
   { value: "cerrado", label: "Cerrado" },
 ];
+
+const TIPO_FORMACION_OPTIONS = (Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][]).map(
+  ([value, label]) => ({ value, label })
+);
 
 export function CursoDetailSheet({
   open,
@@ -177,26 +181,31 @@ export function CursoDetailSheet({
         {/* Info */}
         <DetailSection title="Información General">
           <div className="space-y-4">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Tipo de Formación</p>
-              <p className="text-sm font-medium">{TIPO_FORMACION_LABELS[curso.tipoFormacion]}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Número del Curso</p>
-              <p className="text-sm font-medium">#{curso.numeroCurso}</p>
-            </div>
+            <EditableField
+              label="Tipo de Formación"
+              value={getValue("tipoFormacion")}
+              displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion") as TipoFormacion]}
+              onChange={(v) => handleFieldChange("tipoFormacion", v)}
+              type="select"
+              options={TIPO_FORMACION_OPTIONS}
+            />
+            <EditableField
+              label="Número del Curso"
+              value={getValue("numeroCurso")}
+              onChange={(v) => handleFieldChange("numeroCurso", v)}
+            />
             <EditableField
               label="Entrenador"
               value={getValue("entrenadorNombre")}
               onChange={(v) => handleFieldChange("entrenadorNombre", v)}
               icon={User}
             />
-            {curso.supervisorNombre && (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Supervisor</p>
-                <p className="text-sm">{curso.supervisorNombre}</p>
-              </div>
-            )}
+            <EditableField
+              label="Supervisor"
+              value={getValue("supervisorNombre") ?? ""}
+              onChange={(v) => handleFieldChange("supervisorNombre", v)}
+              icon={User}
+            />
           </div>
         </DetailSection>
 

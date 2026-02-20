@@ -126,6 +126,12 @@ export interface Matricula {
   autoevaluacionRespuestas?: string[];
   evaluacionCompetenciasRespuestas?: string[];
 
+  // Evaluación Reentrenamiento — respuestas individuales (índice de opción seleccionada por pregunta)
+  evaluacionRespuestas?: number[];
+
+  // Encuesta de satisfacción (4 escalas + 1 Sí/No = 5 elementos)
+  encuestaRespuestas?: string[];
+
   // Observaciones
   observaciones?: string;
 

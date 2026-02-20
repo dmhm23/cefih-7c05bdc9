@@ -10,8 +10,8 @@
  * PROP `modo`:
  *   "diligenciamiento" (default) → muestra RadioGroups interactivos + botón Enviar
  *                                   (futuro uso en Vista del Estudiante)
- *   "resultados"                 → oculta preguntas individuales, muestra bloque
- *                                   consolidado de resultado (vista admin en /matriculas/:id)
+ *   "resultados"                 → bloque compacto de resultado + tabla preguntas/respuestas
+ *                                   + encuesta solo lectura (vista admin en /matriculas/:id)
  */
 
 import { useState } from "react";
@@ -39,15 +39,20 @@ interface Props {
   /**
    * Bifurca el comportamiento del renderer:
    * - "diligenciamiento": preguntas interactivas + botón Enviar (futuro estudiante)
-   * - "resultados": solo bloque consolidado de resultado, solo lectura (admin)
+   * - "resultados": bloque compacto + tabla preguntas + encuesta solo lectura (admin)
    * Por defecto: "diligenciamiento"
    */
   modo?: "diligenciamiento" | "resultados";
   /**
-   * Callback desacoplado — el contexto admin lo conecta a updateMatricula,
-   * la futura Vista del Estudiante puede conectarlo a su propio endpoint.
+   * Callback desacoplado — el contexto admin lo conecta a updateMatricula.
+   * La futura Vista del Estudiante puede conectarlo a su propio endpoint.
    */
-  onSubmit?: (data: { evaluacionCompletada: boolean; evaluacionPuntaje: number }) => void;
+  onSubmit?: (data: {
+    evaluacionCompletada: boolean;
+    evaluacionPuntaje: number;
+    evaluacionRespuestas: number[];
+    encuestaRespuestas: string[];
+  }) => void;
 }
 
 interface Pregunta {
@@ -192,6 +197,30 @@ const PREGUNTAS: Pregunta[] = [
 const UMBRAL_APROBACION = 70; // porcentaje mínimo para aprobar
 
 // ---------------------------------------------------------------------------
+// Encuesta de Satisfacción — constantes
+// ---------------------------------------------------------------------------
+
+const ENCUESTA_ESCALA = [
+  "¿Qué tan satisfecho se encuentra con la capacitación y entrenamiento en trabajo en alturas recibida?",
+  "¿Qué tan satisfecho se encuentra con el servicio al cliente recibido por parte de todo el personal de la empresa?",
+  "¿Qué tan satisfecho se encuentra con la amabilidad y el trato recibido por parte del personal?",
+  "¿Qué tan satisfecho se encuentra con la calidad del servicio brindado durante todo el proceso?",
+];
+
+const OPCIONES_ESCALA = [
+  { value: "muy_satisfecho", label: "Muy satisfecho" },
+  { value: "satisfecho", label: "Satisfecho" },
+  { value: "poco_satisfecho", label: "Poco satisfecho" },
+  { value: "insatisfecho", label: "Insatisfecho" },
+];
+
+const ENCUESTA_SI_NO = "¿Volvería a contratar y recomendaría el servicio recibido?";
+const OPCIONES_SI_NO = [
+  { value: "si", label: "Sí" },
+  { value: "no", label: "No" },
+];
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -230,93 +259,135 @@ function SectionTitle({ title }: { title: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Bloque de resultado consolidado — usado en modo="resultados"
+// Bloque compacto de resultado — modo="resultados"
 // ---------------------------------------------------------------------------
 
-function ResultadoConsolidado({ puntaje }: { puntaje: number }) {
+function ResultadoCompacto({ puntaje }: { puntaje: number }) {
   const aprobado = puntaje >= UMBRAL_APROBACION;
   const correctas = Math.round((puntaje * PREGUNTAS.length) / 100);
 
   return (
-    <div className="space-y-6">
-      {/* Bloque principal de resultado */}
-      <div
-        className={`resultado-bloque border-2 rounded-xl p-8 text-center space-y-4 ${
-          aprobado
-            ? "border-emerald-400 bg-emerald-50/60"
-            : "border-destructive/60 bg-destructive/5"
-        }`}
-      >
-        <div className="flex items-center justify-center gap-2">
-          {aprobado ? (
-            <CheckCircle2 className="h-7 w-7 text-emerald-600" />
-          ) : (
-            <XCircle className="h-7 w-7 text-destructive" />
-          )}
-          <p className={`text-xl font-bold ${aprobado ? "text-emerald-700" : "text-destructive"}`}>
-            {aprobado ? "Evaluación Aprobada" : "Evaluación No Aprobada"}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-center gap-4">
-          <span className={`text-6xl font-black ${aprobado ? "text-emerald-700" : "text-destructive"}`}>
-            {puntaje}%
+    <div className="resultado-compacto grid grid-cols-2 gap-0 border rounded-lg overflow-hidden">
+      {/* Fila 1: Resultado principal */}
+      <div className="px-5 py-3 border-b">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide">Resultado de la evaluación</p>
+      </div>
+      <div className="px-5 py-3 border-b border-l flex items-center gap-3">
+        <div>
+          <span className={`text-2xl font-semibold ${aprobado ? "text-emerald-600" : "text-destructive"}`}>
+            {correctas}/{PREGUNTAS.length}
           </span>
-          <Badge
-            className={`text-sm px-4 py-1.5 ${
-              aprobado
-                ? "bg-emerald-600 text-white hover:bg-emerald-600"
-                : "bg-destructive text-destructive-foreground hover:bg-destructive"
-            }`}
-          >
-            {aprobado ? "Aprobado" : "No Aprobado"}
-          </Badge>
+          <p className="text-xs text-muted-foreground mt-0.5">{puntaje.toFixed(2)}%</p>
         </div>
+        <Badge
+          className={`shrink-0 ${
+            aprobado
+              ? "bg-emerald-600 text-white hover:bg-emerald-600"
+              : "bg-destructive text-destructive-foreground hover:bg-destructive"
+          }`}
+        >
+          {aprobado ? "✓ Aprobado" : "✗ No aprobado"}
+        </Badge>
+      </div>
 
-        <p className="text-sm text-muted-foreground">
-          <strong>{correctas} de {PREGUNTAS.length}</strong> respuestas correctas
-          &nbsp;·&nbsp; Puntaje mínimo requerido: <strong>{UMBRAL_APROBACION}%</strong>
+      {/* Fila 2: Respuestas correctas / puntaje mínimo */}
+      <div className="px-5 py-3">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide">Respuestas correctas</p>
+      </div>
+      <div className="px-5 py-3 border-l">
+        <p className="text-sm font-medium text-foreground">
+          {correctas} de {PREGUNTAS.length} — Mínimo requerido: {UMBRAL_APROBACION}%
         </p>
       </div>
-
-      {/* Tabla de resumen estadístico */}
-      <div className="section-group resumen-bloque">
-        <SectionTitle title="Resumen de la Evaluación" />
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <tbody>
-              {[
-                { label: "Total de preguntas", value: String(PREGUNTAS.length) },
-                { label: "Respuestas correctas", value: String(correctas) },
-                { label: "Puntaje obtenido", value: `${puntaje}%` },
-                { label: "Puntaje mínimo aprobatorio", value: `${UMBRAL_APROBACION}%` },
-                {
-                  label: "Resultado",
-                  value: aprobado ? "Aprobado" : "No Aprobado",
-                  highlight: true,
-                  aprobado,
-                },
-              ].map((row, i) => (
-                <tr key={i} className={i % 2 === 0 ? "bg-muted/30" : "bg-background"}>
-                  <td className="px-4 py-2.5 font-medium text-muted-foreground w-1/2">{row.label}</td>
-                  <td
-                    className={`px-4 py-2.5 font-semibold ${
-                      row.highlight
-                        ? row.aprobado
-                          ? "text-emerald-700"
-                          : "text-destructive"
-                        : ""
-                    }`}
-                  >
-                    {row.value}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tabla de preguntas y respuestas — modo="resultados"
+// ---------------------------------------------------------------------------
+
+function TablaRespuestas({ evaluacionRespuestas }: { evaluacionRespuestas: number[] }) {
+  return (
+    <table className="tabla-preguntas w-full text-sm">
+      <thead>
+        <tr className="border-b">
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide w-8">#</th>
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide">Pregunta</th>
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide w-52">Respuesta seleccionada</th>
+          <th className="pb-2 text-center text-xs text-muted-foreground uppercase tracking-wide w-16">Calif.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {PREGUNTAS.map((p, idx) => {
+          const respIdx = evaluacionRespuestas[idx];
+          const esCorrecto = respIdx === p.correcta;
+          return (
+            <tr key={p.id} className="border-b last:border-0">
+              <td className="py-2.5 text-muted-foreground align-top">{p.id}</td>
+              <td className="py-2.5 align-top leading-snug pr-3">{p.texto}</td>
+              <td className={`py-2.5 align-top ${!esCorrecto ? "text-destructive/70" : ""}`}>
+                {respIdx !== undefined ? p.opciones[respIdx] : "—"}
+              </td>
+              <td className="py-2.5 text-center align-top">
+                {esCorrecto ? (
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 mx-auto" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-destructive mx-auto" />
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Encuesta solo lectura — modo="resultados"
+// ---------------------------------------------------------------------------
+
+function EncuestaResultados({ encuestaRespuestas }: { encuestaRespuestas?: string[] }) {
+  if (!encuestaRespuestas || encuestaRespuestas.length === 0) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-4 py-3">
+        <Clock className="h-4 w-4 shrink-0" />
+        <span>Encuesta pendiente de diligenciar.</span>
+      </div>
+    );
+  }
+
+  return (
+    <table className="tabla-preguntas w-full text-sm">
+      <thead>
+        <tr className="border-b">
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide w-8">#</th>
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide">Pregunta</th>
+          <th className="pb-2 text-left text-xs text-muted-foreground uppercase tracking-wide w-44">Respuesta</th>
+        </tr>
+      </thead>
+      <tbody>
+        {ENCUESTA_ESCALA.map((pregunta, idx) => {
+          const respVal = encuestaRespuestas[idx];
+          const label = OPCIONES_ESCALA.find((o) => o.value === respVal)?.label ?? respVal ?? "—";
+          return (
+            <tr key={idx} className="border-b last:border-0">
+              <td className="py-2.5 text-muted-foreground align-top">{idx + 1}</td>
+              <td className="py-2.5 align-top leading-snug pr-3">{pregunta}</td>
+              <td className="py-2.5 align-top font-medium">{label}</td>
+            </tr>
+          );
+        })}
+        <tr className="last:border-0">
+          <td className="py-2.5 text-muted-foreground align-top">{ENCUESTA_ESCALA.length + 1}</td>
+          <td className="py-2.5 align-top leading-snug pr-3">{ENCUESTA_SI_NO}</td>
+          <td className="py-2.5 align-top font-medium">
+            {OPCIONES_SI_NO.find((o) => o.value === encuestaRespuestas[4])?.label ?? encuestaRespuestas[4] ?? "—"}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 }
 
@@ -350,23 +421,36 @@ export default function EvaluacionReentrenamientoDocument({
   modo = "diligenciamiento",
   onSubmit,
 }: Props) {
-  // Estado local solo relevante en modo "diligenciamiento"
-  const [respuestas, setRespuestas] = useState<(string | undefined)[]>(
+  // Estado local — solo relevante en modo "diligenciamiento"
+  const [respuestas, setRespuestas] = useState<(number | undefined)[]>(
     PREGUNTAS.map(() => undefined)
+  );
+  const [encuestaLocal, setEncuestaLocal] = useState<string[]>(
+    Array(ENCUESTA_ESCALA.length + 1).fill("")
   );
   const [submitted, setSubmitted] = useState(false);
 
   const yaCompletada = matricula.evaluacionCompletada;
   const puntajeGuardado = matricula.evaluacionPuntaje;
+  const evaluacionRespuestas = matricula.evaluacionRespuestas;
+  const encuestaRespuestas = matricula.encuestaRespuestas;
 
   const fechaHoy = format(new Date(), "dd/MM/yyyy", { locale: es });
 
-  // Handlers solo activos en modo "diligenciamiento"
+  // Handlers — solo activos en modo "diligenciamiento"
   const handleRespuesta = (preguntaIdx: number, value: string) => {
     if (yaCompletada || modo === "resultados") return;
     setRespuestas((prev) => {
       const next = [...prev];
-      next[preguntaIdx] = value;
+      next[preguntaIdx] = parseInt(value);
+      return next;
+    });
+  };
+
+  const handleEncuesta = (idx: number, value: string) => {
+    setEncuestaLocal((prev) => {
+      const next = [...prev];
+      next[idx] = value;
       return next;
     });
   };
@@ -374,14 +458,20 @@ export default function EvaluacionReentrenamientoDocument({
   const handleEnviar = () => {
     if (!onSubmit || modo === "resultados") return;
 
-    const correctas = PREGUNTAS.filter((p, idx) => {
-      const respuesta = respuestas[idx];
-      return respuesta !== undefined && parseInt(respuesta) === p.correcta;
-    }).length;
+    const correctas = PREGUNTAS.filter(
+      (p, idx) => respuestas[idx] === p.correcta
+    ).length;
 
     const puntaje = Math.round((correctas / PREGUNTAS.length) * 100);
+    const respuestasNumericas = respuestas.map((r) => r ?? -1);
+
     setSubmitted(true);
-    onSubmit({ evaluacionCompletada: true, evaluacionPuntaje: puntaje });
+    onSubmit({
+      evaluacionCompletada: true,
+      evaluacionPuntaje: puntaje,
+      evaluacionRespuestas: respuestasNumericas,
+      encuestaRespuestas: encuestaLocal,
+    });
   };
 
   const sinResponder = respuestas.filter((r) => r === undefined).length;
@@ -390,10 +480,7 @@ export default function EvaluacionReentrenamientoDocument({
   // Puntaje para resultado local inmediato (antes de que llegue la query actualizada)
   const puntajeLocal = submitted
     ? Math.round(
-        (PREGUNTAS.filter((p, idx) => {
-          const r = respuestas[idx];
-          return r !== undefined && parseInt(r) === p.correcta;
-        }).length /
+        (PREGUNTAS.filter((p, idx) => respuestas[idx] === p.correcta).length /
           PREGUNTAS.length) *
           100
       )
@@ -443,19 +530,40 @@ export default function EvaluacionReentrenamientoDocument({
         </div>
       </div>
 
-      {/* ── MODO RESULTADOS ─────────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          MODO RESULTADOS — Vista administrativa
+          ══════════════════════════════════════════════════════════════════════ */}
       {modo === "resultados" && (
-        <div className="section-group">
-          <SectionTitle title="Resultado de la Evaluación" />
-          {yaCompletada && puntajeGuardado !== undefined && puntajeGuardado !== null ? (
-            <ResultadoConsolidado puntaje={puntajeGuardado} />
-          ) : (
-            <EvaluacionPendiente />
+        <>
+          {/* Bloque de resultado compacto */}
+          <div className="section-group">
+            <SectionTitle title="Resultado de la Evaluación" />
+            {yaCompletada && puntajeGuardado !== undefined && puntajeGuardado !== null ? (
+              <ResultadoCompacto puntaje={puntajeGuardado} />
+            ) : (
+              <EvaluacionPendiente />
+            )}
+          </div>
+
+          {/* Tabla de preguntas y respuestas */}
+          {yaCompletada && evaluacionRespuestas && evaluacionRespuestas.length > 0 && (
+            <div className="section-group">
+              <SectionTitle title={`Preguntas y Respuestas (${PREGUNTAS.length})`} />
+              <TablaRespuestas evaluacionRespuestas={evaluacionRespuestas} />
+            </div>
           )}
-        </div>
+
+          {/* Encuesta de satisfacción — solo lectura */}
+          <div className="section-group">
+            <SectionTitle title="Encuesta de Satisfacción" />
+            <EncuestaResultados encuestaRespuestas={encuestaRespuestas} />
+          </div>
+        </>
       )}
 
-      {/* ── MODO DILIGENCIAMIENTO ────────────────────────────────────────────── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          MODO DILIGENCIAMIENTO — Vista del estudiante (futuro)
+          ══════════════════════════════════════════════════════════════════════ */}
       {modo === "diligenciamiento" && (
         <>
           {/* Instrucciones */}
@@ -477,8 +585,7 @@ export default function EvaluacionReentrenamientoDocument({
 
             {PREGUNTAS.map((pregunta, idx) => {
               const respuesta = respuestas[idx];
-              const esCorrecta =
-                respuesta !== undefined && parseInt(respuesta) === pregunta.correcta;
+              const esCorrecta = respuesta !== undefined && respuesta === pregunta.correcta;
               const mostrarResultado = yaCompletada || submitted;
 
               return (
@@ -509,17 +616,16 @@ export default function EvaluacionReentrenamientoDocument({
                     )}
                   </div>
 
-                  {/* RadioGroup — visible en pantalla, oculto en print */}
+                  {/* RadioGroup — visible en pantalla */}
                   <div className="screen-only-eval pl-9">
                     <RadioGroup
-                      value={respuesta ?? ""}
+                      value={respuesta !== undefined ? String(respuesta) : ""}
                       onValueChange={(v) => handleRespuesta(idx, v)}
                       disabled={yaCompletada || submitted}
                       className="space-y-1.5"
                     >
                       {pregunta.opciones.map((opcion, opIdx) => {
-                        const isSelected =
-                          respuesta !== undefined && parseInt(respuesta) === opIdx;
+                        const isSelected = respuesta === opIdx;
                         const isCorrectOption = opIdx === pregunta.correcta;
                         return (
                           <div
@@ -558,7 +664,7 @@ export default function EvaluacionReentrenamientoDocument({
                     <p className="eval-print-row text-sm">
                       <span className="font-medium">Respuesta seleccionada: </span>
                       {respuesta !== undefined
-                        ? pregunta.opciones[parseInt(respuesta)] || "Sin responder"
+                        ? pregunta.opciones[respuesta] || "Sin responder"
                         : "Sin responder"}
                     </p>
                   </div>
@@ -606,6 +712,70 @@ export default function EvaluacionReentrenamientoDocument({
                 </p>
               </div>
             )}
+
+          {/* Encuesta de Satisfacción — interactiva */}
+          <div className="section-group space-y-6">
+            <SectionTitle title="Encuesta de Satisfacción" />
+            <p className="text-sm text-muted-foreground -mt-2">
+              Sus respuestas nos ayudan a mejorar la calidad de nuestros servicios.
+            </p>
+
+            {/* Preguntas de escala */}
+            {ENCUESTA_ESCALA.map((pregunta, idx) => (
+              <div key={idx} className="space-y-2">
+                <p className="text-sm font-medium leading-snug">
+                  {idx + 1}. {pregunta}
+                </p>
+                <div className="screen-only-eval pl-4">
+                  <RadioGroup
+                    value={encuestaLocal[idx] ?? ""}
+                    onValueChange={(v) => handleEncuesta(idx, v)}
+                    disabled={yaCompletada || submitted}
+                    className="flex flex-wrap gap-x-6 gap-y-1.5"
+                  >
+                    {OPCIONES_ESCALA.map((opcion) => (
+                      <div key={opcion.value} className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value={opcion.value}
+                          id={`enc-${idx}-${opcion.value}`}
+                        />
+                        <Label htmlFor={`enc-${idx}-${opcion.value}`} className="cursor-pointer font-normal text-sm">
+                          {opcion.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              </div>
+            ))}
+
+            {/* Pregunta Sí/No */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium leading-snug">
+                {ENCUESTA_ESCALA.length + 1}. {ENCUESTA_SI_NO}
+              </p>
+              <div className="screen-only-eval pl-4">
+                <RadioGroup
+                  value={encuestaLocal[ENCUESTA_ESCALA.length] ?? ""}
+                  onValueChange={(v) => handleEncuesta(ENCUESTA_ESCALA.length, v)}
+                  disabled={yaCompletada || submitted}
+                  className="flex gap-6"
+                >
+                  {OPCIONES_SI_NO.map((opcion) => (
+                    <div key={opcion.value} className="flex items-center gap-2">
+                      <RadioGroupItem
+                        value={opcion.value}
+                        id={`enc-sino-${opcion.value}`}
+                      />
+                      <Label htmlFor={`enc-sino-${opcion.value}`} className="cursor-pointer font-normal text-sm">
+                        {opcion.label}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            </div>
+          </div>
 
           {/* Botón Enviar */}
           {!yaCompletada && !submitted && onSubmit && (

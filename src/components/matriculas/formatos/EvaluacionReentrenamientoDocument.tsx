@@ -274,13 +274,15 @@ function ResultadoCompacto({ puntaje }: { puntaje: number }) {
       </div>
       <div className="px-5 py-3 border-b border-l flex items-center gap-3">
         <div>
-          <span className={`text-2xl font-semibold ${aprobado ? "text-emerald-600" : "text-destructive"}`}>
+          <span className={`resultado-ratio text-2xl font-semibold ${aprobado ? "text-emerald-600" : "text-destructive"}`}>
             {correctas}/{PREGUNTAS.length}
           </span>
-          <p className="text-xs text-muted-foreground mt-0.5">{puntaje.toFixed(2)}%</p>
+          <p className={`resultado-pct text-xs mt-0.5 ${aprobado ? "text-emerald-600/80" : "text-destructive/80"}`}>
+            {puntaje.toFixed(2)}%
+          </p>
         </div>
         <Badge
-          className={`shrink-0 ${
+          className={`resultado-badge-print shrink-0 ${
             aprobado
               ? "bg-emerald-600 text-white hover:bg-emerald-600"
               : "bg-destructive text-destructive-foreground hover:bg-destructive"

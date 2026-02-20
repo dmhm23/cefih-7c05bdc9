@@ -6,6 +6,12 @@
  * (persona, matricula, curso) y un callback `onSubmit` desacoplado.
  * La futura Vista del Estudiante puede conectar onSubmit a su propio
  * endpoint sin necesidad de refactorizar este renderer.
+ *
+ * PROP `modo`:
+ *   "diligenciamiento" (default) → muestra RadioGroups interactivos + botón Enviar
+ *                                   (futuro uso en Vista del Estudiante)
+ *   "resultados"                 → oculta preguntas individuales, muestra bloque
+ *                                   consolidado de resultado (vista admin en /matriculas/:id)
  */
 
 import { useState } from "react";
@@ -20,7 +26,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { TIPOS_DOCUMENTO, NIVELES_FORMACION_EMPRESA } from "@/data/formOptions";
 import DocumentHeader from "@/components/shared/DocumentHeader";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -30,6 +36,13 @@ interface Props {
   persona: Persona | null;
   matricula: Matricula;
   curso: Curso | null;
+  /**
+   * Bifurca el comportamiento del renderer:
+   * - "diligenciamiento": preguntas interactivas + botón Enviar (futuro estudiante)
+   * - "resultados": solo bloque consolidado de resultado, solo lectura (admin)
+   * Por defecto: "diligenciamiento"
+   */
+  modo?: "diligenciamiento" | "resultados";
   /**
    * Callback desacoplado — el contexto admin lo conecta a updateMatricula,
    * la futura Vista del Estudiante puede conectarlo a su propio endpoint.
@@ -217,11 +230,127 @@ function SectionTitle({ title }: { title: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// Bloque de resultado consolidado — usado en modo="resultados"
+// ---------------------------------------------------------------------------
+
+function ResultadoConsolidado({ puntaje }: { puntaje: number }) {
+  const aprobado = puntaje >= UMBRAL_APROBACION;
+  const correctas = Math.round((puntaje * PREGUNTAS.length) / 100);
+
+  return (
+    <div className="space-y-6">
+      {/* Bloque principal de resultado */}
+      <div
+        className={`resultado-bloque border-2 rounded-xl p-8 text-center space-y-4 ${
+          aprobado
+            ? "border-emerald-400 bg-emerald-50/60"
+            : "border-destructive/60 bg-destructive/5"
+        }`}
+      >
+        <div className="flex items-center justify-center gap-2">
+          {aprobado ? (
+            <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+          ) : (
+            <XCircle className="h-7 w-7 text-destructive" />
+          )}
+          <p className={`text-xl font-bold ${aprobado ? "text-emerald-700" : "text-destructive"}`}>
+            {aprobado ? "Evaluación Aprobada" : "Evaluación No Aprobada"}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-4">
+          <span className={`text-6xl font-black ${aprobado ? "text-emerald-700" : "text-destructive"}`}>
+            {puntaje}%
+          </span>
+          <Badge
+            className={`text-sm px-4 py-1.5 ${
+              aprobado
+                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                : "bg-destructive text-destructive-foreground hover:bg-destructive"
+            }`}
+          >
+            {aprobado ? "Aprobado" : "No Aprobado"}
+          </Badge>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          <strong>{correctas} de {PREGUNTAS.length}</strong> respuestas correctas
+          &nbsp;·&nbsp; Puntaje mínimo requerido: <strong>{UMBRAL_APROBACION}%</strong>
+        </p>
+      </div>
+
+      {/* Tabla de resumen estadístico */}
+      <div className="section-group resumen-bloque">
+        <SectionTitle title="Resumen de la Evaluación" />
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>
+              {[
+                { label: "Total de preguntas", value: String(PREGUNTAS.length) },
+                { label: "Respuestas correctas", value: String(correctas) },
+                { label: "Puntaje obtenido", value: `${puntaje}%` },
+                { label: "Puntaje mínimo aprobatorio", value: `${UMBRAL_APROBACION}%` },
+                {
+                  label: "Resultado",
+                  value: aprobado ? "Aprobado" : "No Aprobado",
+                  highlight: true,
+                  aprobado,
+                },
+              ].map((row, i) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-muted/30" : "bg-background"}>
+                  <td className="px-4 py-2.5 font-medium text-muted-foreground w-1/2">{row.label}</td>
+                  <td
+                    className={`px-4 py-2.5 font-semibold ${
+                      row.highlight
+                        ? row.aprobado
+                          ? "text-emerald-700"
+                          : "text-destructive"
+                        : ""
+                    }`}
+                  >
+                    {row.value}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bloque pendiente — cuando evaluacionCompletada=false en modo="resultados"
+// ---------------------------------------------------------------------------
+
+function EvaluacionPendiente() {
+  return (
+    <div className="resultado-bloque border-2 border-amber-300 bg-amber-50/60 rounded-xl p-8 text-center space-y-3">
+      <div className="flex items-center justify-center gap-2">
+        <Clock className="h-6 w-6 text-amber-600" />
+        <p className="text-lg font-bold text-amber-700">Evaluación Pendiente</p>
+      </div>
+      <p className="text-sm text-amber-700/80">
+        El participante aún no ha diligenciado esta evaluación. El resultado aparecerá
+        aquí una vez sea completada desde la vista del estudiante.
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Componente principal
 // ---------------------------------------------------------------------------
 
-export default function EvaluacionReentrenamientoDocument({ persona, matricula, curso, onSubmit }: Props) {
-  // Inicializar respuestas vacías (undefined = sin responder)
+export default function EvaluacionReentrenamientoDocument({
+  persona,
+  matricula,
+  curso,
+  modo = "diligenciamiento",
+  onSubmit,
+}: Props) {
+  // Estado local solo relevante en modo "diligenciamiento"
   const [respuestas, setRespuestas] = useState<(string | undefined)[]>(
     PREGUNTAS.map(() => undefined)
   );
@@ -232,8 +361,9 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
 
   const fechaHoy = format(new Date(), "dd/MM/yyyy", { locale: es });
 
+  // Handlers solo activos en modo "diligenciamiento"
   const handleRespuesta = (preguntaIdx: number, value: string) => {
-    if (yaCompletada) return;
+    if (yaCompletada || modo === "resultados") return;
     setRespuestas((prev) => {
       const next = [...prev];
       next[preguntaIdx] = value;
@@ -242,7 +372,7 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
   };
 
   const handleEnviar = () => {
-    if (!onSubmit) return;
+    if (!onSubmit || modo === "resultados") return;
 
     const correctas = PREGUNTAS.filter((p, idx) => {
       const respuesta = respuestas[idx];
@@ -254,11 +384,10 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
     onSubmit({ evaluacionCompletada: true, evaluacionPuntaje: puntaje });
   };
 
-  // Calcular cuántas preguntas faltan por responder
   const sinResponder = respuestas.filter((r) => r === undefined).length;
-  const puedeEnviar = sinResponder === 0 && !yaCompletada;
+  const puedeEnviar = sinResponder === 0 && !yaCompletada && modo === "diligenciamiento";
 
-  // Para mostrar resultado local si ya se acaba de enviar (antes de que llegue la actualización de la query)
+  // Puntaje para resultado local inmediato (antes de que llegue la query actualizada)
   const puntajeLocal = submitted
     ? Math.round(
         (PREGUNTAS.filter((p, idx) => {
@@ -271,7 +400,10 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
     : null;
 
   const puntajeMostrar = puntajeGuardado ?? puntajeLocal;
-  const aprobado = puntajeMostrar !== null && puntajeMostrar !== undefined ? puntajeMostrar >= UMBRAL_APROBACION : null;
+  const aprobado =
+    puntajeMostrar !== null && puntajeMostrar !== undefined
+      ? puntajeMostrar >= UMBRAL_APROBACION
+      : null;
 
   return (
     <div
@@ -288,7 +420,7 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
         subsistema="SSTA"
       />
 
-      {/* Datos del estudiante */}
+      {/* Datos del participante — común en ambos modos */}
       <div className="section-group">
         <SectionTitle title="Datos del Participante" />
         <div className="grid grid-cols-2 gap-x-6 gap-y-4 grid-2">
@@ -311,163 +443,192 @@ export default function EvaluacionReentrenamientoDocument({ persona, matricula, 
         </div>
       </div>
 
-      {/* Instrucciones */}
-      <div className="section-group">
-        <div className="bg-muted/40 border rounded-md px-4 py-3 text-sm text-muted-foreground space-y-1">
-          <p className="font-semibold text-foreground">Instrucciones:</p>
-          <p>
-            Lea cuidadosamente cada pregunta y seleccione la respuesta que considere correcta. El
-            puntaje mínimo para aprobar es del <strong>{UMBRAL_APROBACION}%</strong>. Una vez enviada
-            la evaluación no podrá modificar sus respuestas.
-          </p>
-        </div>
-      </div>
-
-      {/* Preguntas */}
-      <div className="section-group space-y-6">
-        <SectionTitle title={`Preguntas (${PREGUNTAS.length})`} />
-
-        {PREGUNTAS.map((pregunta, idx) => {
-          const respuesta = respuestas[idx];
-          const esCorrecta = respuesta !== undefined && parseInt(respuesta) === pregunta.correcta;
-          const mostrarResultado = yaCompletada || submitted;
-
-          return (
-            <div
-              key={pregunta.id}
-              className={`border rounded-lg p-4 space-y-3 transition-colors ${
-                mostrarResultado
-                  ? esCorrecta
-                    ? "border-emerald-300 bg-emerald-50/50"
-                    : "border-destructive/40 bg-destructive/5"
-                  : "border-border"
-              }`}
-            >
-              {/* Número + texto de la pregunta */}
-              <div className="flex gap-3">
-                <span className="shrink-0 font-bold text-sm text-muted-foreground w-6 text-right">
-                  {pregunta.id}.
-                </span>
-                <p className="text-sm font-medium leading-snug">{pregunta.texto}</p>
-                {mostrarResultado && (
-                  <span className="shrink-0 ml-auto">
-                    {esCorrecta ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-destructive" />
-                    )}
-                  </span>
-                )}
-              </div>
-
-              {/* Opciones — RadioGroup interactivo (visible en pantalla, oculto en print) */}
-              <div className="screen-only-eval pl-9">
-                <RadioGroup
-                  value={respuesta ?? ""}
-                  onValueChange={(v) => handleRespuesta(idx, v)}
-                  disabled={yaCompletada || submitted}
-                  className="space-y-1.5"
-                >
-                  {pregunta.opciones.map((opcion, opIdx) => {
-                    const isSelected = respuesta !== undefined && parseInt(respuesta) === opIdx;
-                    const isCorrectOption = opIdx === pregunta.correcta;
-                    return (
-                      <div
-                        key={opIdx}
-                        className={`flex items-center gap-2 rounded px-2 py-1 text-sm transition-colors ${
-                          mostrarResultado && isCorrectOption
-                            ? "text-emerald-700 font-semibold"
-                            : mostrarResultado && isSelected && !isCorrectOption
-                            ? "text-destructive line-through"
-                            : ""
-                        }`}
-                      >
-                        <RadioGroupItem value={String(opIdx)} id={`p${pregunta.id}-op${opIdx}`} />
-                        <Label
-                          htmlFor={`p${pregunta.id}-op${opIdx}`}
-                          className="cursor-pointer font-normal"
-                        >
-                          {opcion}
-                        </Label>
-                        {mostrarResultado && isCorrectOption && (
-                          <span className="text-[10px] text-emerald-600 font-semibold ml-1">✓ Correcta</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              </div>
-
-              {/* Versión texto plano — visible solo en print */}
-              <div className="print-only-eval hidden pl-9">
-                <p className="eval-print-row text-sm">
-                  <span className="font-medium">Respuesta seleccionada: </span>
-                  {respuesta !== undefined
-                    ? pregunta.opciones[parseInt(respuesta)] || "Sin responder"
-                    : "Sin responder"}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Resultado (si la evaluación ya fue completada) */}
-      {(yaCompletada || submitted) && puntajeMostrar !== null && puntajeMostrar !== undefined && (
-        <div
-          className={`section-group border-2 rounded-xl p-6 text-center space-y-3 ${
-            aprobado ? "border-emerald-400 bg-emerald-50/60" : "border-destructive/60 bg-destructive/5"
-          }`}
-        >
-          <div className="flex items-center justify-center gap-2">
-            {aprobado ? (
-              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-            ) : (
-              <XCircle className="h-6 w-6 text-destructive" />
-            )}
-            <p className="text-lg font-bold">
-              {aprobado ? "¡Evaluación Aprobada!" : "Evaluación No Aprobada"}
-            </p>
-          </div>
-          <div className="flex items-center justify-center gap-3">
-            <span className="text-4xl font-black">{puntajeMostrar}%</span>
-            <Badge
-              className={`text-sm px-3 py-1 ${
-                aprobado
-                  ? "bg-emerald-600 text-white"
-                  : "bg-destructive text-destructive-foreground"
-              }`}
-            >
-              {aprobado ? "Aprobado" : "No Aprobado"}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Puntaje mínimo requerido: {UMBRAL_APROBACION}% — Obtenido:{" "}
-            <strong>{puntajeMostrar}%</strong>
-          </p>
+      {/* ── MODO RESULTADOS ─────────────────────────────────────────────────── */}
+      {modo === "resultados" && (
+        <div className="section-group">
+          <SectionTitle title="Resultado de la Evaluación" />
+          {yaCompletada && puntajeGuardado !== undefined && puntajeGuardado !== null ? (
+            <ResultadoConsolidado puntaje={puntajeGuardado} />
+          ) : (
+            <EvaluacionPendiente />
+          )}
         </div>
       )}
 
-      {/* Botón Enviar — solo visible si la evaluación no ha sido completada */}
-      {!yaCompletada && !submitted && onSubmit && (
-        <div className="screen-only-eval section-group flex flex-col items-center gap-3 pt-2">
-          {sinResponder > 0 && (
-            <div className="flex items-center gap-2 text-sm text-amber-600">
-              <AlertCircle className="h-4 w-4" />
-              <span>
-                {sinResponder} pregunta{sinResponder !== 1 ? "s" : ""} sin responder
-              </span>
+      {/* ── MODO DILIGENCIAMIENTO ────────────────────────────────────────────── */}
+      {modo === "diligenciamiento" && (
+        <>
+          {/* Instrucciones */}
+          <div className="section-group">
+            <div className="bg-muted/40 border rounded-md px-4 py-3 text-sm text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground">Instrucciones:</p>
+              <p>
+                Lea cuidadosamente cada pregunta y seleccione la respuesta que considere
+                correcta. El puntaje mínimo para aprobar es del{" "}
+                <strong>{UMBRAL_APROBACION}%</strong>. Una vez enviada la evaluación no
+                podrá modificar sus respuestas.
+              </p>
+            </div>
+          </div>
+
+          {/* Preguntas */}
+          <div className="section-group space-y-6">
+            <SectionTitle title={`Preguntas (${PREGUNTAS.length})`} />
+
+            {PREGUNTAS.map((pregunta, idx) => {
+              const respuesta = respuestas[idx];
+              const esCorrecta =
+                respuesta !== undefined && parseInt(respuesta) === pregunta.correcta;
+              const mostrarResultado = yaCompletada || submitted;
+
+              return (
+                <div
+                  key={pregunta.id}
+                  className={`border rounded-lg p-4 space-y-3 transition-colors ${
+                    mostrarResultado
+                      ? esCorrecta
+                        ? "border-emerald-300 bg-emerald-50/50"
+                        : "border-destructive/40 bg-destructive/5"
+                      : "border-border"
+                  }`}
+                >
+                  {/* Número + texto */}
+                  <div className="flex gap-3">
+                    <span className="shrink-0 font-bold text-sm text-muted-foreground w-6 text-right">
+                      {pregunta.id}.
+                    </span>
+                    <p className="text-sm font-medium leading-snug">{pregunta.texto}</p>
+                    {mostrarResultado && (
+                      <span className="shrink-0 ml-auto">
+                        {esCorrecta ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive" />
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* RadioGroup — visible en pantalla, oculto en print */}
+                  <div className="screen-only-eval pl-9">
+                    <RadioGroup
+                      value={respuesta ?? ""}
+                      onValueChange={(v) => handleRespuesta(idx, v)}
+                      disabled={yaCompletada || submitted}
+                      className="space-y-1.5"
+                    >
+                      {pregunta.opciones.map((opcion, opIdx) => {
+                        const isSelected =
+                          respuesta !== undefined && parseInt(respuesta) === opIdx;
+                        const isCorrectOption = opIdx === pregunta.correcta;
+                        return (
+                          <div
+                            key={opIdx}
+                            className={`flex items-center gap-2 rounded px-2 py-1 text-sm transition-colors ${
+                              mostrarResultado && isCorrectOption
+                                ? "text-emerald-700 font-semibold"
+                                : mostrarResultado && isSelected && !isCorrectOption
+                                ? "text-destructive line-through"
+                                : ""
+                            }`}
+                          >
+                            <RadioGroupItem
+                              value={String(opIdx)}
+                              id={`p${pregunta.id}-op${opIdx}`}
+                            />
+                            <Label
+                              htmlFor={`p${pregunta.id}-op${opIdx}`}
+                              className="cursor-pointer font-normal"
+                            >
+                              {opcion}
+                            </Label>
+                            {mostrarResultado && isCorrectOption && (
+                              <span className="text-[10px] text-emerald-600 font-semibold ml-1">
+                                ✓ Correcta
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Texto plano — visible solo en print */}
+                  <div className="print-only-eval hidden pl-9">
+                    <p className="eval-print-row text-sm">
+                      <span className="font-medium">Respuesta seleccionada: </span>
+                      {respuesta !== undefined
+                        ? pregunta.opciones[parseInt(respuesta)] || "Sin responder"
+                        : "Sin responder"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Resultado local tras enviar */}
+          {(yaCompletada || submitted) &&
+            puntajeMostrar !== null &&
+            puntajeMostrar !== undefined && (
+              <div
+                className={`section-group border-2 rounded-xl p-6 text-center space-y-3 ${
+                  aprobado
+                    ? "border-emerald-400 bg-emerald-50/60"
+                    : "border-destructive/60 bg-destructive/5"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {aprobado ? (
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                  ) : (
+                    <XCircle className="h-6 w-6 text-destructive" />
+                  )}
+                  <p className="text-lg font-bold">
+                    {aprobado ? "¡Evaluación Aprobada!" : "Evaluación No Aprobada"}
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-4xl font-black">{puntajeMostrar}%</span>
+                  <Badge
+                    className={`text-sm px-3 py-1 ${
+                      aprobado
+                        ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                        : "bg-destructive text-destructive-foreground hover:bg-destructive"
+                    }`}
+                  >
+                    {aprobado ? "Aprobado" : "No Aprobado"}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Puntaje mínimo requerido: {UMBRAL_APROBACION}% — Obtenido:{" "}
+                  <strong>{puntajeMostrar}%</strong>
+                </p>
+              </div>
+            )}
+
+          {/* Botón Enviar */}
+          {!yaCompletada && !submitted && onSubmit && (
+            <div className="screen-only-eval section-group flex flex-col items-center gap-3 pt-2">
+              {sinResponder > 0 && (
+                <div className="flex items-center gap-2 text-sm text-amber-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>
+                    {sinResponder} pregunta{sinResponder !== 1 ? "s" : ""} sin responder
+                  </span>
+                </div>
+              )}
+              <Button
+                size="lg"
+                disabled={!puedeEnviar}
+                onClick={handleEnviar}
+                className="min-w-48"
+              >
+                Enviar Evaluación
+              </Button>
             </div>
           )}
-          <Button
-            size="lg"
-            disabled={!puedeEnviar}
-            onClick={handleEnviar}
-            className="min-w-48"
-          >
-            Enviar Evaluación
-          </Button>
-        </div>
+        </>
       )}
     </div>
   );

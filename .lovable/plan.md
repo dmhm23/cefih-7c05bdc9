@@ -1,219 +1,138 @@
-## Plan: Rediseño del Formato de Evaluación — Resultados, Preguntas y Encuesta de Satisfacción
 
-### Diagnóstico del estado actual
+## Plan: 4 ajustes puntuales al formato de Evaluación Reentrenamiento
 
-El componente `EvaluacionReentrenamientoDocument` en `modo="resultados"` presenta:
+### Resumen de cambios
 
-- Un bloque de resultado grande y pesado visualmente (puntaje en 6xl, contenedor con borde doble, mucho padding).
-- Una tabla de resumen estadístico separada y verbosa.
-- **Ninguna visualización de las preguntas y respuestas del estudiante** — porque actualmente no se persisten las respuestas individuales, solo `evaluacionPuntaje` y `evaluacionCompletada`.
-- **Sin encuesta de satisfacción** — el campo `encuestaCompletada` existe en el tipo pero no hay preguntas ni respuestas asociadas al modelo.
-
-Para implementar los requerimientos, se necesita:
-
-1. Añadir campos de persistencia en el tipo `Matricula` y `mockData`.
-2. Rediseñar el bloque de resultado en modo admin.
-3. Agregar la sección de preguntas/respuestas (tabla) usando las respuestas guardadas.
-4. Agregar la encuesta de satisfacción al final del documento.
+Todos los cambios se concentran en 2 archivos:
+- `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx`
+- `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx`
 
 ---
 
-### Cambios en el modelo de datos
+### Cambio 1 — Letra de la opción en "Respuesta seleccionada"
 
-#### `src/types/matricula.ts` — nuevos campos
+**Archivo**: `EvaluacionReentrenamientoDocument.tsx`, función `TablaRespuestas` (línea ~329)
 
-```ts
-// Evaluación de reentrenamiento — respuestas individuales
-evaluacionRespuestas?: number[];          // índice de opción seleccionada por pregunta (15 elementos)
-
-// Encuesta de satisfacción
-encuestaRespuestas?: string[];            // 4 respuestas de escala + 1 Sí/No (5 elementos)
-// encuestaCompletada ya existe
-```
-
-Las respuestas de la evaluación se guardan ahora como un array de índices (`number[]`), uno por cada una de las 15 preguntas. El índice corresponde al índice de la opción seleccionada dentro del array `opciones` de cada pregunta (mismo que usa `correcta`). `undefined` significa pregunta no respondida.
-
-#### `src/data/mockData.ts` — actualizar mock m2 y m4
-
-Las matrículas con `evaluacionCompletada: true` (m2 con puntaje 85, m4 con puntaje 92) deben tener `evaluacionRespuestas` y `encuestaRespuestas` para que la vista administrativa muestre datos reales.
-
-Para m2 (85% = 12.75 ≈ 13 correctas de 15):
-
-```ts
-evaluacionRespuestas: [0, 2, 1, 2, 0, 1, 2, 0, 1, 2, 0, 0, 1, 0, 1],
-// 13 correctas (respuestas incorrectas en preguntas 3, 15 o similares)
-encuestaRespuestas: ["muy_satisfecho", "satisfecho", "muy_satisfecho", "satisfecho", "si"],
-```
-
-Para m4 (92% = 13.8 ≈ 14 correctas de 15):
-
-```ts
-evaluacionRespuestas: [0, 2, 1, 2, 0, 1, 2, 0, 1, 2, 0, 0, 1, 0, 1],
-// 14 correctas
-encuestaRespuestas: ["muy_satisfecho", "muy_satisfecho", "muy_satisfecho", "muy_satisfecho", "si"],
-```
-
-#### `src/services/matriculaService.ts` — sin cambios
-
-El método `update` ya acepta `Partial<MatriculaFormData>` y hace spread, así que los nuevos campos se persisten automáticamente. Sin modificaciones necesarias.
-
----
-
-### Cambios en `EvaluacionReentrenamientoDocument.tsx`
-
-#### 1. Actualizar la firma `onSubmit`
-
-Para incluir las respuestas individuales:
-
-```ts
-onSubmit?: (data: {
-  evaluacionCompletada: boolean;
-  evaluacionPuntaje: number;
-  evaluacionRespuestas: number[];
-}) => void;
-```
-
-#### 2. Rediseño del bloque de resultado en `modo="resultados"`
-
-Reemplazar `ResultadoConsolidado` con un diseño compacto horizontal:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Resultado de la evaluación      13/15           ✓ Aprobado │
-│  Respuestas correctas           86.67%                       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**Estructura HTML:**
-
-- Un grid de 2 columnas (label gris a la izquierda / valor a la derecha).
-- Fondo blanco, sin bordes marcados, con un separador sutil.
-- Columna derecha:
-  - `X/Y` en verde semibold, tamaño `text-2xl`.
-  - Porcentaje debajo en `text-sm text-muted-foreground`.
-  - Badge de estado inline o debajo del porcentaje.
-
-Eliminar la tabla de resumen estadístico separada — esa información queda integrada en el bloque compacto.
-
-#### 3. Nueva sección: tabla de preguntas y respuestas
-
-Solo visible en `modo="resultados"` cuando `evaluacionCompletada = true` y `evaluacionRespuestas` tiene datos.
-
-**Encabezado de tabla:**
-
-
-| Pregunta (2 cols) | Respuesta seleccionada | Calificación |
-| ----------------- | ---------------------- | ------------ |
-
-
-**Comportamiento por fila:**
-
-- Columna "Pregunta": número + texto de la pregunta (span de 2 cols en términos de peso visual, pero en la tabla son columnas normales).
-- Columna "Respuesta seleccionada": texto de la opción que seleccionó el estudiante.
-- Columna "Calificación": ícono `CheckCircle2` (verde, 24px) si es correcta o `XCircle` (rojo, 24px) si es incorrecta. Sin texto.
-
-**Estilo de la tabla:**
-
-- Minimalista, sin saturación de colores.
-- `border-b` entre filas, sin fondo alternado.
-- Filas de preguntas incorrectas: texto de "Respuesta seleccionada" en color destructive/60.
-- Sin colores de fondo en las filas.
+Actualmente muestra solo el texto de la opción. Se agrega la letra correspondiente prefijada:
 
 ```tsx
-<table className="w-full text-sm">
-  <thead>
-    <tr className="border-b text-xs text-muted-foreground uppercase tracking-wide">
-      <th className="pb-2 text-left w-8">#</th>
-      <th className="pb-2 text-left">Pregunta</th>
-      <th className="pb-2 text-left w-48">Respuesta seleccionada</th>
-      <th className="pb-2 text-center w-16">Calificación</th>
-    </tr>
-  </thead>
-  <tbody>
-    {PREGUNTAS.map((p, idx) => {
-      const respIdx = evaluacionRespuestas?.[idx];
-      const esCorrecto = respIdx === p.correcta;
-      return (
-        <tr key={p.id} className="border-b last:border-0">
-          <td className="py-2.5 text-muted-foreground">{p.id}</td>
-          <td className="py-2.5">{p.texto}</td>
-          <td className={`py-2.5 ${!esCorrecto ? "text-destructive/70" : ""}`}>
-            {respIdx !== undefined ? p.opciones[respIdx] : "—"}
-          </td>
-          <td className="py-2.5 text-center">
-            {esCorrecto
-              ? <CheckCircle2 className="h-6 w-6 text-emerald-600 mx-auto" />
-              : <XCircle className="h-6 w-6 text-destructive mx-auto" />}
-          </td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
+// Antes:
+{respIdx !== undefined ? p.opciones[respIdx] : "—"}
+
+// Después:
+{respIdx !== undefined
+  ? `${["a", "b", "c", "d"][respIdx]}. ${p.opciones[respIdx]}`
+  : "—"}
 ```
 
-#### 4. Nueva sección: Encuesta de Satisfacción
+Las preguntas de Verdadero/Falso tendrán `a. Verdadero` o `b. Falso`. Las de 4 opciones tendrán `a.`, `b.`, `c.`, `d.`. Coherente con la nomenclatura académica estándar.
 
-Se añade al final del documento, en ambos modos (`resultados` y `diligenciamiento`).
+---
 
-**En `modo="diligenciamiento"` (futuro estudiante):**
+### Cambio 2 — Datos del participante en 3 columnas + "Independiente" + nivel correcto
 
-- RadioGroups interactivos con las 4 opciones de escala.
-- Pregunta Sí/No con RadioGroup de 2 opciones.
-- Estado local `encuestaRespuestas: string[]`.
-- El botón "Enviar" incluye también la encuesta al payload de `onSubmit`.
+**Archivo**: `EvaluacionReentrenamientoDocument.tsx`, sección "Datos del Participante" (líneas ~511–531)
 
-**En `modo="resultados"` (admin):**
+**Cambios:**
+1. `grid-cols-2` → `grid-cols-3` en la clase del div contenedor y en el `PRINT_STYLES` (`.grid-2` → `.grid-3`).
+2. Empresa muestra `"Independiente"` cuando `matricula.empresaNombre` está vacío o ausente:
+   ```tsx
+   value={matricula.empresaNombre || "Independiente"}
+   ```
+3. El nivel de formación se toma de `matricula.empresaNivelFormacion` (ya es así actualmente — se mantiene).
+4. Reorganización de los campos en 3 columnas para lectura compacta:
+   - Col 1: Fecha | Número de documento | Nivel de formación
+   - Col 2: Tipo de documento | Nombre completo (span 2 cols restantes) | Empresa
 
-- Tabla de solo lectura con las respuestas guardadas en `matricula.encuestaRespuestas`.
-- Si no hay respuestas, muestra "Encuesta pendiente de diligenciar".
+   Distribución final con `col-span` para nombre completo:
+   ```
+   [Fecha]          [Tipo de documento]   [Número de documento]
+   [Nombre completo (span 3 cols)                             ]
+   [Nivel de formación]  [Empresa]         [—]
+   ```
+   
+   O más natural con 3 columnas uniformes:
+   ```
+   [Fecha]          [Tipo de documento]   [Número de documento]
+   [Nombre completo (span 2)]             [Nivel de formación]
+   [Empresa]
+   ```
 
-**Preguntas hardcodeadas:**
+   La distribución concreta será:
+   - Fila 1: Fecha / Tipo de documento / Número de documento
+   - Fila 2: Nombre completo (span=3) 
+   - Fila 3: Nivel de formación / Empresa
 
-```ts
-const ENCUESTA_ESCALA = [
-  "¿Qué tan satisfecho se encuentra con la capacitación y entrenamiento en trabajo en alturas recibida?",
-  "¿Qué tan satisfecho se encuentra con el servicio al cliente recibido por parte de todo el personal de la empresa?",
-  "¿Qué tan satisfecho se encuentra con la amabilidad y el trato recibido por parte del personal?",
-  "¿Qué tan satisfecho se encuentra con la calidad del servicio brindado durante todo el proceso?",
-];
+   El `FieldCell` con `span` actualmente aplica `col-span-2`. Se agregará soporte para `span3`:
+   ```tsx
+   function FieldCell({ label, value, span, span3 }: { ...; span3?: boolean }) {
+     return (
+       <div className={`field-cell ${span3 ? "col-span-3 field-span3" : span ? "col-span-2 field-span" : ""}`}>
+   ```
+   
+   Y en `PRINT_STYLES` se agrega:
+   ```css
+   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 24px; }
+   .field-span3 { grid-column: span 3; }
+   ```
 
-const OPCIONES_ESCALA = ["Muy satisfecho", "Satisfecho", "Poco satisfecho", "Insatisfecho"];
-// valores internos: "muy_satisfecho", "satisfecho", "poco_satisfecho", "insatisfecho"
+---
 
-const ENCUESTA_SI_NO = "¿Volvería a contratar y recomendaría el servicio recibido?";
-// valores internos: "si", "no"
+### Cambio 3 — Eliminar "Respuestas correctas X de Y — Mínimo requerido: 70%" en el PDF impreso
+
+**Archivo**: `EvaluacionReentrenamientoPreviewDialog.tsx` → `PRINT_STYLES`
+
+La segunda fila del bloque `.resultado-compacto` (que contiene ese texto) debe ocultarse en print. Se agrega:
+
+```css
+/* Ocultar la fila de detalle mínimo requerido en print */
+.resultado-compacto > div:nth-child(3),
+.resultado-compacto > div:nth-child(4) { display: none; }
 ```
 
----
+Esto oculta la segunda fila del grid (fila de "Respuestas correctas") en el documento impreso, manteniendo solo el resultado principal (X/Y + badge Aprobado/No aprobado).
 
-### Cambios en `EvaluacionReentrenamientoPreviewDialog.tsx`
-
-- Actualizar `handleSubmit` para incluir `evaluacionRespuestas` en el `updateMatricula.mutate()`.
-- Actualizar `PRINT_STYLES`:
-  - Agregar estilos para la tabla de preguntas (`.tabla-preguntas`).
-  - El bloque de resultado compacto se adapta para print (no hay cambio de tamaño extremo).
-  - Asegurar que el ícono check/X se renderiza en print (usar caracteres Unicode como fallback: `✓` / `✗` si los SVG no se imprimen bien en algunos navegadores).
+En pantalla (vista admin) esa fila sigue visible normalmente — el CSS está solo en `PRINT_STYLES`.
 
 ---
 
-### Resumen de archivos a modificar
+### Cambio 4 — Optimizar espacio en impresión (reducir hojas)
 
+**Archivo**: `EvaluacionReentrenamientoPreviewDialog.tsx` → `PRINT_STYLES`
 
-| Archivo                                                                         | Tipo de cambio                                                                        |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `src/types/matricula.ts`                                                        | Agregar `evaluacionRespuestas?: number[]` y `encuestaRespuestas?: string[]`           |
-| `src/data/mockData.ts`                                                          | Agregar `evaluacionRespuestas` y `encuestaRespuestas` en m2 y m4                      |
-| `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx`      | Rediseñar bloque resultado, agregar tabla preguntas, agregar encuesta de satisfacción |
-| `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx` | Actualizar `handleSubmit` para incluir respuestas, mejorar `PRINT_STYLES`             |
+Cambios en las reglas CSS:
 
+1. **Eliminar `break-inside: avoid` en `.section-group`**: Actualmente `@media print { .section-group { break-inside: avoid; } }` fuerza que cada sección (Datos del participante, Resultado, Preguntas y Respuestas, Encuesta) NO se corte entre páginas, lo que genera saltos prematuros. Se elimina esta regla.
 
-**Sin cambios en**: `MatriculaDetallePage`, `MatriculaDetailSheet`, `matriculaService`, `FormatosList`, ni ningún otro archivo.
+2. **Permitir que la tabla se divida entre páginas**: `.tabla-preguntas tbody tr { break-inside: avoid; }` es correcto a nivel de fila (una fila no se corta a la mitad), pero `.tabla-preguntas { break-inside: auto; }` ya permite que la tabla se divida. Se verifica que la tabla no tenga `break-inside: avoid` global.
+
+3. **Reducir padding del body en print**: `body { padding: 10mm }` → `body { padding: 6mm }`.
+
+4. **Reducir márgenes de `section-group` en print**: `margin-top: 24px` → `margin-top: 14px` dentro del `@media print`.
+
+5. **Reducir padding de celdas de tabla**: `.tabla-preguntas td { padding: 7px 4px; }` → `padding: 5px 4px` en print.
+
+6. **Reducir `font-size` del body en print**: `12px` → `11px`.
+
+```css
+@media print { 
+  body { padding: 6mm; font-size: 11px; }
+  .section-group { margin-top: 14px; }
+  .tabla-preguntas td { padding: 5px 4px; }
+}
+```
+
+Nota: no se toca `break-inside: avoid` del `.resultado-compacto` — ese bloque sí debe mantenerse intacto.
 
 ---
 
-### Consideraciones para la futura Vista del Estudiante
+### Resumen técnico de archivos y líneas
 
-- El `onSubmit` del documento pasará a incluir `evaluacionRespuestas` (array de índices) y `encuestaRespuestas` (array de strings), con la misma interfaz desacoplada.
-- La Vista del Estudiante solo necesita conectar ese callback a su propio endpoint — sin modificar el renderer.
-- La sección de encuesta en `modo="diligenciamiento"` está disponible desde ya para cuando se active.
+| Archivo | Cambio | Líneas aproximadas |
+|---------|--------|--------------------|
+| `EvaluacionReentrenamientoDocument.tsx` | Letra de opción en TablaRespuestas | ~329 |
+| `EvaluacionReentrenamientoDocument.tsx` | Grid 3 cols, "Independiente", FieldCell span3 | ~241–250, ~511–531 |
+| `EvaluacionReentrenamientoPreviewDialog.tsx` | Ocultar fila mínimo en print (CSS) | PRINT_STYLES ~89–122 |
+| `EvaluacionReentrenamientoPreviewDialog.tsx` | Optimización de espacio print (CSS) | PRINT_STYLES ~77, ~187–190 |
+
+**Sin cambios en**: tipos, mockData, servicios, ni ningún otro componente.

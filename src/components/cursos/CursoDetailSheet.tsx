@@ -29,9 +29,10 @@ interface CursoDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
+// El estado 'en_progreso' se asigna automáticamente al agregar estudiantes;
+// el usuario solo puede cambiar entre 'abierto' y 'cerrado' manualmente.
 const ESTADO_OPTIONS = [
   { value: "abierto", label: "Abierto" },
-  { value: "en_progreso", label: "En Progreso" },
   { value: "cerrado", label: "Cerrado" },
 ];
 
@@ -173,7 +174,13 @@ export function CursoDetailSheet({
             icon={FileCheck}
             badge
             badgeVariant={getEstadoBadgeVariant(getValue("estado"))}
+            editable={getValue("estado") !== "en_progreso"}
           />
+          {getValue("estado") === "en_progreso" && (
+            <p className="text-xs text-muted-foreground mt-1">
+              El estado pasa a "En Progreso" automáticamente al inscribir estudiantes.
+            </p>
+          )}
         </DetailSection>
 
         <Separator />

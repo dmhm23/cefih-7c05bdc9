@@ -60,7 +60,8 @@ export default function CursoDetallePage() {
 
   // Edición permitida únicamente cuando el curso está "abierto".
   // Un administrador podrá sobrepasar este bloqueo (pendiente de implementar con roles).
-  const isReadOnly = curso.estado !== "abierto";
+  // Solo cursos cerrados son de solo lectura; abierto y en_progreso son editables
+  const isReadOnly = curso.estado === "cerrado";
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

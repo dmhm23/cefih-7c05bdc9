@@ -277,6 +277,11 @@ export const cursoService = {
     mockCursos[index].matriculasIds.push(...nuevosIds);
     mockCursos[index].updatedAt = now;
 
+    // Transición automática: si el curso estaba 'abierto' y ahora tiene estudiantes → 'en_progreso'
+    if (mockCursos[index].estado === 'abierto' && mockCursos[index].matriculasIds.length > 0) {
+      mockCursos[index].estado = 'en_progreso';
+    }
+
     // Actualizar cursoId en cada matrícula
     for (const mId of nuevosIds) {
       const mIndex = mockMatriculas.findIndex(m => m.id === mId);
@@ -312,6 +317,11 @@ export const cursoService = {
 
     mockCursos[index].matriculasIds = mockCursos[index].matriculasIds.filter(id => id !== matriculaId);
     mockCursos[index].updatedAt = now;
+
+    // Transición automática: si quedan 0 estudiantes y el curso estaba 'en_progreso' → vuelve a 'abierto'
+    if (mockCursos[index].estado === 'en_progreso' && mockCursos[index].matriculasIds.length === 0) {
+      mockCursos[index].estado = 'abierto';
+    }
 
     // Limpiar cursoId de la matrícula
     const mIndex = mockMatriculas.findIndex(m => m.id === matriculaId);

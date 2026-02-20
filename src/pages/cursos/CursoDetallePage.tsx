@@ -58,7 +58,9 @@ export default function CursoDetallePage() {
     );
   }
 
-  const isReadOnly = curso.estado === "cerrado";
+  // Edición permitida únicamente cuando el curso está "abierto".
+  // Un administrador podrá sobrepasar este bloqueo (pendiente de implementar con roles).
+  const isReadOnly = curso.estado !== "abierto";
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

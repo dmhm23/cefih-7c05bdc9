@@ -1,32 +1,31 @@
 
 
-## Corrección: Scroll horizontal solo en la tabla
+## Correccion de dos problemas en las tablas
 
-### Problema detectado
+### Problema 1: Columnas adicionales aparecen aunque no estan seleccionadas
 
-Cuando se activan muchas columnas en el selector, el scroll horizontal se propaga a toda la vista (el panel derecho completo) en lugar de quedarse contenido exclusivamente dentro de la tabla. Esto ocurre porque el contenedor de la tabla no tiene una restricción de ancho que lo obligue a respetar los límites de su padre.
+**Causa raiz**: En `DataTable.tsx`, linea 64, cuando una columna del array `columns` no se encuentra en el `columnConfig` (por ejemplo, porque el usuario tiene una version anterior guardada en localStorage), el fallback es `true`:
 
-### Solución
+```
+return config ? config.visible : true;
+```
 
-Modificar el componente `DataTable` para que el contenedor externo de la tabla tenga `overflow-hidden` y el contenedor interno con `overflow-x-auto` quede correctamente acotado. Adicionalmente, asegurar que el wrapper principal use `min-w-0` para evitar que el contenido de la tabla expanda el layout flex/grid del padre.
+Esto significa que cualquier columna nueva que no exista en el `columnConfig` guardado en localStorage se muestra automaticamente. El fix es cambiar ese fallback a `false`.
 
-### Cambios
+**Cambio**: En `src/components/shared/DataTable.tsx`, cambiar la linea 64 de `return config ? config.visible : true;` a `return config ? config.visible : false;`.
 
-**Archivo: `src/components/shared/DataTable.tsx`**
-- Agregar `min-w-0 w-full` al contenedor raiz (`div.space-y-2`) para que no crezca mas alla del espacio disponible del padre.
-- Agregar `overflow-hidden` al div con borde (`rounded-lg border`) para que actue como barrera de scroll.
-- El `overflow-x-auto` interno ya existe y seguira manejando el scroll horizontal de la tabla.
+---
 
-Esto garantiza que:
-- Solo la tabla hace scroll horizontal cuando hay muchas columnas.
-- El header, toolbar, filtros y panel lateral no se desplazan horizontalmente.
-- El layout general de la pagina se mantiene intacto.
+### Problema 2: Scroll horizontal se propaga a toda la vista
 
-### Verificacion de columnas ocultas por defecto
+**Causa raiz**: El `<main>` en `MainLayout.tsx` tiene `overflow-auto` (linea 79), lo que permite que el contenido se expanda y genere scroll a nivel de toda la vista. Las paginas (`MatriculasPage`, `PersonasPage`, `CursosListView`) envuelven la tabla en divs sin restriccion de ancho, asi que la tabla ancha empuja todo el layout.
 
-Las tres tablas ya tienen las columnas adicionales configuradas con `visible: false`:
-- **Personas**: email, genero, nivelEducativo, tipoDocumento, fechaNacimiento, paisNacimiento, rh, areaTrabajo, contactoEmergencia (todas ocultas)
-- **Cursos**: supervisor, numeroCurso, tipoFormacion, minTrabajoRegistro, minTrabajoResponsable, horasTotales (todas ocultas)
-- **Matriculas**: tipoVinculacion, nit, cargo, nivelFormacion, eps, arl, valorCupo, abono, saldo, formaPago, fechaPago, ctaFactNumero, nivelPrevio (todas ocultas)
+**Cambio**: En `src/components/layout/MainLayout.tsx`, agregar `min-w-0` al `<main>` para que no crezca mas alla de su contenedor flex. Esto, combinado con el `min-w-0 w-full` ya existente en DataTable y el `overflow-x-auto` interno, garantiza que solo la tabla haga scroll horizontal.
 
-No se requieren cambios en las paginas de listado, solo en el componente `DataTable`.
+---
+
+### Resumen de archivos a modificar
+
+1. **`src/components/shared/DataTable.tsx`** - Cambiar fallback de visibilidad de columna de `true` a `false` (1 linea).
+2. **`src/components/layout/MainLayout.tsx`** - Agregar `min-w-0` al elemento `<main>` (1 linea).
+

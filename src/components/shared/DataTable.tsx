@@ -61,7 +61,7 @@ export function DataTable<T extends { id: string }>({
   const visibleColumns = columnConfig
     ? columns.filter((col) => {
         const config = columnConfig.find((c) => c.key === col.key);
-        return config ? config.visible : true;
+        return config ? config.visible : false;
       })
     : columns;
 

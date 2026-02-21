@@ -1,31 +1,64 @@
 
 
-## Correccion de dos problemas en las tablas
+## Correccion: Datos no visibles y columnas nuevas ausentes del dropdown
 
-### Problema 1: Columnas adicionales aparecen aunque no estan seleccionadas
+### Causa raiz
 
-**Causa raiz**: En `DataTable.tsx`, linea 64, cuando una columna del array `columns` no se encuentra en el `columnConfig` (por ejemplo, porque el usuario tiene una version anterior guardada en localStorage), el fallback es `true`:
+Los tres listados (Matriculas, Cursos, Personas) inicializan `columnConfig` desde localStorage asi:
 
 ```
-return config ? config.visible : true;
+const saved = localStorage.getItem(STORAGE_KEY);
+return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
 ```
 
-Esto significa que cualquier columna nueva que no exista en el `columnConfig` guardado en localStorage se muestra automaticamente. El fix es cambiar ese fallback a `false`.
+Si el usuario ya visito la pagina antes de que se agregaran las columnas nuevas, localStorage tiene una version anterior del config que **no incluye** las columnas nuevas. Como se usa directamente el valor guardado sin fusionarlo con `DEFAULT_COLUMNS`, las columnas nuevas:
 
-**Cambio**: En `src/components/shared/DataTable.tsx`, cambiar la linea 64 de `return config ? config.visible : true;` a `return config ? config.visible : false;`.
+1. **No aparecen en el dropdown** del `ColumnSelector` (porque este solo muestra lo que hay en `columnConfig`).
+2. **No se renderizan en la tabla** (porque `DataTable` filtra con `columnConfig` y el fallback es `false`).
 
----
+Adicionalmente, si el localStorage guardado tiene menos columnas que las que existen en el array `columns`, las columnas base originales que SI deberian mostrarse tampoco aparecen si por alguna razon no estan en el config guardado.
 
-### Problema 2: Scroll horizontal se propaga a toda la vista
+### Solucion
 
-**Causa raiz**: El `<main>` en `MainLayout.tsx` tiene `overflow-auto` (linea 79), lo que permite que el contenido se expanda y genere scroll a nivel de toda la vista. Las paginas (`MatriculasPage`, `PersonasPage`, `CursosListView`) envuelven la tabla en divs sin restriccion de ancho, asi que la tabla ancha empuja todo el layout.
+Crear una funcion utilitaria `mergeColumnConfig` que fusione el config guardado en localStorage con `DEFAULT_COLUMNS`, garantizando que:
 
-**Cambio**: En `src/components/layout/MainLayout.tsx`, agregar `min-w-0` al `<main>` para que no crezca mas alla de su contenedor flex. Esto, combinado con el `min-w-0 w-full` ya existente en DataTable y el `overflow-x-auto` interno, garantiza que solo la tabla haga scroll horizontal.
+- Columnas nuevas (presentes en DEFAULT pero no en el guardado) se agregan con su visibilidad por defecto (`false`).
+- Columnas existentes conservan la visibilidad que el usuario eligio.
+- Columnas que ya no existen en DEFAULT se eliminan (limpieza).
 
----
+Aplicar esta funcion en la inicializacion del state de las tres paginas.
 
-### Resumen de archivos a modificar
+### Cambios por archivo
 
-1. **`src/components/shared/DataTable.tsx`** - Cambiar fallback de visibilidad de columna de `true` a `false` (1 linea).
-2. **`src/components/layout/MainLayout.tsx`** - Agregar `min-w-0` al elemento `<main>` (1 linea).
+**1. `src/components/shared/DataTable.tsx`** - Sin cambios. La logica actual (fallback `false`) es correcta.
+
+**2. `src/components/layout/MainLayout.tsx`** - Sin cambios. El `min-w-0` ya esta aplicado.
+
+**3. `src/pages/matriculas/MatriculasPage.tsx`** - Cambiar la inicializacion de `columnConfig`:
+```typescript
+const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return DEFAULT_COLUMNS;
+  const parsed: ColumnConfig[] = JSON.parse(saved);
+  // Merge: keep user preferences, add new columns, remove stale ones
+  const savedKeys = new Set(parsed.map(c => c.key));
+  const defaultKeys = new Set(DEFAULT_COLUMNS.map(c => c.key));
+  const merged = DEFAULT_COLUMNS.map(def => {
+    const existing = parsed.find(c => c.key === def.key);
+    return existing ? { ...def, visible: existing.visible } : def;
+  });
+  return merged;
+});
+```
+
+**4. `src/components/cursos/CursosListView.tsx`** - Mismo cambio de inicializacion.
+
+**5. `src/pages/personas/PersonasPage.tsx`** - Mismo cambio de inicializacion.
+
+### Resultado esperado
+
+- Todas las columnas (originales y nuevas) aparecen en el dropdown del selector.
+- Las columnas originales se muestran por defecto; las nuevas estan ocultas hasta que el usuario las active.
+- Los datos de la tabla se muestran correctamente porque todas las columnas base estan presentes en el config.
+- El scroll horizontal sigue contenido dentro de la tabla gracias a los cambios ya aplicados en `DataTable` y `MainLayout`.
 

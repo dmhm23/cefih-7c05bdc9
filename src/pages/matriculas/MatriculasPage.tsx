@@ -69,7 +69,12 @@ export default function MatriculasPage() {
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS;
+    if (!saved) return DEFAULT_COLUMNS;
+    const parsed: ColumnConfig[] = JSON.parse(saved);
+    return DEFAULT_COLUMNS.map(def => {
+      const existing = parsed.find(c => c.key === def.key);
+      return existing ? { ...def, visible: existing.visible } : def;
+    });
   });
 
   const { data: matriculas = [], isLoading } = useMatriculas();

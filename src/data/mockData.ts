@@ -3,6 +3,7 @@ import { Matricula } from '@/types/matricula';
 import { Curso } from '@/types/curso';
 import { AuditLog } from '@/types/audit';
 import { Comentario } from '@/types/comentario';
+import { NivelFormacion } from '@/types/nivelFormacion';
 
 // ============ PERSONAS ============
 export const mockPersonas: Persona[] = [
@@ -512,5 +513,49 @@ export const mockComentarios: Comentario[] = [
     usuarioId: 'admin1',
     usuarioNombre: 'Administrador Sistema',
     creadoEn: '2024-02-15T10:00:00Z',
+  },
+];
+
+// ============ NIVELES DE FORMACION ============
+export const mockNivelesFormacion: NivelFormacion[] = [
+  {
+    id: 'nf1',
+    nombreNivel: 'Reentrenamiento',
+    consecutivo: '01',
+    duracionDias: 1,
+    duracionHoras: 8,
+    documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
+    createdAt: '2024-01-01T08:00:00Z',
+    updatedAt: '2024-01-01T08:00:00Z',
+  },
+  {
+    id: 'nf2',
+    nombreNivel: 'Jefe de Área',
+    consecutivo: '02',
+    duracionDias: 1,
+    duracionHoras: 8,
+    documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
+    createdAt: '2024-01-01T08:00:00Z',
+    updatedAt: '2024-01-01T08:00:00Z',
+  },
+  {
+    id: 'nf3',
+    nombreNivel: 'Trabajador Autorizado',
+    consecutivo: '03',
+    duracionDias: 4,
+    duracionHoras: 32,
+    documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
+    createdAt: '2024-01-01T08:00:00Z',
+    updatedAt: '2024-01-01T08:00:00Z',
+  },
+  {
+    id: 'nf5',
+    nombreNivel: 'Coordinador T.A.',
+    consecutivo: '05',
+    duracionDias: 10,
+    duracionHoras: 80,
+    documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social', 'curso_previo'],
+    createdAt: '2024-01-01T08:00:00Z',
+    updatedAt: '2024-01-01T08:00:00Z',
   },
 ];

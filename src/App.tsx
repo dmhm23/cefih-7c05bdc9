@@ -27,6 +27,11 @@ import CursosPage from "./pages/cursos/CursosPage";
 import CursoDetallePage from "./pages/cursos/CursoDetallePage";
 import CursoFormPage from "./pages/cursos/CursoFormPage";
 
+// Niveles de Formación (Módulo D)
+import NivelesPage from "./pages/niveles/NivelesPage";
+import NivelDetallePage from "./pages/niveles/NivelDetallePage";
+import NivelFormPage from "./pages/niveles/NivelFormPage";
+
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout
@@ -62,6 +67,12 @@ const App = () => (
           <Route path="/cursos" element={<WithLayout><CursosPage /></WithLayout>} />
           <Route path="/cursos/nuevo" element={<WithLayout><CursoFormPage /></WithLayout>} />
           <Route path="/cursos/:id" element={<WithLayout><CursoDetallePage /></WithLayout>} />
+
+          {/* Módulo D - Niveles de Formación */}
+          <Route path="/niveles" element={<WithLayout><NivelesPage /></WithLayout>} />
+          <Route path="/niveles/nuevo" element={<WithLayout><NivelFormPage /></WithLayout>} />
+          <Route path="/niveles/:id" element={<WithLayout><NivelDetallePage /></WithLayout>} />
+          <Route path="/niveles/:id/editar" element={<WithLayout><NivelFormPage /></WithLayout>} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

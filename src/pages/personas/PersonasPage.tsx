@@ -216,6 +216,7 @@ export default function PersonasPage() {
     {
       key: "nombre",
       header: "Nombre Completo",
+      className: "min-w-[200px]",
       render: (p: Persona) => (
         <span className="font-medium">{p.nombres} {p.apellidos}</span>
       ),
@@ -223,6 +224,7 @@ export default function PersonasPage() {
     {
       key: "sector",
       header: "Sector",
+      className: "min-w-[140px]",
       render: (p: Persona) => (
         <Badge variant="secondary" className="font-normal">
           {getSectorLabel(p.sectorEconomico)}
@@ -230,7 +232,7 @@ export default function PersonasPage() {
       ),
     },
     { key: "telefono", header: "Teléfono" },
-    { key: "email", header: "Email" },
+    { key: "email", header: "Email", className: "min-w-[200px]" },
     {
       key: "genero",
       header: "Género",
@@ -265,6 +267,7 @@ export default function PersonasPage() {
     {
       key: "contactoEmergencia",
       header: "Contacto Emergencia",
+      className: "min-w-[200px]",
       render: (p: Persona) =>
         p.contactoEmergencia
           ? `${p.contactoEmergencia.nombre} (${p.contactoEmergencia.telefono})`

@@ -26,6 +26,7 @@ const ESTADO_OPTIONS = [
 ];
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { key: "fechaCreacion", header: "Fecha Creación", visible: true },
   { key: "curso", header: "Curso", visible: true },
   { key: "entrenador", header: "Entrenador", visible: true },
   { key: "fechas", header: "Fechas", visible: true },
@@ -146,6 +147,14 @@ export default function CursosListView() {
   ];
 
   const columns: Column<Curso>[] = [
+    {
+      key: "fechaCreacion",
+      header: "Fecha Creación",
+      className: "min-w-[120px]",
+      sortable: true,
+      sortKey: "createdAt",
+      render: (c: Curso) => format(new Date(c.createdAt), "dd/MM/yyyy"),
+    },
     {
       key: "curso",
       header: "Curso",

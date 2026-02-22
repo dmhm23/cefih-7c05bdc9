@@ -1,64 +1,27 @@
 
 
-## Anchos minimos para columnas de tabla
+## Header fijo con scroll exclusivo en el contenido principal
 
 ### Problema
 
-Cuando el usuario activa columnas adicionales, las celdas se comprimen y el texto hace saltos de linea, aumentando la altura de las filas y reduciendo la legibilidad. En lugar de comprimir, la tabla debe mantener anchos minimos razonables y delegar el exceso al scroll horizontal que ya esta funcionando.
+El `SidebarInset` tiene `min-h-svh` pero no un alto maximo fijo. Cuando el contenido de la pagina es mas largo que el viewport, el `SidebarInset` crece y el navegador genera scroll nativo a nivel de toda la ventana, desplazando el header junto con el contenido.
 
 ### Solucion
 
-Aplicar `whitespace-nowrap` a nivel de la tabla para evitar saltos de linea en las celdas, y agregar `className` con anchos minimos (`min-w-[...]`) a las columnas que contienen texto largo o que requieren espacio fijo. Esto fuerza a la tabla a expandirse horizontalmente en lugar de comprimir verticalmente.
+Agregar `h-svh overflow-hidden` al `SidebarInset` en `MainLayout.tsx`. Esto fija el panel al alto exacto del viewport y evita que crezca. El scroll vertical queda delegado exclusivamente al `<main>` interno que ya tiene `overflow-y-auto`.
 
-### Cambios por archivo
+### Cambio
 
-**1. `src/components/ui/table.tsx`**
+**Archivo: `src/components/layout/MainLayout.tsx`** (linea 40)
 
-Agregar `whitespace-nowrap` a `TableCell` para que por defecto ninguna celda haga salto de linea:
+- Antes: `<SidebarInset className="min-w-0">`
+- Despues: `<SidebarInset className="min-w-0 h-svh overflow-hidden">`
 
-- Antes: `"px-3 py-2.5 align-middle text-sm ..."`
-- Despues: `"px-3 py-2.5 align-middle text-sm whitespace-nowrap ..."`
+Un solo cambio de una linea. No se requieren modificaciones en ningun otro archivo.
 
-**2. `src/pages/personas/PersonasPage.tsx`**
+### Resultado
 
-Agregar `className` con anchos minimos a las columnas que lo necesitan:
-
-| Columna | className |
-|---|---|
-| nombre | `min-w-[200px]` |
-| sector | `min-w-[140px]` |
-| email | `min-w-[200px]` |
-| contactoEmergencia | `min-w-[200px]` |
-
-**3. `src/pages/matriculas/MatriculasPage.tsx`**
-
-Agregar `className` con anchos minimos a columnas clave:
-
-| Columna | className |
-|---|---|
-| empresa | `min-w-[180px]` |
-| asistente | `min-w-[180px]` |
-| fechaArl | `min-w-[140px]` |
-| fechaExamen | `min-w-[120px]` |
-| eps | `min-w-[140px]` |
-| arl | `min-w-[140px]` |
-
-Tambien eliminar el `truncate block max-w-[180px]` de la celda "empresa" ya que el `whitespace-nowrap` global y el `min-w` lo hacen innecesario.
-
-**4. `src/components/cursos/CursosListView.tsx`**
-
-Agregar `className` con anchos minimos a columnas clave:
-
-| Columna | className |
-|---|---|
-| curso | `min-w-[250px]` |
-| entrenador | `min-w-[160px]` |
-| fechas | `min-w-[180px]` |
-
-### Resultado esperado
-
-- Las celdas nunca se comprimen al punto de perder legibilidad.
-- El texto no hace saltos de linea dentro de las celdas.
-- Cuando las columnas visibles exceden el ancho disponible, el scroll horizontal de la tabla absorbe el exceso.
-- La altura de las filas se mantiene compacta y uniforme.
+- El header permanece fijo en la parte superior, siempre visible.
+- Solo el area de contenido (`<main>`) hace scroll vertical.
+- El scroll horizontal de la tabla sigue funcionando correctamente dentro de `<main>`.
 

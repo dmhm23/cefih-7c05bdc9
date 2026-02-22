@@ -1,27 +1,25 @@
 
 
-## Header fijo con scroll exclusivo en el contenido principal
-
-### Problema
-
-El `SidebarInset` tiene `min-h-svh` pero no un alto maximo fijo. Cuando el contenido de la pagina es mas largo que el viewport, el `SidebarInset` crece y el navegador genera scroll nativo a nivel de toda la ventana, desplazando el header junto con el contenido.
-
-### Solucion
-
-Agregar `h-svh overflow-hidden` al `SidebarInset` en `MainLayout.tsx`. Esto fija el panel al alto exacto del viewport y evita que crezca. El scroll vertical queda delegado exclusivamente al `<main>` interno que ya tiene `overflow-y-auto`.
+## Boton "Restablecer columnas" en el selector de columnas
 
 ### Cambio
 
-**Archivo: `src/components/layout/MainLayout.tsx`** (linea 40)
+Agregar un tercer boton "Restablecer" en el footer del `ColumnSelector` que restaure la visibilidad de cada columna a su valor en `DEFAULT_COLUMNS`. Para esto, el componente necesita recibir la configuracion por defecto como prop.
 
-- Antes: `<SidebarInset className="min-w-0">`
-- Despues: `<SidebarInset className="min-w-0 h-svh overflow-hidden">`
+### Archivo: `src/components/shared/ColumnSelector.tsx`
 
-Un solo cambio de una linea. No se requieren modificaciones en ningun otro archivo.
+- Agregar prop `defaultColumns: ColumnConfig[]` a la interfaz `ColumnSelectorProps`.
+- Agregar un boton "Restablecer" en el footer (entre "Mostrar todas" y "Ocultar todas") que aplique la visibilidad de `defaultColumns` a cada columna.
 
-### Resultado
+### Archivos consumidores (pasar la nueva prop)
 
-- El header permanece fijo en la parte superior, siempre visible.
-- Solo el area de contenido (`<main>`) hace scroll vertical.
-- El scroll horizontal de la tabla sigue funcionando correctamente dentro de `<main>`.
+- `src/pages/personas/PersonasPage.tsx` — pasar `defaultColumns={DEFAULT_COLUMNS}`
+- `src/pages/matriculas/MatriculasPage.tsx` — pasar `defaultColumns={DEFAULT_COLUMNS}`
+- `src/components/cursos/CursosListView.tsx` — pasar `defaultColumns={DEFAULT_COLUMNS}`
+
+### Comportamiento
+
+- Al hacer clic en "Restablecer", cada columna toma el valor `visible` definido en el array `DEFAULT_COLUMNS` original del modulo correspondiente.
+- No elimina columnas ni altera el orden, solo restablece la propiedad `visible`.
+- Las columnas con `alwaysVisible: true` no se ven afectadas.
 

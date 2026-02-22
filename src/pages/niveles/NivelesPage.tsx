@@ -16,7 +16,6 @@ import { format } from "date-fns";
 const STORAGE_KEY = "niveles_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
-  { key: "consecutivo", header: "Consecutivo", visible: true },
   { key: "nombreNivel", header: "Nombre del Nivel", visible: true },
   { key: "tipoCertificacion", header: "Tipo de Certificación", visible: true },
   { key: "duracion", header: "Duración", visible: true },
@@ -68,12 +67,6 @@ export default function NivelesPage() {
   };
 
   const columns: Column<NivelFormacion>[] = [
-    {
-      key: "consecutivo",
-      header: "Consecutivo",
-      sortable: true,
-      render: (n) => <Badge variant="outline">{n.consecutivo}</Badge>,
-    },
     {
       key: "nombreNivel",
       header: "Nombre del Nivel",

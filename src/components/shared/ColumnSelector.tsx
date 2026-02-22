@@ -17,9 +17,10 @@ export interface ColumnConfig {
 interface ColumnSelectorProps {
   columns: ColumnConfig[];
   onChange: (columns: ColumnConfig[]) => void;
+  defaultColumns?: ColumnConfig[];
 }
 
-export function ColumnSelector({ columns, onChange }: ColumnSelectorProps) {
+export function ColumnSelector({ columns, onChange, defaultColumns }: ColumnSelectorProps) {
   const toggleColumn = (key: string) => {
     onChange(
       columns.map((col) =>
@@ -67,7 +68,7 @@ export function ColumnSelector({ columns, onChange }: ColumnSelectorProps) {
             </label>
           ))}
         </div>
-        <div className="px-3 py-2 border-t flex justify-between items-center">
+        <div className="px-3 py-2 border-t flex justify-between items-center gap-2">
           <button
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             onClick={() =>
@@ -80,6 +81,21 @@ export function ColumnSelector({ columns, onChange }: ColumnSelectorProps) {
           >
             Mostrar todas
           </button>
+          {defaultColumns && (
+            <button
+              className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+              onClick={() =>
+                onChange(
+                  columns.map((c) => {
+                    const def = defaultColumns.find((d) => d.key === c.key);
+                    return def && !c.alwaysVisible ? { ...c, visible: def.visible } : c;
+                  })
+                )
+              }
+            >
+              Restablecer
+            </button>
+          )}
           <button
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             onClick={() =>

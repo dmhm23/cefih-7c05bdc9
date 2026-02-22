@@ -406,7 +406,7 @@ export default function MatriculasPage() {
               </Button>
             }
           />
-          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} defaultColumns={DEFAULT_COLUMNS} />
         </div>
         <SearchInput
           placeholder="Buscar por cédula o nombre..."

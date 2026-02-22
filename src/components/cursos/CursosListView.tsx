@@ -150,6 +150,8 @@ export default function CursosListView() {
       key: "curso",
       header: "Curso",
       className: "min-w-[250px]",
+      sortable: true,
+      sortValue: (c: Curso) => getCursoLabel(c).toLowerCase(),
       render: (c: Curso) => (
         <span className="font-medium max-w-[300px] truncate block">
           {getCursoLabel(c)}
@@ -160,12 +162,16 @@ export default function CursosListView() {
       key: "entrenador",
       header: "Entrenador",
       className: "min-w-[160px]",
+      sortable: true,
+      sortKey: "entrenadorNombre",
       render: (c: Curso) => c.entrenadorNombre,
     },
     {
       key: "fechas",
       header: "Fechas",
       className: "min-w-[180px]",
+      sortable: true,
+      sortKey: "fechaInicio",
       render: (c: Curso) => (
         <div className="text-sm">
           <span>{format(new Date(c.fechaInicio), "dd/MM/yyyy")}</span>
@@ -176,6 +182,8 @@ export default function CursosListView() {
     {
       key: "duracion",
       header: "Duración",
+      sortable: true,
+      sortValue: (c: Curso) => c.duracionDias,
       render: (c: Curso) => (
         <span className="text-sm">{c.duracionDias}d ({c.horasTotales}h)</span>
       ),
@@ -203,6 +211,8 @@ export default function CursosListView() {
     {
       key: "estado",
       header: "Estado",
+      sortable: true,
+      sortKey: "estado",
       render: (c: Curso) => <StatusBadge status={c.estado} />,
     },
     {

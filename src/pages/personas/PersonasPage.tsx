@@ -211,12 +211,15 @@ export default function PersonasPage() {
     {
       key: "numeroDocumento",
       header: "Documento",
+      sortable: true,
       render: (p: Persona) => <CopyableCell value={p.numeroDocumento} />,
     },
     {
       key: "nombre",
       header: "Nombre Completo",
       className: "min-w-[200px]",
+      sortable: true,
+      sortValue: (p: Persona) => `${p.nombres} ${p.apellidos}`.toLowerCase(),
       render: (p: Persona) => (
         <span className="font-medium">{p.nombres} {p.apellidos}</span>
       ),
@@ -225,6 +228,8 @@ export default function PersonasPage() {
       key: "sector",
       header: "Sector",
       className: "min-w-[140px]",
+      sortable: true,
+      sortKey: "sectorEconomico",
       render: (p: Persona) => (
         <Badge variant="secondary" className="font-normal">
           {getSectorLabel(p.sectorEconomico)}
@@ -232,15 +237,17 @@ export default function PersonasPage() {
       ),
     },
     { key: "telefono", header: "Teléfono" },
-    { key: "email", header: "Email", className: "min-w-[200px]" },
+    { key: "email", header: "Email", className: "min-w-[200px]", sortable: true },
     {
       key: "genero",
       header: "Género",
+      sortable: true,
       render: (p: Persona) => getGeneroLabel(p.genero),
     },
     {
       key: "nivelEducativo",
       header: "Nivel Educativo",
+      sortable: true,
       render: (p: Persona) => getNivelLabel(p.nivelEducativo),
     },
     {
@@ -251,6 +258,7 @@ export default function PersonasPage() {
     {
       key: "fechaNacimiento",
       header: "Fecha Nac.",
+      sortable: true,
       render: (p: Persona) =>
         p.fechaNacimiento
           ? format(new Date(p.fechaNacimiento), "dd/MM/yyyy")

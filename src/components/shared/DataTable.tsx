@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +10,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { BulkActionsBar, BulkAction } from "./BulkActionsBar";
 import { ColumnConfig } from "./ColumnSelector";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,12 @@ export interface Column<T> {
   header: string;
   render?: (item: T) => React.ReactNode;
   className?: string;
+  sortable?: boolean;
+  sortKey?: string;
+  sortValue?: (item: T) => string | number;
 }
+
+type SortDirection = "asc" | "desc";
 
 interface DataTableProps<T> {
   data: T[];
@@ -39,6 +45,26 @@ interface DataTableProps<T> {
   isPanelOpen?: boolean;
   activeRowId?: string;
   onViewRow?: (item: T) => void;
+  // Sort
+  defaultSortKey?: string;
+  defaultSortDirection?: SortDirection;
+}
+
+function getSortValue<T>(item: T, column: Column<T> | undefined, sortKey: string): string | number {
+  if (column?.sortValue) return column.sortValue(item);
+  const key = column?.sortKey || sortKey;
+  const val = (item as Record<string, unknown>)[key];
+  if (val == null) return "";
+  if (typeof val === "number") return val;
+  return String(val);
+}
+
+function compareValues(a: string | number, b: string | number, direction: SortDirection): number {
+  const mult = direction === "asc" ? 1 : -1;
+  if (typeof a === "number" && typeof b === "number") return (a - b) * mult;
+  const sa = String(a);
+  const sb = String(b);
+  return sa.localeCompare(sb, "es", { numeric: true }) * mult;
 }
 
 export function DataTable<T extends { id: string }>({
@@ -56,7 +82,12 @@ export function DataTable<T extends { id: string }>({
   isPanelOpen = false,
   activeRowId,
   onViewRow,
+  defaultSortKey = "createdAt",
+  defaultSortDirection = "desc",
 }: DataTableProps<T>) {
+  const [sortKey, setSortKey] = useState(defaultSortKey);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
+
   // Filter visible columns based on config
   const visibleColumns = columnConfig
     ? columns.filter((col) => {
@@ -65,9 +96,48 @@ export function DataTable<T extends { id: string }>({
       })
     : columns;
 
+  // Find column for current sort
+  const sortColumn = columns.find(
+    (c) => c.key === sortKey || c.sortKey === sortKey
+  );
+
+  // Sort data
+  const sortedData = useMemo(() => {
+    const sorted = [...data];
+    sorted.sort((a, b) =>
+      compareValues(
+        getSortValue(a, sortColumn, sortKey),
+        getSortValue(b, sortColumn, sortKey),
+        sortDirection
+      )
+    );
+    return sorted;
+  }, [data, sortKey, sortDirection, sortColumn]);
+
+  const handleSort = (column: Column<T>) => {
+    if (!column.sortable) return;
+    const key = column.sortKey || column.key;
+    if (sortKey === key) {
+      setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortKey(key);
+      setSortDirection("desc");
+    }
+  };
+
+  const renderSortIcon = (column: Column<T>) => {
+    if (!column.sortable) return null;
+    const key = column.sortKey || column.key;
+    const isActive = sortKey === key;
+    if (!isActive) return <ArrowUpDown className="h-3.5 w-3.5 ml-1 text-muted-foreground/50" />;
+    return sortDirection === "asc"
+      ? <ArrowUp className="h-3.5 w-3.5 ml-1 text-foreground" />
+      : <ArrowDown className="h-3.5 w-3.5 ml-1 text-foreground" />;
+  };
+
   const handleSelectAll = () => {
     if (onSelectionChange) {
-      onSelectionChange(data.map((item) => item.id));
+      onSelectionChange(sortedData.map((item) => item.id));
     }
   };
 
@@ -88,8 +158,8 @@ export function DataTable<T extends { id: string }>({
     }
   };
 
-  const isAllSelected = data.length > 0 && selectedIds.length === data.length;
-  const isPartiallySelected = selectedIds.length > 0 && selectedIds.length < data.length;
+  const isAllSelected = sortedData.length > 0 && selectedIds.length === sortedData.length;
+  const isPartiallySelected = selectedIds.length > 0 && selectedIds.length < sortedData.length;
 
   if (isLoading) {
     return (
@@ -137,14 +207,24 @@ export function DataTable<T extends { id: string }>({
                   </TableHead>
                 )}
                 {visibleColumns.map((column) => (
-                  <TableHead key={column.key} className={column.className}>
-                    {column.header}
+                  <TableHead
+                    key={column.key}
+                    className={cn(
+                      column.className,
+                      column.sortable && "cursor-pointer select-none hover:bg-muted/60 transition-colors"
+                    )}
+                    onClick={() => handleSort(column)}
+                  >
+                    <span className="inline-flex items-center">
+                      {column.header}
+                      {renderSortIcon(column)}
+                    </span>
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item, index) => {
+              {sortedData.map((item) => {
                 const isSelected = selectedIds.includes(item.id);
                 const isActiveRow = activeRowId === item.id;
                 const showViewButton = isPanelOpen && !isActiveRow && onViewRow;

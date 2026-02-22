@@ -215,12 +215,17 @@ export default function MatriculasPage() {
     {
       key: "fechaCreacion",
       header: "Fecha Creación",
+      sortable: true,
+      sortKey: "createdAt",
+      sortValue: (m: Matricula) => m.createdAt,
       render: (m: Matricula) => format(new Date(m.createdAt), "dd/MM/yyyy"),
     },
     {
       key: "empresa",
       header: "Empresa",
       className: "min-w-[180px]",
+      sortable: true,
+      sortValue: (m: Matricula) => m.tipoVinculacion === "empresa" && m.empresaNombre ? m.empresaNombre : "Independiente",
       render: (m: Matricula) => (
         <span>
           {m.tipoVinculacion === "empresa" && m.empresaNombre ? m.empresaNombre : "Independiente"}
@@ -231,6 +236,8 @@ export default function MatriculasPage() {
       key: "asistente",
       header: "Asistente",
       className: "min-w-[180px]",
+      sortable: true,
+      sortValue: (m: Matricula) => getPersonaNombre(m.personaId).toLowerCase(),
       render: (m: Matricula) => (
         <span className="font-medium">{getPersonaNombre(m.personaId)}</span>
       ),
@@ -239,17 +246,29 @@ export default function MatriculasPage() {
       key: "fechaArl",
       header: "Fecha Cobertura ARL",
       className: "min-w-[140px]",
+      sortable: true,
+      sortValue: (m: Matricula) => {
+        const doc = m.documentos?.find((d) => d.tipo === "arl");
+        return doc?.fechaInicioCobertura || "";
+      },
       render: (m: Matricula) => getDocumentoFecha(m, "arl", "fechaInicioCobertura"),
     },
     {
       key: "fechaExamen",
       header: "Fecha Examen",
       className: "min-w-[120px]",
+      sortable: true,
+      sortValue: (m: Matricula) => {
+        const doc = m.documentos?.find((d) => d.tipo === "examen_medico");
+        return doc?.fechaDocumento || "";
+      },
       render: (m: Matricula) => getDocumentoFecha(m, "examen_medico", "fechaDocumento"),
     },
     {
       key: "estadoDocumental",
       header: "Estado Documental",
+      sortable: true,
+      sortValue: (m: Matricula) => getEstadoDocumental(m),
       render: (m: Matricula) => {
         const estado = getEstadoDocumental(m);
         return (
@@ -265,6 +284,8 @@ export default function MatriculasPage() {
     {
       key: "estadoFinanciero",
       header: "Estado Financiero",
+      sortable: true,
+      sortValue: (m: Matricula) => m.pagado ? "Pagado" : "Pendiente",
       render: (m: Matricula) => (
         <Badge
           variant={m.pagado ? "default" : "secondary"}

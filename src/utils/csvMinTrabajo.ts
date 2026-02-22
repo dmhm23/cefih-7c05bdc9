@@ -16,7 +16,7 @@ function capitalize(value: string): string {
   if (!value) return "";
   return value
     .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
 function findLabel(

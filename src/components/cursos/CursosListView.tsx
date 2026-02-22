@@ -275,7 +275,7 @@ export default function CursosListView() {
               </Button>
             }
           />
-          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} defaultColumns={DEFAULT_COLUMNS} />
         </div>
         <SearchInput
           placeholder="Buscar por tipo, número o entrenador..."

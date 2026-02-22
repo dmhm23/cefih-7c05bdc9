@@ -325,7 +325,7 @@ export default function PersonasPage() {
               </Button>
             }
           />
-          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} />
+          <ColumnSelector columns={columnConfig} onChange={setColumnConfig} defaultColumns={DEFAULT_COLUMNS} />
         </div>
         <SearchInput
           placeholder="Buscar por cédula, nombre o email..."

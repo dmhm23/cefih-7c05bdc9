@@ -10,13 +10,13 @@ import {
 } from "@/data/formOptions";
 
 /**
- * Remove diacritics (tildes) from a string and convert to uppercase.
+ * Convert to Title Case preserving tildes, ñ and special characters.
  */
-function normalize(value: string): string {
+function capitalize(value: string): string {
+  if (!value) return "";
   return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase();
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function findLabel(
@@ -25,9 +25,8 @@ function findLabel(
 ): string {
   if (!value) return "";
   const found = options.find((o) => o.value === value);
-  return found ? normalize(found.label) : normalize(value);
+  return found ? capitalize(found.label) : capitalize(value);
 }
-
 function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return "";
   try {
@@ -44,7 +43,7 @@ function formatDate(dateStr: string | undefined): string {
 
 function splitName(fullName: string, index: number): string {
   const parts = fullName.trim().split(/\s+/);
-  return normalize(parts[index] ?? "");
+  return capitalize(parts[index] ?? "");
 }
 
 function cleanDocumento(doc: string): string {
@@ -53,20 +52,20 @@ function cleanDocumento(doc: string): string {
 
 function buildRow(persona: Persona, matricula: Matricula): string {
   const columns = [
-    normalize(persona.tipoDocumento),
+    persona.tipoDocumento,
     cleanDocumento(persona.numeroDocumento),
     splitName(persona.nombres, 0),
     splitName(persona.nombres, 1),
     splitName(persona.apellidos, 0),
     splitName(persona.apellidos, 1),
-    normalize(persona.genero),
+    persona.genero,
     findLabel(PAISES, persona.paisNacimiento),
     formatDate(persona.fechaNacimiento),
     findLabel(NIVELES_EDUCATIVOS, persona.nivelEducativo),
-    findLabel(AREAS_TRABAJO, persona.areaTrabajo),
-    normalize(matricula.empresaCargo ?? ""),
+    findLabel(AREAS_TRABAJO, matricula.areaTrabajo),
+    capitalize(matricula.empresaCargo ?? ""),
     findLabel(SECTORES_ECONOMICOS, matricula.sectorEconomico),
-    normalize(matricula.empresaNombre || "INDEPENDIENTE"),
+    capitalize(matricula.empresaNombre || "Independiente"),
     findLabel(ARL_OPTIONS, matricula.arl),
   ];
   return columns.join(";");
@@ -98,9 +97,9 @@ export function generateMinTrabajoCsv(
  */
 export function generateDummyCsv(): string {
   const dummyRows = [
-    "CC;1023456789;JUAN;CARLOS;MARTINEZ;LOPEZ;M;COLOMBIA;03/15/1990;BACHILLER;OPERATIVA;ELECTRICISTA;CONSTRUCCION;CONSTRUCTORA ABC SAS;ARL SURA",
-    "CE;987654321;MARIA;;GONZALEZ;PEREZ;F;VENEZUELA;07/22/1985;TECNICO;ADMINISTRATIVA;ASISTENTE ADMINISTRATIVO;TELECOMUNICACIONES;INDEPENDIENTE;POSITIVA COMPANIA DE SEGUROS S.A.",
-    "CC;1122334455;PEDRO;ANDRES;RAMIREZ;;M;COLOMBIA;11/05/1995;UNIVERSITARIO;OPERATIVA;INGENIERO DE CAMPO;ENERGIA ELECTRICA;ENERGIA TOTAL SAS;COLMENA SEGUROS S.A.",
+    "CC;1234567890;Juan;Carlos;Rodriguez;Perez;M;Colombia;06/15/1985;Universitario;Operativa;Operario De Alturas;Construcción;Constructora Abc S.A.S;",
+    "CC;0987654321;Ana;Maria;Garcia;Lopez;F;Colombia;03/22/1990;Tecnólogo;Administrativo;;Energía Eléctrica;Independiente;",
+    "CC;5678901234;Pedro;Antonio;Martinez;Ruiz;M;Colombia;11/08/1988;Bachiller;Operativa;Supervisor De Obra;Infraestructura Vial Y Transporte;Infraestructuras Del Norte S.A.;",
   ];
   return dummyRows.join("\n");
 }

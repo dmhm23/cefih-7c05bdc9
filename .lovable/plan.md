@@ -1,45 +1,64 @@
 
 
-## Scroll horizontal contenido exclusivamente en la tabla
+## Anchos minimos para columnas de tabla
 
-### Diagnostico
+### Problema
 
-La cadena de contencion de ancho tiene un eslabon roto. La estructura actual es:
-
-```text
-SidebarProvider  (div flex w-full)
-  +-- AppSidebar (ancho fijo)
-  +-- SidebarInset (main, flex-1, flex-col)  <-- SIN min-w-0
-        +-- header (shrink-0)
-        +-- main (flex-1, overflow-x-hidden, min-w-0)
-              +-- PersonasPage div
-                    +-- Toolbar (buscador, filtros, botones)
-                    +-- DataTable (min-w-0, w-full)
-                          +-- div overflow-x-auto  <-- scroll interno
-```
-
-El problema es que `SidebarInset` (definido en `sidebar.tsx`) tiene `flex-1` pero **no tiene `min-w-0`**. En un contenedor flex, un hijo con `flex-1` puede crecer mas alla del espacio disponible si su contenido es mas ancho. Esto hace que todo el panel (incluyendo header con buscador y botones) se expanda horizontalmente, generando scroll a nivel superior.
-
-El `overflow-x-hidden` y `min-w-0` que ya estan en el `<main>` interno no sirven porque su padre (`SidebarInset`) ya se expandio.
+Cuando el usuario activa columnas adicionales, las celdas se comprimen y el texto hace saltos de linea, aumentando la altura de las filas y reduciendo la legibilidad. En lugar de comprimir, la tabla debe mantener anchos minimos razonables y delegar el exceso al scroll horizontal que ya esta funcionando.
 
 ### Solucion
 
-Agregar `min-w-0` al componente `SidebarInset` en `MainLayout.tsx` pasandolo como className. Esto evita que el flex item crezca mas alla de su espacio disponible, forzando que el contenido se recorte/scrollee internamente.
+Aplicar `whitespace-nowrap` a nivel de la tabla para evitar saltos de linea en las celdas, y agregar `className` con anchos minimos (`min-w-[...]`) a las columnas que contienen texto largo o que requieren espacio fijo. Esto fuerza a la tabla a expandirse horizontalmente en lugar de comprimir verticalmente.
 
-### Cambio
+### Cambios por archivo
 
-**Archivo: `src/components/layout/MainLayout.tsx`** (linea 40)
+**1. `src/components/ui/table.tsx`**
 
-- Antes: `<SidebarInset>`
-- Despues: `<SidebarInset className="min-w-0">`
+Agregar `whitespace-nowrap` a `TableCell` para que por defecto ninguna celda haga salto de linea:
 
-Un solo cambio. No se requieren modificaciones en ningun otro archivo.
+- Antes: `"px-3 py-2.5 align-middle text-sm ..."`
+- Despues: `"px-3 py-2.5 align-middle text-sm whitespace-nowrap ..."`
 
-### Por que funciona
+**2. `src/pages/personas/PersonasPage.tsx`**
 
-Con `min-w-0` en `SidebarInset`:
-1. El panel no puede crecer mas alla del espacio que le asigna el flex container del `SidebarProvider`.
-2. El `overflow-x-hidden` del `<main>` interno ahora si tiene efecto porque su padre esta limitado.
-3. El `overflow-x-auto` dentro de `DataTable` captura el scroll horizontal solo para la tabla.
-4. El header, toolbar, buscador y botones permanecen siempre visibles y estaticos.
+Agregar `className` con anchos minimos a las columnas que lo necesitan:
+
+| Columna | className |
+|---|---|
+| nombre | `min-w-[200px]` |
+| sector | `min-w-[140px]` |
+| email | `min-w-[200px]` |
+| contactoEmergencia | `min-w-[200px]` |
+
+**3. `src/pages/matriculas/MatriculasPage.tsx`**
+
+Agregar `className` con anchos minimos a columnas clave:
+
+| Columna | className |
+|---|---|
+| empresa | `min-w-[180px]` |
+| asistente | `min-w-[180px]` |
+| fechaArl | `min-w-[140px]` |
+| fechaExamen | `min-w-[120px]` |
+| eps | `min-w-[140px]` |
+| arl | `min-w-[140px]` |
+
+Tambien eliminar el `truncate block max-w-[180px]` de la celda "empresa" ya que el `whitespace-nowrap` global y el `min-w` lo hacen innecesario.
+
+**4. `src/components/cursos/CursosListView.tsx`**
+
+Agregar `className` con anchos minimos a columnas clave:
+
+| Columna | className |
+|---|---|
+| curso | `min-w-[250px]` |
+| entrenador | `min-w-[160px]` |
+| fechas | `min-w-[180px]` |
+
+### Resultado esperado
+
+- Las celdas nunca se comprimen al punto de perder legibilidad.
+- El texto no hace saltos de linea dentro de las celdas.
+- Cuando las columnas visibles exceden el ancho disponible, el scroll horizontal de la tabla absorbe el exceso.
+- La altura de las filas se mantiene compacta y uniforme.
 

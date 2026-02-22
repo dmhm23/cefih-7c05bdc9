@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const menuItems = [
   { title: "Personas", url: "/personas", icon: Users },
   { title: "Matrículas", url: "/matriculas", icon: GraduationCap },
   { title: "Cursos", url: "/cursos", icon: BookOpen },
+  { title: "Niveles de Formación", url: "/niveles", icon: Layers },
 ];
 
 export function AppSidebar() {

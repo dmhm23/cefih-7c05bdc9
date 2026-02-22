@@ -149,6 +149,7 @@ export default function CursosListView() {
     {
       key: "curso",
       header: "Curso",
+      className: "min-w-[250px]",
       render: (c: Curso) => (
         <span className="font-medium max-w-[300px] truncate block">
           {getCursoLabel(c)}
@@ -158,11 +159,13 @@ export default function CursosListView() {
     {
       key: "entrenador",
       header: "Entrenador",
+      className: "min-w-[160px]",
       render: (c: Curso) => c.entrenadorNombre,
     },
     {
       key: "fechas",
       header: "Fechas",
+      className: "min-w-[180px]",
       render: (c: Curso) => (
         <div className="text-sm">
           <span>{format(new Date(c.fechaInicio), "dd/MM/yyyy")}</span>

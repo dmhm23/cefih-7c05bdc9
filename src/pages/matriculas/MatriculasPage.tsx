@@ -220,8 +220,9 @@ export default function MatriculasPage() {
     {
       key: "empresa",
       header: "Empresa",
+      className: "min-w-[180px]",
       render: (m: Matricula) => (
-        <span className="truncate block max-w-[180px]">
+        <span>
           {m.tipoVinculacion === "empresa" && m.empresaNombre ? m.empresaNombre : "Independiente"}
         </span>
       ),
@@ -229,6 +230,7 @@ export default function MatriculasPage() {
     {
       key: "asistente",
       header: "Asistente",
+      className: "min-w-[180px]",
       render: (m: Matricula) => (
         <span className="font-medium">{getPersonaNombre(m.personaId)}</span>
       ),
@@ -236,11 +238,13 @@ export default function MatriculasPage() {
     {
       key: "fechaArl",
       header: "Fecha Cobertura ARL",
+      className: "min-w-[140px]",
       render: (m: Matricula) => getDocumentoFecha(m, "arl", "fechaInicioCobertura"),
     },
     {
       key: "fechaExamen",
       header: "Fecha Examen",
+      className: "min-w-[120px]",
       render: (m: Matricula) => getDocumentoFecha(m, "examen_medico", "fechaDocumento"),
     },
     {
@@ -297,11 +301,13 @@ export default function MatriculasPage() {
     {
       key: "eps",
       header: "EPS",
+      className: "min-w-[140px]",
       render: (m: Matricula) => m.epsOtra || m.eps || "-",
     },
     {
       key: "arl",
       header: "ARL",
+      className: "min-w-[140px]",
       render: (m: Matricula) => m.arlOtra || m.arl || "-",
     },
     {

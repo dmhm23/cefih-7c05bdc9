@@ -1,44 +1,29 @@
-## Ajuste de formato de texto en CSV MinTrabajo
 
-### Problema actual
 
-La funcion `normalize()` convierte todo a mayusculas y elimina tildes/acentos. El requerimiento es que el CSV refleje los datos tal como estan guardados, aplicando solo "Title Case" (primera letra mayuscula, resto minuscula), y conservando caracteres especiales como la ñ y tildes.
+## Corregir Title Case con vocales acentuadas
 
-### Cambios en `src/utils/csvMinTrabajo.ts`
+### Problema
 
-**1. Reemplazar la funcion `normalize()**` por una funcion `capitalize()` que:
+La funcion `capitalize()` usa la regex `\b\w` para detectar inicio de palabra. En JavaScript, `\b` (word boundary) no reconoce caracteres acentuados (o, e, i, n) como parte de una palabra. Esto causa que la letra despues de una vocal con tilde sea tratada como inicio de nueva palabra y se convierta a mayuscula.
 
-- Convierte la primera letra de cada palabra a mayuscula y el resto a minuscula
-- Conserva tildes, ñ y caracteres especiales intactos
-- No aplica `NFD` ni elimina diacriticos
+Ejemplo: "construccion" → "ConstruccioN", "electrico" → "EleCTrico"
 
-```
+### Solucion
+
+Reemplazar la regex por una que use un patron Unicode-aware, detectando solo el inicio real de cada palabra (despues de espacio o inicio de cadena):
+
+```typescript
 function capitalize(value: string): string {
   if (!value) return "";
   return value
     .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+    .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 ```
 
-**2. Actualizar `findLabel()**` para usar `capitalize()` en lugar de `normalize()`.
+Esta regex `(^|\s)\S` solo convierte a mayuscula el primer caracter no-espacio que aparece despues de un espacio o al inicio de la cadena, evitando falsos positivos con vocales acentuadas.
 
-**3. Actualizar `splitName()**` para usar `capitalize()` en lugar de `normalize()`.
+### Archivo a modificar
 
-**4. Actualizar `buildRow()**`:
+- `src/utils/csvMinTrabajo.ts` — lineas 15-20, reemplazar la funcion `capitalize()`
 
-- Campos como `tipoDocumento` y `genero` se dejan tal cual (ya son abreviaturas cortas como CC, M, F).
-- Campos de texto (cargo, empresa) usan `capitalize()`.
-- `empresaNombre` por defecto sera `"Independiente"` en lugar de `"INDEPENDIENTE"`.
-
-**5. Actualizar las filas dummy** en `generateDummyCsv()` para reflejar el nuevo formato Title Case con tildes:
-
-```
-"CC;1023456789;Juan;Carlos;Martínez;López;M;Colombia;03/15/1990;Bachiller;Operativa;Electricista;Construcción;Constructora Abc Sas;Arl Sura"
-```
-
-6. Datos dummys: para el documento de prueba usar datos dummyes que ya están guardados actualmente en la app, para poder comparar los datos.  
-  
-Archivo a modificar
-
-- `src/utils/csvMinTrabajo.ts`

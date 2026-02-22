@@ -14,9 +14,10 @@ interface CourseHeaderProps {
   curso: Curso;
   onBack: () => void;
   onCloseCourse: () => void;
+  onDownloadCsvMinTrabajo: () => void;
 }
 
-export function CourseHeader({ curso, onBack, onCloseCourse }: CourseHeaderProps) {
+export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo }: CourseHeaderProps) {
   const { toast } = useToast();
 
   const title = `${TIPO_FORMACION_LABELS[curso.tipoFormacion]} — #${curso.numeroCurso}`;
@@ -48,6 +49,10 @@ export function CourseHeader({ curso, onBack, onCloseCourse }: CourseHeaderProps
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onDownloadCsvMinTrabajo}>
+              <Download className="h-4 w-4 mr-2" />
+              Descargar CSV MinTrabajo
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast({ title: "Generar certificados (pendiente)" })}>
               <Award className="h-4 w-4 mr-2" />
               Generar certificados

@@ -14,6 +14,7 @@ import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
+import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv } from "@/utils/csvMinTrabajo";
 
 export default function CursoDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -88,6 +89,21 @@ export default function CursoDetallePage() {
     minTrabajoRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+  const handleDownloadCsvMinTrabajo = () => {
+    const isDummy = matriculas.length === 0;
+    const content = isDummy
+      ? generateDummyCsv()
+      : generateMinTrabajoCsv(matriculas, personas, curso);
+    const filename = `Curso_${curso.numeroCurso}_MinTrabajo.csv`;
+    downloadCsv(content, filename);
+    toast({
+      title: isDummy ? "CSV de prueba generado" : "CSV MinTrabajo descargado",
+      description: isDummy
+        ? "Se generó un archivo con datos de ejemplo (3 filas dummy)."
+        : `${matriculas.length} registro(s) exportados.`,
+    });
+  };
+
   const handleCambiarEstado = async (nuevoEstado: "abierto" | "en_progreso") => {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });
@@ -104,6 +120,7 @@ export default function CursoDetallePage() {
         curso={curso}
         onBack={() => navigate("/cursos")}
         onCloseCourse={() => setCloseDialogOpen(true)}
+        onDownloadCsvMinTrabajo={handleDownloadCsvMinTrabajo}
       />
 
 

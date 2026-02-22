@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.2  
-> Última actualización: 20 de Febrero 2026  
+> Versión: 1.3  
+> Última actualización: 22 de Febrero 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -201,7 +201,7 @@ interface Persona {
 
 | Componente | Función |
 |------------|---------|
-| `PersonasPage` | Tabla con búsqueda, filtros (género, sector, nivel educativo), selección múltiple, columnas configurables, y acciones en lote. |
+| `PersonasPage` | Tabla con búsqueda, filtros (género, sector, nivel educativo), selección múltiple, columnas configurables con ordenamiento interactivo, y acciones en lote. |
 | `PersonaDetailSheet` | Panel lateral deslizable con vista resumida y edición inline de todos los campos. |
 | `PersonaDetallePage` | Vista completa a pantalla completa. |
 | `PersonaFormPage` | Formulario de creación/edición. Detecta si es edición por presencia de `:id` en la ruta. |
@@ -468,7 +468,7 @@ Se captura mediante un canvas interactivo (`react-signature-canvas`).
 
 | Componente | Función |
 |------------|---------|
-| `MatriculasPage` | Tabla con búsqueda, filtros, selección múltiple |
+| `MatriculasPage` | Tabla con búsqueda, filtros, selección múltiple, columnas con ordenamiento interactivo |
 | `MatriculaDetailSheet` | Panel lateral con vista completa: progreso, estudiante, curso, vinculación, documentos, formatos, cartera, certificado, observaciones |
 | `MatriculaDetallePage` | Vista completa a pantalla completa con sidebar informativo |
 | `MatriculaFormPage` | Formulario wizard de creación |
@@ -588,7 +588,7 @@ abierto → en_progreso → cerrado
 | Componente | Función |
 |------------|---------|
 | `CursosPage` | Listado con dos vistas: tabla y calendario |
-| `CursosListView` | Vista de tabla con búsqueda y filtros |
+| `CursosListView` | Vista de tabla con búsqueda, filtros y columnas ordenables. Incluye columna "Fecha Creación" (`createdAt`) como primera columna visible por defecto. |
 | `CursosCalendarioView` | Vista de calendario (Mes/Semana/Día) con filtros por entrenador y supervisor. Panel lateral de resumen de horas por entrenador. |
 | `CursoDetallePage` | Detalle del curso con listado de estudiantes y estadísticas |
 | `CursoDetailSheet` | Panel lateral deslizable |
@@ -650,7 +650,10 @@ Listado (/cursos)
 ### 7.1 DataTable
 
 Tabla genérica reutilizable con:
-- Paginación configurable
+- **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.
+- Columnas con `sortable: true` muestran iconos de dirección: `ArrowUpDown` (inactiva), `ArrowUp` (ascendente), `ArrowDown` (descendente).
+- Click en header alterna la dirección de ordenamiento; click en otra columna cambia el criterio.
+- Interfaz `Column<T>` ampliada con `sortable?: boolean`, `sortKey?: string` (campo de datos real) y `sortValue?: (item: T) => string | number` (extractor personalizado).
 - Selección múltiple con checkboxes
 - Acciones por fila (`RowActions`)
 - Acciones en lote (`BulkActionsBar`)
@@ -692,7 +695,7 @@ Sistema de comentarios con:
 |------------|-------------|
 | `SearchInput` | Input de búsqueda con icono y debounce |
 | `FilterPopover` | Popover con opciones de filtro |
-| `ColumnSelector` | Selector de columnas visibles |
+| `ColumnSelector` | Selector de columnas visibles. Acepta prop opcional `defaultColumns` para habilitar el botón "Restablecer" que restaura la visibilidad por defecto. Footer con tres acciones: Mostrar todas / Restablecer / Ocultar todas. |
 | `StatusBadge` | Badge de estado con colores semánticos |
 | `ConfirmDialog` | Diálogo de confirmación para acciones destructivas |
 | `BulkActionsBar` | Barra flotante de acciones masivas |
@@ -1021,6 +1024,38 @@ interface AuditLog {
 **Archivos modificados:**
 - `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx`
 - `src/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog.tsx`
+
+---
+
+### v1.3 — 22 de Febrero 2026
+
+**ColumnSelector: botón "Restablecer"**
+- Nueva prop opcional `defaultColumns` que habilita un botón "Restablecer" en el footer del popover.
+- Al hacer clic, restaura la visibilidad de columnas a sus valores por defecto definidos en `defaultColumns`.
+- El footer ahora muestra tres acciones: Mostrar todas / Restablecer / Ocultar todas.
+
+**DataTable: ordenamiento interactivo**
+- Ordenamiento por defecto por `createdAt` descendente en todas las tablas.
+- Nuevas props `defaultSortKey` y `defaultSortDirection` en `DataTableProps<T>`.
+- Columnas con `sortable: true` muestran iconos de dirección (`ArrowUp`, `ArrowDown`, `ArrowUpDown` de Lucide).
+- Click en header alterna dirección; click en otra columna cambia criterio de ordenamiento.
+- Interfaz `Column<T>` ampliada con propiedades `sortable`, `sortKey` y `sortValue`.
+- Funciones auxiliares `getSortValue()` y `compareValues()` con soporte para comparación numérica y `localeCompare` en español.
+
+**CursosListView: columna "Fecha Creación"**
+- Nueva columna `fechaCreacion` como primera columna visible por defecto en la tabla de cursos.
+- Formateada con `format(new Date(c.createdAt), "dd/MM/yyyy")`.
+- Ordenable por `createdAt` con `sortable: true` y `sortKey: "createdAt"`.
+
+**PersonasPage y MatriculasPage: columnas ordenables**
+- Columnas con ordenamiento interactivo habilitado en ambos módulos.
+
+**Archivos modificados:**
+- `src/components/shared/DataTable.tsx`
+- `src/components/shared/ColumnSelector.tsx`
+- `src/components/cursos/CursosListView.tsx`
+- `src/pages/personas/PersonasPage.tsx`
+- `src/pages/matriculas/MatriculasPage.tsx`
 
 ---
 

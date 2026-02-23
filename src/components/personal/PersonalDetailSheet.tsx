@@ -3,9 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { User, UserCog } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
+import { AdjuntosPersonal } from "@/components/personal/AdjuntosPersonal";
+import { FirmaPersonal } from "@/components/personal/FirmaPersonal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdatePersonal, useCargos } from "@/hooks/usePersonal";
+import {
+  useUpdatePersonal,
+  useCargos,
+  useUpdateFirma,
+  useDeleteFirma,
+  useAddAdjunto,
+  useDeleteAdjunto,
+} from "@/hooks/usePersonal";
 import { Personal, PersonalFormData } from "@/types/personal";
 import { useEffect } from "react";
 
@@ -30,6 +39,10 @@ export function PersonalDetailSheet({
   const { toast } = useToast();
   const updatePersonal = useUpdatePersonal();
   const { data: cargos = [] } = useCargos();
+  const updateFirma = useUpdateFirma();
+  const deleteFirma = useDeleteFirma();
+  const addAdjunto = useAddAdjunto();
+  const deleteAdjunto = useDeleteAdjunto();
   const [formData, setFormData] = useState<Partial<PersonalFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -83,6 +96,35 @@ export function PersonalDetailSheet({
     navigate(`/gestion-personal/${personal.id}`);
   };
 
+  // Firma handlers
+  const handleGuardarFirma = (firmaBase64: string) => {
+    updateFirma.mutate(
+      { id: personal.id, firmaBase64 },
+      { onSuccess: () => toast({ title: "Firma guardada" }) }
+    );
+  };
+
+  const handleEliminarFirma = () => {
+    deleteFirma.mutate(personal.id, {
+      onSuccess: () => toast({ title: "Firma eliminada" }),
+    });
+  };
+
+  // Adjuntos handlers
+  const handleUploadAdjunto = (file: File) => {
+    addAdjunto.mutate(
+      { personalId: personal.id, file },
+      { onSuccess: () => toast({ title: "Archivo adjuntado" }) }
+    );
+  };
+
+  const handleDeleteAdjunto = (adjuntoId: string) => {
+    deleteAdjunto.mutate(
+      { personalId: personal.id, adjuntoId },
+      { onSuccess: () => toast({ title: "Archivo eliminado" }) }
+    );
+  };
+
   return (
     <DetailSheet
       open={open}
@@ -133,6 +175,27 @@ export function PersonalDetailSheet({
               badge
             />
           </div>
+        </DetailSection>
+
+        {/* Documentos Adjuntos */}
+        <DetailSection title="Documentos Adjuntos">
+          <AdjuntosPersonal
+            adjuntos={personal.adjuntos || []}
+            onUpload={handleUploadAdjunto}
+            onDelete={handleDeleteAdjunto}
+            isUploading={addAdjunto.isPending}
+            isDeleting={deleteAdjunto.isPending}
+          />
+        </DetailSection>
+
+        {/* Firma Digital */}
+        <DetailSection title="Firma Digital">
+          <FirmaPersonal
+            firmaExistente={personal.firmaBase64}
+            onGuardarFirma={handleGuardarFirma}
+            onEliminarFirma={handleEliminarFirma}
+            isPending={updateFirma.isPending || deleteFirma.isPending}
+          />
         </DetailSection>
       </div>
     </DetailSheet>

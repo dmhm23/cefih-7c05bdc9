@@ -1,174 +1,113 @@
-## Campos Adicionales con Modal de Configuracion Estructurada
+
+
+## Renderizado dinamico de Campos Adicionales en el formulario de Curso
 
 ### Resumen
 
-Reemplazar la experiencia actual de “Añadir campo” (que agrega inline dos inputs nombre/valor sin contexto) por un modal de configuración completo donde el usuario define el nombre, tipo de campo, obligatoriedad y valor por defecto (opcional). Se elimina el campo “Valor” ambiguo actual.
-
-Adicionalmente, antes de guardar el campo, el sistema debe preguntarle al usuario si el campo aplica únicamente al nivel que se está creando/editando o si debe aplicarse a todos los niveles de formación.
+Cuando el usuario selecciona un "Tipo / Nivel de Formacion" en el formulario de Nuevo Curso, el sistema cargara los `camposAdicionales` configurados en ese nivel y los renderizara como campos funcionales dentro de una nueva Card "Campos Adicionales". Cada campo se comportara exactamente segun su tipo y configuracion (obligatoriedad, opciones, etc.). Se elimina el campo "Valor por defecto" del modal de configuracion en Niveles.
 
 ---
 
-### 1. Actualizar el modelo de datos
+### 1. Eliminar "Valor por defecto" del modal de Niveles
+
+**Archivo:** `src/components/niveles/CampoAdicionalModal.tsx`
+
+- Eliminar completamente el estado `valorPorDefecto` y toda la UI relacionada (lineas 53, 67, 74, 132-135, 196-224).
+- Eliminar la propiedad `valorPorDefecto` del objeto `campo` que se construye en `doSave()`.
+- Simplificar la logica: ya no se necesitan las variables `hideValorDefecto` ni `showEstadoDefault`.
 
 **Archivo:** `src/types/nivelFormacion.ts`
 
-Reemplazar la estructura actual `{ nombre: string; valor: string }` por una mas robusta:
-
-```typescript
-export type TipoCampoAdicional =
-  | 'texto_corto'
-  | 'texto_largo'
-  | 'numerico'
-  | 'select'
-  | 'select_multiple'
-  | 'estado'
-  | 'fecha'
-  | 'fecha_hora'
-  | 'booleano'
-  | 'archivo'
-  | 'url'
-  | 'telefono'
-  | 'email';
-
-export type AlcanceCampo =
-  | 'solo_nivel'
-  | 'todos_los_niveles';
-
-export interface CampoAdicional {
-  id: string;
-  nombre: string;
-  tipo: TipoCampoAdicional;
-  obligatorio: boolean;
-  valorPorDefecto?: string;
-  opciones?: string[]; // Solo para select / select_multiple
-  alcance: AlcanceCampo; // Define si aplica solo a este nivel o globalmente
-}
-```
-
-Actualizar `NivelFormacion.camposAdicionales` para usar `CampoAdicional[]`.
-
-Agregar constante con labels legibles:
-
-```typescript
-export const TIPOS_CAMPO_LABELS: Record<TipoCampoAdicional, string> = {
-  texto_corto: 'Texto corto',
-  texto_largo: 'Texto largo',
-  numerico: 'Campo numérico',
-  select: 'Lista desplegable',
-  select_multiple: 'Select múltiple',
-  estado: 'Estado (activo/inactivo)',
-  fecha: 'Fecha',
-  fecha_hora: 'Fecha y hora',
-  booleano: 'Campo booleano (switch)',
-  archivo: 'Subida de archivo',
-  url: 'URL',
-  telefono: 'Teléfono',
-  email: 'Correo electrónico',
-};
-```
+- Eliminar `valorPorDefecto?: string` de la interfaz `CampoAdicional` (linea 33).
 
 ---
 
-### 2. Actualizar mock data
+### 2. Agregar `camposAdicionales` al modelo de Curso
 
-**Archivo:** `src/data/mockData.ts`
+**Archivo:** `src/types/curso.ts`
 
-Los niveles precargados tienen `camposAdicionales: []` o `undefined`, por lo que no requieren cambios significativos. Solo asegurar que el tipo sea compatible con la nueva interfaz.
-
----
-
-### 3. Modal de configuracion de campo
-
-**Archivo:** `src/pages/niveles/NivelFormPage.tsx`
-
-Reemplazar el bloque actual de campos adicionales (lineas 233-278) por:
-
-**A) Lista de campos configurados:** Cada campo creado se muestra como una fila compacta con:
-
-- Nombre del campo
-- Badge con el tipo (ej: "Texto corto", "Lista desplegable")
-- Badge "Obligatorio" si aplica
-- Botones editar y eliminar
-
-**B) Boton "+ Anadir campo"** que abre un Dialog modal con:
-
-- **Nombre del campo** (input texto, obligatorio, validacion de duplicados contra campos existentes)
-- **Tipo de campo** (Select con las 13 opciones definidas en `TIPOS_CAMPO_LABELS`)
-- **Obligatorio** (Switch, default: no)
-- **Valor por defecto** (input opcional, con helper text: "Si se define, este valor se precompletara al crear un curso con este nivel". Se oculta para tipos `archivo` y `booleano` donde no aplica, y para `estado` se muestra como switch activo/inactivo)
-- **Opciones** (solo visible si tipo es `select` o `select_multiple`): seccion con inputs para agregar/eliminar opciones de la lista. Minimo 2 opciones requeridas para estos tipos.
-- **Alcance del campo** (nuevo bloque obligatorio antes de guardar):
-  - Radio o Select con dos opciones:
-    - “Aplicar solo a este nivel de formación”
-    - “Aplicar a todos los niveles de formación”
-  Si el usuario selecciona “Aplicar a todos los niveles”, debe mostrarse una advertencia clara:
-  &nbsp;
-  > Este campo se agregará a todos los niveles existentes y futuros. ¿Desea continuar?
-  &nbsp;
-  Puede implementarse una confirmación secundaria (confirm dialog) para evitar configuraciones accidentales.
-
-**C) Modo edicion:** Al hacer clic en "editar" en un campo existente, el mismo modal se abre precargado con los datos del campo para modificarlos.
-
-**Validaciones del modal:**
-
-- Nombre obligatorio y sin duplicados
-- Si tipo es `select` o `select_multiple`, al menos 2 opciones
-- Tipo obligatorio
-- El modal se abre precargado con los datos actuales del campo.
-- Si el campo es global, el alcance no debe poder cambiarse sin advertencia explícita.
+- Agregar al `Curso` interface: `camposAdicionalesValores?: Record<string, any>` -- un mapa donde la key es el `id` del campo adicional y el value es el valor ingresado por el usuario.
+- Incluirlo tambien en `CursoFormData`.
 
 ---
 
-### 4. Schema zod actualizado
+### 3. Renderizado dinamico en CursoFormPage
 
-En `NivelFormPage.tsx`, el schema cambia de:
+**Archivo:** `src/pages/cursos/CursoFormPage.tsx`
 
-```typescript
-camposAdicionales: z.array(z.object({ nombre: z.string(), valor: z.string() }))
-```
+**A) Cargar campos adicionales al seleccionar nivel:**
 
-a gestionar los campos como estado local (no dentro del form de react-hook-form), ya que la configuracion se maneja via modal separado. Se inyectan al payload en `onSubmit`.
+En `handleTipoFormacionChange`, cuando se selecciona un nivel, extraer `nivel.camposAdicionales` y guardarlos en un estado local `camposAdicionales` (useState).
 
-Se usara un `useState<CampoAdicional[]>` para gestionar los campos, similar a como `customDocs` maneja los documentos personalizados.
+**B) Construir schema zod dinamico:**
 
-El schema Zod ya no validará { nombre, valor }, sino que el modal gestionará validaciones internas antes de añadir el campo al estado.
+Reemplazar el schema estatico por uno que se reconstruya cuando cambien los campos adicionales. Para cada campo:
+
+| Tipo | Validacion zod |
+|---|---|
+| `texto_corto` | `z.string()` + `.min(1)` si obligatorio |
+| `texto_largo` | `z.string()` + `.min(1)` si obligatorio |
+| `numerico` | `z.coerce.number()` + `.min(0)` si obligatorio |
+| `select` | `z.string()` + `.min(1)` si obligatorio |
+| `select_multiple` | `z.array(z.string())` + `.min(1)` si obligatorio |
+| `estado` | `z.string()` (default `"inactivo"`) |
+| `fecha` | `z.string()` + `.min(1)` si obligatorio |
+| `fecha_hora` | `z.string()` + `.min(1)` si obligatorio |
+| `booleano` | `z.boolean()` (default `false`) |
+| `archivo` | `z.string()` (solo placeholder, no upload real) + `.min(1)` si obligatorio |
+| `url` | `z.string().url()` o `.optional()` segun obligatorio |
+| `telefono` | `z.string()` + `.min(1)` si obligatorio |
+| `email` | `z.string().email()` o `.optional()` segun obligatorio |
+
+Se usara `z.object()` con spread del schema base + los campos dinamicos, recalculado via `useMemo`.
+
+**C) Renderizar nueva Card "Campos Adicionales":**
+
+Solo visible cuando `camposAdicionales.length > 0`. Cada campo se renderiza con `FormField` segun su tipo:
+
+| Tipo | Componente UI |
+|---|---|
+| `texto_corto` | `<Input type="text" />` |
+| `texto_largo` | `<Textarea />` |
+| `numerico` | `<Input type="number" />` |
+| `select` | `<Select>` con las opciones configuradas |
+| `select_multiple` | Multiples `<Checkbox>` con las opciones |
+| `estado` | `<Switch>` con labels Activo/Inactivo |
+| `fecha` | `<Input type="date" />` |
+| `fecha_hora` | `<Input type="datetime-local" />` |
+| `booleano` | `<Switch>` |
+| `archivo` | `<Input type="file" />` (placeholder visual) |
+| `url` | `<Input type="url" />` |
+| `telefono` | `<Input type="tel" />` |
+| `email` | `<Input type="email" />` |
+
+Los labels mostraran `*` si el campo es obligatorio. Los mensajes de error provienen de la validacion zod.
+
+**D) Incluir valores en el payload:**
+
+En `onSubmit`, recopilar los valores de los campos adicionales en un objeto `camposAdicionalesValores` y enviarlo como parte del payload de creacion del curso.
+
+**E) Limpiar al cambiar de nivel:**
+
+Cuando el usuario cambia de nivel, resetear los valores de campos adicionales y recargar los nuevos.
 
 ---
 
-### 5. Vista de detalle actualizada
+### 4. Actualizar NivelDetallePage
 
 **Archivo:** `src/pages/niveles/NivelDetallePage.tsx`
 
-En la seccion de campos adicionales (lineas 99-104), mostrar cada campo con:
-
-- Nombre del campo
-- Tipo (badge)
-- Si es obligatorio (badge)
-- Valor por defecto (si tiene)
-- Opciones (si es select/select_multiple, listar las opciones disponibles)
-
----
-
-### 6. Consideraciones de diseno
-
-- Los campos adicionales son **informativos y configuracionales**: definen la estructura que un curso basado en este nivel debera tener. No impactan procesos de certificacion ni matricula en esta fase.
-- Son **editables despues de guardar** el nivel (se pueden modificar, agregar o eliminar al editar el nivel).
-- Son visibles tanto en creacion como en edicion del nivel.
-- Si el campo tiene alcance global:
-  - Debe replicarse en todos los niveles existentes.
-  - Debe heredarse automáticamente en niveles futuros.
-    &nbsp;
-  &nbsp;
+- Eliminar la referencia a `valorPorDefecto` en el renderizado de campos adicionales (si existe).
 
 ---
 
 ### Archivos a modificar
 
+| Archivo | Cambio |
+|---|---|
+| `src/types/nivelFormacion.ts` | Eliminar `valorPorDefecto` de `CampoAdicional` |
+| `src/components/niveles/CampoAdicionalModal.tsx` | Eliminar toda la UI y logica de "Valor por defecto" |
+| `src/types/curso.ts` | Agregar `camposAdicionalesValores?: Record<string, any>` |
+| `src/pages/cursos/CursoFormPage.tsx` | Schema dinamico, renderizado por tipo, integracion con react-hook-form |
+| `src/pages/niveles/NivelDetallePage.tsx` | Eliminar referencia a `valorPorDefecto` |
 
-| Archivo                                  | Cambio                                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `src/types/nivelFormacion.ts`            | Nueva interfaz `CampoAdicional`, tipo `TipoCampoAdicional`, constante `TIPOS_CAMPO_LABELS` |
-| `src/data/mockData.ts`                   | Ajustar tipo de `camposAdicionales` si es necesario                                        |
-| `src/pages/niveles/NivelFormPage.tsx`    | Reemplazar campos inline por modal de configuracion, estado local, edicion/eliminacion     |
-| `src/pages/niveles/NivelDetallePage.tsx` | Renderizar campos con tipo, obligatoriedad y opciones                                      |
-| `src/services/nivelFormacionService.ts`  | Sin cambios funcionales, solo asegurar que el tipo sea compatible                          |

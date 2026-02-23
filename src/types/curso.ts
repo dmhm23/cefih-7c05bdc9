@@ -34,12 +34,14 @@ export interface Curso {
   minTrabajoResponsable?: string;
   minTrabajoFechaCierrePrincipal?: string;
   minTrabajoFechasAdicionales: FechaAdicionalMinTrabajo[];
+  camposAdicionalesValores?: Record<string, any>;
   createdAt: string;
   updatedAt: string;
 }
 
 export type CursoFormData = Omit<Curso, 'id' | 'createdAt' | 'updatedAt' | 'matriculasIds' | 'minTrabajoFechasAdicionales'> & {
   minTrabajoFechasAdicionales?: FechaAdicionalMinTrabajo[];
+  camposAdicionalesValores?: Record<string, any>;
 };
 
 export const ESTADO_CURSO_LABELS: Record<EstadoCurso, string> = {

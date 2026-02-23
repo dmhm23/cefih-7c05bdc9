@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,12 +24,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
+import { CamposAdicionalesCard } from "@/components/cursos/CamposAdicionalesCard";
 import { useCreateCurso } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
 import { ENTRENADORES_MOCK, SUPERVISORES_MOCK } from "@/data/formOptions";
+import { CampoAdicional } from "@/types/nivelFormacion";
 
-const cursoSchema = z.object({
+const baseSchema = {
   tipoFormacion: z.string().min(1, "Seleccione el tipo de formación"),
   numeroCurso: z.string().min(1, "Ingrese el número del curso"),
   fechaInicio: z.string().min(1, "Seleccione la fecha de inicio"),
@@ -40,23 +43,93 @@ const cursoSchema = z.object({
   supervisorId: z.string().optional(),
   supervisorNombre: z.string().optional(),
   capacidadMaxima: z.coerce.number().min(1, "Mínimo 1").max(50, "Máximo 50").optional(),
-});
+};
 
-type FormValues = z.infer<typeof cursoSchema>;
+function buildDynamicSchema(campos: CampoAdicional[]) {
+  const dynamicShape: Record<string, z.ZodTypeAny> = {};
+  for (const c of campos) {
+    const key = `_ca_${c.id}`;
+    switch (c.tipo) {
+      case "texto_corto":
+      case "texto_largo":
+      case "fecha":
+      case "fecha_hora":
+      case "telefono":
+      case "archivo":
+        dynamicShape[key] = c.obligatorio
+          ? z.string().min(1, `${c.nombre} es obligatorio`)
+          : z.string().optional().default("");
+        break;
+      case "numerico":
+        dynamicShape[key] = c.obligatorio
+          ? z.coerce.number({ invalid_type_error: `${c.nombre} debe ser numérico` }).min(0, `${c.nombre} es obligatorio`)
+          : z.coerce.number().optional().default(0);
+        break;
+      case "select":
+      case "estado":
+        dynamicShape[key] = c.obligatorio
+          ? z.string().min(1, `${c.nombre} es obligatorio`)
+          : z.string().optional().default(c.tipo === "estado" ? "inactivo" : "");
+        break;
+      case "select_multiple":
+        dynamicShape[key] = c.obligatorio
+          ? z.array(z.string()).min(1, `Seleccione al menos una opción en ${c.nombre}`)
+          : z.array(z.string()).optional().default([]);
+        break;
+      case "booleano":
+        dynamicShape[key] = z.boolean().optional().default(false);
+        break;
+      case "url":
+        dynamicShape[key] = c.obligatorio
+          ? z.string().url(`${c.nombre} debe ser una URL válida`)
+          : z.string().url(`${c.nombre} debe ser una URL válida`).or(z.literal("")).optional().default("");
+        break;
+      case "email":
+        dynamicShape[key] = c.obligatorio
+          ? z.string().email(`${c.nombre} debe ser un email válido`)
+          : z.string().email(`${c.nombre} debe ser un email válido`).or(z.literal("")).optional().default("");
+        break;
+      default:
+        dynamicShape[key] = z.any().optional();
+    }
+  }
+  return dynamicShape;
+}
+
+function getDefaults(campos: CampoAdicional[]): Record<string, any> {
+  const defaults: Record<string, any> = {};
+  for (const c of campos) {
+    const key = `_ca_${c.id}`;
+    switch (c.tipo) {
+      case "booleano": defaults[key] = false; break;
+      case "select_multiple": defaults[key] = []; break;
+      case "estado": defaults[key] = "inactivo"; break;
+      case "numerico": defaults[key] = 0; break;
+      default: defaults[key] = "";
+    }
+  }
+  return defaults;
+}
 
 export default function CursoFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const createCurso = useCreateCurso();
   const { data: niveles = [] } = useNivelesFormacion();
+  const [camposAdicionales, setCamposAdicionales] = useState<CampoAdicional[]>([]);
+
+  const schema = useMemo(
+    () => z.object({ ...baseSchema, ...buildDynamicSchema(camposAdicionales) }),
+    [camposAdicionales]
+  );
 
   const nivelesOptions = niveles.map((n) => ({
     value: n.id,
     label: n.nombreNivel,
   }));
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(cursoSchema),
+  const form = useForm<any>({
+    resolver: zodResolver(schema),
     defaultValues: {
       tipoFormacion: "",
       numeroCurso: "",
@@ -72,6 +145,12 @@ export default function CursoFormPage() {
     },
   });
 
+  // Re-register resolver when schema changes
+  useMemo(() => {
+    // @ts-ignore - internal react-hook-form resolver update
+    form.clearErrors();
+  }, [schema]);
+
   const recalcularDuracion = (inicio: string, fin: string) => {
     if (!inicio || !fin) return;
     const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
@@ -84,6 +163,19 @@ export default function CursoFormPage() {
     if (nivel) {
       if (nivel.duracionDias) form.setValue("duracionDias", nivel.duracionDias);
       if (nivel.duracionHoras) form.setValue("horasTotales", nivel.duracionHoras);
+
+      const campos = nivel.camposAdicionales || [];
+      setCamposAdicionales(campos);
+
+      // Clear old dynamic values and set defaults for new ones
+      const currentValues = form.getValues();
+      const caKeys = Object.keys(currentValues).filter((k) => k.startsWith("_ca_"));
+      caKeys.forEach((k) => form.unregister(k));
+
+      const defaults = getDefaults(campos);
+      Object.entries(defaults).forEach(([k, v]) => form.setValue(k, v));
+    } else {
+      setCamposAdicionales([]);
     }
   };
 
@@ -108,8 +200,15 @@ export default function CursoFormPage() {
     }
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: any) => {
     try {
+      // Separate dynamic field values
+      const camposAdicionalesValores: Record<string, any> = {};
+      for (const campo of camposAdicionales) {
+        const key = `_ca_${campo.id}`;
+        camposAdicionalesValores[campo.id] = data[key];
+      }
+
       const nivel = niveles.find((n) => n.id === data.tipoFormacion);
       const label = nivel?.nombreNivel || data.tipoFormacion;
       await createCurso.mutateAsync({
@@ -127,6 +226,8 @@ export default function CursoFormPage() {
         supervisorNombre: data.supervisorNombre,
         capacidadMaxima: data.capacidadMaxima || 20,
         estado: "en_progreso",
+        camposAdicionalesValores: Object.keys(camposAdicionalesValores).length > 0
+          ? camposAdicionalesValores : undefined,
       });
       toast({ title: "Curso creado correctamente" });
       navigate("/cursos");
@@ -352,6 +453,9 @@ export default function CursoFormPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Card D — Campos Adicionales (dinámicos) */}
+          <CamposAdicionalesCard campos={camposAdicionales} form={form} />
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => navigate("/cursos")}>

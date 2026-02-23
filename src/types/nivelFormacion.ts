@@ -30,7 +30,6 @@ export interface CampoAdicional {
   nombre: string;
   tipo: TipoCampoAdicional;
   obligatorio: boolean;
-  valorPorDefecto?: string;
   opciones?: string[]; // Solo para select / select_multiple
   alcance: AlcanceCampo;
 }

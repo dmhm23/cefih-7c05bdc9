@@ -126,11 +126,6 @@ export default function NivelDetallePage() {
                           <Badge variant="outline" className="text-[10px]">Global</Badge>
                         )}
                       </div>
-                      {campo.valorPorDefecto && (
-                        <p className="text-xs text-muted-foreground">
-                          Valor por defecto: <span className="font-medium text-foreground">{campo.valorPorDefecto}</span>
-                        </p>
-                      )}
                       {campo.opciones && campo.opciones.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-0.5">
                           {campo.opciones.map((op, i) => (

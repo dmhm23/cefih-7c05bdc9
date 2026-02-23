@@ -37,22 +37,12 @@ interface Props {
   editingCampo?: CampoAdicional | null;
 }
 
-const INITIAL_STATE = {
-  nombre: "",
-  tipo: "" as TipoCampoAdicional | "",
-  obligatorio: false,
-  valorPorDefecto: "",
-  opciones: ["", ""],
-  alcance: "solo_nivel" as AlcanceCampo,
-};
-
 export function CampoAdicionalModal({ open, onOpenChange, onSave, existingNames, editingCampo }: Props) {
-  const [nombre, setNombre] = useState(INITIAL_STATE.nombre);
-  const [tipo, setTipo] = useState<TipoCampoAdicional | "">(INITIAL_STATE.tipo);
-  const [obligatorio, setObligatorio] = useState(INITIAL_STATE.obligatorio);
-  const [valorPorDefecto, setValorPorDefecto] = useState(INITIAL_STATE.valorPorDefecto);
-  const [opciones, setOpciones] = useState<string[]>(INITIAL_STATE.opciones);
-  const [alcance, setAlcance] = useState<AlcanceCampo>(INITIAL_STATE.alcance);
+  const [nombre, setNombre] = useState("");
+  const [tipo, setTipo] = useState<TipoCampoAdicional | "">("");
+  const [obligatorio, setObligatorio] = useState(false);
+  const [opciones, setOpciones] = useState<string[]>(["", ""]);
+  const [alcance, setAlcance] = useState<AlcanceCampo>("solo_nivel");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showGlobalConfirm, setShowGlobalConfirm] = useState(false);
 
@@ -64,24 +54,20 @@ export function CampoAdicionalModal({ open, onOpenChange, onSave, existingNames,
         setNombre(editingCampo.nombre);
         setTipo(editingCampo.tipo);
         setObligatorio(editingCampo.obligatorio);
-        setValorPorDefecto(editingCampo.valorPorDefecto || "");
         setOpciones(editingCampo.opciones?.length ? editingCampo.opciones : ["", ""]);
         setAlcance(editingCampo.alcance);
       } else {
-        setNombre(INITIAL_STATE.nombre);
-        setTipo(INITIAL_STATE.tipo);
-        setObligatorio(INITIAL_STATE.obligatorio);
-        setValorPorDefecto(INITIAL_STATE.valorPorDefecto);
-        setOpciones([...INITIAL_STATE.opciones]);
-        setAlcance(INITIAL_STATE.alcance);
+        setNombre("");
+        setTipo("");
+        setObligatorio(false);
+        setOpciones(["", ""]);
+        setAlcance("solo_nivel");
       }
       setErrors({});
     }
   }, [open, editingCampo]);
 
   const showOpciones = tipo === "select" || tipo === "select_multiple";
-  const hideValorDefecto = tipo === "archivo" || tipo === "booleano";
-  const showEstadoDefault = tipo === "estado";
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -129,10 +115,6 @@ export function CampoAdicionalModal({ open, onOpenChange, onSave, existingNames,
       obligatorio,
       alcance,
       ...(showOpciones ? { opciones: opciones.filter((o) => o.trim()) } : {}),
-      ...(!hideValorDefecto && !showEstadoDefault && valorPorDefecto.trim()
-        ? { valorPorDefecto: valorPorDefecto.trim() }
-        : {}),
-      ...(showEstadoDefault ? { valorPorDefecto: valorPorDefecto || "inactivo" } : {}),
     };
     onSave(campo);
     onOpenChange(false);
@@ -191,37 +173,6 @@ export function CampoAdicionalModal({ open, onOpenChange, onSave, existingNames,
               <Label>Obligatorio</Label>
               <Switch checked={obligatorio} onCheckedChange={setObligatorio} />
             </div>
-
-            {/* Valor por defecto */}
-            {!hideValorDefecto && !showOpciones && !showEstadoDefault && (
-              <div className="space-y-1.5">
-                <Label>Valor por defecto</Label>
-                <Input
-                  value={valorPorDefecto}
-                  onChange={(e) => setValorPorDefecto(e.target.value)}
-                  placeholder="Opcional"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Si se define, este valor se precompletará al crear un curso con este nivel.
-                </p>
-              </div>
-            )}
-
-            {/* Estado default */}
-            {showEstadoDefault && (
-              <div className="flex items-center justify-between py-2 px-3 rounded-md border">
-                <Label>Valor por defecto (estado)</Label>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {valorPorDefecto === "activo" ? "Activo" : "Inactivo"}
-                  </span>
-                  <Switch
-                    checked={valorPorDefecto === "activo"}
-                    onCheckedChange={(c) => setValorPorDefecto(c ? "activo" : "inactivo")}
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Opciones para select */}
             {showOpciones && (

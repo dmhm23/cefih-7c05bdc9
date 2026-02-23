@@ -1,79 +1,174 @@
-
-## Sincronizacion de Niveles y Ajustes de UI
+## Campos Adicionales con Modal de Configuracion Estructurada
 
 ### Resumen
 
-4 cambios independientes:
+Reemplazar la experiencia actual de “Añadir campo” (que agrega inline dos inputs nombre/valor sin contexto) por un modal de configuración completo donde el usuario define el nombre, tipo de campo, obligatoriedad y valor por defecto (opcional). Se elimina el campo “Valor” ambiguo actual.
 
-1. Reordenar campos Horas/Dias en el formulario de Nuevo Nivel
-2. Navegacion "Atras" con historial en NivelFormPage
-3. Sincronizar dropdown de Curso con el modulo de Niveles
-4. Sincronizar dropdown de Matricula con el modulo de Niveles
+Adicionalmente, antes de guardar el campo, el sistema debe preguntarle al usuario si el campo aplica únicamente al nivel que se está creando/editando o si debe aplicarse a todos los niveles de formación.
 
 ---
 
-### 1. Reordenar Horas antes de Dias en NivelFormPage
+### 1. Actualizar el modelo de datos
 
-**Archivo:** `src/pages/niveles/NivelFormPage.tsx` (lineas 204-231)
+**Archivo:** `src/types/nivelFormacion.ts`
 
-Intercambiar el orden de los dos `FormField` dentro del grid: primero `duracionHoras`, luego `duracionDias`.
+Reemplazar la estructura actual `{ nombre: string; valor: string }` por una mas robusta:
+
+```typescript
+export type TipoCampoAdicional =
+  | 'texto_corto'
+  | 'texto_largo'
+  | 'numerico'
+  | 'select'
+  | 'select_multiple'
+  | 'estado'
+  | 'fecha'
+  | 'fecha_hora'
+  | 'booleano'
+  | 'archivo'
+  | 'url'
+  | 'telefono'
+  | 'email';
+
+export type AlcanceCampo =
+  | 'solo_nivel'
+  | 'todos_los_niveles';
+
+export interface CampoAdicional {
+  id: string;
+  nombre: string;
+  tipo: TipoCampoAdicional;
+  obligatorio: boolean;
+  valorPorDefecto?: string;
+  opciones?: string[]; // Solo para select / select_multiple
+  alcance: AlcanceCampo; // Define si aplica solo a este nivel o globalmente
+}
+```
+
+Actualizar `NivelFormacion.camposAdicionales` para usar `CampoAdicional[]`.
+
+Agregar constante con labels legibles:
+
+```typescript
+export const TIPOS_CAMPO_LABELS: Record<TipoCampoAdicional, string> = {
+  texto_corto: 'Texto corto',
+  texto_largo: 'Texto largo',
+  numerico: 'Campo numérico',
+  select: 'Lista desplegable',
+  select_multiple: 'Select múltiple',
+  estado: 'Estado (activo/inactivo)',
+  fecha: 'Fecha',
+  fecha_hora: 'Fecha y hora',
+  booleano: 'Campo booleano (switch)',
+  archivo: 'Subida de archivo',
+  url: 'URL',
+  telefono: 'Teléfono',
+  email: 'Correo electrónico',
+};
+```
 
 ---
 
-### 2. Boton "Atras" con navegacion al origen en NivelFormPage
+### 2. Actualizar mock data
+
+**Archivo:** `src/data/mockData.ts`
+
+Los niveles precargados tienen `camposAdicionales: []` o `undefined`, por lo que no requieren cambios significativos. Solo asegurar que el tipo sea compatible con la nueva interfaz.
+
+---
+
+### 3. Modal de configuracion de campo
 
 **Archivo:** `src/pages/niveles/NivelFormPage.tsx`
 
-- Cambiar `navigate("/niveles")` en el boton "Atras" (linea 172) por `navigate(-1)` para volver a la vista anterior real (puede ser `/niveles/:id` u otra).
-- Hacer lo mismo con el boton "Cancelar" (linea 363).
+Reemplazar el bloque actual de campos adicionales (lineas 233-278) por:
+
+**A) Lista de campos configurados:** Cada campo creado se muestra como una fila compacta con:
+
+- Nombre del campo
+- Badge con el tipo (ej: "Texto corto", "Lista desplegable")
+- Badge "Obligatorio" si aplica
+- Botones editar y eliminar
+
+**B) Boton "+ Anadir campo"** que abre un Dialog modal con:
+
+- **Nombre del campo** (input texto, obligatorio, validacion de duplicados contra campos existentes)
+- **Tipo de campo** (Select con las 13 opciones definidas en `TIPOS_CAMPO_LABELS`)
+- **Obligatorio** (Switch, default: no)
+- **Valor por defecto** (input opcional, con helper text: "Si se define, este valor se precompletara al crear un curso con este nivel". Se oculta para tipos `archivo` y `booleano` donde no aplica, y para `estado` se muestra como switch activo/inactivo)
+- **Opciones** (solo visible si tipo es `select` o `select_multiple`): seccion con inputs para agregar/eliminar opciones de la lista. Minimo 2 opciones requeridas para estos tipos.
+- **Alcance del campo** (nuevo bloque obligatorio antes de guardar):
+  - Radio o Select con dos opciones:
+    - “Aplicar solo a este nivel de formación”
+    - “Aplicar a todos los niveles de formación”
+  Si el usuario selecciona “Aplicar a todos los niveles”, debe mostrarse una advertencia clara:
+  &nbsp;
+  > Este campo se agregará a todos los niveles existentes y futuros. ¿Desea continuar?
+  &nbsp;
+  Puede implementarse una confirmación secundaria (confirm dialog) para evitar configuraciones accidentales.
+
+**C) Modo edicion:** Al hacer clic en "editar" en un campo existente, el mismo modal se abre precargado con los datos del campo para modificarlos.
+
+**Validaciones del modal:**
+
+- Nombre obligatorio y sin duplicados
+- Si tipo es `select` o `select_multiple`, al menos 2 opciones
+- Tipo obligatorio
+- El modal se abre precargado con los datos actuales del campo.
+- Si el campo es global, el alcance no debe poder cambiarse sin advertencia explícita.
 
 ---
 
-### 3. Sincronizar "Tipo / Nivel de Formacion" en CursoFormPage con el modulo de Niveles
+### 4. Schema zod actualizado
 
-**Archivo:** `src/pages/cursos/CursoFormPage.tsx`
+En `NivelFormPage.tsx`, el schema cambia de:
 
-Actualmente el dropdown usa `TIPOS_FORMACION_CURSO` (constante hardcodeada con 4 valores). Se reemplazara por datos dinamicos del modulo de Niveles:
+```typescript
+camposAdicionales: z.array(z.object({ nombre: z.string(), valor: z.string() }))
+```
 
-- Importar `useNivelesFormacion` desde `@/hooks/useNivelesFormacion`.
-- Llamar al hook para obtener la lista de niveles.
-- Cambiar el schema zod: `tipoFormacion` pasa de `z.enum([...])` a `z.string().min(1, "Seleccione el tipo de formacion")`.
-- Reemplazar el `<Select>` por un `<Combobox>` (ya existe el componente) que muestre `nivel.nombreNivel` como label y `nivel.id` como value.
-- Al seleccionar un nivel, autocompletar `duracionDias` y `horasTotales` desde los datos del nivel seleccionado.
-- En `onSubmit`, usar `nivel.nombreNivel` para construir el nombre del curso en lugar de `TIPO_FORMACION_LABELS`.
-- Eliminar las importaciones de `TIPOS_FORMACION_CURSO` y `TIPO_FORMACION_LABELS` que ya no se usan.
+a gestionar los campos como estado local (no dentro del form de react-hook-form), ya que la configuracion se maneja via modal separado. Se inyectan al payload en `onSubmit`.
 
----
+Se usara un `useState<CampoAdicional[]>` para gestionar los campos, similar a como `customDocs` maneja los documentos personalizados.
 
-### 4. Sincronizar "Nivel de Formacion" en MatriculaFormPage con el modulo de Niveles
-
-**Archivos afectados:**
-
-**`src/pages/matriculas/MatriculaFormPage.tsx`** (lineas 742-765):
-- Importar `useNivelesFormacion`.
-- Reemplazar el `<Select>` que usa `NIVELES_FORMACION_EMPRESA` por un `<Combobox>` alimentado dinamicamente con los niveles del modulo.
-- Las opciones mostraran `nivel.nombreNivel` como label y `nivel.id` como value.
-- Eliminar la importacion de `NIVELES_FORMACION_EMPRESA`.
-
-**`src/pages/matriculas/MatriculaDetallePage.tsx`** y **`src/components/matriculas/MatriculaDetailSheet.tsx`**:
-- Reemplazar `NIVELES_FORMACION_EMPRESA` por una funcion que consulte `mockNivelesFormacion` para resolver el label del nivel guardado.
-- Importar `useNivelesFormacion` o acceder directamente a los datos mock para obtener el nombre legible.
-
-**`src/components/matriculas/formatos/InfoAprendizDocument.tsx`** y **`EvaluacionReentrenamientoDocument.tsx`**:
-- Reemplazar el uso de `NIVELES_FORMACION_EMPRESA` para resolver labels por una busqueda en `mockNivelesFormacion`.
-
-**Nota:** Los valores ya guardados en matriculas existentes (como `"jefe_area"`) seguiran funcionando porque se hara un fallback: buscar primero por `id`, luego por `nombreNivel`, y si no coincide, mostrar el valor tal cual.
+El schema Zod ya no validará { nombre, valor }, sino que el modal gestionará validaciones internas antes de añadir el campo al estado.
 
 ---
 
-### Archivos a modificar (resumen)
+### 5. Vista de detalle actualizada
 
-| Archivo | Cambio |
-|---|---|
-| `src/pages/niveles/NivelFormPage.tsx` | Reordenar Horas/Dias, navigate(-1) |
-| `src/pages/cursos/CursoFormPage.tsx` | Reemplazar TIPOS_FORMACION_CURSO por useNivelesFormacion + Combobox |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar NIVELES_FORMACION_EMPRESA por useNivelesFormacion + Combobox |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Resolver label desde niveles dinamicos |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Resolver label desde niveles dinamicos |
-| `src/components/matriculas/formatos/InfoAprendizDocument.tsx` | Resolver label desde niveles dinamicos |
-| `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` | Resolver label desde niveles dinamicos |
+**Archivo:** `src/pages/niveles/NivelDetallePage.tsx`
+
+En la seccion de campos adicionales (lineas 99-104), mostrar cada campo con:
+
+- Nombre del campo
+- Tipo (badge)
+- Si es obligatorio (badge)
+- Valor por defecto (si tiene)
+- Opciones (si es select/select_multiple, listar las opciones disponibles)
+
+---
+
+### 6. Consideraciones de diseno
+
+- Los campos adicionales son **informativos y configuracionales**: definen la estructura que un curso basado en este nivel debera tener. No impactan procesos de certificacion ni matricula en esta fase.
+- Son **editables despues de guardar** el nivel (se pueden modificar, agregar o eliminar al editar el nivel).
+- Son visibles tanto en creacion como en edicion del nivel.
+- Si el campo tiene alcance global:
+  - Debe replicarse en todos los niveles existentes.
+  - Debe heredarse automáticamente en niveles futuros.
+    &nbsp;
+  &nbsp;
+
+---
+
+### Archivos a modificar
+
+
+| Archivo                                  | Cambio                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/types/nivelFormacion.ts`            | Nueva interfaz `CampoAdicional`, tipo `TipoCampoAdicional`, constante `TIPOS_CAMPO_LABELS` |
+| `src/data/mockData.ts`                   | Ajustar tipo de `camposAdicionales` si es necesario                                        |
+| `src/pages/niveles/NivelFormPage.tsx`    | Reemplazar campos inline por modal de configuracion, estado local, edicion/eliminacion     |
+| `src/pages/niveles/NivelDetallePage.tsx` | Renderizar campos con tipo, obligatoriedad y opciones                                      |
+| `src/services/nivelFormacionService.ts`  | Sin cambios funcionales, solo asegurar que el tipo sea compatible                          |

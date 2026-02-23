@@ -22,15 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { useCreateCurso } from "@/hooks/useCursos";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { TIPOS_FORMACION_CURSO, ENTRENADORES_MOCK, SUPERVISORES_MOCK } from "@/data/formOptions";
-import { TIPO_FORMACION_LABELS } from "@/types/curso";
+import { ENTRENADORES_MOCK, SUPERVISORES_MOCK } from "@/data/formOptions";
 
 const cursoSchema = z.object({
-  tipoFormacion: z.enum(["jefe_area", "trabajador_autorizado", "reentrenamiento", "coordinador_ta"], {
-    required_error: "Seleccione el tipo de formación",
-  }),
+  tipoFormacion: z.string().min(1, "Seleccione el tipo de formación"),
   numeroCurso: z.string().min(1, "Ingrese el número del curso"),
   fechaInicio: z.string().min(1, "Seleccione la fecha de inicio"),
   fechaFin: z.string().optional(),
@@ -49,11 +48,17 @@ export default function CursoFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const createCurso = useCreateCurso();
+  const { data: niveles = [] } = useNivelesFormacion();
+
+  const nivelesOptions = niveles.map((n) => ({
+    value: n.id,
+    label: n.nombreNivel,
+  }));
 
   const form = useForm<FormValues>({
     resolver: zodResolver(cursoSchema),
     defaultValues: {
-      tipoFormacion: undefined,
+      tipoFormacion: "",
       numeroCurso: "",
       fechaInicio: "",
       fechaFin: "",
@@ -74,11 +79,11 @@ export default function CursoFormPage() {
   };
 
   const handleTipoFormacionChange = (value: string) => {
-    form.setValue("tipoFormacion", value as FormValues["tipoFormacion"]);
-    const tipo = TIPOS_FORMACION_CURSO.find((t) => t.value === value);
-    if (tipo) {
-      form.setValue("duracionDias", tipo.duracionDias);
-      form.setValue("horasTotales", tipo.horasTotales);
+    form.setValue("tipoFormacion", value);
+    const nivel = niveles.find((n) => n.id === value);
+    if (nivel) {
+      if (nivel.duracionDias) form.setValue("duracionDias", nivel.duracionDias);
+      if (nivel.duracionHoras) form.setValue("horasTotales", nivel.duracionHoras);
     }
   };
 
@@ -105,11 +110,12 @@ export default function CursoFormPage() {
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const label = TIPO_FORMACION_LABELS[data.tipoFormacion];
+      const nivel = niveles.find((n) => n.id === data.tipoFormacion);
+      const label = nivel?.nombreNivel || data.tipoFormacion;
       await createCurso.mutateAsync({
         nombre: `${label} - #${data.numeroCurso}`,
         descripcion: "",
-        tipoFormacion: data.tipoFormacion,
+        tipoFormacion: data.tipoFormacion as any,
         numeroCurso: data.numeroCurso,
         fechaInicio: data.fechaInicio,
         fechaFin: data.fechaFin ?? "",
@@ -160,20 +166,16 @@ export default function CursoFormPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo / Nivel de Formación *</FormLabel>
-                      <Select onValueChange={handleTipoFormacionChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar tipo..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {TIPOS_FORMACION_CURSO.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>
-                              {t.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={nivelesOptions}
+                          value={field.value}
+                          onValueChange={handleTipoFormacionChange}
+                          placeholder="Seleccionar nivel..."
+                          searchPlaceholder="Buscar nivel..."
+                          emptyMessage="No se encontraron niveles."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -247,12 +249,12 @@ export default function CursoFormPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="duracionDias"
+                  name="horasTotales"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duración (días) *</FormLabel>
+                      <FormLabel>Horas Totales *</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} min={1} max={30} />
+                        <Input type="number" {...field} min={1} max={200} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -261,12 +263,12 @@ export default function CursoFormPage() {
 
                 <FormField
                   control={form.control}
-                  name="horasTotales"
+                  name="duracionDias"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Horas Totales *</FormLabel>
+                      <FormLabel>Duración (días) *</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} min={1} max={200} />
+                        <Input type="number" {...field} min={1} max={30} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -169,7 +169,7 @@ export default function NivelFormPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/niveles")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -204,12 +204,12 @@ export default function NivelFormPage() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="duracionDias"
+                  name="duracionHoras"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duración (días)</FormLabel>
+                      <FormLabel>Duración (horas)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} min={0} max={365} placeholder="0" />
+                        <Input type="number" {...field} min={0} max={2000} placeholder="0" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -217,12 +217,12 @@ export default function NivelFormPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="duracionHoras"
+                  name="duracionDias"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duración (horas)</FormLabel>
+                      <FormLabel>Duración (días)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} min={0} max={2000} placeholder="0" />
+                        <Input type="number" {...field} min={0} max={365} placeholder="0" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -360,7 +360,7 @@ export default function NivelFormPage() {
           </Card>
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate("/niveles")}>
+            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>

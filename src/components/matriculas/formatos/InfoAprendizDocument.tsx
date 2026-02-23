@@ -13,9 +13,9 @@ import {
   GENEROS,
   NIVELES_EDUCATIVOS,
   AREAS_TRABAJO,
-  NIVELES_FORMACION_EMPRESA,
   PAISES,
 } from "@/data/formOptions";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -215,7 +215,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
           <FieldCell label="Nivel educativo" value={getLabel(persona?.nivelEducativo, NIVELES_EDUCATIVOS)} />
           <FieldCell label="Área de trabajo" value={getLabel(matricula.areaTrabajo, AREAS_TRABAJO)} />
           <FieldCell label="Cargo" value={matricula.empresaCargo} />
-          <FieldCell label="Nivel de formación" value={getLabel(matricula.empresaNivelFormacion, NIVELES_FORMACION_EMPRESA)} span />
+          <FieldCell label="Nivel de formación" value={resolveNivelFormacionLabel(matricula.empresaNivelFormacion)} span />
         </div>
       </div>
 

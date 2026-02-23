@@ -24,7 +24,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { TIPOS_DOCUMENTO, NIVELES_FORMACION_EMPRESA } from "@/data/formOptions";
+import { TIPOS_DOCUMENTO } from "@/data/formOptions";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react";
 
@@ -528,7 +529,7 @@ export default function EvaluacionReentrenamientoDocument({
           />
           <FieldCell
             label="Nivel de formación"
-            value={getLabel(matricula.empresaNivelFormacion, NIVELES_FORMACION_EMPRESA)}
+            value={resolveNivelFormacionLabel(matricula.empresaNivelFormacion)}
           />
           <FieldCell label="Empresa" value={matricula.empresaNombre || "Independiente"} />
         </div>

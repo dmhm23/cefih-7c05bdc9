@@ -38,7 +38,6 @@ import {
   SECTORES_ECONOMICOS,
   NIVELES_PREVIOS,
   FORMAS_PAGO,
-  NIVELES_FORMACION_EMPRESA,
   EPS_OPTIONS,
   ARL_OPTIONS,
   TIPOS_DOCUMENTO,
@@ -47,6 +46,8 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
 interface ChecklistItem {
   id: string;
@@ -472,10 +473,8 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Nivel de Formación"
                 value={getValue("empresaNivelFormacion")}
-                displayValue={getDisplayLabel(getValue("empresaNivelFormacion"), NIVELES_FORMACION_EMPRESA)}
+                displayValue={resolveNivelFormacionLabel(getValue("empresaNivelFormacion"))}
                 onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
-                type="select"
-                options={[...NIVELES_FORMACION_EMPRESA]}
               />
               <EditableField
                 label="Área de Trabajo"

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -17,23 +18,34 @@ interface CampoPreviewProps {
 }
 
 export function CampoPreview({ campo }: CampoPreviewProps) {
+  const [textValue, setTextValue] = useState("");
+  const [boolValue, setBoolValue] = useState(false);
+  const [selectedMultiple, setSelectedMultiple] = useState<string[]>([]);
+  const [selectValue, setSelectValue] = useState("");
+
+  const toggleMultiple = (op: string) => {
+    setSelectedMultiple((prev) =>
+      prev.includes(op) ? prev.filter((v) => v !== op) : [...prev, op]
+    );
+  };
+
   const renderControl = () => {
     switch (campo.tipo) {
       case "texto_corto":
-        return <Input placeholder={campo.nombre} disabled />;
+        return <Input placeholder={campo.nombre} value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "url":
-        return <Input type="url" placeholder="https://ejemplo.com" disabled />;
+        return <Input type="url" placeholder="https://ejemplo.com" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "email":
-        return <Input type="email" placeholder="correo@ejemplo.com" disabled />;
+        return <Input type="email" placeholder="correo@ejemplo.com" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "telefono":
-        return <Input type="tel" placeholder="+57 300 000 0000" disabled />;
+        return <Input type="tel" placeholder="+57 300 000 0000" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "texto_largo":
-        return <Textarea placeholder={campo.nombre} rows={2} disabled />;
+        return <Textarea placeholder={campo.nombre} rows={2} value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "numerico":
-        return <Input type="number" placeholder="0" disabled />;
+        return <Input type="number" placeholder="0" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "select":
         return (
-          <Select disabled>
+          <Select value={selectValue} onValueChange={setSelectValue}>
             <SelectTrigger>
               <SelectValue placeholder="Seleccionar..." />
             </SelectTrigger>
@@ -50,8 +62,11 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
             {(campo.opciones || []).length > 0 ? (
               campo.opciones!.map((op) => (
                 <div key={op} className="flex items-center gap-1.5">
-                  <Checkbox disabled />
-                  <Label className="text-sm text-muted-foreground">{op}</Label>
+                  <Checkbox
+                    checked={selectedMultiple.includes(op)}
+                    onCheckedChange={() => toggleMultiple(op)}
+                  />
+                  <Label className="text-sm">{op}</Label>
                 </div>
               ))
             ) : (
@@ -62,30 +77,30 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
       case "estado":
         return (
           <div className="flex items-center gap-2">
-            <Switch disabled />
-            <Label className="text-sm text-muted-foreground">Inactivo</Label>
+            <Switch checked={boolValue} onCheckedChange={setBoolValue} />
+            <Label className="text-sm">{boolValue ? "Activo" : "Inactivo"}</Label>
           </div>
         );
       case "booleano":
         return (
           <div className="flex items-center gap-2">
-            <Switch disabled />
-            <Label className="text-sm text-muted-foreground">No</Label>
+            <Switch checked={boolValue} onCheckedChange={setBoolValue} />
+            <Label className="text-sm">{boolValue ? "Sí" : "No"}</Label>
           </div>
         );
       case "fecha":
-        return <Input type="date" disabled />;
+        return <Input type="date" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "fecha_hora":
-        return <Input type="datetime-local" disabled />;
+        return <Input type="datetime-local" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "archivo":
-        return <Input type="file" disabled />;
+        return <Input type="file" />;
       default:
-        return <Input placeholder={campo.nombre} disabled />;
+        return <Input placeholder={campo.nombre} value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
     }
   };
 
   return (
-    <div className="mt-2 pointer-events-none opacity-75">
+    <div className="mt-2">
       {renderControl()}
     </div>
   );

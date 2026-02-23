@@ -1,61 +1,34 @@
 
 
-## Renderizado funcional de Campos Adicionales
+## Hacer interactivos los campos adicionales en NivelFormPage
 
-### Problema
+### Causa raiz
 
-En `/niveles/nuevo`, al guardar un campo adicional solo se muestra el nombre y un badge con el tipo ("Texto corto"), pero no se renderiza el control funcional correspondiente. En `/cursos/nuevo`, el resolver de validacion no se actualiza al cambiar de nivel.
+El componente `CampoPreview` (`src/components/niveles/CampoPreview.tsx`) renderiza todos los controles con la prop `disabled` y los envuelve en un `div` con las clases `pointer-events-none opacity-75` (linea 76). Esto bloquea toda interaccion del usuario.
 
----
+### Solucion
 
-### Cambio 1: Renderizar controles funcionales en NivelFormPage
+Modificar `CampoPreview` para que los controles sean interactivos:
 
-**Archivo:** `src/pages/niveles/NivelFormPage.tsx`
+1. **Eliminar `pointer-events-none opacity-75`** del div contenedor (linea 76).
+2. **Eliminar la prop `disabled`** de todos los controles (Input, Textarea, Switch, Select, Checkbox).
+3. **Agregar estado local** para cada tipo de control, de modo que el usuario pueda interactuar con ellos. Dado que `CampoPreview` recibe un solo campo y se monta una vez por campo, se usara `useState` interno para manejar el valor de cada control.
 
-Agregar un componente `CampoPreview` que renderice el control UI correspondiente al tipo del campo (sin conexion a react-hook-form, solo visual). Se insertara debajo de los badges y botones de cada campo en la lista.
+### Detalle tecnico
 
-El componente mapeara cada tipo a su control:
-- `texto_corto` / `url` / `email` / `telefono`: `Input` con type correspondiente
-- `texto_largo`: `Textarea`
-- `numerico`: `Input type="number"`
-- `select`: `Select` con opciones configuradas
-- `select_multiple`: checkboxes con opciones
-- `estado`: `Switch` con label Activo/Inactivo
-- `booleano`: `Switch`
-- `fecha`: `Input type="date"`
-- `fecha_hora`: `Input type="datetime-local"`
-- `archivo`: `Input type="file"`
+**Archivo:** `src/components/niveles/CampoPreview.tsx`
 
-El preview se muestra con `pointer-events-none opacity-75` para indicar que es solo una previsualizacion.
+- Agregar un `useState` generico para el valor del campo (string, boolean, string[], etc.).
+- Cada control usara `value`/`checked`/`onChange` conectados a ese estado local.
+- Para `select_multiple`, el estado sera un array de strings manejado via checkboxes con toggle.
+- Para `estado` y `booleano`, el estado sera un boolean conectado al `Switch`.
+- Para `archivo`, `Input type="file"` no necesita estado controlado, solo quitar `disabled`.
 
----
+Estos valores locales son efimeros (no se persisten); sirven para que el usuario vea y pruebe el control funcional dentro del flujo de configuracion del nivel.
 
-### Cambio 2: Corregir resolver dinamico en CursoFormPage
-
-**Archivo:** `src/pages/cursos/CursoFormPage.tsx`
-
-Reemplazar el `zodResolver(schema)` estatico y el hack de `clearErrors` por un resolver wrapper con `useRef` + `useCallback`:
-
-```typescript
-const schemaRef = useRef(schema);
-schemaRef.current = schema;
-
-const dynamicResolver = useCallback(
-  (values, context, options) => zodResolver(schemaRef.current)(values, context, options),
-  []
-);
-```
-
-Pasar `dynamicResolver` a `useForm({ resolver: dynamicResolver })`.
-
-Agregar imports de `useRef` y `useCallback`.
-
----
-
-### Archivos a modificar
+### Archivo a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/pages/niveles/NivelFormPage.tsx` | Agregar componente `CampoPreview` y renderizarlo debajo de cada campo en la lista |
-| `src/pages/cursos/CursoFormPage.tsx` | Reemplazar resolver estatico por wrapper dinamico con useRef/useCallback |
+| `src/components/niveles/CampoPreview.tsx` | Eliminar `disabled` y `pointer-events-none`, agregar estado local para interactividad |
 

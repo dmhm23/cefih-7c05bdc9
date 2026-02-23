@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.3  
-> Última actualización: 22 de Febrero 2026  
+> Versión: 1.4  
+> Última actualización: 23 de Febrero 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -15,14 +15,16 @@
 3. [Módulo de Personas](#3-módulo-de-personas)
 4. [Módulo de Matrículas](#4-módulo-de-matrículas)
 5. [Módulo de Cursos](#5-módulo-de-cursos)
-6. [Dashboard](#6-dashboard)
-7. [Componentes Compartidos](#7-componentes-compartidos)
-8. [Capa de Servicios y Datos](#8-capa-de-servicios-y-datos)
-9. [Hooks (React Query)](#9-hooks-react-query)
-10. [Relación entre Módulos](#10-relación-entre-módulos)
-11. [Catálogos y Datos de Referencia](#11-catálogos-y-datos-de-referencia)
-12. [Auditoría y Trazabilidad](#12-auditoría-y-trazabilidad)
-13. [Historial de Cambios](#13-historial-de-cambios)
+6. [Módulo de Niveles de Formación](#6-módulo-de-niveles-de-formación)
+7. [Módulo de Gestión de Personal](#7-módulo-de-gestión-de-personal)
+8. [Dashboard](#8-dashboard)
+9. [Componentes Compartidos](#9-componentes-compartidos)
+10. [Capa de Servicios y Datos](#10-capa-de-servicios-y-datos)
+11. [Hooks (React Query)](#11-hooks-react-query)
+12. [Relación entre Módulos](#12-relación-entre-módulos)
+13. [Catálogos y Datos de Referencia](#13-catálogos-y-datos-de-referencia)
+14. [Auditoría y Trazabilidad](#14-auditoría-y-trazabilidad)
+15. [Historial de Cambios](#15-historial-de-cambios)
 
 ---
 
@@ -34,13 +36,15 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca tres módulos principales:
+El sistema abarca cinco módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
 | **Personas** | Registro y gestión de datos personales, laborales y de contacto |
 | **Matrículas** | Vinculación persona-curso con gestión documental, financiera y de certificación |
 | **Cursos** | Programación, control de capacidad, calendario y estadísticas de cursos |
+| **Niveles de Formación** | Configuración dinámica de niveles, documentos requeridos y campos adicionales |
+| **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 
@@ -60,6 +64,7 @@ Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 | Formularios | React Hook Form + Zod |
 | Iconos | Lucide React |
 | Componentes UI | Radix UI (via shadcn/ui) |
+| Firma Digital | react-signature-canvas |
 
 ### 2.2 Patrón de Arquitectura: Backend Emulado
 
@@ -75,6 +80,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │                   CAPA DE SERVICIOS                       │
 │  personaService · matriculaService · cursoService        │
 │  comentarioService · documentoService · driveService     │
+│  nivelFormacionService · personalService                 │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
@@ -84,6 +90,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
 │  mockPersonas · mockMatriculas · mockCursos              │
+│  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
 │  mockComentarios · mockAuditLogs                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -103,6 +110,8 @@ src/
 │   ├── cursos/          # Componentes específicos de cursos
 │   ├── matriculas/      # Componentes específicos de matrículas
 │   │   └── formatos/    # Documentos PDF previsualizables
+│   ├── niveles/         # Componentes de niveles de formación
+│   ├── personal/        # Componentes de gestión de personal
 │   ├── personas/        # Componentes específicos de personas
 │   ├── shared/          # Componentes reutilizables
 │   └── ui/              # shadcn/ui base components
@@ -113,9 +122,12 @@ src/
 ├── pages/               # Páginas por módulo
 │   ├── cursos/
 │   ├── matriculas/
+│   ├── niveles/
+│   ├── personal/
 │   └── personas/
 ├── services/            # Capa de servicios (API emulada)
-└── types/               # Definiciones TypeScript
+├── types/               # Definiciones TypeScript
+└── utils/               # Utilidades (CSV, resolvers)
 ```
 
 ### 2.4 Enrutamiento
@@ -134,6 +146,14 @@ src/
 | `/cursos` | `CursosPage` | Listado de cursos |
 | `/cursos/nuevo` | `CursoFormPage` | Crear curso |
 | `/cursos/:id` | `CursoDetallePage` | Detalle de curso |
+| `/niveles` | `NivelesPage` | Listado de niveles de formación |
+| `/niveles/nuevo` | `NivelFormPage` | Crear nivel de formación |
+| `/niveles/:id` | `NivelDetallePage` | Detalle de nivel de formación |
+| `/niveles/:id/editar` | `NivelFormPage` | Editar nivel de formación |
+| `/gestion-personal` | `GestionPersonalPage` | Listado de personal (staff) |
+| `/gestion-personal/nuevo` | `PersonalFormPage` | Crear perfil de personal |
+| `/gestion-personal/:id` | `PersonalDetallePage` | Detalle de personal |
+| `/gestion-personal/:id/editar` | `PersonalFormPage` | Editar perfil de personal |
 
 Todas las rutas protegidas se envuelven en `MainLayout` que provee el sidebar de navegación.
 
@@ -626,9 +646,250 @@ Listado (/cursos)
 
 ---
 
-## 6. Dashboard
+## 6. Módulo de Niveles de Formación
 
-### 6.1 Métricas Globales
+### 6.1 Entidad: `NivelFormacion`
+
+Permite configurar dinámicamente los niveles de formación del centro, definiendo documentos requeridos y campos adicionales personalizados.
+
+```typescript
+interface NivelFormacion {
+  id: string;
+  nombreNivel: string;
+  duracionHoras?: number;
+  duracionDias?: number;
+  documentosRequeridos: string[];         // Claves del catálogo CATALOGO_DOCUMENTOS
+  camposAdicionales?: CampoAdicional[];   // Campos personalizados configurables
+  observaciones?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### 6.2 Campos Adicionales
+
+El sistema permite agregar campos personalizados a cada nivel de formación. Cada campo tiene las siguientes propiedades:
+
+```typescript
+interface CampoAdicional {
+  id: string;
+  nombre: string;
+  tipo: TipoCampoAdicional;    // 12 tipos disponibles
+  obligatorio: boolean;
+  opciones?: string[];          // Solo para select / select_multiple
+  alcance: AlcanceCampo;        // 'solo_nivel' | 'todos_los_niveles'
+}
+```
+
+**Tipos de campo disponibles:**
+
+| Tipo | Etiqueta | Descripción |
+|------|----------|-------------|
+| `texto_corto` | Texto corto | Input de texto simple |
+| `texto_largo` | Texto largo | Textarea |
+| `numerico` | Campo numérico | Input numérico |
+| `select` | Lista desplegable | Select con opciones configurables |
+| `select_multiple` | Select múltiple | Selección múltiple con opciones configurables |
+| `estado` | Estado (activo/inactivo) | Switch booleano |
+| `fecha` | Fecha | Date picker |
+| `fecha_hora` | Fecha y hora | DateTime picker |
+| `booleano` | Campo booleano (switch) | Toggle on/off |
+| `archivo` | Subida de archivo | File upload |
+| `url` | URL | Input de URL |
+| `telefono` | Teléfono | Input de teléfono |
+| `email` | Correo electrónico | Input de email |
+
+### 6.3 Catálogo de Documentos Requeridos
+
+| Clave | Documento |
+|-------|-----------|
+| `cedula` | Cédula de Ciudadanía |
+| `examen_medico` | Examen Médico Ocupacional |
+| `certificado_eps` | Certificado EPS |
+| `arl` | Afiliación ARL |
+| `planilla_seguridad_social` | Planilla de Seguridad Social |
+| `curso_previo` | Certificado de Curso Previo |
+
+### 6.4 Operaciones y Reglas de Negocio
+
+| Operación | Regla de Negocio |
+|-----------|-----------------|
+| **Crear** | Genera nivel con documentos y campos opcionales. Audita creación. |
+| **Buscar** | Búsqueda por nombre del nivel. Requiere 2+ caracteres. |
+| **Editar** | Actualización parcial. Registra campos modificados en auditoría. |
+| **Eliminar** | Registra auditoría antes de eliminar. |
+| **Gestión de campos adicionales** | CRUD individual sobre campos del array `camposAdicionales` (`addCampoAdicional`, `updateCampoAdicional`, `deleteCampoAdicional`). |
+
+### 6.5 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `NivelesPage` | Tabla con búsqueda, columnas configurables y acciones por fila |
+| `NivelDetallePage` | Vista de detalle con información del nivel, documentos y campos adicionales |
+| `NivelFormPage` | Formulario de creación/edición con selección de documentos |
+| `CampoAdicionalModal` | Modal para crear/editar campos adicionales con preview en tiempo real |
+| `CampoPreview` | Vista previa del campo según su tipo configurado |
+
+### 6.6 Flujo Funcional
+
+```
+Listado (/niveles)
+  ├── [Buscar] → Filtrar por nombre
+  ├── [+ Nuevo Nivel] → /niveles/nuevo
+  │     ├── Nombre, duración (horas/días)
+  │     ├── Seleccionar documentos requeridos (checklist)
+  │     ├── Observaciones opcionales
+  │     └── Guardar → Redirigir a listado
+  ├── [Clic en fila] → /niveles/:id
+  │     ├── Ver documentos requeridos
+  │     ├── Gestionar campos adicionales
+  │     │   ├── [+ Agregar campo] → Modal CampoAdicionalModal
+  │     │   ├── [Editar campo] → Modal con datos prellenados
+  │     │   └── [Eliminar campo] → Confirmación
+  │     └── [Editar nivel] → /niveles/:id/editar
+  └── [Eliminar] → Confirmación → Eliminar
+```
+
+---
+
+## 7. Módulo de Gestión de Personal
+
+### 7.1 Propósito
+
+Centraliza la administración de perfiles de **staff interno** del centro de formación (entrenadores, supervisores, administrativos, instructores, etc.). Sustituye las listas estáticas previas del formulario de Cursos, permitiendo que los selectores de entrenador y supervisor consuman registros dinámicos filtrados por tipo de cargo.
+
+### 7.2 Entidad: `Personal`
+
+```typescript
+interface Personal {
+  id: string;
+  nombres: string;
+  apellidos: string;
+  cargoId: string;
+  cargoNombre: string;
+  firmaBase64?: string;          // Firma digital en Base64 (PNG)
+  adjuntos: AdjuntoPersonal[];   // Documentos adjuntos
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### 7.3 Entidad: `Cargo`
+
+```typescript
+interface Cargo {
+  id: string;
+  nombre: string;               // Único (validación case-insensitive)
+  tipo: TipoCargo;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type TipoCargo = 'entrenador' | 'supervisor' | 'administrativo' | 'instructor' | 'otro';
+```
+
+### 7.4 Entidad: `AdjuntoPersonal`
+
+```typescript
+interface AdjuntoPersonal {
+  id: string;
+  nombre: string;      // Nombre del archivo
+  tipo: string;        // MIME type
+  tamano: number;      // Tamaño en bytes
+  fechaCarga: string;  // ISO datetime
+  dataUrl?: string;    // Base64 data URL (almacenamiento mock)
+}
+```
+
+### 7.5 Firma Digital
+
+El componente `FirmaPersonal` ofrece dos modos de captura:
+
+| Modo | Descripción |
+|------|-------------|
+| **Dibujar** | Canvas interactivo usando `react-signature-canvas`. Permite limpiar y guardar. |
+| **Cargar PNG** | Subida de archivo de imagen (PNG, JPEG, WebP). Se recomienda PNG con fondo transparente. |
+
+**Comportamiento:**
+- Si ya existe firma: muestra la imagen con indicador "Firma registrada" y botón para eliminar.
+- Si no existe: muestra las pestañas Dibujar / Cargar PNG.
+- La firma es **opcional** tanto en la creación como en la edición del perfil.
+- La firma centralizada es la fuente única para formatos de Matrículas (entrenador/supervisor).
+
+### 7.6 Documentos Adjuntos
+
+El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja de vida, contratos, certificaciones, etc.):
+
+- **Carga**: Archivos de hasta 10MB. Lectura como DataURL para almacenamiento mock.
+- **Previsualización inline**: Para imágenes y PDFs.
+- **Descarga**: Botón de descarga individual.
+- **Eliminación**: Con confirmación.
+- Los adjuntos son **opcionales** y pueden cargarse durante la creación o posteriormente.
+
+### 7.7 Operaciones y Reglas de Negocio
+
+#### Personal
+
+| Operación | Regla de Negocio |
+|-----------|-----------------|
+| **Crear** | Crea perfil con datos básicos. Opcionalmente acepta firma y adjuntos (se suben secuencialmente tras crear el registro). |
+| **Editar** | Actualización parcial. Registra campos modificados en auditoría. |
+| **Eliminar** | Registra auditoría antes de eliminar. |
+| **Filtrar por tipo de cargo** | `getByTipoCargo(tipo)` filtra personal cuyos cargos correspondan al tipo solicitado. |
+| **Actualizar firma** | `updateFirma(id, base64)` almacena la firma. Audita el cambio. |
+| **Eliminar firma** | `deleteFirma(id)` pone `firmaBase64 = undefined`. Audita el cambio. |
+| **Agregar adjunto** | `addAdjunto(personalId, file)` lee el archivo como DataURL y lo agrega al array. |
+| **Eliminar adjunto** | `deleteAdjunto(personalId, adjuntoId)` remueve del array. |
+
+#### Cargos
+
+| Operación | Regla de Negocio |
+|-----------|-----------------|
+| **Crear** | Valida **unicidad del nombre** (case-insensitive). Lanza `ApiError` con código `CARGO_DUPLICADO`. |
+| **Editar** | Valida unicidad del nombre excluyendo el registro actual. |
+| **Eliminar** | **No se puede eliminar** si hay personal asignado al cargo. Lanza `ApiError` con código `CARGO_EN_USO`. |
+
+### 7.8 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `GestionPersonalPage` | Tabla principal con búsqueda, columnas configurables, panel lateral y acciones por fila |
+| `PersonalFormPage` | Formulario de creación/edición con secciones opcionales de firma y adjuntos |
+| `PersonalDetallePage` | Vista de detalle en pantalla completa (3 columnas: datos, adjuntos, firma) |
+| `PersonalDetailSheet` | Panel lateral con datos del perfil, adjuntos y firma (gestión en tiempo real) |
+| `FirmaPersonal` | Componente de captura de firma (dibujo o carga de imagen) |
+| `AdjuntosPersonal` | Gestión de documentos adjuntos con preview, descarga y eliminación |
+| `GestionCargosModal` | Modal para CRUD de cargos accesible desde el formulario de personal |
+
+### 7.9 Flujo Funcional
+
+```
+Listado (/gestion-personal)
+  ├── [Buscar] → Filtrar por nombre o cargo
+  ├── [+ Nuevo Perfil] → /gestion-personal/nuevo
+  │     ├── Datos básicos (nombres, apellidos, cargo)
+  │     ├── [Gestionar Cargos] → Modal GestionCargosModal
+  │     ├── Documentos Adjuntos (opcional)
+  │     ├── Firma Digital (opcional, dibujar o cargar)
+  │     └── Guardar → Crear perfil → Subir firma y adjuntos → Redirigir
+  ├── [Clic en fila] → Panel lateral (PersonalDetailSheet)
+  │     ├── Ver datos del perfil
+  │     ├── Gestionar adjuntos (agregar/eliminar en tiempo real)
+  │     ├── Gestionar firma (capturar/eliminar en tiempo real)
+  │     └── [Pantalla completa] → /gestion-personal/:id
+  └── [Eliminar] → Confirmación → Eliminar perfil
+
+Integración con Cursos:
+  └── Formulario de Curso (/cursos/nuevo o /cursos/:id/editar)
+      ├── Selector "Entrenador" → Consume personal filtrado por tipo 'entrenador'
+      └── Selector "Supervisor" → Consume personal filtrado por tipo 'supervisor'
+```
+
+---
+
+## 8. Dashboard
+
+### 8.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|
@@ -637,7 +898,7 @@ Listado (/cursos)
 | **Total Cursos** | `cursos.length` + activos (`estado === 'abierto' \|\| 'en_progreso'`) |
 | **Tasa de Certificación** | `(certificadas + completas) / total * 100` |
 
-### 6.2 Secciones
+### 8.2 Secciones
 
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.
@@ -645,9 +906,9 @@ Listado (/cursos)
 
 ---
 
-## 7. Componentes Compartidos
+## 9. Componentes Compartidos
 
-### 7.1 DataTable
+### 9.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.
@@ -660,7 +921,7 @@ Tabla genérica reutilizable con:
 - Columnas configurables (`ColumnSelector`)
 - Toolbar con búsqueda y filtros (`TableToolbar`)
 
-### 7.2 DetailSheet
+### 9.2 DetailSheet
 
 Panel lateral deslizable (Sheet de Radix UI) con:
 - Título y subtítulo
@@ -670,7 +931,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Footer configurable (para botones de guardar/cancelar)
 - **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
-### 7.3 EditableField
+### 9.3 EditableField
 
 Campo editable inline que soporta:
 - **Tipos**: `text`, `select`, `date`
@@ -679,7 +940,7 @@ Campo editable inline que soporta:
 - **Badge mode**: Muestra valor como Badge
 - **Opciones**: Array de `{ value, label }` para selects
 
-### 7.4 ComentariosSection
+### 9.4 ComentariosSection
 
 Sistema de comentarios con:
 - Historial cronológico (más recientes primero)
@@ -689,7 +950,7 @@ Sistema de comentarios con:
 - Registro de usuario y timestamp
 - Indicador de "editado" con fecha
 
-### 7.5 Otros Componentes Compartidos
+### 9.5 Otros Componentes Compartidos
 
 | Componente | Descripción |
 |------------|-------------|
@@ -704,9 +965,9 @@ Sistema de comentarios con:
 
 ---
 
-## 8. Capa de Servicios y Datos
+## 10. Capa de Servicios y Datos
 
-### 8.1 Servicios
+### 10.1 Servicios
 
 #### `api.ts` — Utilidades Base
 
@@ -762,6 +1023,39 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `agregarEstudiantes(cId, mIds)` | Agregar matrículas al curso | Existencia, filtra duplicados |
 | `removerEstudiante(cId, mId)` | Remover matrícula del curso | Existencia |
 
+#### `nivelFormacionService.ts`
+
+| Método | Descripción | Validación |
+|--------|-------------|------------|
+| `getAll()` | Todos los niveles de formación | — |
+| `getById(id)` | Nivel por ID | — |
+| `search(query)` | Buscar por nombre del nivel | — |
+| `create(data)` | Crear nivel | Auditoría |
+| `update(id, data)` | Actualización parcial | Existencia, auditoría |
+| `delete(id)` | Eliminar nivel | Existencia, auditoría |
+| `addCampoAdicional(nId, campo)` | Agregar campo adicional al nivel | Existencia del nivel |
+| `updateCampoAdicional(nId, cId, data)` | Editar campo adicional | Existencia de ambos |
+| `deleteCampoAdicional(nId, cId)` | Eliminar campo adicional | Existencia de ambos |
+
+#### `personalService.ts`
+
+| Método | Descripción | Validación |
+|--------|-------------|------------|
+| `getAll()` | Todo el personal | — |
+| `getById(id)` | Personal por ID | — |
+| `getByTipoCargo(tipo)` | Personal filtrado por tipo de cargo | — |
+| `create(data)` | Crear perfil de personal | Auditoría |
+| `update(id, data)` | Actualización parcial | Existencia, auditoría |
+| `delete(id)` | Eliminar perfil | Existencia, auditoría |
+| `updateFirma(id, base64)` | Guardar firma digital del personal | Existencia, auditoría |
+| `deleteFirma(id)` | Eliminar firma digital | Existencia, auditoría |
+| `addAdjunto(personalId, file)` | Agregar documento adjunto (lectura como DataURL) | Existencia, auditoría |
+| `deleteAdjunto(personalId, adjuntoId)` | Eliminar documento adjunto | Existencia de ambos, auditoría |
+| `getAllCargos()` | Todos los cargos | — |
+| `createCargo(data)` | Crear cargo | Unicidad de nombre |
+| `updateCargo(id, data)` | Editar cargo | Existencia, unicidad de nombre |
+| `deleteCargo(id)` | Eliminar cargo | No eliminar si tiene personal asignado (`CARGO_EN_USO`) |
+
 #### `comentarioService.ts`
 
 | Método | Descripción |
@@ -784,7 +1078,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `uploadDocumento(mId, tipo, file, meta)` | Simula subida individual a Google Drive. Retorna URL ficticia. |
 | `uploadConsolidado(mId, file, tipos, meta)` | Simula subida de PDF consolidado. Retorna URL + tipos incluidos. |
 
-### 8.2 Datos Mock (`mockData.ts`)
+### 10.2 Datos Mock (`mockData.ts`)
 
 Arrays exportados mutables que sirven como "base de datos" en memoria:
 
@@ -793,14 +1087,17 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `mockPersonas` | 4 personas con datos completos |
 | `mockCursos` | 7 cursos en distintos estados |
 | `mockMatriculas` | 4 matrículas con distintos niveles de completitud |
+| `mockNivelesFormacion` | Niveles de formación precargados |
+| `mockPersonalStaff` | Perfiles de personal con adjuntos inicializados |
+| `mockCargos` | Cargos precargados (Entrenador, Supervisor, etc.) |
 | `mockComentarios` | 3 comentarios de ejemplo en 2 secciones |
-| `mockAuditLogs` | 3 logs iniciales de ejemplo |
+| `mockAuditLogs` | Logs iniciales de ejemplo |
 
 ---
 
-## 9. Hooks (React Query)
+## 11. Hooks (React Query)
 
-### 9.1 Hooks de Personas (`usePersonas.ts`)
+### 11.1 Hooks de Personas (`usePersonas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -812,7 +1109,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdatePersona()` | Mutation | Invalida `['personas']`, `['persona', id]` | Actualizar persona |
 | `useDeletePersona()` | Mutation | Invalida `['personas']` | Eliminar persona |
 
-### 9.2 Hooks de Matrículas (`useMatriculas.ts`)
+### 11.2 Hooks de Matrículas (`useMatriculas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -831,7 +1128,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useDeleteMatricula()` | Mutation | Invalida matrículas + cursos | Eliminar matrícula |
 | `useUploadDocumento()` | Mutation | Invalida matrícula + matrículas | Subir documento (Drive + updateDocumento) |
 
-### 9.3 Hooks de Cursos (`useCursos.ts`)
+### 11.3 Hooks de Cursos (`useCursos.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -847,7 +1144,37 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useAgregarEstudiantesCurso()` | Mutation | Invalida cursos + curso + matrículas | Agregar estudiantes |
 | `useRemoverEstudianteCurso()` | Mutation | Invalida cursos + curso + matrículas | Remover estudiante |
 
-### 9.4 Hooks de Comentarios (`useComentarios.ts`)
+### 11.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useNivelesFormacion()` | Query | `['niveles-formacion']` | Todos los niveles |
+| `useNivelFormacion(id)` | Query | `['nivel-formacion', id]` | Nivel por ID |
+| `useSearchNiveles(query)` | Query | `['niveles-formacion', 'search', query]` | Buscar niveles (2+ chars) |
+| `useCreateNivelFormacion()` | Mutation | Invalida `['niveles-formacion']` | Crear nivel |
+| `useUpdateNivelFormacion()` | Mutation | Invalida niveles + nivel específico | Actualizar nivel |
+| `useDeleteNivelFormacion()` | Mutation | Invalida `['niveles-formacion']` | Eliminar nivel |
+
+### 11.5 Hooks de Personal (`usePersonal.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `usePersonalList()` | Query | `['personal']` | Todo el personal |
+| `usePersonal(id)` | Query | `['personal', id]` | Personal por ID |
+| `usePersonalByTipoCargo(tipo)` | Query | `['personal', 'tipoCargo', tipo]` | Personal filtrado por tipo de cargo |
+| `useCreatePersonal()` | Mutation | Invalida `['personal']` | Crear perfil |
+| `useUpdatePersonal()` | Mutation | Invalida personal + perfil específico | Actualizar perfil |
+| `useDeletePersonal()` | Mutation | Invalida `['personal']` | Eliminar perfil |
+| `useUpdateFirma()` | Mutation | Invalida personal + perfil específico | Guardar firma digital |
+| `useDeleteFirma()` | Mutation | Invalida personal + perfil específico | Eliminar firma digital |
+| `useAddAdjunto()` | Mutation | Invalida personal + perfil específico | Agregar documento adjunto |
+| `useDeleteAdjunto()` | Mutation | Invalida personal + perfil específico | Eliminar documento adjunto |
+| `useCargos()` | Query | `['cargos']` | Todos los cargos |
+| `useCreateCargo()` | Mutation | Invalida `['cargos']` | Crear cargo |
+| `useUpdateCargo()` | Mutation | Invalida `['cargos']` | Editar cargo |
+| `useDeleteCargo()` | Mutation | Invalida `['cargos']` | Eliminar cargo |
+
+### 11.6 Hooks de Comentarios (`useComentarios.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -858,9 +1185,9 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 
 ---
 
-## 10. Relación entre Módulos
+## 12. Relación entre Módulos
 
-### 10.1 Diagrama de Entidades
+### 12.1 Diagrama de Entidades
 
 ```
 ┌──────────┐     1:N     ┌────────────┐     N:1     ┌──────────┐
@@ -871,33 +1198,35 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 │ apellidos│             │ estado     │             │ estado   │
 │ documento│             │ documentos │             │ matrIds  │
 │ ...      │             │ pagado     │             │ ...      │
-└──────────┘             │ ...        │             └──────────┘
-                         └─────┬──────┘
-                               │ 1:N
-                    ┌──────────┴───────────┐
-                    │                      │
-              ┌─────▼─────┐         ┌──────▼─────┐
-              │ Documento │         │ Comentario │
-              │ Requerido │         │            │
-              │           │         │ seccion    │
-              │ tipo      │         │ texto      │
-              │ estado    │         │ usuario    │
+└──────────┘             │ ...        │             └────┬─────┘
+                         └─────┬──────┘                  │
+                               │ 1:N                     │ N:1 (entrenador/supervisor)
+                    ┌──────────┴───────────┐       ┌─────▼─────┐     N:1     ┌──────────┐
+                    │                      │       │ Personal  │─────────────│  Cargo   │
+              ┌─────▼─────┐         ┌──────▼─────┐│           │             │          │
+              │ Documento │         │ Comentario ││ nombres   │             │ nombre   │
+              │ Requerido │         │            ││ apellidos │             │ tipo     │
+              │           │         │ seccion    ││ firmaB64  │             └──────────┘
+              │ tipo      │         │ texto      ││ adjuntos  │
+              │ estado    │         │ usuario    │└───────────┘
               │ fechas    │         │ timestamp  │
               └───────────┘         └────────────┘
 
-                    ┌─────────────────────┐
-                    │     AuditLog        │
-                    │                     │
-                    │ entidadTipo         │ ← persona | matricula | curso | comentario
-                    │ entidadId           │
-                    │ accion              │ ← crear | editar | eliminar
-                    │ camposModificados   │
-                    │ valorAnterior/Nuevo │
-                    │ usuario + timestamp │
-                    └─────────────────────┘
+┌──────────────────┐                    ┌─────────────────────┐
+│ NivelFormacion   │                    │     AuditLog        │
+│                  │                    │                     │
+│ nombreNivel      │                    │ entidadTipo         │ ← persona | matricula | curso |
+│ duracionHoras    │                    │                     │   comentario | nivel_formacion |
+│ documentosReq    │                    │                     │   personal | cargo
+│ camposAdicionales│                    │ entidadId           │
+│ observaciones    │                    │ accion              │ ← crear | editar | eliminar
+└──────────────────┘                    │ camposModificados   │
+                                        │ valorAnterior/Nuevo │
+                                        │ usuario + timestamp │
+                                        └─────────────────────┘
 ```
 
-### 10.2 Relaciones
+### 12.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|
@@ -905,9 +1234,11 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | Curso → Matrícula | 1:N | Un curso contiene múltiples matrículas/estudiantes |
 | Matrícula → Documento | 1:N | Cada matrícula tiene documentos requeridos dinámicos |
 | Matrícula → Comentario | 1:N | Comentarios por sección (cartera, observaciones) |
+| Curso → Personal | N:1 | Un curso referencia un entrenador y opcionalmente un supervisor del módulo de Personal |
+| Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 10.3 Interacciones entre Módulos
+### 12.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.
@@ -915,11 +1246,13 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 4. **Remover estudiante de curso** → Limpia `cursoId` de la matrícula (pone `''`).
 5. **Cerrar curso** → Verifica que no haya matrículas pendientes/creadas.
 6. **Eliminar curso** → Verifica que no tenga matrículas asociadas.
-7. **Dashboard** → Consume datos de los tres módulos para calcular métricas globales.
+7. **Crear/editar curso** → Selecciona entrenador y supervisor desde el módulo de Personal (filtrado por tipo de cargo).
+8. **Formatos de matrículas** → Consultan firma digital del entrenador/supervisor desde Personal para insertar en documentos generados.
+9. **Dashboard** → Consume datos de los tres módulos principales para calcular métricas globales.
 
 ---
 
-## 11. Catálogos y Datos de Referencia
+## 13. Catálogos y Datos de Referencia
 
 Definidos en `src/data/formOptions.ts`:
 
@@ -938,17 +1271,20 @@ Definidos en `src/data/formOptions.ts`:
 | `FORMAS_PAGO` | Efectivo, Transferencia, Consignación, Tarjeta, Otro | Forma de pago |
 | `EPS_OPTIONS` | 25 EPS colombianas + "Otra" | Entidad Promotora de Salud |
 | `ARL_OPTIONS` | 11 ARL colombianas + "Otra" | Administradora de Riesgos Laborales |
+| `TIPOS_CARGO` | Entrenador, Supervisor, Administrativo, Instructor, Otro | Tipo de cargo de personal |
+| `CATALOGO_DOCUMENTOS` | 6 tipos de documentos requeridos para niveles de formación | Documentos requeridos configurables |
+| `TIPOS_CAMPO_LABELS` | 12 tipos de campo adicional con etiquetas | Tipos de campos personalizados |
 
 ---
 
-## 12. Auditoría y Trazabilidad
+## 14. Auditoría y Trazabilidad
 
-### 12.1 Entidad: `AuditLog`
+### 14.1 Entidad: `AuditLog`
 
 ```typescript
 interface AuditLog {
   id: string;
-  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario';
+  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo';
   entidadId: string;
   accion: 'crear' | 'editar' | 'eliminar';
   camposModificados?: string[];           // Solo en ediciones
@@ -960,7 +1296,7 @@ interface AuditLog {
 }
 ```
 
-### 12.2 Eventos Auditados
+### 14.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|
@@ -968,16 +1304,21 @@ interface AuditLog {
 | Matrícula | ✓ | ✓ (con diff) | ✗ |
 | Curso | ✓ | ✓ (con diff, incluye gestión de estudiantes) | ✗ |
 | Comentario | ✓ | ✓ (con diff de texto) | ✓ |
+| Nivel de Formación | ✓ | ✓ (con diff) | ✓ |
+| Personal | ✓ | ✓ (incluye firma y adjuntos) | ✓ |
+| Cargo | ✓ | ✓ (con diff) | ✓ |
 
-### 12.3 Cobertura de Auditoría
+### 14.3 Cobertura de Auditoría
 
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.
 - **Edición de campos**: Se registra el objeto completo anterior y los campos nuevos modificados.
+- **Firma digital de personal**: Se registra como edición con `camposModificados: ['firmaBase64']`.
+- **Adjuntos de personal**: Se registra como edición con `camposModificados: ['adjuntos']`.
 
 ---
 
-## 13. Historial de Cambios
+## 15. Historial de Cambios
 
 ### v1.2 — 20 de Febrero 2026
 
@@ -1056,6 +1397,54 @@ interface AuditLog {
 - `src/components/cursos/CursosListView.tsx`
 - `src/pages/personas/PersonasPage.tsx`
 - `src/pages/matriculas/MatriculasPage.tsx`
+
+---
+
+### v1.4 — 23 de Febrero 2026
+
+#### Módulo de Niveles de Formación
+
+Nuevo módulo completo para configurar dinámicamente los niveles de formación del centro:
+
+- **Entidad `NivelFormacion`**: nombre, duración (horas/días), documentos requeridos (del catálogo), campos adicionales personalizados y observaciones.
+- **Campos Adicionales (`CampoAdicional`)**: 12 tipos de campo (texto, numérico, select, fecha, booleano, archivo, URL, etc.) con soporte de alcance (`solo_nivel` / `todos_los_niveles`) y opciones configurables para selects.
+- **CRUD completo**: Crear, editar, eliminar niveles con auditoría. Gestión individual de campos adicionales dentro de cada nivel.
+- **Componentes**: `NivelesPage` (tabla con búsqueda), `NivelDetallePage`, `NivelFormPage`, `CampoAdicionalModal` (con preview en tiempo real), `CampoPreview`.
+
+**Archivos creados/modificados:**
+- `src/types/nivelFormacion.ts`
+- `src/services/nivelFormacionService.ts`
+- `src/hooks/useNivelesFormacion.ts`
+- `src/pages/niveles/NivelesPage.tsx`, `NivelDetallePage.tsx`, `NivelFormPage.tsx`
+- `src/components/niveles/CampoAdicionalModal.tsx`, `CampoPreview.tsx`
+
+#### Módulo de Gestión de Personal
+
+Nuevo módulo completo para administrar perfiles de staff interno del centro de formación:
+
+- **Entidades**: `Personal` (perfil con firma y adjuntos), `Cargo` (nombre único + tipo), `AdjuntoPersonal` (archivo con metadata).
+- **Tipos de cargo**: Entrenador, Supervisor, Administrativo, Instructor, Otro.
+- **Firma digital**: Componente `FirmaPersonal` con dos modos (dibujo con `react-signature-canvas` y carga de imagen PNG). Opcional en creación y edición.
+- **Documentos adjuntos**: Componente `AdjuntosPersonal` para gestión de archivos (hoja de vida, contratos, etc.) con preview inline, descarga y eliminación. Opcional en creación y edición.
+- **Formulario de creación**: Permite opcionalmente adjuntar documentos y capturar firma durante la creación del perfil. Los archivos se suben secuencialmente tras crear el registro base.
+- **Panel lateral (DetailSheet)**: Muestra datos del perfil, adjuntos y firma con gestión en tiempo real desde el listado principal.
+- **Gestión de cargos**: Modal `GestionCargosModal` con CRUD de cargos, validación de unicidad de nombre y protección contra eliminación de cargos en uso.
+- **Integración con Cursos**: Los selectores de entrenador y supervisor en el formulario de cursos consumen registros de personal filtrados por tipo de cargo.
+- **Integración con Matrículas**: La firma centralizada del personal es la fuente para los formatos de documentos generados (firma del entrenador/supervisor).
+
+**Archivos creados/modificados:**
+- `src/types/personal.ts`
+- `src/services/personalService.ts`
+- `src/hooks/usePersonal.ts`
+- `src/pages/personal/GestionPersonalPage.tsx`, `PersonalDetallePage.tsx`, `PersonalFormPage.tsx`
+- `src/components/personal/FirmaPersonal.tsx`, `AdjuntosPersonal.tsx`, `PersonalDetailSheet.tsx`, `GestionCargosModal.tsx`
+
+#### Actualizaciones generales
+
+- **Sidebar de navegación**: Nuevas entradas "Gestión de Personal" y "Niveles de Formación" en `AppSidebar`.
+- **Enrutamiento**: 8 nuevas rutas para los módulos de Niveles y Personal.
+- **Auditoría ampliada**: `TipoEntidad` extendido con `'nivel_formacion' | 'personal' | 'cargo'`. Todas las operaciones CRUD de los nuevos módulos generan logs de auditoría.
+- **Datos mock**: Nuevos arrays `mockNivelesFormacion`, `mockPersonalStaff` y `mockCargos` en `mockData.ts`.
 
 ---
 

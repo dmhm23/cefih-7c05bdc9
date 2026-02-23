@@ -1,12 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, FileText, Clock } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, FileText, Clock, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useNivelFormacion, useDeleteNivelFormacion } from "@/hooks/useNivelesFormacion";
-import { CATALOGO_DOCUMENTOS } from "@/types/nivelFormacion";
+import { CATALOGO_DOCUMENTOS, TIPOS_CAMPO_LABELS } from "@/types/nivelFormacion";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -55,6 +55,8 @@ export default function NivelDetallePage() {
     return found ? found.label : key;
   };
 
+  const campos = nivel.camposAdicionales || [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -96,15 +98,57 @@ export default function NivelDetallePage() {
                   <p className="text-xs text-muted-foreground">Última actualización</p>
                   <p className="font-medium">{format(new Date(nivel.updatedAt), "dd/MM/yyyy HH:mm")}</p>
                 </div>
-                {nivel.camposAdicionales?.map((campo, i) => (
-                  <div key={i}>
-                    <p className="text-xs text-muted-foreground">{campo.nombre}</p>
-                    <p className="font-medium">{campo.valor || "—"}</p>
-                  </div>
-                ))}
               </div>
             </CardContent>
           </Card>
+
+          {campos.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Campos Adicionales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {campos.map((campo) => (
+                    <div key={campo.id} className="py-2.5 px-3 rounded-md border space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium">{campo.nombre}</span>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {TIPOS_CAMPO_LABELS[campo.tipo]}
+                        </Badge>
+                        {campo.obligatorio && (
+                          <Badge variant="default" className="text-[10px]">Obligatorio</Badge>
+                        )}
+                        {campo.alcance === "todos_los_niveles" && (
+                          <Badge variant="outline" className="text-[10px]">Global</Badge>
+                        )}
+                      </div>
+                      {campo.valorPorDefecto && (
+                        <p className="text-xs text-muted-foreground">
+                          Valor por defecto: <span className="font-medium text-foreground">{campo.valorPorDefecto}</span>
+                        </p>
+                      )}
+                      {campo.opciones && campo.opciones.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          {campo.opciones.map((op, i) => (
+                            <Badge key={i} variant="outline" className="text-[10px] font-normal">
+                              {op}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Badge variant="secondary" className="mt-3">
+                  {campos.length} campo{campos.length !== 1 ? 's' : ''} adicional{campos.length !== 1 ? 'es' : ''}
+                </Badge>
+              </CardContent>
+            </Card>
+          )}
 
           {nivel.observaciones && (
             <Card>

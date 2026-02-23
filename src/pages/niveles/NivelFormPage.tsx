@@ -1,14 +1,15 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -26,16 +27,16 @@ import {
 } from "@/components/ui/dialog";
 import { useNivelFormacion, useCreateNivelFormacion, useUpdateNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { CATALOGO_DOCUMENTOS } from "@/types/nivelFormacion";
+import { CATALOGO_DOCUMENTOS, TIPOS_CAMPO_LABELS, CampoAdicional } from "@/types/nivelFormacion";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CampoAdicionalModal } from "@/components/niveles/CampoAdicionalModal";
 
 const nivelSchema = z.object({
   nombreNivel: z.string().min(1, "El nombre es obligatorio"),
   duracionDias: z.coerce.number().min(0).optional(),
   duracionHoras: z.coerce.number().min(0).optional(),
   documentosRequeridos: z.array(z.string()),
-  camposAdicionales: z.array(z.object({ nombre: z.string().min(1, "Requerido"), valor: z.string() })).optional(),
   observaciones: z.string().optional(),
 }).refine(
   (data) => (data.duracionDias && data.duracionDias > 0) || (data.duracionHoras && data.duracionHoras > 0),
@@ -52,6 +53,11 @@ export default function NivelFormPage() {
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [newDocName, setNewDocName] = useState("");
 
+  // Campos adicionales as local state
+  const [camposAdicionales, setCamposAdicionales] = useState<CampoAdicional[]>([]);
+  const [showCampoModal, setShowCampoModal] = useState(false);
+  const [editingCampo, setEditingCampo] = useState<CampoAdicional | null>(null);
+
   const { data: nivel, isLoading } = useNivelFormacion(id || "");
   const createNivel = useCreateNivelFormacion();
   const updateNivel = useUpdateNivelFormacion();
@@ -66,31 +72,24 @@ export default function NivelFormPage() {
       duracionDias: undefined,
       duracionHoras: undefined,
       documentosRequeridos: [],
-      camposAdicionales: [],
       observaciones: "",
     },
   });
 
-  const { fields: camposFields, append: appendCampo, remove: removeCampo } = useFieldArray({
-    control: form.control,
-    name: "camposAdicionales",
-  });
-
   useEffect(() => {
     if (isEdit && nivel) {
-      // Detect custom docs from saved data
       const catalogKeys = CATALOGO_DOCUMENTOS.map(d => d.key as string);
       const savedCustom = nivel.documentosRequeridos
         .filter(key => !catalogKeys.includes(key))
         .map(key => ({ key, label: key }));
       setCustomDocs(savedCustom);
+      setCamposAdicionales(nivel.camposAdicionales || []);
 
       form.reset({
         nombreNivel: nivel.nombreNivel,
         duracionDias: nivel.duracionDias,
         duracionHoras: nivel.duracionHoras,
         documentosRequeridos: nivel.documentosRequeridos,
-        camposAdicionales: nivel.camposAdicionales || [],
         observaciones: nivel.observaciones || "",
       });
     }
@@ -112,7 +111,7 @@ export default function NivelFormPage() {
         duracionDias: data.duracionDias,
         duracionHoras: data.duracionHoras,
         documentosRequeridos: data.documentosRequeridos,
-        camposAdicionales: (data.camposAdicionales || []).map(c => ({ nombre: c.nombre, valor: c.valor })),
+        camposAdicionales,
         observaciones: data.observaciones,
       };
 
@@ -145,7 +144,6 @@ export default function NivelFormPage() {
   const handleAddCustomDoc = () => {
     const trimmed = newDocName.trim();
     if (!trimmed) return;
-    // Check duplicates
     const allKeys = [...CATALOGO_DOCUMENTOS.map(d => d.key), ...customDocs.map(d => d.key)];
     if (allKeys.includes(trimmed)) {
       toast({ title: "Ese documento ya existe", variant: "destructive" });
@@ -162,6 +160,28 @@ export default function NivelFormPage() {
     setCustomDocs(prev => prev.filter(d => d.key !== key));
     const current = form.getValues("documentosRequeridos");
     form.setValue("documentosRequeridos", current.filter(d => d !== key), { shouldValidate: true });
+  };
+
+  const handleSaveCampo = (campo: CampoAdicional) => {
+    setCamposAdicionales((prev) => {
+      const idx = prev.findIndex((c) => c.id === campo.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = campo;
+        return updated;
+      }
+      return [...prev, campo];
+    });
+    setEditingCampo(null);
+  };
+
+  const handleEditCampo = (campo: CampoAdicional) => {
+    setEditingCampo(campo);
+    setShowCampoModal(true);
+  };
+
+  const handleRemoveCampo = (id: string) => {
+    setCamposAdicionales((prev) => prev.filter((c) => c.id !== id));
   };
 
   const isPending = createNivel.isPending || updateNivel.isPending;
@@ -230,39 +250,36 @@ export default function NivelFormPage() {
                 />
               </div>
 
-              {/* Campos adicionales */}
-              {camposFields.length > 0 && (
-                <div className="space-y-3 pt-2 border-t">
+              {/* Campos adicionales — lista */}
+              {camposAdicionales.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
                   <p className="text-sm font-medium text-muted-foreground">Campos adicionales</p>
-                  {camposFields.map((field, index) => (
-                    <div key={field.id} className="flex items-end gap-2">
-                      <FormField
-                        control={form.control}
-                        name={`camposAdicionales.${index}.nombre`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            {index === 0 && <FormLabel className="text-xs">Nombre</FormLabel>}
-                            <FormControl>
-                              <Input {...field} placeholder="Nombre del campo" />
-                            </FormControl>
-                          </FormItem>
+                  {camposAdicionales.map((campo) => (
+                    <div key={campo.id} className="flex items-center justify-between py-2 px-3 rounded-md border gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm font-medium truncate">{campo.nombre}</span>
+                        <Badge variant="secondary" className="text-[10px] shrink-0">
+                          {TIPOS_CAMPO_LABELS[campo.tipo]}
+                        </Badge>
+                        {campo.obligatorio && (
+                          <Badge variant="default" className="text-[10px] shrink-0">
+                            Obligatorio
+                          </Badge>
                         )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`camposAdicionales.${index}.valor`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            {index === 0 && <FormLabel className="text-xs">Valor</FormLabel>}
-                            <FormControl>
-                              <Input {...field} placeholder="Valor" />
-                            </FormControl>
-                          </FormItem>
+                        {campo.alcance === "todos_los_niveles" && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            Global
+                          </Badge>
                         )}
-                      />
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeCampo(index)} className="shrink-0">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -271,7 +288,7 @@ export default function NivelFormPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendCampo({ nombre: "", valor: "" })}
+                onClick={() => { setEditingCampo(null); setShowCampoModal(true); }}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Añadir campo
@@ -305,7 +322,6 @@ export default function NivelFormPage() {
                   );
                 })}
 
-                {/* Custom documents */}
                 {customDocs.map((doc) => {
                   const isActive = form.watch("documentosRequeridos").includes(doc.key);
                   return (
@@ -405,6 +421,15 @@ export default function NivelFormPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal campo adicional */}
+      <CampoAdicionalModal
+        open={showCampoModal}
+        onOpenChange={(open) => { setShowCampoModal(open); if (!open) setEditingCampo(null); }}
+        onSave={handleSaveCampo}
+        existingNames={camposAdicionales.map((c) => c.nombre)}
+        editingCampo={editingCampo}
+      />
     </div>
   );
 }

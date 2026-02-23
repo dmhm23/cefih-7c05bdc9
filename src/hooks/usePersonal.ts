@@ -57,6 +57,55 @@ export const useDeletePersonal = () => {
   });
 };
 
+// ============ FIRMA ============
+export const useUpdateFirma = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, firmaBase64 }: { id: string; firmaBase64: string }) =>
+      personalService.updateFirma(id, firmaBase64),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['personal'] });
+      queryClient.invalidateQueries({ queryKey: ['personal', id] });
+    },
+  });
+};
+
+export const useDeleteFirma = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => personalService.deleteFirma(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['personal'] });
+      queryClient.invalidateQueries({ queryKey: ['personal', id] });
+    },
+  });
+};
+
+// ============ ADJUNTOS ============
+export const useAddAdjunto = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ personalId, file }: { personalId: string; file: File }) =>
+      personalService.addAdjunto(personalId, file),
+    onSuccess: (_, { personalId }) => {
+      queryClient.invalidateQueries({ queryKey: ['personal'] });
+      queryClient.invalidateQueries({ queryKey: ['personal', personalId] });
+    },
+  });
+};
+
+export const useDeleteAdjunto = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ personalId, adjuntoId }: { personalId: string; adjuntoId: string }) =>
+      personalService.deleteAdjunto(personalId, adjuntoId),
+    onSuccess: (_, { personalId }) => {
+      queryClient.invalidateQueries({ queryKey: ['personal'] });
+      queryClient.invalidateQueries({ queryKey: ['personal', personalId] });
+    },
+  });
+};
+
 // ============ CARGOS ============
 export const useCargos = () => {
   return useQuery({

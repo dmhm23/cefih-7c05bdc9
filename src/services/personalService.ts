@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { Personal, PersonalFormData, Cargo, CargoFormData, TipoCargo } from '@/types/personal';
+import { Personal, PersonalFormData, Cargo, CargoFormData, TipoCargo, AdjuntoPersonal } from '@/types/personal';
 import { mockPersonalStaff, mockCargos, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 
@@ -27,6 +27,7 @@ export const personalService = {
     const newPersonal: Personal = {
       ...data,
       id: uuid(),
+      adjuntos: [],
       createdAt: now,
       updatedAt: now,
     };
@@ -84,6 +85,119 @@ export const personalService = {
     });
 
     mockPersonalStaff.splice(index, 1);
+  },
+
+  // ============ FIRMA ============
+  async updateFirma(id: string, firmaBase64: string): Promise<Personal> {
+    await delay(600);
+    const index = mockPersonalStaff.findIndex(p => p.id === id);
+    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+
+    const now = new Date().toISOString();
+    mockPersonalStaff[index] = { ...mockPersonalStaff[index], firmaBase64, updatedAt: now };
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'personal',
+      entidadId: id,
+      accion: 'editar',
+      camposModificados: ['firmaBase64'],
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return mockPersonalStaff[index];
+  },
+
+  async deleteFirma(id: string): Promise<Personal> {
+    await delay(400);
+    const index = mockPersonalStaff.findIndex(p => p.id === id);
+    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+
+    const now = new Date().toISOString();
+    mockPersonalStaff[index] = { ...mockPersonalStaff[index], firmaBase64: undefined, updatedAt: now };
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'personal',
+      entidadId: id,
+      accion: 'editar',
+      camposModificados: ['firmaBase64'],
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return mockPersonalStaff[index];
+  },
+
+  // ============ ADJUNTOS ============
+  async addAdjunto(personalId: string, file: File): Promise<AdjuntoPersonal> {
+    await delay(800);
+    const index = mockPersonalStaff.findIndex(p => p.id === personalId);
+    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+
+    const now = new Date().toISOString();
+
+    // Read file as data URL for mock storage
+    const dataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+
+    const adjunto: AdjuntoPersonal = {
+      id: uuid(),
+      nombre: file.name,
+      tipo: file.type,
+      tamano: file.size,
+      fechaCarga: now,
+      dataUrl,
+    };
+
+    if (!mockPersonalStaff[index].adjuntos) {
+      mockPersonalStaff[index].adjuntos = [];
+    }
+    mockPersonalStaff[index].adjuntos.push(adjunto);
+    mockPersonalStaff[index].updatedAt = now;
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'personal',
+      entidadId: personalId,
+      accion: 'editar',
+      camposModificados: ['adjuntos'],
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
+
+    return adjunto;
+  },
+
+  async deleteAdjunto(personalId: string, adjuntoId: string): Promise<void> {
+    await delay(400);
+    const index = mockPersonalStaff.findIndex(p => p.id === personalId);
+    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+
+    const adjIndex = mockPersonalStaff[index].adjuntos?.findIndex(a => a.id === adjuntoId) ?? -1;
+    if (adjIndex === -1) throw new ApiError('Adjunto no encontrado', 404, 'NOT_FOUND');
+
+    const now = new Date().toISOString();
+    mockPersonalStaff[index].adjuntos.splice(adjIndex, 1);
+    mockPersonalStaff[index].updatedAt = now;
+
+    mockAuditLogs.push({
+      id: uuid(),
+      entidadTipo: 'personal',
+      entidadId: personalId,
+      accion: 'editar',
+      camposModificados: ['adjuntos'],
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: now,
+    });
   },
 
   // ============ CARGOS ============

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Filter } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
@@ -17,7 +17,6 @@ const STORAGE_KEY = "niveles_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombreNivel", header: "Nombre del Nivel", visible: true },
-  { key: "tipoCertificacion", header: "Tipo de Certificación", visible: true },
   { key: "duracion", header: "Duración", visible: true },
   { key: "documentos", header: "Documentos", visible: true },
   { key: "updatedAt", header: "Actualización", visible: true },
@@ -49,10 +48,7 @@ export default function NivelesPage() {
   const filteredNiveles = niveles.filter((n) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return (
-      n.nombreNivel.toLowerCase().includes(q) ||
-      n.consecutivo.toLowerCase().includes(q)
-    );
+    return n.nombreNivel.toLowerCase().includes(q);
   });
 
   const handleDelete = async () => {
@@ -73,11 +69,6 @@ export default function NivelesPage() {
       sortable: true,
       className: "min-w-[180px]",
       render: (n) => <span className="font-medium">{n.nombreNivel}</span>,
-    },
-    {
-      key: "tipoCertificacion",
-      header: "Tipo de Certificación",
-      render: (n) => n.tipoCertificacion || <span className="text-muted-foreground">—</span>,
     },
     {
       key: "duracion",
@@ -140,7 +131,7 @@ export default function NivelesPage() {
           <ColumnSelector columns={columnConfig} onChange={setColumnConfig} defaultColumns={DEFAULT_COLUMNS} />
         </div>
         <SearchInput
-          placeholder="Buscar por nombre o consecutivo..."
+          placeholder="Buscar por nombre..."
           value={searchQuery}
           onChange={setSearchQuery}
           className="w-80"

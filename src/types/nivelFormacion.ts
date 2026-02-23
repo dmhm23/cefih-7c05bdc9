@@ -9,11 +9,10 @@ export type DocumentoReqKey =
 export interface NivelFormacion {
   id: string;
   nombreNivel: string;
-  tipoCertificacion?: string;
   duracionHoras?: number;
   duracionDias?: number;
-  consecutivo: string;
-  documentosRequeridos: DocumentoReqKey[];
+  documentosRequeridos: string[];
+  camposAdicionales?: { nombre: string; valor: string }[];
   observaciones?: string;
   createdAt: string;
   updatedAt: string;

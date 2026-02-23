@@ -18,19 +18,12 @@ export const nivelFormacionService = {
     await delay(400);
     const q = query.toLowerCase();
     return mockNivelesFormacion.filter(n =>
-      n.nombreNivel.toLowerCase().includes(q) ||
-      n.consecutivo.toLowerCase().includes(q)
+      n.nombreNivel.toLowerCase().includes(q)
     );
   },
 
   async create(data: NivelFormacionFormData): Promise<NivelFormacion> {
     await delay(800);
-
-    // Validar consecutivo único
-    const exists = mockNivelesFormacion.some(n => n.consecutivo === data.consecutivo);
-    if (exists) {
-      throw new ApiError('El consecutivo ya existe', 400, 'CONSECUTIVO_DUPLICADO');
-    }
 
     const now = new Date().toISOString();
     const nuevo: NivelFormacion = {
@@ -61,14 +54,6 @@ export const nivelFormacionService = {
     const index = mockNivelesFormacion.findIndex(n => n.id === id);
     if (index === -1) {
       throw new ApiError('Nivel de formación no encontrado', 404, 'NOT_FOUND');
-    }
-
-    // Validar consecutivo único (excluyendo el propio)
-    if (data.consecutivo) {
-      const exists = mockNivelesFormacion.some(n => n.consecutivo === data.consecutivo && n.id !== id);
-      if (exists) {
-        throw new ApiError('El consecutivo ya existe', 400, 'CONSECUTIVO_DUPLICADO');
-      }
     }
 
     const now = new Date().toISOString();

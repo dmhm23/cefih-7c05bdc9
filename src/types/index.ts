@@ -11,3 +11,4 @@ export * from './matricula';
 export * from './curso';
 export * from './audit';
 export * from './nivelFormacion';
+export * from './personal';

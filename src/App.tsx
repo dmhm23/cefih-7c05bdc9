@@ -32,6 +32,11 @@ import NivelesPage from "./pages/niveles/NivelesPage";
 import NivelDetallePage from "./pages/niveles/NivelDetallePage";
 import NivelFormPage from "./pages/niveles/NivelFormPage";
 
+// Gestión de Personal (Módulo E)
+import GestionPersonalPage from "./pages/personal/GestionPersonalPage";
+import PersonalFormPage from "./pages/personal/PersonalFormPage";
+import PersonalDetallePage from "./pages/personal/PersonalDetallePage";
+
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout
@@ -73,6 +78,12 @@ const App = () => (
           <Route path="/niveles/nuevo" element={<WithLayout><NivelFormPage /></WithLayout>} />
           <Route path="/niveles/:id" element={<WithLayout><NivelDetallePage /></WithLayout>} />
           <Route path="/niveles/:id/editar" element={<WithLayout><NivelFormPage /></WithLayout>} />
+
+          {/* Módulo E - Gestión de Personal */}
+          <Route path="/gestion-personal" element={<WithLayout><GestionPersonalPage /></WithLayout>} />
+          <Route path="/gestion-personal/nuevo" element={<WithLayout><PersonalFormPage /></WithLayout>} />
+          <Route path="/gestion-personal/:id" element={<WithLayout><PersonalDetallePage /></WithLayout>} />
+          <Route path="/gestion-personal/:id/editar" element={<WithLayout><PersonalFormPage /></WithLayout>} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

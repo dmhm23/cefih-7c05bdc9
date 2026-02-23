@@ -4,6 +4,7 @@ import { Curso } from '@/types/curso';
 import { AuditLog } from '@/types/audit';
 import { Comentario } from '@/types/comentario';
 import { NivelFormacion } from '@/types/nivelFormacion';
+import { Personal, Cargo } from '@/types/personal';
 
 // ============ PERSONAS ============
 export const mockPersonas: Persona[] = [
@@ -516,6 +517,22 @@ export const mockComentarios: Comentario[] = [
   },
 ];
 
+// ============ CARGOS ============
+export const mockCargos: Cargo[] = [
+  { id: 'cargo1', nombre: 'Entrenador', tipo: 'entrenador', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'cargo2', nombre: 'Supervisor', tipo: 'supervisor', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'cargo3', nombre: 'Asistente Administrativo', tipo: 'administrativo', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+];
+
+// ============ PERSONAL (STAFF) ============
+export const mockPersonalStaff: Personal[] = [
+  { id: 'e1', nombres: 'Carlos', apellidos: 'Entrenador', cargoId: 'cargo1', cargoNombre: 'Entrenador', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'e2', nombres: 'Maria', apellidos: 'Instructora', cargoId: 'cargo1', cargoNombre: 'Entrenador', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'e3', nombres: 'Jorge', apellidos: 'Capacitador', cargoId: 'cargo1', cargoNombre: 'Entrenador', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 's1', nombres: 'Roberto', apellidos: 'Supervisor', cargoId: 'cargo2', cargoNombre: 'Supervisor', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 's2', nombres: 'Diana', apellidos: 'Coordinadora', cargoId: 'cargo2', cargoNombre: 'Supervisor', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 's3', nombres: 'Felipe', apellidos: 'Morales', cargoId: 'cargo2', cargoNombre: 'Supervisor', createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+];
 // ============ NIVELES DE FORMACION ============
 export const mockNivelesFormacion: NivelFormacion[] = [
   {

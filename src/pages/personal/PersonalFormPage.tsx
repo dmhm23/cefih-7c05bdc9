@@ -23,9 +23,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GestionCargosModal } from "@/components/personal/GestionCargosModal";
-import { usePersonal, useCreatePersonal, useUpdatePersonal, useCargos } from "@/hooks/usePersonal";
+import { AdjuntosPersonal } from "@/components/personal/AdjuntosPersonal";
+import { FirmaPersonal } from "@/components/personal/FirmaPersonal";
+import {
+  usePersonal,
+  useCreatePersonal,
+  useUpdatePersonal,
+  useCargos,
+  useUpdateFirma,
+  useDeleteFirma,
+  useAddAdjunto,
+  useDeleteAdjunto,
+} from "@/hooks/usePersonal";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { AdjuntoPersonal } from "@/types/personal";
+import { v4 as uuidv4 } from "uuid";
 
 const personalSchema = z.object({
   nombres: z.string().min(2, "Ingrese el nombre"),
@@ -45,7 +58,16 @@ export default function PersonalFormPage() {
   const { data: cargos = [] } = useCargos();
   const createPersonal = useCreatePersonal();
   const updatePersonal = useUpdatePersonal();
+  const updateFirma = useUpdateFirma();
+  const deleteFirma = useDeleteFirma();
+  const addAdjunto = useAddAdjunto();
+  const deleteAdjunto = useDeleteAdjunto();
   const [cargosModalOpen, setCargosModalOpen] = useState(false);
+
+  // Local state for creation mode
+  const [tempFirma, setTempFirma] = useState<string | undefined>(undefined);
+  const [tempAdjuntos, setTempAdjuntos] = useState<AdjuntoPersonal[]>([]);
+  const [tempFiles, setTempFiles] = useState<File[]>([]);
 
   const form = useForm<PersonalFormSchema>({
     resolver: zodResolver(personalSchema),
@@ -70,9 +92,70 @@ export default function PersonalFormPage() {
     form.setValue("cargoId", cargoId);
   };
 
+  // --- Firma handlers ---
+  const handleGuardarFirma = (firmaBase64: string) => {
+    if (isEditing && id) {
+      updateFirma.mutate(
+        { id, firmaBase64 },
+        { onSuccess: () => toast({ title: "Firma guardada" }) }
+      );
+    } else {
+      setTempFirma(firmaBase64);
+    }
+  };
+
+  const handleEliminarFirma = () => {
+    if (isEditing && id) {
+      deleteFirma.mutate(id, {
+        onSuccess: () => toast({ title: "Firma eliminada" }),
+      });
+    } else {
+      setTempFirma(undefined);
+    }
+  };
+
+  // --- Adjuntos handlers ---
+  const handleUploadAdjunto = (file: File) => {
+    if (isEditing && id) {
+      addAdjunto.mutate(
+        { personalId: id, file },
+        { onSuccess: () => toast({ title: "Archivo adjuntado" }) }
+      );
+    } else {
+      // Store locally for creation mode
+      const reader = new FileReader();
+      reader.onload = () => {
+        const adj: AdjuntoPersonal = {
+          id: uuidv4(),
+          nombre: file.name,
+          tipo: file.type,
+          tamano: file.size,
+          fechaCarga: new Date().toISOString(),
+          dataUrl: reader.result as string,
+        };
+        setTempAdjuntos((prev) => [...prev, adj]);
+        setTempFiles((prev) => [...prev, file]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDeleteAdjunto = (adjuntoId: string) => {
+    if (isEditing && id) {
+      deleteAdjunto.mutate(
+        { personalId: id, adjuntoId },
+        { onSuccess: () => toast({ title: "Archivo eliminado" }) }
+      );
+    } else {
+      const idx = tempAdjuntos.findIndex((a) => a.id === adjuntoId);
+      setTempAdjuntos((prev) => prev.filter((a) => a.id !== adjuntoId));
+      if (idx >= 0) setTempFiles((prev) => prev.filter((_, i) => i !== idx));
+    }
+  };
+
   const onSubmit = async (data: PersonalFormSchema) => {
     try {
-      const cargo = cargos.find(c => c.id === data.cargoId);
+      const cargo = cargos.find((c) => c.id === data.cargoId);
       const personalData = {
         nombres: data.nombres,
         apellidos: data.apellidos,
@@ -84,7 +167,18 @@ export default function PersonalFormPage() {
         await updatePersonal.mutateAsync({ id, data: personalData });
         toast({ title: "Perfil actualizado correctamente" });
       } else {
-        await createPersonal.mutateAsync(personalData);
+        const newPersonal = await createPersonal.mutateAsync(personalData);
+
+        // Upload pending firma
+        if (tempFirma) {
+          await updateFirma.mutateAsync({ id: newPersonal.id, firmaBase64: tempFirma });
+        }
+
+        // Upload pending adjuntos
+        for (const file of tempFiles) {
+          await addAdjunto.mutateAsync({ personalId: newPersonal.id, file });
+        }
+
         toast({ title: "Perfil creado correctamente" });
       }
       navigate("/gestion-personal");
@@ -102,6 +196,9 @@ export default function PersonalFormPage() {
   if (isEditing && isLoadingPersonal) {
     return <div className="flex justify-center py-12">Cargando...</div>;
   }
+
+  const adjuntosToShow = isEditing ? (personal?.adjuntos || []) : tempAdjuntos;
+  const firmaToShow = isEditing ? personal?.firmaBase64 : tempFirma;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -190,6 +287,43 @@ export default function PersonalFormPage() {
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Documentos Adjuntos (opcional) */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Documentos Adjuntos</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Opcional — Suba hojas de vida, contratos u otros documentos relevantes
+              </p>
+            </CardHeader>
+            <CardContent>
+              <AdjuntosPersonal
+                adjuntos={adjuntosToShow}
+                onUpload={handleUploadAdjunto}
+                onDelete={handleDeleteAdjunto}
+                isUploading={addAdjunto.isPending}
+                isDeleting={deleteAdjunto.isPending}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Firma Digital (opcional) */}
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base">Firma Digital</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Opcional — La firma se usará en formatos legales generados por el sistema
+              </p>
+            </CardHeader>
+            <CardContent>
+              <FirmaPersonal
+                firmaExistente={firmaToShow}
+                onGuardarFirma={handleGuardarFirma}
+                onEliminarFirma={handleEliminarFirma}
+                isPending={updateFirma.isPending || deleteFirma.isPending}
               />
             </CardContent>
           </Card>

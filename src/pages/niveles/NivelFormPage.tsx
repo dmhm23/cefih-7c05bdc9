@@ -31,6 +31,7 @@ import { CATALOGO_DOCUMENTOS, TIPOS_CAMPO_LABELS, CampoAdicional } from "@/types
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CampoAdicionalModal } from "@/components/niveles/CampoAdicionalModal";
+import { CampoPreview } from "@/components/niveles/CampoPreview";
 
 const nivelSchema = z.object({
   nombreNivel: z.string().min(1, "El nombre es obligatorio"),
@@ -255,31 +256,34 @@ export default function NivelFormPage() {
                 <div className="space-y-2 pt-2 border-t">
                   <p className="text-sm font-medium text-muted-foreground">Campos adicionales</p>
                   {camposAdicionales.map((campo) => (
-                    <div key={campo.id} className="flex items-center justify-between py-2 px-3 rounded-md border gap-2">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-sm font-medium truncate">{campo.nombre}</span>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">
-                          {TIPOS_CAMPO_LABELS[campo.tipo]}
-                        </Badge>
-                        {campo.obligatorio && (
-                          <Badge variant="default" className="text-[10px] shrink-0">
-                            Obligatorio
+                    <div key={campo.id} className="py-2 px-3 rounded-md border space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-sm font-medium truncate">{campo.nombre}</span>
+                          <Badge variant="secondary" className="text-[10px] shrink-0">
+                            {TIPOS_CAMPO_LABELS[campo.tipo]}
                           </Badge>
-                        )}
-                        {campo.alcance === "todos_los_niveles" && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">
-                            Global
-                          </Badge>
-                        )}
+                          {campo.obligatorio && (
+                            <Badge variant="default" className="text-[10px] shrink-0">
+                              Obligatorio
+                            </Badge>
+                          )}
+                          {campo.alcance === "todos_los_niveles" && (
+                            <Badge variant="outline" className="text-[10px] shrink-0">
+                              Global
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
+                      <CampoPreview campo={campo} />
                     </div>
                   ))}
                 </div>

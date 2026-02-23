@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -123,13 +123,22 @@ export default function CursoFormPage() {
     [camposAdicionales]
   );
 
+  const schemaRef = useRef(schema);
+  schemaRef.current = schema;
+
+  const dynamicResolver = useCallback(
+    (values: any, context: any, options: any) =>
+      zodResolver(schemaRef.current)(values, context, options),
+    []
+  );
+
   const nivelesOptions = niveles.map((n) => ({
     value: n.id,
     label: n.nombreNivel,
   }));
 
   const form = useForm<any>({
-    resolver: zodResolver(schema),
+    resolver: dynamicResolver,
     defaultValues: {
       tipoFormacion: "",
       numeroCurso: "",
@@ -144,12 +153,6 @@ export default function CursoFormPage() {
       capacidadMaxima: 20,
     },
   });
-
-  // Re-register resolver when schema changes
-  useMemo(() => {
-    // @ts-ignore - internal react-hook-form resolver update
-    form.clearErrors();
-  }, [schema]);
 
   const recalcularDuracion = (inicio: string, fin: string) => {
     if (!inicio || !fin) return;

@@ -13,12 +13,23 @@ export interface CargoFormData {
   tipo: TipoCargo;
 }
 
+export interface AdjuntoPersonal {
+  id: string;
+  nombre: string;
+  tipo: string; // MIME type
+  tamano: number;
+  fechaCarga: string;
+  dataUrl?: string; // base64 data URL (mock storage)
+}
+
 export interface Personal {
   id: string;
   nombres: string;
   apellidos: string;
   cargoId: string;
   cargoNombre: string;
+  firmaBase64?: string;
+  adjuntos: AdjuntoPersonal[];
   createdAt: string;
   updatedAt: string;
 }

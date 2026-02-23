@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, FileText, Clock, Hash } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +51,8 @@ export default function NivelDetallePage() {
   };
 
   const getDocLabel = (key: string) => {
-    return CATALOGO_DOCUMENTOS.find(d => d.key === key)?.label || key;
+    const found = CATALOGO_DOCUMENTOS.find(d => d.key === key);
+    return found ? found.label : key;
   };
 
   return (
@@ -62,7 +63,6 @@ export default function NivelDetallePage() {
         </Button>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold">{nivel.nombreNivel}</h1>
-          <p className="text-sm text-muted-foreground">Consecutivo: {nivel.consecutivo}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate(`/niveles/${nivel.id}/editar`)}>
@@ -78,21 +78,12 @@ export default function NivelDetallePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
-          {/* Info general */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Información General</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1"><Hash className="h-3 w-3" /> Consecutivo</p>
-                  <p className="font-medium">{nivel.consecutivo}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Tipo de Certificación</p>
-                  <p className="font-medium">{nivel.tipoCertificacion || "—"}</p>
-                </div>
                 <div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Duración</p>
                   <p className="font-medium">
@@ -105,11 +96,16 @@ export default function NivelDetallePage() {
                   <p className="text-xs text-muted-foreground">Última actualización</p>
                   <p className="font-medium">{format(new Date(nivel.updatedAt), "dd/MM/yyyy HH:mm")}</p>
                 </div>
+                {nivel.camposAdicionales?.map((campo, i) => (
+                  <div key={i}>
+                    <p className="text-xs text-muted-foreground">{campo.nombre}</p>
+                    <p className="font-medium">{campo.valor || "—"}</p>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Observaciones */}
           {nivel.observaciones && (
             <Card>
               <CardHeader className="pb-3">
@@ -122,7 +118,6 @@ export default function NivelDetallePage() {
           )}
         </div>
 
-        {/* Documentos requeridos */}
         <div>
           <Card>
             <CardHeader className="pb-3">

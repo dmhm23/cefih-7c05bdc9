@@ -22,7 +22,6 @@ export function getDocumentosRequeridos(
   const nivel = nivelFormacionKey
     ? mockNivelesFormacion.find(
         n => n.id === nivelFormacionKey ||
-        n.consecutivo === nivelFormacionKey ||
         n.nombreNivel === LEGACY_KEY_MAP[nivelFormacionKey] ||
         n.nombreNivel.toLowerCase() === nivelFormacionKey?.toLowerCase()
       )

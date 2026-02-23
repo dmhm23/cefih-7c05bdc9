@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,19 +17,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useNivelFormacion, useCreateNivelFormacion, useUpdateNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { CATALOGO_DOCUMENTOS, DocumentoReqKey } from "@/types/nivelFormacion";
-import { useEffect } from "react";
+import { CATALOGO_DOCUMENTOS } from "@/types/nivelFormacion";
+import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const nivelSchema = z.object({
   nombreNivel: z.string().min(1, "El nombre es obligatorio"),
-  tipoCertificacion: z.string().optional(),
-  consecutivo: z.string().min(1, "El consecutivo es obligatorio"),
   duracionDias: z.coerce.number().min(0).optional(),
   duracionHoras: z.coerce.number().min(0).optional(),
   documentosRequeridos: z.array(z.string()),
+  camposAdicionales: z.array(z.object({ nombre: z.string().min(1, "Requerido"), valor: z.string() })).optional(),
   observaciones: z.string().optional(),
 }).refine(
   (data) => (data.duracionDias && data.duracionDias > 0) || (data.duracionHoras && data.duracionHoras > 0),
@@ -43,33 +49,48 @@ export default function NivelFormPage() {
   const isEdit = !!id;
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showAddDoc, setShowAddDoc] = useState(false);
+  const [newDocName, setNewDocName] = useState("");
 
   const { data: nivel, isLoading } = useNivelFormacion(id || "");
   const createNivel = useCreateNivelFormacion();
   const updateNivel = useUpdateNivelFormacion();
 
+  // Track custom documents (non-catalog)
+  const [customDocs, setCustomDocs] = useState<{ key: string; label: string }[]>([]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(nivelSchema),
     defaultValues: {
       nombreNivel: "",
-      tipoCertificacion: "",
-      consecutivo: "",
       duracionDias: undefined,
       duracionHoras: undefined,
       documentosRequeridos: [],
+      camposAdicionales: [],
       observaciones: "",
     },
   });
 
+  const { fields: camposFields, append: appendCampo, remove: removeCampo } = useFieldArray({
+    control: form.control,
+    name: "camposAdicionales",
+  });
+
   useEffect(() => {
     if (isEdit && nivel) {
+      // Detect custom docs from saved data
+      const catalogKeys = CATALOGO_DOCUMENTOS.map(d => d.key as string);
+      const savedCustom = nivel.documentosRequeridos
+        .filter(key => !catalogKeys.includes(key))
+        .map(key => ({ key, label: key }));
+      setCustomDocs(savedCustom);
+
       form.reset({
         nombreNivel: nivel.nombreNivel,
-        tipoCertificacion: nivel.tipoCertificacion || "",
-        consecutivo: nivel.consecutivo,
         duracionDias: nivel.duracionDias,
         duracionHoras: nivel.duracionHoras,
         documentosRequeridos: nivel.documentosRequeridos,
+        camposAdicionales: nivel.camposAdicionales || [],
         observaciones: nivel.observaciones || "",
       });
     }
@@ -88,11 +109,10 @@ export default function NivelFormPage() {
     try {
       const payload = {
         nombreNivel: data.nombreNivel,
-        tipoCertificacion: data.tipoCertificacion,
-        consecutivo: data.consecutivo,
         duracionDias: data.duracionDias,
         duracionHoras: data.duracionHoras,
-        documentosRequeridos: data.documentosRequeridos as DocumentoReqKey[],
+        documentosRequeridos: data.documentosRequeridos,
+        camposAdicionales: (data.camposAdicionales || []).map(c => ({ nombre: c.nombre, valor: c.valor })),
         observaciones: data.observaciones,
       };
 
@@ -113,13 +133,35 @@ export default function NivelFormPage() {
     }
   };
 
-  const toggleDocumento = (key: DocumentoReqKey) => {
+  const toggleDocumento = (key: string) => {
     const current = form.getValues("documentosRequeridos");
     if (current.includes(key)) {
       form.setValue("documentosRequeridos", current.filter(d => d !== key), { shouldValidate: true });
     } else {
       form.setValue("documentosRequeridos", [...current, key], { shouldValidate: true });
     }
+  };
+
+  const handleAddCustomDoc = () => {
+    const trimmed = newDocName.trim();
+    if (!trimmed) return;
+    // Check duplicates
+    const allKeys = [...CATALOGO_DOCUMENTOS.map(d => d.key), ...customDocs.map(d => d.key)];
+    if (allKeys.includes(trimmed)) {
+      toast({ title: "Ese documento ya existe", variant: "destructive" });
+      return;
+    }
+    setCustomDocs(prev => [...prev, { key: trimmed, label: trimmed }]);
+    const current = form.getValues("documentosRequeridos");
+    form.setValue("documentosRequeridos", [...current, trimmed], { shouldValidate: true });
+    setNewDocName("");
+    setShowAddDoc(false);
+  };
+
+  const removeCustomDoc = (key: string) => {
+    setCustomDocs(prev => prev.filter(d => d.key !== key));
+    const current = form.getValues("documentosRequeridos");
+    form.setValue("documentosRequeridos", current.filter(d => d !== key), { shouldValidate: true });
   };
 
   const isPending = createNivel.isPending || updateNivel.isPending;
@@ -146,47 +188,19 @@ export default function NivelFormPage() {
               <CardTitle className="text-base">Información General</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="nombreNivel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nombre del Nivel *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ej: Trabajador Autorizado" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="consecutivo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Consecutivo *</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ej: 01" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tipoCertificacion"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Certificación</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Opcional" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="nombreNivel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre del Nivel *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Ej: Trabajador Autorizado" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -215,6 +229,53 @@ export default function NivelFormPage() {
                   )}
                 />
               </div>
+
+              {/* Campos adicionales */}
+              {camposFields.length > 0 && (
+                <div className="space-y-3 pt-2 border-t">
+                  <p className="text-sm font-medium text-muted-foreground">Campos adicionales</p>
+                  {camposFields.map((field, index) => (
+                    <div key={field.id} className="flex items-end gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`camposAdicionales.${index}.nombre`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            {index === 0 && <FormLabel className="text-xs">Nombre</FormLabel>}
+                            <FormControl>
+                              <Input {...field} placeholder="Nombre del campo" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`camposAdicionales.${index}.valor`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            {index === 0 && <FormLabel className="text-xs">Valor</FormLabel>}
+                            <FormControl>
+                              <Input {...field} placeholder="Valor" />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeCampo(index)} className="shrink-0">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendCampo({ nombre: "", valor: "" })}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Añadir campo
+              </Button>
             </CardContent>
           </Card>
 
@@ -243,7 +304,37 @@ export default function NivelFormPage() {
                     </div>
                   );
                 })}
+
+                {/* Custom documents */}
+                {customDocs.map((doc) => {
+                  const isActive = form.watch("documentosRequeridos").includes(doc.key);
+                  return (
+                    <div key={doc.key} className="flex items-center justify-between py-2 px-3 rounded-md border border-dashed">
+                      <Label className="cursor-pointer flex-1">{doc.label}</Label>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={isActive}
+                          onCheckedChange={() => toggleDocumento(doc.key)}
+                        />
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeCustomDoc(doc.key)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => setShowAddDoc(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Añadir documento
+              </Button>
             </CardContent>
           </Card>
 
@@ -288,6 +379,32 @@ export default function NivelFormPage() {
           </div>
         </form>
       </Form>
+
+      {/* Modal añadir documento */}
+      <Dialog open={showAddDoc} onOpenChange={setShowAddDoc}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Añadir Documento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label>Nombre del documento</Label>
+            <Input
+              value={newDocName}
+              onChange={(e) => setNewDocName(e.target.value)}
+              placeholder="Ej: Certificado de Bomberos"
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddCustomDoc())}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowAddDoc(false); setNewDocName(""); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddCustomDoc} disabled={!newDocName.trim()}>
+              Agregar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

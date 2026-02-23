@@ -1,103 +1,67 @@
 
 
-## Renderizado dinamico de Campos Adicionales en el formulario de Curso
+## Renderizado funcional de Campos Adicionales
 
-### Resumen
+### Problema
 
-Cuando el usuario selecciona un "Tipo / Nivel de Formacion" en el formulario de Nuevo Curso, el sistema cargara los `camposAdicionales` configurados en ese nivel y los renderizara como campos funcionales dentro de una nueva Card "Campos Adicionales". Cada campo se comportara exactamente segun su tipo y configuracion (obligatoriedad, opciones, etc.). Se elimina el campo "Valor por defecto" del modal de configuracion en Niveles.
+En `/niveles/nuevo`, al guardar un campo adicional solo se muestra el nombre y un badge con el tipo ("Texto corto"), pero no se renderiza el control funcional correspondiente (input, textarea, switch, etc.). El usuario espera ver el campo listo para usarse.
 
----
+Hay dos contextos donde esto debe funcionar:
 
-### 1. Eliminar "Valor por defecto" del modal de Niveles
+1. **NivelFormPage** (definicion del nivel): Mostrar una vista previa funcional del campo configurado, con su control real renderizado. Estos campos no almacenan valores aqui, sirven como previsualizacion de la estructura.
 
-**Archivo:** `src/components/niveles/CampoAdicionalModal.tsx`
-
-- Eliminar completamente el estado `valorPorDefecto` y toda la UI relacionada (lineas 53, 67, 74, 132-135, 196-224).
-- Eliminar la propiedad `valorPorDefecto` del objeto `campo` que se construye en `doSave()`.
-- Simplificar la logica: ya no se necesitan las variables `hideValorDefecto` ni `showEstadoDefault`.
-
-**Archivo:** `src/types/nivelFormacion.ts`
-
-- Eliminar `valorPorDefecto?: string` de la interfaz `CampoAdicional` (linea 33).
+2. **CursoFormPage** (creacion de curso): Los campos ya se renderizan via `CamposAdicionalesCard`, pero hay un problema tecnico: el `zodResolver` se configura una sola vez al inicializar `useForm` y no se actualiza cuando cambia el schema dinamico.
 
 ---
 
-### 2. Agregar `camposAdicionales` al modelo de Curso
+### Cambio 1: Renderizar controles funcionales en NivelFormPage
 
-**Archivo:** `src/types/curso.ts`
+**Archivo:** `src/pages/niveles/NivelFormPage.tsx` (lineas 253-285)
 
-- Agregar al `Curso` interface: `camposAdicionalesValores?: Record<string, any>` -- un mapa donde la key es el `id` del campo adicional y el value es el valor ingresado por el usuario.
-- Incluirlo tambien en `CursoFormData`.
+Reemplazar la lista actual de badges por una lista que muestre cada campo con:
+- El badge del tipo como referencia visual (conservar)
+- Los botones de editar/eliminar (conservar)
+- El control funcional real renderizado debajo, segun el tipo del campo
+
+El renderizado se hara con un componente inline o reutilizando la logica de `CamposAdicionalesCard`, pero en modo "preview" (sin conexion a un form de react-hook-form). Se usara un estado local simple para mostrar los controles funcionales con valores vacios, sin validacion.
+
+La estructura visual de cada campo sera:
+
+```text
++--------------------------------------------------+
+| [Nombre del campo]  [Badge tipo] [Obligatorio]   |
+|                              [Editar] [Eliminar]  |
+| [Control funcional segun tipo]                    |
++--------------------------------------------------+
+```
+
+Se reutilizara la logica de mapeo tipo-componente ya definida en `CamposAdicionalesCard.tsx`, creando una funcion de renderizado reutilizable o un componente de preview.
 
 ---
 
-### 3. Renderizado dinamico en CursoFormPage
+### Cambio 2: Corregir actualizacion dinamica del resolver en CursoFormPage
 
 **Archivo:** `src/pages/cursos/CursoFormPage.tsx`
 
-**A) Cargar campos adicionales al seleccionar nivel:**
+El `zodResolver` se pasa a `useForm` una sola vez en la inicializacion (linea 131-146). Cuando el usuario selecciona un nivel y `camposAdicionales` cambia, el schema se recalcula via `useMemo` (linea 121-124), pero el resolver dentro de `useForm` no se actualiza.
 
-En `handleTipoFormacionChange`, cuando se selecciona un nivel, extraer `nivel.camposAdicionales` y guardarlos en un estado local `camposAdicionales` (useState).
+**Solucion:** Usar la propiedad `resolver` del metodo `form` de forma que se actualice. Se puede lograr de dos formas:
+- Mover la creacion del form fuera del componente y recrearlo cuando cambia el schema (no recomendado)
+- Usar un wrapper de resolver que consulte el schema actual via ref
 
-**B) Construir schema zod dinamico:**
+La solucion sera crear un resolver wrapper que use una referencia (`useRef`) al schema actual, de modo que cuando el schema cambie, la validacion siempre use la version mas reciente sin necesidad de recrear el form.
 
-Reemplazar el schema estatico por uno que se reconstruya cuando cambien los campos adicionales. Para cada campo:
+```
+const schemaRef = useRef(schema);
+schemaRef.current = schema;
 
-| Tipo | Validacion zod |
-|---|---|
-| `texto_corto` | `z.string()` + `.min(1)` si obligatorio |
-| `texto_largo` | `z.string()` + `.min(1)` si obligatorio |
-| `numerico` | `z.coerce.number()` + `.min(0)` si obligatorio |
-| `select` | `z.string()` + `.min(1)` si obligatorio |
-| `select_multiple` | `z.array(z.string())` + `.min(1)` si obligatorio |
-| `estado` | `z.string()` (default `"inactivo"`) |
-| `fecha` | `z.string()` + `.min(1)` si obligatorio |
-| `fecha_hora` | `z.string()` + `.min(1)` si obligatorio |
-| `booleano` | `z.boolean()` (default `false`) |
-| `archivo` | `z.string()` (solo placeholder, no upload real) + `.min(1)` si obligatorio |
-| `url` | `z.string().url()` o `.optional()` segun obligatorio |
-| `telefono` | `z.string()` + `.min(1)` si obligatorio |
-| `email` | `z.string().email()` o `.optional()` segun obligatorio |
+const dynamicResolver = useCallback(
+  (values, context, options) => zodResolver(schemaRef.current)(values, context, options),
+  []
+);
+```
 
-Se usara `z.object()` con spread del schema base + los campos dinamicos, recalculado via `useMemo`.
-
-**C) Renderizar nueva Card "Campos Adicionales":**
-
-Solo visible cuando `camposAdicionales.length > 0`. Cada campo se renderiza con `FormField` segun su tipo:
-
-| Tipo | Componente UI |
-|---|---|
-| `texto_corto` | `<Input type="text" />` |
-| `texto_largo` | `<Textarea />` |
-| `numerico` | `<Input type="number" />` |
-| `select` | `<Select>` con las opciones configuradas |
-| `select_multiple` | Multiples `<Checkbox>` con las opciones |
-| `estado` | `<Switch>` con labels Activo/Inactivo |
-| `fecha` | `<Input type="date" />` |
-| `fecha_hora` | `<Input type="datetime-local" />` |
-| `booleano` | `<Switch>` |
-| `archivo` | `<Input type="file" />` (placeholder visual) |
-| `url` | `<Input type="url" />` |
-| `telefono` | `<Input type="tel" />` |
-| `email` | `<Input type="email" />` |
-
-Los labels mostraran `*` si el campo es obligatorio. Los mensajes de error provienen de la validacion zod.
-
-**D) Incluir valores en el payload:**
-
-En `onSubmit`, recopilar los valores de los campos adicionales en un objeto `camposAdicionalesValores` y enviarlo como parte del payload de creacion del curso.
-
-**E) Limpiar al cambiar de nivel:**
-
-Cuando el usuario cambia de nivel, resetear los valores de campos adicionales y recargar los nuevos.
-
----
-
-### 4. Actualizar NivelDetallePage
-
-**Archivo:** `src/pages/niveles/NivelDetallePage.tsx`
-
-- Eliminar la referencia a `valorPorDefecto` en el renderizado de campos adicionales (si existe).
+Esto asegura que al seleccionar un nivel con campos obligatorios, la validacion funcione correctamente al intentar guardar el curso.
 
 ---
 
@@ -105,9 +69,6 @@ Cuando el usuario cambia de nivel, resetear los valores de campos adicionales y 
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/nivelFormacion.ts` | Eliminar `valorPorDefecto` de `CampoAdicional` |
-| `src/components/niveles/CampoAdicionalModal.tsx` | Eliminar toda la UI y logica de "Valor por defecto" |
-| `src/types/curso.ts` | Agregar `camposAdicionalesValores?: Record<string, any>` |
-| `src/pages/cursos/CursoFormPage.tsx` | Schema dinamico, renderizado por tipo, integracion con react-hook-form |
-| `src/pages/niveles/NivelDetallePage.tsx` | Eliminar referencia a `valorPorDefecto` |
+| `src/pages/niveles/NivelFormPage.tsx` | Renderizar controles funcionales junto a los badges en la lista de campos adicionales |
+| `src/pages/cursos/CursoFormPage.tsx` | Corregir resolver dinamico con useRef para que la validacion se actualice al cambiar de nivel |
 

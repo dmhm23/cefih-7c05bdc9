@@ -1,80 +1,79 @@
 
-## Cambios en el modulo Niveles de Formacion
+## Sincronizacion de Niveles y Ajustes de UI
 
 ### Resumen
 
-1. Eliminar los campos `consecutivo` y `tipoCertificacion` de toda la UI y del modelo de datos.
-2. Agregar la funcionalidad de documentos personalizados con un boton "+ Anadir documento" y un modal.
-3. Permitir agregar campos adicionales en la seccion "Informacion general" del formulario.
+4 cambios independientes:
+
+1. Reordenar campos Horas/Dias en el formulario de Nuevo Nivel
+2. Navegacion "Atras" con historial en NivelFormPage
+3. Sincronizar dropdown de Curso con el modulo de Niveles
+4. Sincronizar dropdown de Matricula con el modulo de Niveles
 
 ---
 
-### 1. Eliminar campos `consecutivo` y `tipoCertificacion`
+### 1. Reordenar Horas antes de Dias en NivelFormPage
+
+**Archivo:** `src/pages/niveles/NivelFormPage.tsx` (lineas 204-231)
+
+Intercambiar el orden de los dos `FormField` dentro del grid: primero `duracionHoras`, luego `duracionDias`.
+
+---
+
+### 2. Boton "Atras" con navegacion al origen en NivelFormPage
+
+**Archivo:** `src/pages/niveles/NivelFormPage.tsx`
+
+- Cambiar `navigate("/niveles")` en el boton "Atras" (linea 172) por `navigate(-1)` para volver a la vista anterior real (puede ser `/niveles/:id` u otra).
+- Hacer lo mismo con el boton "Cancelar" (linea 363).
+
+---
+
+### 3. Sincronizar "Tipo / Nivel de Formacion" en CursoFormPage con el modulo de Niveles
+
+**Archivo:** `src/pages/cursos/CursoFormPage.tsx`
+
+Actualmente el dropdown usa `TIPOS_FORMACION_CURSO` (constante hardcodeada con 4 valores). Se reemplazara por datos dinamicos del modulo de Niveles:
+
+- Importar `useNivelesFormacion` desde `@/hooks/useNivelesFormacion`.
+- Llamar al hook para obtener la lista de niveles.
+- Cambiar el schema zod: `tipoFormacion` pasa de `z.enum([...])` a `z.string().min(1, "Seleccione el tipo de formacion")`.
+- Reemplazar el `<Select>` por un `<Combobox>` (ya existe el componente) que muestre `nivel.nombreNivel` como label y `nivel.id` como value.
+- Al seleccionar un nivel, autocompletar `duracionDias` y `horasTotales` desde los datos del nivel seleccionado.
+- En `onSubmit`, usar `nivel.nombreNivel` para construir el nombre del curso en lugar de `TIPO_FORMACION_LABELS`.
+- Eliminar las importaciones de `TIPOS_FORMACION_CURSO` y `TIPO_FORMACION_LABELS` que ya no se usan.
+
+---
+
+### 4. Sincronizar "Nivel de Formacion" en MatriculaFormPage con el modulo de Niveles
 
 **Archivos afectados:**
 
-- **`src/types/nivelFormacion.ts`**: Eliminar `tipoCertificacion` y `consecutivo` de la interfaz `NivelFormacion` y de `NivelFormacionFormData`.
-- **`src/data/mockData.ts`**: Eliminar las propiedades `consecutivo` y `tipoCertificacion` de los 4 niveles precargados.
-- **`src/services/nivelFormacionService.ts`**: Eliminar la validacion de consecutivo unico en `create()` y `update()`. Eliminar busqueda por consecutivo en `search()`.
-- **`src/pages/niveles/NivelesPage.tsx`**:
-  - Eliminar columna `tipoCertificacion` de `DEFAULT_COLUMNS` y de `columns`.
-  - Eliminar referencia a `consecutivo` en el filtro de busqueda y en el placeholder.
-- **`src/pages/niveles/NivelFormPage.tsx`**:
-  - Eliminar los campos `consecutivo` y `tipoCertificacion` del schema zod, de `defaultValues`, del `useEffect` de carga, del `onSubmit` payload, y del JSX del formulario.
-- **`src/pages/niveles/NivelDetallePage.tsx`**:
-  - Eliminar la linea "Consecutivo: ..." del subtitulo.
-  - Eliminar las celdas de "Consecutivo" y "Tipo de Certificacion" de la card de informacion general.
-- **`src/services/documentoService.ts`**: Eliminar la busqueda por `consecutivo` en el `find()` de `getDocumentosRequeridos()`.
+**`src/pages/matriculas/MatriculaFormPage.tsx`** (lineas 742-765):
+- Importar `useNivelesFormacion`.
+- Reemplazar el `<Select>` que usa `NIVELES_FORMACION_EMPRESA` por un `<Combobox>` alimentado dinamicamente con los niveles del modulo.
+- Las opciones mostraran `nivel.nombreNivel` como label y `nivel.id` como value.
+- Eliminar la importacion de `NIVELES_FORMACION_EMPRESA`.
 
----
+**`src/pages/matriculas/MatriculaDetallePage.tsx`** y **`src/components/matriculas/MatriculaDetailSheet.tsx`**:
+- Reemplazar `NIVELES_FORMACION_EMPRESA` por una funcion que consulte `mockNivelesFormacion` para resolver el label del nivel guardado.
+- Importar `useNivelesFormacion` o acceder directamente a los datos mock para obtener el nombre legible.
 
-### 2. Documentos personalizados (+ Anadir documento)
+**`src/components/matriculas/formatos/InfoAprendizDocument.tsx`** y **`EvaluacionReentrenamientoDocument.tsx`**:
+- Reemplazar el uso de `NIVELES_FORMACION_EMPRESA` para resolver labels por una busqueda en `mockNivelesFormacion`.
 
-Actualmente `documentosRequeridos` es un array de `DocumentoReqKey` (union de strings fijos). Para soportar documentos personalizados, se cambiara a `string[]` y se mantendra el catalogo predefinido como referencia visual.
-
-**`src/types/nivelFormacion.ts`**:
-- Cambiar `documentosRequeridos: DocumentoReqKey[]` a `documentosRequeridos: string[]` en la interfaz.
-- Mantener `CATALOGO_DOCUMENTOS` como catalogo base predefinido.
-
-**`src/pages/niveles/NivelFormPage.tsx`**:
-- En la seccion "Requisitos Documentales", despues de la lista del catalogo, mostrar los documentos personalizados que se hayan agregado (con switch activo y boton para eliminar).
-- Agregar un boton `+ Anadir documento` que abre un Dialog/modal.
-- El modal contendra un campo de texto para ingresar el nombre del documento y un boton "Agregar".
-- Al agregar, se anade el nombre (como key tipo slug, ej: `custom_nombre_documento`) al array `documentosRequeridos` y se muestra en la lista con su switch.
-- Se usara un estado local `customDocumentos` (array de `{ key: string; label: string }`) para trackear los documentos personalizados agregados en la sesion, que se fusionaran con `CATALOGO_DOCUMENTOS` para renderizar la lista completa.
-
-**`src/pages/niveles/NivelDetallePage.tsx`**:
-- La funcion `getDocLabel()` ya hace fallback a mostrar la key si no la encuentra en el catalogo. Se ajustara para mostrar el nombre legible de documentos personalizados (se guardara el label directamente como key en `documentosRequeridos`).
-
-**Enfoque simplificado para keys personalizadas**: Los documentos personalizados se guardaran directamente con su nombre legible como key (ej: `"Certificado de Bomberos"`), ya que no necesitan un key tecnico. El catalogo predefinido sigue usando keys tecnicas (`cedula`, `arl`, etc.).
-
----
-
-### 3. Campos adicionales en "Informacion general"
-
-Se agregara la posibilidad de anadir campos personalizados de texto en la seccion "Informacion general" del formulario.
-
-**`src/types/nivelFormacion.ts`**:
-- Agregar `camposAdicionales?: { nombre: string; valor: string }[]` a la interfaz `NivelFormacion`.
-
-**`src/pages/niveles/NivelFormPage.tsx`**:
-- Agregar al schema zod: `camposAdicionales: z.array(z.object({ nombre: z.string(), valor: z.string() })).optional()`.
-- Debajo de los campos de duracion, mostrar los campos adicionales existentes (cada uno con label editable y valor editable, mas un boton para eliminar).
-- Boton `+ Anadir campo` que agrega una nueva fila con inputs para nombre y valor.
-
-**`src/pages/niveles/NivelDetallePage.tsx`**:
-- En la card de informacion general, renderizar los campos adicionales debajo de la duracion.
+**Nota:** Los valores ya guardados en matriculas existentes (como `"jefe_area"`) seguiran funcionando porque se hara un fallback: buscar primero por `id`, luego por `nombreNivel`, y si no coincide, mostrar el valor tal cual.
 
 ---
 
 ### Archivos a modificar (resumen)
 
-| Archivo | Cambios |
+| Archivo | Cambio |
 |---|---|
-| `src/types/nivelFormacion.ts` | Eliminar `consecutivo` y `tipoCertificacion`, agregar `camposAdicionales`, cambiar tipo de `documentosRequeridos` a `string[]` |
-| `src/data/mockData.ts` | Eliminar `consecutivo` y `tipoCertificacion` de los mock |
-| `src/services/nivelFormacionService.ts` | Eliminar validacion de consecutivo |
-| `src/services/documentoService.ts` | Eliminar busqueda por consecutivo |
-| `src/pages/niveles/NivelesPage.tsx` | Eliminar columna tipoCertificacion, eliminar ref a consecutivo en busqueda |
-| `src/pages/niveles/NivelFormPage.tsx` | Eliminar campos, agregar campos adicionales dinamicos, agregar modal de documento personalizado |
-| `src/pages/niveles/NivelDetallePage.tsx` | Eliminar campos, mostrar campos adicionales y documentos personalizados |
+| `src/pages/niveles/NivelFormPage.tsx` | Reordenar Horas/Dias, navigate(-1) |
+| `src/pages/cursos/CursoFormPage.tsx` | Reemplazar TIPOS_FORMACION_CURSO por useNivelesFormacion + Combobox |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar NIVELES_FORMACION_EMPRESA por useNivelesFormacion + Combobox |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Resolver label desde niveles dinamicos |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Resolver label desde niveles dinamicos |
+| `src/components/matriculas/formatos/InfoAprendizDocument.tsx` | Resolver label desde niveles dinamicos |
+| `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` | Resolver label desde niveles dinamicos |

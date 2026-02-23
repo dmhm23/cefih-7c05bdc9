@@ -38,7 +38,7 @@ import { useCursos } from "@/hooks/useCursos";
 import { PersonaFormData } from "@/types/persona";
 import {
   Matricula, ESTADO_MATRICULA_LABELS, EstadoMatricula,
-  NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, FORMA_PAGO_LABELS, FormaPago,
+  NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -59,12 +59,12 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
   TIPOS_VINCULACION,
-  NIVELES_FORMACION_EMPRESA,
   FORMAS_PAGO,
   NIVELES_PREVIOS,
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 
 type PreviewFormatoId = string | null;
 
@@ -256,7 +256,7 @@ export function MatriculaDetailSheet({
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "Sin curso asignado";
   const nivelFormacionLabel = matricula.empresaNivelFormacion 
-    ? NIVEL_FORMACION_EMPRESA_LABELS[matricula.empresaNivelFormacion] 
+    ? resolveNivelFormacionLabel(matricula.empresaNivelFormacion) 
     : undefined;
 
   const handleFullScreen = () => {
@@ -440,10 +440,8 @@ export function MatriculaDetailSheet({
             <EditableField
               label="Nivel de Formación"
               value={getValue("empresaNivelFormacion") || ""}
-              displayValue={getValue("empresaNivelFormacion") ? NIVEL_FORMACION_EMPRESA_LABELS[getValue("empresaNivelFormacion")!] : undefined}
+              displayValue={getValue("empresaNivelFormacion") ? resolveNivelFormacionLabel(getValue("empresaNivelFormacion") as string) : undefined}
               onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
-              type="select"
-              options={[...NIVELES_FORMACION_EMPRESA]}
               icon={GraduationCap}
             />
             <EditableField

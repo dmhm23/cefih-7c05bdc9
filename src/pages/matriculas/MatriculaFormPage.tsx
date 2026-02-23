@@ -26,7 +26,7 @@ import { useSearchPersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas";
 import { useToast } from "@/hooks/use-toast";
-import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useState, useEffect } from "react";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
@@ -38,7 +38,6 @@ import { es } from "date-fns/locale";
 import {
   NIVELES_PREVIOS,
   TIPOS_VINCULACION,
-  NIVELES_FORMACION_EMPRESA,
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
   TIPOS_DOCUMENTO,
@@ -101,8 +100,14 @@ export default function MatriculaFormPage() {
 
   const { data: searchResults = [], isFetching: isSearching } = useSearchPersonas(searchQuery);
   const { data: cursos = [] } = useCursos();
+  const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const createMatricula = useCreateMatricula();
   const updatePersona = useUpdatePersona();
+
+  const nivelesOptions = nivelesFormacion.map((n) => ({
+    value: n.id,
+    label: n.nombreNivel,
+  }));
 
   const form = useForm<MatriculaFormData>({
     resolver: zodResolver(matriculaSchema),
@@ -745,20 +750,16 @@ export default function MatriculaFormPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nivel de Formación</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {NIVELES_FORMACION_EMPRESA.map((n) => (
-                            <SelectItem key={n.value} value={n.value}>
-                              {n.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Combobox
+                          options={nivelesOptions}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder="Seleccionar nivel..."
+                          searchPlaceholder="Buscar nivel..."
+                          emptyMessage="No se encontraron niveles."
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

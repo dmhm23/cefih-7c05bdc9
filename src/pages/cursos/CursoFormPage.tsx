@@ -28,7 +28,7 @@ import { CamposAdicionalesCard } from "@/components/cursos/CamposAdicionalesCard
 import { useCreateCurso } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { ENTRENADORES_MOCK, SUPERVISORES_MOCK } from "@/data/formOptions";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { CampoAdicional } from "@/types/nivelFormacion";
 
 const baseSchema = {
@@ -116,6 +116,8 @@ export default function CursoFormPage() {
   const { toast } = useToast();
   const createCurso = useCreateCurso();
   const { data: niveles = [] } = useNivelesFormacion();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+  const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const [camposAdicionales, setCamposAdicionales] = useState<CampoAdicional[]>([]);
 
   const schema = useMemo(
@@ -183,10 +185,10 @@ export default function CursoFormPage() {
   };
 
   const handleEntrenadorChange = (entrenadorId: string) => {
-    const e = ENTRENADORES_MOCK.find((x) => x.id === entrenadorId);
+    const e = entrenadores.find((x) => x.id === entrenadorId);
     if (e) {
       form.setValue("entrenadorId", entrenadorId);
-      form.setValue("entrenadorNombre", e.nombre);
+      form.setValue("entrenadorNombre", `${e.nombres} ${e.apellidos}`);
     }
   };
 
@@ -196,10 +198,10 @@ export default function CursoFormPage() {
       form.setValue("supervisorNombre", "");
       return;
     }
-    const s = SUPERVISORES_MOCK.find((x) => x.id === supervisorId);
+    const s = supervisores.find((x) => x.id === supervisorId);
     if (s) {
       form.setValue("supervisorId", supervisorId);
-      form.setValue("supervisorNombre", s.nombre);
+      form.setValue("supervisorNombre", `${s.nombres} ${s.apellidos}`);
     }
   };
 
@@ -402,9 +404,9 @@ export default function CursoFormPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {ENTRENADORES_MOCK.map((e) => (
+                          {entrenadores.map((e) => (
                             <SelectItem key={e.id} value={e.id}>
-                              {e.nombre}
+                              {e.nombres} {e.apellidos}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -428,9 +430,9 @@ export default function CursoFormPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="_none">Sin supervisor</SelectItem>
-                          {SUPERVISORES_MOCK.map((s) => (
+                          {supervisores.map((s) => (
                             <SelectItem key={s.id} value={s.id}>
-                              {s.nombre}
+                              {s.nombres} {s.apellidos}
                             </SelectItem>
                           ))}
                         </SelectContent>

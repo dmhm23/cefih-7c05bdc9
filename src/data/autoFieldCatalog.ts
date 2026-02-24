@@ -49,6 +49,12 @@ export const AUTO_FIELD_CATALOG: AutoFieldOption[] = [
   // --- Personal Asignado ---
   { key: 'entrenador_nombre', label: 'Entrenador', category: 'Personal Asignado', source: 'Curso' },
   { key: 'supervisor_nombre', label: 'Supervisor', category: 'Personal Asignado', source: 'Curso' },
+  { key: 'entrenador_firma', label: 'Firma del entrenador', category: 'Personal Asignado', source: 'Personal' },
+  { key: 'supervisor_firma', label: 'Firma del supervisor', category: 'Personal Asignado', source: 'Personal' },
+
+  // --- Sistema ---
+  { key: 'fecha_diligenciamiento', label: 'Fecha de diligenciamiento', category: 'Datos del Curso', source: 'Sistema' },
+  { key: 'aprendiz_firma', label: 'Firma del aprendiz', category: 'Datos del Aprendiz', source: 'Persona' },
 ];
 
 export const AUTO_FIELD_CATEGORIES = [...new Set(AUTO_FIELD_CATALOG.map(f => f.category))];

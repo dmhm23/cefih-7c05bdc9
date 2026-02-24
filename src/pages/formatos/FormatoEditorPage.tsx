@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Save, Eye, GripVertical, Trash2, Copy, Plus } from "lucide-react";
+import { BLOQUE_TYPE_LABELS, BLOCK_PALETTE, COMPLEX_TYPES } from "@/data/bloqueConstants";
+import BloqueInspector from "@/components/formatos/BloqueInspector";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -36,25 +38,7 @@ import {
 import { TipoFormacion, TIPO_FORMACION_LABELS } from "@/types/curso";
 import { v4 as uuidv4 } from "uuid";
 
-// ---------------------------------------------------------------------------
-// Block palette
-// ---------------------------------------------------------------------------
-
-const BLOCK_PALETTE: { type: TipoBloque; label: string; icon: string }[] = [
-  { type: "section_title", label: "Título de sección", icon: "📌" },
-  { type: "heading", label: "Encabezado", icon: "🔤" },
-  { type: "paragraph", label: "Párrafo", icon: "📝" },
-  { type: "text", label: "Campo de texto", icon: "✏️" },
-  { type: "date", label: "Campo de fecha", icon: "📅" },
-  { type: "number", label: "Campo numérico", icon: "🔢" },
-  { type: "radio", label: "Opciones (radio)", icon: "🔘" },
-  { type: "select", label: "Lista desplegable", icon: "📋" },
-  { type: "checkbox", label: "Casilla de verificación", icon: "☑️" },
-  { type: "auto_field", label: "Campo automático", icon: "⚡" },
-  { type: "signature_aprendiz", label: "Firma aprendiz", icon: "✍️" },
-  { type: "signature_entrenador_auto", label: "Firma entrenador", icon: "✍️" },
-  { type: "signature_supervisor_auto", label: "Firma supervisor", icon: "✍️" },
-];
+// Constants imported from @/data/bloqueConstants
 
 const TIPO_CURSO_OPTIONS = Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][];
 
@@ -75,33 +59,6 @@ function createDefaultBloque(type: TipoBloque): Bloque {
       return base as Bloque;
   }
 }
-
-// ---------------------------------------------------------------------------
-// Block item (inline editor)
-// ---------------------------------------------------------------------------
-
-const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
-  section_title: "Título de sección",
-  heading: "Encabezado",
-  paragraph: "Párrafo",
-  text: "Campo de texto",
-  date: "Fecha",
-  number: "Numérico",
-  radio: "Radio",
-  select: "Select",
-  checkbox: "Checkbox",
-  auto_field: "Automático",
-  attendance_by_day: "Asistencia por día",
-  signature_aprendiz: "Firma aprendiz",
-  signature_entrenador_auto: "Firma entrenador",
-  signature_supervisor_auto: "Firma supervisor",
-  health_consent: "Consentimiento salud",
-  data_authorization: "Autorización datos",
-  evaluation_quiz: "Evaluación",
-  satisfaction_survey: "Encuesta satisfacción",
-};
-
-const COMPLEX_TYPES: TipoBloque[] = ["health_consent", "data_authorization", "evaluation_quiz", "satisfaction_survey"];
 
 interface BloqueItemProps {
   bloque: Bloque;
@@ -453,6 +410,8 @@ export default function FormatoEditorPage() {
 
   const formatoPreview: Partial<FormatoFormacion> = { nombre, descripcion, codigo, version, bloques };
   const isSaving = updateMutation.isPending || createMutation.isPending;
+  const selectedBloque = selectedBloqueId ? bloques.find(b => b.id === selectedBloqueId) ?? null : null;
+  const selectedIndex = selectedBloqueId ? bloques.findIndex(b => b.id === selectedBloqueId) : -1;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-muted/30">
@@ -668,25 +627,35 @@ export default function FormatoEditorPage() {
 
         {/* Panel derecho */}
         <aside className="w-80 shrink-0 border-l overflow-y-auto bg-background p-5">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Bloques Disponibles</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-1.5">
-              {BLOCK_PALETTE.map((item) => (
-                <button
-                  key={item.type}
-                  type="button"
-                  onClick={() => addBloque(item.type)}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-muted/60 transition-colors border border-transparent hover:border-border"
-                >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
-                  <Plus className="h-3 w-3 ml-auto text-muted-foreground" />
-                </button>
-              ))}
-            </CardContent>
-          </Card>
+          {selectedBloque ? (
+            <BloqueInspector
+              bloque={selectedBloque}
+              onChange={(updated) => updateBloque(selectedIndex, updated)}
+              onDelete={() => { deleteBloque(selectedIndex); setSelectedBloqueId(null); }}
+              onDuplicate={() => duplicateBloque(selectedIndex)}
+              onBack={() => setSelectedBloqueId(null)}
+            />
+          ) : (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Bloques Disponibles</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {BLOCK_PALETTE.map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    onClick={() => addBloque(item.type)}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-muted/60 transition-colors border border-transparent hover:border-border"
+                  >
+                    <span>{item.icon}</span>
+                    <span>{item.label}</span>
+                    <Plus className="h-3 w-3 ml-auto text-muted-foreground" />
+                  </button>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </aside>
       </div>
 

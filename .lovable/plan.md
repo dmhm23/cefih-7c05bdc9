@@ -85,12 +85,17 @@ Este tipo solo se usa en `FormatosList` como interfaz de presentacion. No hay se
 
 ---
 
-### Proximos pasos (Parte 1)
+### Parte 1 — COMPLETADA ✅
 
-Con este diagnostico completo, la Parte 1 procedera a:
+Archivos creados:
 
-1. Definir `FormatoFormacion` y `Bloque` como tipos TypeScript.
-2. Crear `formatoFormacionService.ts` con CRUD mock.
-3. Pre-cargar los 4 formatos como registros con bloques.
-4. Crear hooks React Query.
-5. No tocar UI existente de Matriculas aun.
+| Archivo | Contenido |
+|---|---|
+| `src/types/formatoFormacion.ts` | Interfaces `FormatoFormacion`, `Bloque` (18 tipos), `FormatoRespuesta`, union type `Bloque` |
+| `src/services/formatoFormacionService.ts` | CRUD mock con 4 formatos precargados como bloques declarativos + `getForMatricula` |
+| `src/hooks/useFormatosFormacion.ts` | `useFormatos`, `useFormato`, `useFormatosMatricula`, `useCreateFormato`, `useUpdateFormato`, `useToggleFormatoActivo`, `useDuplicateFormato` |
+| `src/types/index.ts` | Re-export de `formatoFormacion` |
+
+### Proximos pasos (Parte 2)
+
+Construir UI del módulo: listado en `/gestion-formatos` + editor de formato con constructor de bloques.

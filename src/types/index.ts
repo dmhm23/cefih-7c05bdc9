@@ -12,3 +12,4 @@ export * from './curso';
 export * from './audit';
 export * from './nivelFormacion';
 export * from './personal';
+export * from './formatoFormacion';

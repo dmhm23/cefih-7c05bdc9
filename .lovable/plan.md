@@ -1,135 +1,132 @@
 
 
-## PARTE 5 — Insercion Profesional desde Paleta + Iconos Lucide
+## PARTE 6 — Vista Previa Profesional
 
 ### Objetivo
 
-Permitir arrastrar bloques desde la paleta lateral directamente al canvas, insertandolos en la posicion deseada con un placeholder visual. Mantener el boton "+" como fallback. Reemplazar todos los emojis de la paleta con iconos Lucide profesionales.
+Reemplazar el `PreviewDialog` actual (lineas 285-389) con una vista previa profesional que renderiza el formato como un documento real, usando el encabezado institucional estandar (`DocumentHeader`), datos dummy de estudiante/curso, y estilos fieles al documento impreso.
 
 ---
 
 ### Situacion actual
 
-- La paleta (lineas 722-740) usa botones con emojis y `onClick` que siempre agregan al final del array.
-- El canvas ya tiene `DndContext` + `SortableContext` para reordenar bloques existentes.
-- Los emojis no se ven consistentes entre plataformas y no son profesionales.
+- `PreviewDialog` es un `Dialog` pequeno (max-w-3xl) con renderizado basico de bloques.
+- No usa el encabezado institucional (`DocumentHeader`) que todos los documentos reales usan.
+- No muestra datos dummy reales — los campos auto aparecen como texto gris generico.
+- No tiene estetica de "hoja" (margenes, tipografia de documento).
+- No es consistente con los preview dialogs existentes (InfoAprendiz, RegistroAsistencia, etc.).
 
 ---
 
 ### Cambios detallados
 
-#### 1. Reemplazar emojis por iconos Lucide en `bloqueConstants.ts`
+#### 1. Crear componente `FormatoPreviewDocument`
 
-Cambiar el tipo de `icon` de `string` (emoji) a `string` (nombre de icono Lucide). Crear un mapeo de icono Lucide por tipo:
+**Archivo:** `src/components/formatos/FormatoPreviewDocument.tsx` (nuevo)
 
-| Tipo | Icono Lucide |
-|---|---|
-| `section_title` | `Bookmark` |
-| `heading` | `Heading` |
-| `paragraph` | `AlignLeft` |
-| `text` | `TextCursorInput` |
-| `date` | `CalendarDays` |
-| `number` | `Hash` |
-| `radio` | `CircleDot` |
-| `select` | `ChevronDown` |
-| `checkbox` | `CheckSquare` |
-| `auto_field` | `Zap` |
-| `signature_aprendiz` | `PenTool` |
-| `signature_entrenador_auto` | `PenTool` |
-| `signature_supervisor_auto` | `PenTool` |
+Componente que renderiza el formato como documento imprimible, reutilizando `DocumentHeader` y los patrones visuales de los documentos existentes.
 
-Se exporta un mapeo `BLOQUE_ICONS: Record<TipoBloque, LucideIcon>` desde `bloqueConstants.ts` para reutilizar en paleta, inspector y tarjetas.
-
-#### 2. Hacer la paleta "draggable" con dnd-kit
-
-Cada item de la paleta se convierte en un elemento draggable usando `useDraggable` de `@dnd-kit/core`. Al iniciar el drag:
-
-- Se genera un ID temporal con prefijo `palette-` + tipo (ej: `palette-text`).
-- El `DragOverlay` muestra un ghost estilizado del bloque de paleta.
-- El item original en la paleta reduce su opacidad.
-
-El boton "+" se mantiene como fallback funcional (click = agregar al final).
-
-#### 3. Elevar el DndContext para cubrir paleta + canvas
-
-Actualmente el `DndContext` solo envuelve la lista de bloques (lineas 679-705). Para soportar drag desde la paleta, se necesita que el `DndContext` envuelva tanto el canvas como el aside (panel derecho).
-
-Se mueve el `DndContext` para que envuelva el `<div className="flex flex-1 overflow-hidden">` completo (canvas + aside).
-
-#### 4. Logica de insercion en posicion
-
-En `handleDragEnd`, detectar si el item arrastrado viene de la paleta (id empieza con `palette-`):
-
+**Props:**
 ```typescript
-const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  setActiveId(null);
-  
-  if (!over) return;
-  
-  const activeIdStr = String(active.id);
-  
-  // Drag desde paleta
-  if (activeIdStr.startsWith('palette-')) {
-    const type = activeIdStr.replace('palette-', '') as TipoBloque;
-    const newBloque = createDefaultBloque(type);
-    const overIndex = bloques.findIndex(b => b.id === over.id);
-    if (overIndex >= 0) {
-      setBloques(prev => [...prev.slice(0, overIndex + 1), newBloque, ...prev.slice(overIndex + 1)]);
-    } else {
-      setBloques(prev => [...prev, newBloque]);
-    }
-    markDirty();
-    setSelectedBloqueId(newBloque.id);
-    return;
-  }
-  
-  // Reordenamiento existente
-  if (active.id !== over.id) {
-    const oldIndex = bloques.findIndex(b => b.id === active.id);
-    const newIndex = bloques.findIndex(b => b.id === over.id);
-    setBloques(arrayMove(bloques, oldIndex, newIndex));
-    markDirty();
-  }
-};
+interface FormatoPreviewDocumentProps {
+  formato: Partial<FormatoFormacion>;
+}
 ```
 
-Al soltar sobre un bloque existente, se inserta despues de ese bloque. Al soltar sobre el area vacia del canvas (no sobre un bloque), se agrega al final.
+**Datos dummy embebidos** (constante `DUMMY_DATA`):
+- Persona: Juan Carlos Perez Martinez, CC 1.023.456.789, genero M, nacimiento 15/03/1990, telefono 310-456-7890, email juan.perez@email.com, RH O+, nivel educativo Tecnologo.
+- Empresa: Construcciones ABC S.A.S., NIT 900.123.456-7, cargo Operario, area Construccion, sector Construccion, vinculacion Contrato obra.
+- Curso: "Trabajo Seguro en Alturas - Nivel Avanzado", tipo Formacion, numero 2025-001, inicio 15/01/2025, fin 20/01/2025, 6 dias, 48 horas.
+- Personal: Entrenador "Carlos Rodriguez", Supervisor "Ana Martinez".
 
-#### 5. Placeholder visual en el canvas
+**Estructura del documento:**
 
-Para mostrar donde se insertara el bloque al soltar, se usa el comportamiento nativo de `SortableContext` que ya maneja animaciones de desplazamiento. Cuando un item de paleta se arrastra sobre la zona de bloques, los bloques existentes se desplazan para abrir espacio.
+1. `DocumentHeader` con nombre del formato, codigo, version, subsistema "FORMACION", fechas del documentMeta o defaults.
 
-Para que esto funcione, los items de paleta necesitan ser reconocidos por el `SortableContext`. Se usa `useDroppable` en el contenedor de bloques vacios para manejar el caso de canvas vacio.
+2. Por cada bloque en `formato.bloques`, renderizar segun tipo:
 
-#### 6. DragOverlay diferenciado
+| Tipo | Renderizado en preview |
+|---|---|
+| `section_title` | `<div>` con borde inferior, h2 uppercase tracking-widest, estilo identico a `.section-title` de los documentos existentes |
+| `heading` | h3 con font-bold, nivel respetado (H1 = text-lg, H2 = text-base, H3 = text-sm) |
+| `paragraph` | Texto justificado con `text-sm leading-relaxed` |
+| `text` | `FieldCell` con label y valor dummy "Dato de ejemplo" |
+| `date` | `FieldCell` con label y valor "15/01/2025" |
+| `number` | `FieldCell` con label y valor "42" |
+| `radio` | `FieldCell` con label y la primera opcion seleccionada visualmente (circulo relleno) |
+| `select` | `FieldCell` con label y la primera opcion como valor |
+| `checkbox` | Checkbox marcado con label |
+| `auto_field` | `FieldCell` con label, valor resuelto desde `DUMMY_DATA` segun la `key`, y badge "Auto" pequeno al lado del label |
+| `signature_aprendiz` | Box dashed con texto "Firma del Aprendiz" y placeholder gris |
+| `signature_entrenador_auto` | Box dashed con nombre "Carlos Rodriguez" |
+| `signature_supervisor_auto` | Box dashed con nombre "Ana Martinez" |
+| `attendance_by_day` | Tabla simplificada con 6 filas (una por dia del curso dummy) y columnas Fecha/Hora entrada/Hora salida/Firma |
+| `health_consent` | Badge "Bloque complejo" con nota informativa |
+| `data_authorization` | Badge "Bloque complejo" con nota informativa |
+| `evaluation_quiz` | Badge "Bloque complejo" con nota informativa |
+| `satisfaction_survey` | Badge "Bloque complejo" con nota informativa |
 
-El `DragOverlay` ahora muestra dos tipos de ghost:
+Los campos se organizan en grid de 2 columnas (`grid-2`) siguiendo el patron de los documentos existentes. Los bloques con `props.span` usan `grid-column: span 2`.
 
-- Si es un bloque existente (`activeDragBloque`): el overlay actual con borde primary.
-- Si es un item de paleta (`activeId` empieza con `palette-`): un ghost compacto con el icono Lucide + nombre del tipo + badge "Nuevo", con estilo de tarjeta con borde dashed primary.
-
-#### 7. Actualizar la paleta en el aside
-
-Cada item de la paleta cambia de:
+**Sub-componente `FieldCell`** (reutilizar el patron de InfoAprendizDocument):
 ```
-<button onClick={...}>
-  <span>emoji</span>
-  <span>label</span>
-  <Plus />
-</button>
-```
-
-A:
-```
-<div draggable via useDraggable>
-  <LucideIcon className="h-4 w-4 text-muted-foreground" />
-  <span>label</span>
-  <Plus onClick={addBloque} />  // fallback click
+<div className="field-cell">
+  <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</p>
+  <p className="text-sm font-medium">{value}</p>
 </div>
 ```
 
-El contenedor del item tiene `cursor: grab` y al iniciar drag cambia a `cursor: grabbing`.
+#### 2. Crear componente `FormatoPreviewDialog`
+
+**Archivo:** `src/components/formatos/FormatoPreviewDialog.tsx` (nuevo)
+
+Dialog profesional de vista previa, siguiendo el patron de `RegistroAsistenciaPreviewDialog` y `ParticipacionPtaAtsPreviewDialog`.
+
+**Estructura:**
+- `Dialog` con `max-w-6xl h-[90vh]`, layout flex column, padding 0.
+- Header fijo: titulo "Vista Previa — {nombre}", boton "Descargar PDF" (usando `window.print()` como los demas dialogos).
+- Body: `ScrollArea` con fondo `bg-muted/30`, documento centrado con `shadow-lg rounded border bg-white`.
+- El documento renderizado con `FormatoPreviewDocument` dentro de un `div ref={documentRef}`.
+
+**Print/PDF:**
+- Misma logica de `handlePrint` que los dialogos existentes: clonar el DOM del documento, inyectar `PRINT_STYLES`, abrir ventana y `window.print()`.
+- Reutilizar los mismos `PRINT_STYLES` CSS del proyecto (patron ya establecido).
+
+#### 3. Eliminar `PreviewDialog` inline
+
+**Archivo:** `src/pages/formatos/FormatoEditorPage.tsx`
+
+- Eliminar la funcion `PreviewDialog` (lineas 285-389).
+- Importar `FormatoPreviewDialog` del nuevo componente.
+- Reemplazar `<PreviewDialog ... />` (linea 860) por `<FormatoPreviewDialog ... />`.
+- Las props se mantienen: `open`, `onOpenChange`, `formato`.
+
+#### 4. Mapeo de auto_field a datos dummy
+
+Dentro de `FormatoPreviewDocument`, crear un `Record<AutoFieldKey, string>` con los valores dummy:
+
+```typescript
+const DUMMY_AUTO_VALUES: Record<string, string> = {
+  nombre_aprendiz: "Juan Carlos Pérez Martínez",
+  documento_aprendiz: "1.023.456.789",
+  tipo_documento_aprendiz: "Cédula de Ciudadanía",
+  genero_aprendiz: "Masculino",
+  fecha_nacimiento_aprendiz: "15/03/1990",
+  telefono_aprendiz: "310-456-7890",
+  email_aprendiz: "juan.perez@email.com",
+  rh_aprendiz: "O+",
+  nivel_educativo_aprendiz: "Tecnólogo",
+  empresa_nombre: "Construcciones ABC S.A.S.",
+  empresa_nit: "900.123.456-7",
+  empresa_cargo: "Operario",
+  nombre_curso: "Trabajo Seguro en Alturas - Nivel Avanzado",
+  fecha_inicio_curso: "15/01/2025",
+  fecha_fin_curso: "20/01/2025",
+  entrenador_nombre: "Carlos Rodríguez",
+  supervisor_nombre: "Ana Martínez",
+  // ... demas campos
+};
+```
 
 ---
 
@@ -137,16 +134,15 @@ El contenedor del item tiene `cursor: grab` y al iniciar drag cambia a `cursor: 
 
 | Archivo | Cambio |
 |---|---|
-| `src/data/bloqueConstants.ts` | Reemplazar emojis por nombres de iconos Lucide, exportar `BLOQUE_ICONS` |
-| `src/pages/formatos/FormatoEditorPage.tsx` | Elevar DndContext, crear items de paleta draggables, actualizar handleDragEnd con logica de insercion, diferenciar DragOverlay, actualizar renderizado de paleta con iconos Lucide |
-| `src/components/formatos/BloqueInspector.tsx` | Actualizar encabezado para usar icono Lucide en vez de emoji |
+| `src/components/formatos/FormatoPreviewDocument.tsx` | Nuevo: documento con encabezado institucional, datos dummy, renderizado profesional por tipo de bloque |
+| `src/components/formatos/FormatoPreviewDialog.tsx` | Nuevo: dialog grande (90vh) con scroll, boton PDF, patron consistente con los demas preview dialogs |
+| `src/pages/formatos/FormatoEditorPage.tsx` | Eliminar PreviewDialog inline, importar y usar FormatoPreviewDialog |
 
 ### Lo que NO cambia
 
-- Layout de header sticky y canvas (Parte 1)
-- Tarjetas compactas de bloques (Parte 2)
-- Inspector de propiedades (Parte 3)
-- Reordenamiento por drag de bloques existentes (Parte 4)
-- Preview dialog
+- Layout del builder (Partes 1-5)
+- Inspector de propiedades
+- Drag and drop
 - Logica de guardado y dirty state
+- El estado del builder se preserva al abrir/cerrar la vista previa
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Save, Eye, GripVertical, Trash2, Copy, Plus } from "lucide-react";
 import {
@@ -100,10 +101,13 @@ const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
   satisfaction_survey: "Encuesta satisfacción",
 };
 
+const COMPLEX_TYPES: TipoBloque[] = ["health_consent", "data_authorization", "evaluation_quiz", "satisfaction_survey"];
+
 interface BloqueItemProps {
   bloque: Bloque;
   index: number;
-  onChange: (updated: Bloque) => void;
+  isSelected: boolean;
+  onSelect: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onMoveUp: () => void;
@@ -112,107 +116,66 @@ interface BloqueItemProps {
   isLast: boolean;
 }
 
-function BloqueItem({ bloque, index, onChange, onDelete, onDuplicate, onMoveUp, onMoveDown, isFirst, isLast }: BloqueItemProps) {
-  const isComplex = ["health_consent", "data_authorization", "evaluation_quiz", "satisfaction_survey"].includes(bloque.type);
+function BloqueItem({ bloque, isSelected, onSelect, onDelete, onDuplicate, onMoveUp, onMoveDown, isFirst, isLast }: BloqueItemProps) {
+  const isComplex = COMPLEX_TYPES.includes(bloque.type);
+
+  // Subtext logic
+  let subtext = BLOQUE_TYPE_LABELS[bloque.type] || bloque.type;
+  if (bloque.type === "auto_field" && "props" in bloque) {
+    const opt = getAutoFieldOption((bloque as any).props?.key);
+    subtext += ` · ${opt?.label ?? (bloque as any).props?.key}`;
+  } else if (bloque.type === "paragraph" && "props" in bloque) {
+    const txt = (bloque as any).props?.text || "";
+    if (txt) subtext += ` · ${txt.slice(0, 60)}${txt.length > 60 ? "…" : ""}`;
+  }
 
   return (
-    <div className="group flex items-start gap-2 p-3 border rounded-lg bg-card hover:border-primary/30 transition-colors">
-      <div className="flex flex-col items-center gap-0.5 pt-1">
-        <GripVertical className="h-4 w-4 text-muted-foreground/50 cursor-grab" />
-        <span className="text-[10px] text-muted-foreground">{index + 1}</span>
+    <div
+      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      className={cn(
+        "group flex items-center gap-3 p-4 border rounded-[10px] cursor-pointer transition-all duration-150",
+        isSelected
+          ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+          : "bg-background border-border hover:bg-muted/50 hover:border-muted-foreground/20"
+      )}
+    >
+      {/* Drag handle */}
+      <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40 cursor-grab" />
+
+      {/* Central info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate">
+          {bloque.label || <span className="italic text-muted-foreground font-normal">Sin etiqueta</span>}
+        </p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{subtext}</p>
       </div>
 
-      <div className="flex-1 min-w-0 space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className="text-[10px] shrink-0">
-            {BLOQUE_TYPE_LABELS[bloque.type] || bloque.type}
-          </Badge>
-          {isComplex && (
-            <Badge variant="secondary" className="text-[10px]">Bloque complejo</Badge>
-          )}
-          {bloque.required && (
-            <Badge className="text-[10px] bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100">
-              Obligatorio
-            </Badge>
-          )}
-        </div>
-
-        <Input
-          value={bloque.label}
-          onChange={(e) => onChange({ ...bloque, label: e.target.value })}
-          placeholder="Etiqueta del bloque..."
-          className="h-8 text-sm"
-        />
-
-        {bloque.type === "paragraph" && "props" in bloque && (
-          <Textarea
-            value={(bloque as any).props?.text || ""}
-            onChange={(e) =>
-              onChange({ ...bloque, props: { ...(bloque as any).props, text: e.target.value } } as Bloque)
-            }
-            placeholder="Texto del párrafo..."
-            className="text-sm min-h-[60px]"
-          />
+      {/* Chips */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {bloque.type === "auto_field" && (
+          <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50">Auto</Badge>
         )}
-
-        {bloque.type === "auto_field" && "props" in bloque && (
-          <Select
-            value={(bloque as any).props?.key || "nombre_aprendiz"}
-            onValueChange={(v) =>
-              onChange({ ...bloque, props: { ...(bloque as any).props, key: v } } as Bloque)
-            }
-          >
-            <SelectTrigger className="h-8 text-sm w-72">
-              <SelectValue>
-                {getAutoFieldLabel((bloque as any).props?.key || "nombre_aprendiz")}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {AUTO_FIELD_CATEGORIES.map((cat) => (
-                <SelectGroup key={cat}>
-                  <SelectLabel className="text-xs font-semibold text-muted-foreground">{cat}</SelectLabel>
-                  {AUTO_FIELD_CATALOG.filter((f) => f.category === cat).map((opt) => (
-                    <SelectItem key={opt.key} value={opt.key}>
-                      <span className="flex items-center gap-2">
-                        <span>{opt.label}</span>
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-normal">
-                          {opt.source}
-                        </Badge>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+        {bloque.required && (
+          <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">Obligatorio</Badge>
         )}
-
-        {!isComplex && !["signature_aprendiz", "signature_entrenador_auto", "signature_supervisor_auto", "auto_field", "attendance_by_day"].includes(bloque.type) && (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={bloque.required || false}
-              onCheckedChange={(checked) => onChange({ ...bloque, required: !!checked })}
-              id={`req-${bloque.id}`}
-            />
-            <Label htmlFor={`req-${bloque.id}`} className="text-xs text-muted-foreground">
-              Obligatorio
-            </Label>
-          </div>
+        {isComplex && (
+          <Badge variant="secondary" className="text-[10px]">Complejo</Badge>
         )}
       </div>
 
-      <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} disabled={isFirst} title="Mover arriba">
+      {/* Hover actions */}
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} disabled={isFirst} title="Mover arriba">
           <span className="text-xs">↑</span>
         </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveDown} disabled={isLast} title="Mover abajo">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} disabled={isLast} title="Mover abajo">
           <span className="text-xs">↓</span>
         </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDuplicate} title="Duplicar">
-          <Copy className="h-3 w-3" />
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicar">
+          <Copy className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={onDelete} title="Eliminar">
-          <Trash2 className="h-3 w-3" />
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Eliminar">
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
@@ -359,6 +322,7 @@ export default function FormatoEditorPage() {
   const [firmaSupervisor, setFirmaSupervisor] = useState(false);
   const [bloques, setBloques] = useState<Bloque[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedBloqueId, setSelectedBloqueId] = useState<string | null>(null);
 
   // --- Dirty state ---
   const [isDirty, setIsDirty] = useState(false);
@@ -558,9 +522,12 @@ export default function FormatoEditorPage() {
           onScroll={handleCanvasScroll}
           className="flex-1 overflow-y-auto bg-[hsl(var(--muted)/0.3)] p-8"
         >
-          <div className="max-w-[900px] mx-auto bg-background rounded-xl shadow-sm border p-6 space-y-4">
+          <div
+            className="max-w-[900px] mx-auto space-y-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setSelectedBloqueId(null); }}
+          >
             {/* A. Configuración General */}
-            <Card>
+            <Card className="bg-background rounded-xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Configuración General</CardTitle>
               </CardHeader>
@@ -638,7 +605,7 @@ export default function FormatoEditorPage() {
             </Card>
 
             {/* B. Firmas */}
-            <Card>
+            <Card className="bg-background rounded-xl shadow-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Firmas Requeridas</CardTitle>
               </CardHeader>
@@ -665,41 +632,37 @@ export default function FormatoEditorPage() {
               </CardContent>
             </Card>
 
-            {/* C. Constructor de bloques */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  Constructor de Bloques
-                  <Badge variant="secondary" className="ml-2">{bloques.length}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {bloques.length === 0 ? (
-                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">
-                      Agrega bloques desde el panel lateral para construir el formato
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {bloques.map((bloque, index) => (
-                      <BloqueItem
-                        key={bloque.id}
-                        bloque={bloque}
-                        index={index}
-                        onChange={(updated) => updateBloque(index, updated)}
-                        onDelete={() => deleteBloque(index)}
-                        onDuplicate={() => duplicateBloque(index)}
-                        onMoveUp={() => moveBloque(index, -1)}
-                        onMoveDown={() => moveBloque(index, 1)}
-                        isFirst={index === 0}
-                        isLast={index === bloques.length - 1}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* C. Bloques */}
+            <div className="pt-2">
+              <p className="text-sm font-semibold text-muted-foreground mb-3">
+                Bloques ({bloques.length})
+              </p>
+              {bloques.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-xl bg-background">
+                  <p className="text-muted-foreground">
+                    Agrega bloques desde el panel lateral para construir el formato
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bloques.map((bloque, index) => (
+                    <BloqueItem
+                      key={bloque.id}
+                      bloque={bloque}
+                      index={index}
+                      isSelected={selectedBloqueId === bloque.id}
+                      onSelect={() => setSelectedBloqueId(bloque.id)}
+                      onDelete={() => deleteBloque(index)}
+                      onDuplicate={() => duplicateBloque(index)}
+                      onMoveUp={() => moveBloque(index, -1)}
+                      onMoveDown={() => moveBloque(index, 1)}
+                      isFirst={index === 0}
+                      isLast={index === bloques.length - 1}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

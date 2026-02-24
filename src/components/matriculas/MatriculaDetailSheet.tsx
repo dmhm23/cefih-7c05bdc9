@@ -112,6 +112,10 @@ export function MatriculaDetailSheet({
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
 
+  const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
+  const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
+  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
+
   useEffect(() => {
     setFormData({});
     setPersonaFormData({});
@@ -125,10 +129,6 @@ export function MatriculaDetailSheet({
   }, [open]);
 
   if (!matricula) return null;
-
-  const persona = personas.find((p) => p.id === matricula.personaId);
-  const curso = cursos.find((c) => c.id === matricula.cursoId);
-  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
   const handleFieldChange = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);

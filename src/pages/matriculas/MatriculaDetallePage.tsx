@@ -10,6 +10,8 @@ import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago,
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
+import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
+import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
@@ -75,7 +77,7 @@ export default function MatriculaDetallePage() {
   const { data: matricula, isLoading } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
-
+  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
   const updateMatricula = useUpdateMatricula();
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();
@@ -743,28 +745,12 @@ export default function MatriculaDetallePage() {
               Formatos para Formación
             </h3>
             <FormatosList
-              formatos={[
-                {
-                  id: "info_aprendiz",
-                  nombre: "Información del Aprendiz",
-                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
-                },
-                {
-                  id: "registro_asistencia",
-                  nombre: "Registro de Asistencia",
-                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
-                },
-                {
-                  id: "participacion_pta_ats",
-                  nombre: "Participación PTA - ATS",
-                  estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo",
-                },
-                {
-                  id: "evaluacion_reentrenamiento",
-                  nombre: "Evaluación Reentrenamiento (FIH04-019)",
-                  estado: matricula.evaluacionCompletada ? "completo" : "borrador",
-                },
-              ]}
+              formatos={(formatosDinamicos ?? []).map((f) => ({
+                id: f.legacyComponentId || f.id,
+                nombre: f.nombre,
+                codigo: f.codigo,
+                estado: resolveFormatoEstado(f, matricula),
+              }))}
               onPreview={(id) => setPreviewFormato(id)}
               onDownload={(id) => setPreviewFormato(id)}
             />

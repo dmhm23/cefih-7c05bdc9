@@ -7,6 +7,7 @@ import { EstadoFormato } from "@/types/formato";
 interface FormatoItem {
   id: string;
   nombre: string;
+  codigo?: string;
   estado: EstadoFormato;
 }
 

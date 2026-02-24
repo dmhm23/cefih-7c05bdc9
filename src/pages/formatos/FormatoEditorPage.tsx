@@ -351,6 +351,19 @@ export default function FormatoEditorPage() {
       return;
     }
 
+    // Validate auto_field blocks have a key assigned
+    const invalidAutoFields = bloques.filter(
+      (b) => b.type === "auto_field" && (!("props" in b) || !(b as any).props?.key)
+    );
+    if (invalidAutoFields.length > 0) {
+      toast({
+        title: "Hay campos automáticos sin clave asignada",
+        description: "Revisa los bloques marcados como 'Auto'.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data: FormatoFormacionFormData = {
       nombre,
       descripcion,

@@ -34,6 +34,8 @@ import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoApre
 import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
 import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
 import EvaluacionReentrenamientoPreviewDialog from "@/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog";
+import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
+import { FormatoFormacion } from "@/types/formatoFormacion";
 import {
   TIPOS_VINCULACION,
   AREAS_TRABAJO,
@@ -60,6 +62,8 @@ interface ChecklistItem {
 
 type PreviewFormatoId = string | null;
 
+const LEGACY_IDS = new Set(["info_aprendiz", "registro_asistencia", "participacion_pta_ats", "evaluacion_reentrenamiento"]);
+
 export default function MatriculaDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -71,6 +75,7 @@ export default function MatriculaDetallePage() {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
+  const [dynamicFormato, setDynamicFormato] = useState<FormatoFormacion | null>(null);
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
 
@@ -744,15 +749,29 @@ export default function MatriculaDetallePage() {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Formatos para Formación
             </h3>
-            <FormatosList
+             <FormatosList
               formatos={(formatosDinamicos ?? []).map((f) => ({
                 id: f.legacyComponentId || f.id,
                 nombre: f.nombre,
                 codigo: f.codigo,
                 estado: resolveFormatoEstado(f, matricula),
               }))}
-              onPreview={(id) => setPreviewFormato(id)}
-              onDownload={(id) => setPreviewFormato(id)}
+              onPreview={(id) => {
+                if (LEGACY_IDS.has(id)) {
+                  setPreviewFormato(id);
+                } else {
+                  const fmt = formatosDinamicos?.find((f) => f.id === id);
+                  if (fmt) { setDynamicFormato(fmt); }
+                }
+              }}
+              onDownload={(id) => {
+                if (LEGACY_IDS.has(id)) {
+                  setPreviewFormato(id);
+                } else {
+                  const fmt = formatosDinamicos?.find((f) => f.id === id);
+                  if (fmt) { setDynamicFormato(fmt); }
+                }
+              }}
             />
           </div>
 
@@ -844,6 +863,14 @@ export default function MatriculaDetallePage() {
       <EvaluacionReentrenamientoPreviewDialog
         open={previewFormato === "evaluacion_reentrenamiento"}
         onOpenChange={(open) => !open && setPreviewFormato(null)}
+        persona={persona ?? null}
+        matricula={matricula}
+        curso={curso ?? null}
+      />
+      <DynamicFormatoPreviewDialog
+        open={!!dynamicFormato}
+        onOpenChange={(open) => !open && setDynamicFormato(null)}
+        formato={dynamicFormato}
         persona={persona ?? null}
         matricula={matricula}
         curso={curso ?? null}

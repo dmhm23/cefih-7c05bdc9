@@ -42,6 +42,10 @@ const DUMMY_AUTO_VALUES: Record<string, string> = {
   horas_totales_curso: "48",
   entrenador_nombre: "Carlos Rodríguez",
   supervisor_nombre: "Ana Martínez",
+  fecha_diligenciamiento: "24/02/2026",
+  aprendiz_firma: "(Firma)",
+  entrenador_firma: "(Firma)",
+  supervisor_firma: "(Firma)",
 };
 
 const ATTENDANCE_DAYS = [

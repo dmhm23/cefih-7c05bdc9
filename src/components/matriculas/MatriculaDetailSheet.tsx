@@ -52,6 +52,8 @@ import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoApre
 import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
 import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
 import EvaluacionReentrenamientoPreviewDialog from "@/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog";
+import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
+import { FormatoFormacion } from "@/types/formatoFormacion";
 import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
@@ -69,6 +71,8 @@ import {
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 
 type PreviewFormatoId = string | null;
+
+const LEGACY_IDS = new Set(["info_aprendiz", "registro_asistencia", "participacion_pta_ats", "evaluacion_reentrenamiento"]);
 
 interface MatriculaDetailSheetProps {
   open: boolean;
@@ -111,6 +115,7 @@ export function MatriculaDetailSheet({
   const [isDirty, setIsDirty] = useState(false);
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
+  const [dynamicFormato, setDynamicFormato] = useState<FormatoFormacion | null>(null);
 
   const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
   const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
@@ -122,10 +127,11 @@ export function MatriculaDetailSheet({
     setIsDirty(false);
     setIsPersonaDirty(false);
     setPreviewFormato(null);
+    setDynamicFormato(null);
   }, [matricula?.id]);
 
   useEffect(() => {
-    if (!open) setPreviewFormato(null);
+    if (!open) { setPreviewFormato(null); setDynamicFormato(null); }
   }, [open]);
 
   if (!matricula) return null;
@@ -560,8 +566,22 @@ export function MatriculaDetailSheet({
               codigo: f.codigo,
               estado: resolveFormatoEstado(f, matricula),
             }))}
-            onPreview={(id) => setPreviewFormato(id)}
-            onDownload={(id) => setPreviewFormato(id)}
+            onPreview={(id) => {
+              if (LEGACY_IDS.has(id)) {
+                setPreviewFormato(id);
+              } else {
+                const fmt = formatosDinamicos?.find((f) => f.id === id);
+                if (fmt) { setDynamicFormato(fmt); }
+              }
+            }}
+            onDownload={(id) => {
+              if (LEGACY_IDS.has(id)) {
+                setPreviewFormato(id);
+              } else {
+                const fmt = formatosDinamicos?.find((f) => f.id === id);
+                if (fmt) { setDynamicFormato(fmt); }
+              }
+            }}
           />
         </DetailSection>
 
@@ -721,6 +741,14 @@ export function MatriculaDetailSheet({
     <EvaluacionReentrenamientoPreviewDialog
       open={previewFormato === "evaluacion_reentrenamiento"}
       onOpenChange={(open) => !open && setPreviewFormato(null)}
+      persona={persona ?? null}
+      matricula={matricula}
+      curso={curso ?? null}
+    />
+    <DynamicFormatoPreviewDialog
+      open={!!dynamicFormato}
+      onOpenChange={(open) => !open && setDynamicFormato(null)}
+      formato={dynamicFormato}
       persona={persona ?? null}
       matricula={matricula}
       curso={curso ?? null}

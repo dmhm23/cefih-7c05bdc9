@@ -60,7 +60,11 @@ export type AutoFieldKey =
   | 'duracion_dias_curso'
   | 'horas_totales_curso'
   | 'entrenador_nombre'
-  | 'supervisor_nombre';
+  | 'supervisor_nombre'
+  | 'fecha_diligenciamiento'
+  | 'aprendiz_firma'
+  | 'entrenador_firma'
+  | 'supervisor_firma';
 
 export interface BloqueBase {
   id: string;

@@ -1,5 +1,5 @@
 import { Bloque, TipoBloque } from "@/types/formatoFormacion";
-import { BLOQUE_TYPE_LABELS, BLOCK_PALETTE, COMPLEX_TYPES } from "@/data/bloqueConstants";
+import { BLOQUE_TYPE_LABELS, BLOQUE_ICONS, COMPLEX_TYPES } from "@/data/bloqueConstants";
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from "@/data/autoFieldCatalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,9 @@ interface BloqueInspectorProps {
   onBack: () => void;
 }
 
-// Helper to get icon from palette
-function getPaletteIcon(type: TipoBloque): string {
-  return BLOCK_PALETTE.find((b) => b.type === type)?.icon ?? "📦";
+// Helper to get Lucide icon component for a block type
+function getBloqueIcon(type: TipoBloque) {
+  return BLOQUE_ICONS[type] ?? null;
 }
 
 // Editable options list for radio/select
@@ -289,7 +289,7 @@ const HIDE_REQUIRED: TipoBloque[] = ["section_title", "heading", "paragraph", "s
 const HIDE_LABEL: TipoBloque[] = [];
 
 export default function BloqueInspector({ bloque, onChange, onDelete, onDuplicate, onBack }: BloqueInspectorProps) {
-  const icon = getPaletteIcon(bloque.type);
+  const IconComponent = getBloqueIcon(bloque.type);
   const typeLabel = BLOQUE_TYPE_LABELS[bloque.type] || bloque.type;
 
   return (
@@ -302,7 +302,7 @@ export default function BloqueInspector({ bloque, onChange, onDelete, onDuplicat
 
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span className="text-lg">{icon}</span>
+        {IconComponent && <IconComponent className="h-5 w-5 text-muted-foreground" />}
         <p className="text-sm font-semibold flex-1">{typeLabel}</p>
         <Button variant="outline" size="icon" className="h-8 w-8" onClick={onDuplicate} title="Duplicar">
           <Copy className="h-3.5 w-3.5" />

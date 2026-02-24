@@ -1,4 +1,23 @@
 import { TipoBloque } from '@/types/formatoFormacion';
+import {
+  Bookmark,
+  Heading,
+  AlignLeft,
+  TextCursorInput,
+  CalendarDays,
+  Hash,
+  CircleDot,
+  ChevronDown,
+  CheckSquare,
+  Zap,
+  PenTool,
+  Heart,
+  ShieldCheck,
+  ClipboardCheck,
+  SmilePlus,
+  CalendarCheck,
+  type LucideIcon,
+} from 'lucide-react';
 
 export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
   section_title: "Título de sección",
@@ -21,20 +40,41 @@ export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
   satisfaction_survey: "Encuesta satisfacción",
 };
 
-export const BLOCK_PALETTE: { type: TipoBloque; label: string; icon: string }[] = [
-  { type: "section_title", label: "Título de sección", icon: "📌" },
-  { type: "heading", label: "Encabezado", icon: "🔤" },
-  { type: "paragraph", label: "Párrafo", icon: "📝" },
-  { type: "text", label: "Campo de texto", icon: "✏️" },
-  { type: "date", label: "Campo de fecha", icon: "📅" },
-  { type: "number", label: "Campo numérico", icon: "🔢" },
-  { type: "radio", label: "Opciones (radio)", icon: "🔘" },
-  { type: "select", label: "Lista desplegable", icon: "📋" },
-  { type: "checkbox", label: "Casilla de verificación", icon: "☑️" },
-  { type: "auto_field", label: "Campo automático", icon: "⚡" },
-  { type: "signature_aprendiz", label: "Firma aprendiz", icon: "✍️" },
-  { type: "signature_entrenador_auto", label: "Firma entrenador", icon: "✍️" },
-  { type: "signature_supervisor_auto", label: "Firma supervisor", icon: "✍️" },
+export const BLOQUE_ICONS: Record<string, LucideIcon> = {
+  section_title: Bookmark,
+  heading: Heading,
+  paragraph: AlignLeft,
+  text: TextCursorInput,
+  date: CalendarDays,
+  number: Hash,
+  radio: CircleDot,
+  select: ChevronDown,
+  checkbox: CheckSquare,
+  auto_field: Zap,
+  attendance_by_day: CalendarCheck,
+  signature_aprendiz: PenTool,
+  signature_entrenador_auto: PenTool,
+  signature_supervisor_auto: PenTool,
+  health_consent: Heart,
+  data_authorization: ShieldCheck,
+  evaluation_quiz: ClipboardCheck,
+  satisfaction_survey: SmilePlus,
+};
+
+export const BLOCK_PALETTE: { type: TipoBloque; label: string }[] = [
+  { type: "section_title", label: "Título de sección" },
+  { type: "heading", label: "Encabezado" },
+  { type: "paragraph", label: "Párrafo" },
+  { type: "text", label: "Campo de texto" },
+  { type: "date", label: "Campo de fecha" },
+  { type: "number", label: "Campo numérico" },
+  { type: "radio", label: "Opciones (radio)" },
+  { type: "select", label: "Lista desplegable" },
+  { type: "checkbox", label: "Casilla de verificación" },
+  { type: "auto_field", label: "Campo automático" },
+  { type: "signature_aprendiz", label: "Firma aprendiz" },
+  { type: "signature_entrenador_auto", label: "Firma entrenador" },
+  { type: "signature_supervisor_auto", label: "Firma supervisor" },
 ];
 
 export const COMPLEX_TYPES: TipoBloque[] = [

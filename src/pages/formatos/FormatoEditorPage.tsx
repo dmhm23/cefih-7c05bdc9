@@ -47,7 +47,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGr
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES, getAutoFieldLabel, getAutoFieldOption } from "@/data/autoFieldCatalog";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import FormatoPreviewDialog from "@/components/formatos/FormatoPreviewDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useFormato, useUpdateFormato, useCreateFormato } from "@/hooks/useFormatosFormacion";
 import {
@@ -282,112 +282,7 @@ function DroppableCanvasZone() {
 // Preview dialog
 // ---------------------------------------------------------------------------
 
-function PreviewDialog({ open, onOpenChange, formato }: { open: boolean; onOpenChange: (o: boolean) => void; formato: Partial<FormatoFormacion> }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Vista Previa — {formato.nombre || "Sin nombre"}</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4 py-4">
-            {/* Document header */}
-            <div className="border rounded-lg p-4 bg-muted/30">
-              <p className="text-xs text-muted-foreground font-mono">
-                {formato.codigo || "---"} v{formato.version || "---"}
-              </p>
-              <p className="font-bold text-lg mt-1">{formato.nombre || "Formato sin nombre"}</p>
-              <p className="text-sm text-muted-foreground">{formato.descripcion}</p>
-            </div>
-
-            {/* Render blocks preview */}
-            {(formato.bloques || []).map((bloque) => (
-              <div key={bloque.id} className="space-y-1">
-                {bloque.type === "section_title" && (
-                  <div className="border-b pb-1 mt-4">
-                    <h2 className="text-base font-bold uppercase tracking-widest">
-                      {bloque.label || "Sección sin título"}
-                    </h2>
-                  </div>
-                )}
-                {bloque.type === "heading" && (
-                  <h3 className="text-sm font-bold mt-3">{bloque.label || "Encabezado"}</h3>
-                )}
-                {bloque.type === "paragraph" && "props" in bloque && (
-                  <p className="text-sm leading-relaxed text-justify">
-                    {(bloque as any).props?.text || "Texto del párrafo..."}
-                  </p>
-                )}
-                {bloque.type === "auto_field" && (() => {
-                  const opt = getAutoFieldOption((bloque as any).props?.key);
-                  return (
-                    <div className="py-1">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{bloque.label}</p>
-                      <p className="text-sm font-medium text-muted-foreground/50 italic">
-                        [Auto: {opt ? `${opt.label} — ${opt.category}` : (bloque as any).props?.key}]
-                      </p>
-                    </div>
-                  );
-                })()}
-                {["text", "date", "number"].includes(bloque.type) && (
-                  <div className="py-1">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {bloque.label} {bloque.required && <span className="text-destructive">*</span>}
-                    </p>
-                    <div className="h-8 border rounded bg-muted/20 mt-1" />
-                  </div>
-                )}
-                {bloque.type === "radio" && "props" in bloque && (
-                  <div className="py-1">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{bloque.label}</p>
-                    <div className="flex gap-3 mt-1">
-                      {((bloque as any).props?.options || []).map((opt: any) => (
-                        <div key={opt.value} className="flex items-center gap-1">
-                          <div className="h-3.5 w-3.5 rounded-full border" />
-                          <span className="text-xs">{opt.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {["signature_aprendiz", "signature_entrenador_auto", "signature_supervisor_auto"].includes(bloque.type) && (
-                  <div className="mt-4">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label}</p>
-                    <div className="border-2 border-dashed border-muted rounded h-20 flex items-center justify-center">
-                      <p className="text-sm text-muted-foreground italic">Espacio para firma</p>
-                    </div>
-                  </div>
-                )}
-                {["health_consent", "data_authorization", "evaluation_quiz", "satisfaction_survey"].includes(bloque.type) && (
-                  <div className="border rounded-lg p-3 bg-muted/20 mt-2">
-                    <Badge variant="secondary" className="text-[10px]">
-                      {BLOQUE_TYPE_LABELS[bloque.type]}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Bloque complejo — se renderiza con su componente especializado
-                    </p>
-                  </div>
-                )}
-                {bloque.type === "checkbox" && (
-                  <div className="flex items-center gap-2 py-1">
-                    <div className="h-4 w-4 border rounded" />
-                    <span className="text-sm">{bloque.label}</span>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {(!formato.bloques || formato.bloques.length === 0) && (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>Sin bloques configurados</p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// PreviewDialog replaced by FormatoPreviewDialog component
 
 // ---------------------------------------------------------------------------
 // Main editor
@@ -857,7 +752,7 @@ export default function FormatoEditorPage() {
       </DndContext>
 
       {/* Preview */}
-      <PreviewDialog open={showPreview} onOpenChange={setShowPreview} formato={formatoPreview} />
+      <FormatoPreviewDialog open={showPreview} onOpenChange={setShowPreview} formato={formatoPreview} />
     </div>
   );
 }

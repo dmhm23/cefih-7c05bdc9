@@ -12,6 +12,8 @@ import {
   DragStartEvent,
   DragEndEvent,
   DragOverlay,
+  useDraggable,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -22,7 +24,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { BLOQUE_TYPE_LABELS, BLOCK_PALETTE, COMPLEX_TYPES } from "@/data/bloqueConstants";
+import { BLOQUE_TYPE_LABELS, BLOCK_PALETTE, BLOQUE_ICONS, COMPLEX_TYPES } from "@/data/bloqueConstants";
 import BloqueInspector from "@/components/formatos/BloqueInspector";
 import {
   Breadcrumb,
@@ -79,6 +81,63 @@ function createDefaultBloque(type: TipoBloque): Bloque {
       return base as Bloque;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Palette draggable item
+// ---------------------------------------------------------------------------
+
+function PaletteDraggableItem({ type, label, onClickAdd }: { type: TipoBloque; label: string; onClickAdd: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${type}`,
+    data: { fromPalette: true, type },
+  });
+
+  const Icon = BLOQUE_ICONS[type];
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left transition-colors border border-transparent hover:border-border hover:bg-muted/60 cursor-grab active:cursor-grabbing",
+        isDragging && "opacity-40"
+      )}
+    >
+      {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
+      <span className="flex-1">{label}</span>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onClickAdd(); }}
+        className="p-0.5 rounded hover:bg-muted text-muted-foreground"
+        title="Agregar al final"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Palette overlay ghost (for DragOverlay)
+// ---------------------------------------------------------------------------
+
+function PaletteOverlayGhost({ type }: { type: TipoBloque }) {
+  const Icon = BLOQUE_ICONS[type];
+  const label = BLOQUE_TYPE_LABELS[type] || type;
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-primary rounded-[10px] bg-background shadow-lg opacity-95">
+      {Icon && <Icon className="h-4 w-4 text-primary" />}
+      <span className="text-sm font-medium">{label}</span>
+      <Badge variant="secondary" className="text-[10px] ml-auto">Nuevo</Badge>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Block item components
+// ---------------------------------------------------------------------------
 
 interface BloqueItemProps {
   bloque: Bloque;
@@ -193,6 +252,28 @@ function BloqueItemOverlay({ bloque }: { bloque: Bloque }) {
           <Badge variant="secondary" className="text-[10px]">Complejo</Badge>
         )}
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Droppable canvas zone (for empty canvas)
+// ---------------------------------------------------------------------------
+
+function DroppableCanvasZone() {
+  const { setNodeRef, isOver } = useDroppable({ id: "canvas-drop-zone" });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "text-center py-12 border-2 border-dashed rounded-xl bg-background transition-colors",
+        isOver ? "border-primary bg-primary/5" : ""
+      )}
+    >
+      <p className="text-muted-foreground">
+        Agrega bloques desde el panel lateral para construir el formato
+      </p>
     </div>
   );
 }
@@ -440,7 +521,7 @@ export default function FormatoEditorPage() {
     markDirty();
   };
 
-  // Drag and drop
+  // Drag and drop (elevated to cover palette + canvas)
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -453,16 +534,51 @@ export default function FormatoEditorPage() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    const activeIdStr = String(active.id);
+
+    // Drag from palette
+    if (activeIdStr.startsWith("palette-")) {
+      if (over) {
+        const type = activeIdStr.replace("palette-", "") as TipoBloque;
+        const newBloque = createDefaultBloque(type);
+        const overIdStr = String(over.id);
+
+        if (overIdStr === "canvas-drop-zone") {
+          // Drop on empty canvas zone
+          setBloques((prev) => [...prev, newBloque]);
+        } else {
+          const overIndex = bloques.findIndex((b) => b.id === over.id);
+          if (overIndex >= 0) {
+            setBloques((prev) => [
+              ...prev.slice(0, overIndex + 1),
+              newBloque,
+              ...prev.slice(overIndex + 1),
+            ]);
+          } else {
+            setBloques((prev) => [...prev, newBloque]);
+          }
+        }
+        markDirty();
+        setSelectedBloqueId(newBloque.id);
+      }
+      setActiveId(null);
+      return;
+    }
+
+    // Reorder existing blocks
     if (over && active.id !== over.id) {
       const oldIndex = bloques.findIndex((b) => b.id === active.id);
       const newIndex = bloques.findIndex((b) => b.id === over.id);
-      setBloques(arrayMove(bloques, oldIndex, newIndex));
-      markDirty();
+      if (oldIndex >= 0 && newIndex >= 0) {
+        setBloques(arrayMove(bloques, oldIndex, newIndex));
+        markDirty();
+      }
     }
     setActiveId(null);
   };
 
   const activeDragBloque = activeId ? bloques.find((b) => b.id === activeId) ?? null : null;
+  const activePaletteType = activeId?.startsWith("palette-") ? activeId.replace("palette-", "") as TipoBloque : null;
 
   const handleCanvasScroll = () => {
     if (canvasRef.current) {
@@ -546,143 +662,138 @@ export default function FormatoEditorPage() {
         </div>
       </header>
 
-      {/* ── BODY: CANVAS + PANEL ── */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Canvas */}
-        <div
-          ref={canvasRef}
-          onScroll={handleCanvasScroll}
-          className="flex-1 overflow-y-auto bg-[hsl(var(--muted)/0.3)] p-8"
-        >
+      {/* ── BODY: DndContext wraps canvas + panel ── */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex flex-1 overflow-hidden">
+          {/* Canvas */}
           <div
-            className="max-w-[900px] mx-auto space-y-4"
-            onClick={(e) => { if (e.target === e.currentTarget) setSelectedBloqueId(null); }}
+            ref={canvasRef}
+            onScroll={handleCanvasScroll}
+            className="flex-1 overflow-y-auto bg-[hsl(var(--muted)/0.3)] p-8"
           >
-            {/* A. Configuración General */}
-            <Card className="bg-background rounded-xl shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Configuración General</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5 md:col-span-2">
-                    <Label>Nombre del formato</Label>
-                    <Input value={nombre} onChange={(e) => { setNombre(e.target.value); markDirty(); }} placeholder="Ej: Registro de Asistencia" />
-                  </div>
-                  <div className="space-y-1.5 md:col-span-2">
-                    <Label>Descripción</Label>
-                    <Textarea value={descripcion} onChange={(e) => { setDescripcion(e.target.value); markDirty(); }} placeholder="Descripción breve..." className="min-h-[60px]" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Código</Label>
-                    <Input value={codigo} onChange={(e) => { setCodigo(e.target.value); markDirty(); }} placeholder="FIH04-XXX" className="font-mono" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Versión</Label>
-                    <Input value={version} onChange={(e) => { setVersion(e.target.value); markDirty(); }} placeholder="001" className="font-mono" />
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-3">
-                  <Label>Alcance de asignación</Label>
-                  <Select value={scope} onValueChange={(v) => { setScope(v as AsignacionScope); markDirty(); }}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tipo_curso">Por tipo de curso</SelectItem>
-                      <SelectItem value="nivel_formacion">Por nivel de formación</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {scope === "tipo_curso" && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {TIPO_CURSO_OPTIONS.map(([key, label]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => { toggleTipoCurso(key); markDirty(); }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                            tipoCursoKeys.includes(key)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background text-foreground border-border hover:border-primary/50"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+            <div
+              className="max-w-[900px] mx-auto space-y-4"
+              onClick={(e) => { if (e.target === e.currentTarget) setSelectedBloqueId(null); }}
+            >
+              {/* A. Configuración General */}
+              <Card className="bg-background rounded-xl shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Configuración General</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label>Nombre del formato</Label>
+                      <Input value={nombre} onChange={(e) => { setNombre(e.target.value); markDirty(); }} placeholder="Ej: Registro de Asistencia" />
                     </div>
-                  )}
-                </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label>Descripción</Label>
+                      <Textarea value={descripcion} onChange={(e) => { setDescripcion(e.target.value); markDirty(); }} placeholder="Descripción breve..." className="min-h-[60px]" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Código</Label>
+                      <Input value={codigo} onChange={(e) => { setCodigo(e.target.value); markDirty(); }} placeholder="FIH04-XXX" className="font-mono" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Versión</Label>
+                      <Input value={version} onChange={(e) => { setVersion(e.target.value); markDirty(); }} placeholder="001" className="font-mono" />
+                    </div>
+                  </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={visibleEnMatricula} onCheckedChange={(v) => { setVisibleEnMatricula(v); markDirty(); }} id="vis-mat" />
-                    <Label htmlFor="vis-mat" className="text-sm">Visible en Matrícula</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={visibleEnCurso} onCheckedChange={(v) => { setVisibleEnCurso(v); markDirty(); }} id="vis-cur" />
-                    <Label htmlFor="vis-cur" className="text-sm">Visible en Curso</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch checked={activo} onCheckedChange={(v) => { setActivo(v); markDirty(); }} id="activo" />
-                    <Label htmlFor="activo" className="text-sm">Activo</Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="space-y-3">
+                    <Label>Alcance de asignación</Label>
+                    <Select value={scope} onValueChange={(v) => { setScope(v as AsignacionScope); markDirty(); }}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tipo_curso">Por tipo de curso</SelectItem>
+                        <SelectItem value="nivel_formacion">Por nivel de formación</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-            {/* B. Firmas */}
-            <Card className="bg-background rounded-xl shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Firmas Requeridas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Checkbox checked={firmaAprendiz} onCheckedChange={(c) => { setFirmaAprendiz(!!c); markDirty(); }} id="f-apr" />
-                    <Label htmlFor="f-apr">Firma del aprendiz</Label>
+                    {scope === "tipo_curso" && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {TIPO_CURSO_OPTIONS.map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => { toggleTipoCurso(key); markDirty(); }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              tipoCursoKeys.includes(key)
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background text-foreground border-border hover:border-primary/50"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Checkbox checked={firmaEntrenador} onCheckedChange={(c) => { setFirmaEntrenador(!!c); markDirty(); }} id="f-ent" />
-                    <Label htmlFor="f-ent">Firma del entrenador</Label>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Checkbox checked={firmaSupervisor} onCheckedChange={(c) => { setFirmaSupervisor(!!c); markDirty(); }} id="f-sup" />
-                    <Label htmlFor="f-sup">Firma del supervisor</Label>
-                  </div>
-                  {(firmaEntrenador || firmaSupervisor) && (
-                    <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-                      💡 Las firmas de entrenador y supervisor se obtienen automáticamente desde el módulo de Gestión de Personal, a través del curso asociado.
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* C. Bloques */}
-            <div className="pt-2">
-              <p className="text-sm font-semibold text-muted-foreground mb-3">
-                Bloques ({bloques.length})
-              </p>
-              {bloques.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed rounded-xl bg-background">
-                  <p className="text-muted-foreground">
-                    Agrega bloques desde el panel lateral para construir el formato
-                  </p>
-                </div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  modifiers={[restrictToVerticalAxis]}
-                >
+                  <Separator />
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={visibleEnMatricula} onCheckedChange={(v) => { setVisibleEnMatricula(v); markDirty(); }} id="vis-mat" />
+                      <Label htmlFor="vis-mat" className="text-sm">Visible en Matrícula</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={visibleEnCurso} onCheckedChange={(v) => { setVisibleEnCurso(v); markDirty(); }} id="vis-cur" />
+                      <Label htmlFor="vis-cur" className="text-sm">Visible en Curso</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={activo} onCheckedChange={(v) => { setActivo(v); markDirty(); }} id="activo" />
+                      <Label htmlFor="activo" className="text-sm">Activo</Label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* B. Firmas */}
+              <Card className="bg-background rounded-xl shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Firmas Requeridas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={firmaAprendiz} onCheckedChange={(c) => { setFirmaAprendiz(!!c); markDirty(); }} id="f-apr" />
+                      <Label htmlFor="f-apr">Firma del aprendiz</Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={firmaEntrenador} onCheckedChange={(c) => { setFirmaEntrenador(!!c); markDirty(); }} id="f-ent" />
+                      <Label htmlFor="f-ent">Firma del entrenador</Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Checkbox checked={firmaSupervisor} onCheckedChange={(c) => { setFirmaSupervisor(!!c); markDirty(); }} id="f-sup" />
+                      <Label htmlFor="f-sup">Firma del supervisor</Label>
+                    </div>
+                    {(firmaEntrenador || firmaSupervisor) && (
+                      <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                        💡 Las firmas de entrenador y supervisor se obtienen automáticamente desde el módulo de Gestión de Personal, a través del curso asociado.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* C. Bloques */}
+              <div className="pt-2">
+                <p className="text-sm font-semibold text-muted-foreground mb-3">
+                  Bloques ({bloques.length})
+                </p>
+                {bloques.length === 0 ? (
+                  <DroppableCanvasZone />
+                ) : (
                   <SortableContext items={bloques.map(b => b.id)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-3">
                       {bloques.map((bloque, index) => (
@@ -699,48 +810,51 @@ export default function FormatoEditorPage() {
                       ))}
                     </div>
                   </SortableContext>
-                  <DragOverlay>
-                    {activeDragBloque ? <BloqueItemOverlay bloque={activeDragBloque} /> : null}
-                  </DragOverlay>
-                </DndContext>
-              )}
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Panel derecho */}
+          <aside className="w-80 shrink-0 border-l overflow-y-auto bg-background p-5">
+            {selectedBloque ? (
+              <BloqueInspector
+                bloque={selectedBloque}
+                onChange={(updated) => updateBloque(selectedIndex, updated)}
+                onDelete={() => { deleteBloque(selectedIndex); setSelectedBloqueId(null); }}
+                onDuplicate={() => duplicateBloque(selectedIndex)}
+                onBack={() => setSelectedBloqueId(null)}
+              />
+            ) : (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Bloques Disponibles</CardTitle>
+                  <p className="text-xs text-muted-foreground">Arrastra al canvas o haz clic en +</p>
+                </CardHeader>
+                <CardContent className="space-y-1">
+                  {BLOCK_PALETTE.map((item) => (
+                    <PaletteDraggableItem
+                      key={item.type}
+                      type={item.type}
+                      label={item.label}
+                      onClickAdd={() => addBloque(item.type)}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </aside>
         </div>
 
-        {/* Panel derecho */}
-        <aside className="w-80 shrink-0 border-l overflow-y-auto bg-background p-5">
-          {selectedBloque ? (
-            <BloqueInspector
-              bloque={selectedBloque}
-              onChange={(updated) => updateBloque(selectedIndex, updated)}
-              onDelete={() => { deleteBloque(selectedIndex); setSelectedBloqueId(null); }}
-              onDuplicate={() => duplicateBloque(selectedIndex)}
-              onBack={() => setSelectedBloqueId(null)}
-            />
-          ) : (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Bloques Disponibles</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {BLOCK_PALETTE.map((item) => (
-                  <button
-                    key={item.type}
-                    type="button"
-                    onClick={() => addBloque(item.type)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left hover:bg-muted/60 transition-colors border border-transparent hover:border-border"
-                  >
-                    <span>{item.icon}</span>
-                    <span>{item.label}</span>
-                    <Plus className="h-3 w-3 ml-auto text-muted-foreground" />
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-        </aside>
-      </div>
+        {/* DragOverlay — differentiated for palette vs existing blocks */}
+        <DragOverlay>
+          {activeDragBloque ? (
+            <BloqueItemOverlay bloque={activeDragBloque} />
+          ) : activePaletteType ? (
+            <PaletteOverlayGhost type={activePaletteType} />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {/* Preview */}
       <PreviewDialog open={showPreview} onOpenChange={setShowPreview} formato={formatoPreview} />

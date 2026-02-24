@@ -96,6 +96,22 @@ Archivos creados:
 | `src/hooks/useFormatosFormacion.ts` | `useFormatos`, `useFormato`, `useFormatosMatricula`, `useCreateFormato`, `useUpdateFormato`, `useToggleFormatoActivo`, `useDuplicateFormato` |
 | `src/types/index.ts` | Re-export de `formatoFormacion` |
 
-### Proximos pasos (Parte 2)
+### Parte 2 — COMPLETADA ✅
 
-Construir UI del módulo: listado en `/gestion-formatos` + editor de formato con constructor de bloques.
+Archivos creados:
+
+| Archivo | Contenido |
+|---|---|
+| `src/pages/formatos/FormatosPage.tsx` | Vista listado con DataTable, búsqueda, columnas configurables, acciones (editar, duplicar, activar/desactivar) |
+| `src/pages/formatos/FormatoEditorPage.tsx` | Editor completo con config general, firmas, constructor de bloques con paleta lateral, y vista previa |
+
+Archivos modificados:
+
+| Archivo | Cambio |
+|---|---|
+| `src/App.tsx` | Rutas `/gestion-formatos`, `/gestion-formatos/nuevo`, `/gestion-formatos/:id/editar` |
+| `src/components/layout/AppSidebar.tsx` | Enlace "Gestión de Formatos" con ícono FileText |
+
+### Próximos pasos (Parte 3)
+
+Integración con Matrículas: resolver formatos aplicables dinámicamente y construir el renderer genérico de bloques.

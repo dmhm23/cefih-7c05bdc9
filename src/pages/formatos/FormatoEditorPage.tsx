@@ -2,6 +2,26 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Save, Eye, GripVertical, Trash2, Copy, Plus } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { BLOQUE_TYPE_LABELS, BLOCK_PALETTE, COMPLEX_TYPES } from "@/data/bloqueConstants";
 import BloqueInspector from "@/components/formatos/BloqueInspector";
 import {
@@ -67,14 +87,12 @@ interface BloqueItemProps {
   onSelect: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  isFirst: boolean;
-  isLast: boolean;
+  activeId?: string | null;
 }
 
-function BloqueItem({ bloque, isSelected, onSelect, onDelete, onDuplicate, onMoveUp, onMoveDown, isFirst, isLast }: BloqueItemProps) {
+function BloqueItemContent({ bloque, isSelected, onSelect, onDelete, onDuplicate, activeId, dragHandleProps }: BloqueItemProps & { dragHandleProps?: Record<string, any> }) {
   const isComplex = COMPLEX_TYPES.includes(bloque.type);
+  const isDraggedAway = activeId === bloque.id;
 
   // Subtext logic
   let subtext = BLOQUE_TYPE_LABELS[bloque.type] || bloque.type;
@@ -91,13 +109,16 @@ function BloqueItem({ bloque, isSelected, onSelect, onDelete, onDuplicate, onMov
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
       className={cn(
         "group flex items-center gap-3 p-4 border rounded-[10px] cursor-pointer transition-all duration-150",
+        isDraggedAway && "opacity-40",
         isSelected
           ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
           : "bg-background border-border hover:bg-muted/50 hover:border-muted-foreground/20"
       )}
     >
       {/* Drag handle */}
-      <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40 cursor-grab" />
+      <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
+        <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+      </div>
 
       {/* Central info */}
       <div className="flex-1 min-w-0">
@@ -122,18 +143,55 @@ function BloqueItem({ bloque, isSelected, onSelect, onDelete, onDuplicate, onMov
 
       {/* Hover actions */}
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} disabled={isFirst} title="Mover arriba">
-          <span className="text-xs">↑</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} disabled={isLast} title="Mover abajo">
-          <span className="text-xs">↓</span>
-        </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} title="Duplicar">
           <Copy className="h-3.5 w-3.5" />
         </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); onDelete(); }} title="Eliminar">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function SortableBloqueItem(props: BloqueItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.bloque.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes}>
+      <BloqueItemContent {...props} dragHandleProps={listeners} />
+    </div>
+  );
+}
+
+function BloqueItemOverlay({ bloque }: { bloque: Bloque }) {
+  const isComplex = COMPLEX_TYPES.includes(bloque.type);
+  let subtext = BLOQUE_TYPE_LABELS[bloque.type] || bloque.type;
+
+  return (
+    <div className="flex items-center gap-3 p-4 border-2 border-primary rounded-[10px] bg-background shadow-lg opacity-95">
+      <GripVertical className="h-4 w-4 shrink-0 text-primary" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold truncate">
+          {bloque.label || <span className="italic text-muted-foreground font-normal">Sin etiqueta</span>}
+        </p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{subtext}</p>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {bloque.type === "auto_field" && (
+          <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">Auto</Badge>
+        )}
+        {bloque.required && (
+          <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">Obligatorio</Badge>
+        )}
+        {isComplex && (
+          <Badge variant="secondary" className="text-[10px]">Complejo</Badge>
+        )}
       </div>
     </div>
   );
@@ -382,14 +440,29 @@ export default function FormatoEditorPage() {
     markDirty();
   };
 
-  const moveBloque = (index: number, direction: -1 | 1) => {
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= bloques.length) return;
-    const updated = [...bloques];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    setBloques(updated);
-    markDirty();
+  // Drag and drop
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = bloques.findIndex((b) => b.id === active.id);
+      const newIndex = bloques.findIndex((b) => b.id === over.id);
+      setBloques(arrayMove(bloques, oldIndex, newIndex));
+      markDirty();
+    }
+    setActiveId(null);
+  };
+
+  const activeDragBloque = activeId ? bloques.find((b) => b.id === activeId) ?? null : null;
 
   const handleCanvasScroll = () => {
     if (canvasRef.current) {
@@ -603,23 +676,33 @@ export default function FormatoEditorPage() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {bloques.map((bloque, index) => (
-                    <BloqueItem
-                      key={bloque.id}
-                      bloque={bloque}
-                      index={index}
-                      isSelected={selectedBloqueId === bloque.id}
-                      onSelect={() => setSelectedBloqueId(bloque.id)}
-                      onDelete={() => deleteBloque(index)}
-                      onDuplicate={() => duplicateBloque(index)}
-                      onMoveUp={() => moveBloque(index, -1)}
-                      onMoveDown={() => moveBloque(index, 1)}
-                      isFirst={index === 0}
-                      isLast={index === bloques.length - 1}
-                    />
-                  ))}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToVerticalAxis]}
+                >
+                  <SortableContext items={bloques.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                      {bloques.map((bloque, index) => (
+                        <SortableBloqueItem
+                          key={bloque.id}
+                          bloque={bloque}
+                          index={index}
+                          isSelected={selectedBloqueId === bloque.id}
+                          onSelect={() => setSelectedBloqueId(bloque.id)}
+                          onDelete={() => deleteBloque(index)}
+                          onDuplicate={() => duplicateBloque(index)}
+                          activeId={activeId}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                  <DragOverlay>
+                    {activeDragBloque ? <BloqueItemOverlay bloque={activeDragBloque} /> : null}
+                  </DragOverlay>
+                </DndContext>
               )}
             </div>
           </div>

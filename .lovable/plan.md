@@ -1,131 +1,140 @@
 
 
-## PARTE 1 — Layout Base Tipo Builder (Arquitectura Estructural)
+## PARTE 2 — Transformacion de Bloques a Tarjetas Compactas
 
 ### Objetivo
 
-Transformar la pantalla actual de `FormatoEditorPage` de un formulario largo con scroll vertical a una arquitectura visual tipo builder profesional, con header sticky, canvas central y panel de soporte lateral. No se altera la logica existente de bloques, guardado ni preview.
+Convertir cada bloque del canvas de un editor inline (con inputs, textareas y selects abiertos) a una tarjeta compacta estructural que solo muestra informacion resumida. El canvas deja de ser editable inline y pasa a ser una vista de estructura.
 
 ---
 
 ### Situacion actual
 
-El editor actual (`FormatoEditorPage.tsx`, 660 lineas) vive dentro del `MainLayout` que aporta sidebar + header global. La pagina usa un layout `grid-cols-1 xl:grid-cols-[1fr_320px]` donde el contenido principal son 3 Cards apiladas (Config General, Firmas, Constructor de Bloques) y el panel lateral tiene la paleta de bloques.
+El componente `BloqueItem` (lineas 115-219) renderiza cada bloque como un editor inline completo:
+- Input abierto para el label
+- Textarea para parrafos
+- Select desplegable para auto_field
+- Checkbox de obligatorio
+- Botones de accion siempre presentes (move up/down, duplicate, delete)
 
-El `MainLayout` envuelve el contenido en un `<main>` con `overflow-y-auto p-6`. Todo se percibe como formulario largo.
-
----
-
-### Estrategia de implementacion
-
-El rediseno se limita a reorganizar la estructura visual del `FormatoEditorPage`. El `MainLayout` se mantiene intacto; el builder vive como contenido de pagina pero ocupa todo el viewport disponible.
+Esto hace que el canvas se perciba como formulario largo, no como builder.
 
 ---
 
 ### Cambios detallados
 
-#### 1. Ruta sin MainLayout
-
-**Archivo:** `src/App.tsx`
-
-Cambiar la ruta del editor para que NO use `WithLayout`. El builder necesita control total del viewport:
-
-```
-// Antes
-<Route path="/gestion-formatos/nuevo" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
-<Route path="/gestion-formatos/:id/editar" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
-
-// Despues
-<Route path="/gestion-formatos/nuevo" element={<FormatoEditorPage />} />
-<Route path="/gestion-formatos/:id/editar" element={<FormatoEditorPage />} />
-```
-
-La lista de formatos (`/gestion-formatos`) sigue con layout normal.
-
-#### 2. Reestructurar FormatoEditorPage completo
+#### 1. Agregar estado de seleccion al editor principal
 
 **Archivo:** `src/pages/formatos/FormatoEditorPage.tsx`
 
-La estructura visual pasa de ser un `div.space-y-4` a una pantalla full-viewport con 3 zonas:
-
-```text
-+----------------------------------------------------------+
-| HEADER STICKY (64-72px)                                  |
-| Breadcrumb | Nombre formato | Estado | Preview | Guardar |
-+----------------------------------------------------------+
-| CANVAS (70%)                    | PANEL DERECHO (30%)    |
-| fondo gris claro                | fondo blanco           |
-|   +------------------------+    | scroll independiente   |
-|   | hoja blanca centrada   |    | border-left gris       |
-|   | max-w-[900px]          |    | padding 20px           |
-|   | shadow, rounded-xl     |    |                        |
-|   | padding 24px           |    | [Contenido existente   |
-|   |                        |    |  de paleta + config]   |
-|   | [Cards de config +     |    |                        |
-|   |  bloques existentes]   |    |                        |
-|   +------------------------+    |                        |
-+----------------------------------------------------------+
-```
-
-##### 2a. Header Sticky
-
-- Contenedor `sticky top-0 z-50` con `h-16` (64px), `border-b`, `bg-background`, `shadow-sm`.
-- Se agrega sombra condicional: cuando el canvas tiene scroll, la sombra se intensifica (controlado con un state `isScrolled` via `onScroll` del contenedor canvas).
-- Contenido del header:
-  - **Izquierda**: Breadcrumb con enlace: `SAFA > Gestion de Formatos > Editar` (texto 12px, gris).
-  - **Centro**: Nombre del formato (18px semibold). Si esta vacio, mostrar "Sin nombre".
-  - **Derecha**:
-    - Badge de estado: "Cambios sin guardar" (amarillo) o "Guardado" (verde). Se controla con un state `isDirty` que se activa al cambiar cualquier campo y se resetea al guardar exitosamente.
-    - Boton outline: "Vista Previa" con icono Eye.
-    - Boton primary: "Guardar Cambios" con icono Save, deshabilitado si `!isDirty`.
-
-##### 2b. Zona principal con dos columnas
-
-- Contenedor flex horizontal que ocupa `h-[calc(100vh-64px)]`.
-- **Columna izquierda (canvas)**: `flex-1 overflow-y-auto bg-[#F8F9FB]` con padding generoso.
-  - Dentro, un contenedor centrado: `max-w-[900px] mx-auto bg-white rounded-xl shadow-sm border p-6`.
-  - Aqui van las 3 Cards existentes (Config General, Firmas, Constructor de Bloques) sin modificaciones funcionales.
-- **Columna derecha (panel)**: `w-80 border-l overflow-y-auto bg-background p-5`.
-  - Aqui va la paleta de bloques existente (actualmente en el sidebar `Card.sticky`), sin cambios funcionales.
-  - Se elimina el `sticky top-4` de la Card porque el panel ya tiene scroll propio.
-
-##### 2c. Dirty state
-
-Agregar un mecanismo simple de deteccion de cambios:
+Agregar un state para rastrear el bloque seleccionado:
 
 ```typescript
-const [isDirty, setIsDirty] = useState(false);
-const [savedOnce, setSavedOnce] = useState(false);
-
-// Marcar dirty en cada setter
-const setNombreD = (v: string) => { setNombre(v); setIsDirty(true); };
-// ... igual para todos los campos
-
-// Al guardar exitosamente:
-setIsDirty(false);
-setSavedOnce(true);
+const [selectedBloqueId, setSelectedBloqueId] = useState<string | null>(null);
 ```
 
-El badge muestra:
-- Si `isDirty`: "Cambios sin guardar" (amarillo)
-- Si `!isDirty && savedOnce`: "Guardado" (verde)
-- Si `!isDirty && !savedOnce && isNew`: nada
+Al hacer click en un bloque, se selecciona. Click fuera o en area vacia del canvas deselecciona.
+
+#### 2. Redisenar BloqueItem como tarjeta compacta
+
+**Archivo:** `src/pages/formatos/FormatoEditorPage.tsx` (componente `BloqueItem`)
+
+Reemplazar completamente el render del BloqueItem. La nueva tarjeta tiene:
+
+**Contenedor:**
+- `border rounded-[10px] p-4 cursor-pointer transition-all duration-150`
+- Margen vertical 12px entre bloques
+- Sin inputs, textareas ni selects visibles
+
+**Estructura interna en una sola fila:**
+
+```
+[Drag Handle 16px] [Info central] [Chips + Acciones hover]
+```
+
+- **Drag handle**: Icono GripVertical (16px), siempre visible, color gris claro
+- **Info central**:
+  - Label principal (14px semibold). Si vacio, mostrar placeholder en italica gris ("Sin etiqueta")
+  - Subtexto: tipo de bloque (12px gris), usando `BLOQUE_TYPE_LABELS`
+  - Para `auto_field`: mostrar tambien el campo seleccionado como subtexto adicional
+  - Para `paragraph`: mostrar los primeros 60 caracteres del texto como subtexto
+- **Chips** (siempre visibles si aplican):
+  - Badge "Auto" (azul claro) si es `auto_field`
+  - Badge "Obligatorio" (ambar) si `required === true`
+  - Badge "Complejo" (gris) si es bloque complejo
+- **Acciones** (visibles solo en hover):
+  - Boton Duplicar (icono Copy)
+  - Boton Eliminar (icono Trash2, color destructive)
+
+**Se eliminan del bloque:**
+- Input de label
+- Textarea de parrafo
+- Select de auto_field
+- Checkbox de obligatorio
+- Botones de mover arriba/abajo (el reordenamiento se hara por drag en parte 4; por ahora se mantienen como acciones hover discretas)
+
+#### 3. Estados visuales de la tarjeta
+
+La interfaz de `BloqueItem` cambia para recibir `isSelected` y `onSelect`:
+
+```typescript
+interface BloqueItemProps {
+  bloque: Bloque;
+  index: number;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+}
+```
+
+Estados CSS:
+- **Normal**: `bg-white border-gray-200`
+- **Hover**: `bg-[#F3F4F6] border-gray-300`, mostrar acciones, cursor pointer
+- **Seleccionado**: `border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20`
+
+Se aplican con clases condicionales basadas en `isSelected` y group-hover.
+
+#### 4. Click en area vacia deselecciona
+
+En el contenedor del canvas (div `max-w-[900px]`), agregar un `onClick` que deselecciona:
+
+```typescript
+onClick={(e) => {
+  if (e.target === e.currentTarget) setSelectedBloqueId(null);
+}}
+```
+
+Cada BloqueItem llama `onSelect` con `e.stopPropagation()` para evitar deseleccion.
+
+#### 5. Eliminar la Card wrapper del constructor de bloques
+
+Actualmente los bloques estan dentro de una `<Card>` con titulo "Constructor de Bloques". Para darle mas espacio y sensacion de builder, los bloques se renderizan directamente en el canvas (sin Card wrapper), separados de las Cards de configuracion y firmas por un `<Separator>` o espacio visual.
+
+Se mantiene un titulo discreto "Bloques ({count})" como texto simple, no como Card.
 
 ---
 
-### Resumen de archivos a modificar
+### Resumen de cambios
 
 | Archivo | Cambio |
 |---|---|
-| `src/App.tsx` | Quitar `WithLayout` de las rutas del editor de formatos |
-| `src/pages/formatos/FormatoEditorPage.tsx` | Reestructurar layout completo: header sticky + canvas centrado + panel lateral |
+| `src/pages/formatos/FormatoEditorPage.tsx` | Agregar `selectedBloqueId` state, redisenar `BloqueItem` como tarjeta compacta, agregar estados visuales, click-to-select, click-fuera-deselecciona, remover Card wrapper de bloques |
 
 ### Lo que NO cambia
 
-- Logica de bloques (crear, editar, duplicar, eliminar, mover).
-- Logica de guardado (create/update mutations).
-- Preview dialog.
-- Paleta de bloques (solo se reubica visualmente).
-- Cards de configuracion general y firmas (solo se mueven al canvas).
-- Ningun otro modulo del sistema.
+- Logica de bloques (crear, editar, duplicar, eliminar, mover) — las funciones siguen existiendo, solo cambia donde se invocan
+- Paleta de bloques en panel derecho
+- Cards de Configuracion General y Firmas
+- Preview dialog
+- Header sticky
+- Logica de guardado y dirty state
+
+### Nota sobre edicion
+
+Al convertir los bloques a tarjetas compactas, la edicion inline se elimina. En esta parte, las propiedades de los bloques (label, required, props) **no se pueden editar visualmente**. La edicion se restaurara en la Parte 3 (Inspector) que usara el panel derecho para mostrar las propiedades del bloque seleccionado. Los bloques existentes mantienen sus datos — solo cambia la representacion visual.
 

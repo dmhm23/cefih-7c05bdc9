@@ -1,6 +1,14 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Eye, GripVertical, Trash2, Copy, Plus } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Save, Eye, GripVertical, Trash2, Copy, Plus } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -336,6 +344,7 @@ export default function FormatoEditorPage() {
   const updateMutation = useUpdateFormato();
   const createMutation = useCreateFormato();
 
+  // --- Form state ---
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [codigo, setCodigo] = useState("");
@@ -350,6 +359,17 @@ export default function FormatoEditorPage() {
   const [firmaSupervisor, setFirmaSupervisor] = useState(false);
   const [bloques, setBloques] = useState<Bloque[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+
+  // --- Dirty state ---
+  const [isDirty, setIsDirty] = useState(false);
+  const [savedOnce, setSavedOnce] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const markDirty = useCallback(() => setIsDirty(true), []);
+
+  const wrap = <T,>(setter: React.Dispatch<React.SetStateAction<T>>) =>
+    (v: React.SetStateAction<T>) => { setter(v); markDirty(); };
 
   // Load existing
   useEffect(() => {
@@ -404,6 +424,8 @@ export default function FormatoEditorPage() {
         await updateMutation.mutateAsync({ id: id!, data });
         toast({ title: "Formato actualizado correctamente" });
       }
+      setIsDirty(false);
+      setSavedOnce(true);
       navigate("/gestion-formatos");
     } catch {
       toast({ title: "Error al guardar", variant: "destructive" });
@@ -419,20 +441,24 @@ export default function FormatoEditorPage() {
   // Block operations
   const addBloque = (type: TipoBloque) => {
     setBloques((prev) => [...prev, createDefaultBloque(type)]);
+    markDirty();
   };
 
   const updateBloque = (index: number, updated: Bloque) => {
     setBloques((prev) => prev.map((b, i) => (i === index ? updated : b)));
+    markDirty();
   };
 
   const deleteBloque = (index: number) => {
     setBloques((prev) => prev.filter((_, i) => i !== index));
+    markDirty();
   };
 
   const duplicateBloque = (index: number) => {
     const original = bloques[index];
     const copy = { ...original, id: uuidv4() };
     setBloques((prev) => [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)]);
+    markDirty();
   };
 
   const moveBloque = (index: number, direction: -1 | 1) => {
@@ -441,197 +467,245 @@ export default function FormatoEditorPage() {
     const updated = [...bloques];
     [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
     setBloques(updated);
+    markDirty();
+  };
+
+  const handleCanvasScroll = () => {
+    if (canvasRef.current) {
+      setIsScrolled(canvasRef.current.scrollTop > 8);
+    }
   };
 
   if (!isNew && isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-96 w-full" />
+      <div className="flex h-screen items-center justify-center">
+        <div className="space-y-4 w-96">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-96 w-full" />
+        </div>
       </div>
     );
   }
 
   const formatoPreview: Partial<FormatoFormacion> = { nombre, descripcion, codigo, version, bloques };
+  const isSaving = updateMutation.isPending || createMutation.isPending;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/gestion-formatos")}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-semibold">
-            {isNew ? "Nuevo Formato" : `Editar: ${existing?.nombre || ""}`}
-          </h1>
-          {existing?.legacyComponentId && (
-            <p className="text-xs text-muted-foreground">
-              Formato legacy con componente asociado — los cambios de bloques se reflejarán cuando el renderer genérico reemplace el componente actual
-            </p>
-          )}
+    <div className="flex flex-col h-screen overflow-hidden bg-muted/30">
+      {/* ── HEADER STICKY ── */}
+      <header
+        className={`sticky top-0 z-50 h-16 shrink-0 border-b bg-background px-6 flex items-center gap-4 transition-shadow ${
+          isScrolled ? "shadow-md" : "shadow-sm"
+        }`}
+      >
+        {/* Left: Breadcrumb */}
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/dashboard">SAFA</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/gestion-formatos">Gestión de Formatos</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{isNew ? "Nuevo" : "Editar"}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        {/* Center: Name */}
+        <div className="flex-1 min-w-0 text-center">
+          <p className="text-lg font-semibold truncate">
+            {nombre || "Sin nombre"}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowPreview(true)}>
+
+        {/* Right: Status + Actions */}
+        <div className="flex items-center gap-3 shrink-0">
+          {isDirty && (
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+              Cambios sin guardar
+            </Badge>
+          )}
+          {!isDirty && savedOnce && (
+            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              Guardado
+            </Badge>
+          )}
+
+          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)}>
             <Eye className="h-4 w-4 mr-2" />
             Vista Previa
           </Button>
-          <Button onClick={handleSave} disabled={updateMutation.isPending || createMutation.isPending}>
+          <Button size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            {isNew ? "Crear Formato" : "Guardar Cambios"}
+            Guardar Cambios
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-4">
-        {/* Main content */}
-        <div className="space-y-4">
-          {/* A. Configuración General */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Configuración General</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5 md:col-span-2">
-                  <Label>Nombre del formato</Label>
-                  <Input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Registro de Asistencia" />
+      {/* ── BODY: CANVAS + PANEL ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Canvas */}
+        <div
+          ref={canvasRef}
+          onScroll={handleCanvasScroll}
+          className="flex-1 overflow-y-auto bg-[hsl(var(--muted)/0.3)] p-8"
+        >
+          <div className="max-w-[900px] mx-auto bg-background rounded-xl shadow-sm border p-6 space-y-4">
+            {/* A. Configuración General */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Configuración General</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label>Nombre del formato</Label>
+                    <Input value={nombre} onChange={(e) => { setNombre(e.target.value); markDirty(); }} placeholder="Ej: Registro de Asistencia" />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label>Descripción</Label>
+                    <Textarea value={descripcion} onChange={(e) => { setDescripcion(e.target.value); markDirty(); }} placeholder="Descripción breve..." className="min-h-[60px]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Código</Label>
+                    <Input value={codigo} onChange={(e) => { setCodigo(e.target.value); markDirty(); }} placeholder="FIH04-XXX" className="font-mono" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Versión</Label>
+                    <Input value={version} onChange={(e) => { setVersion(e.target.value); markDirty(); }} placeholder="001" className="font-mono" />
+                  </div>
                 </div>
-                <div className="space-y-1.5 md:col-span-2">
-                  <Label>Descripción</Label>
-                  <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Descripción breve..." className="min-h-[60px]" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Código</Label>
-                  <Input value={codigo} onChange={(e) => setCodigo(e.target.value)} placeholder="FIH04-XXX" className="font-mono" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Versión</Label>
-                  <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="001" className="font-mono" />
-                </div>
-              </div>
 
-              <Separator />
+                <Separator />
 
-              <div className="space-y-3">
-                <Label>Alcance de asignación</Label>
-                <Select value={scope} onValueChange={(v) => setScope(v as AsignacionScope)}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="tipo_curso">Por tipo de curso</SelectItem>
-                    <SelectItem value="nivel_formacion">Por nivel de formación</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-3">
+                  <Label>Alcance de asignación</Label>
+                  <Select value={scope} onValueChange={(v) => { setScope(v as AsignacionScope); markDirty(); }}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tipo_curso">Por tipo de curso</SelectItem>
+                      <SelectItem value="nivel_formacion">Por nivel de formación</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                {scope === "tipo_curso" && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {TIPO_CURSO_OPTIONS.map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => toggleTipoCurso(key)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                          tipoCursoKeys.includes(key)
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-foreground border-border hover:border-primary/50"
-                        }`}
-                      >
-                        {label}
-                      </button>
+                  {scope === "tipo_curso" && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {TIPO_CURSO_OPTIONS.map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => { toggleTipoCurso(key); markDirty(); }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                            tipoCursoKeys.includes(key)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-foreground border-border hover:border-primary/50"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch checked={visibleEnMatricula} onCheckedChange={(v) => { setVisibleEnMatricula(v); markDirty(); }} id="vis-mat" />
+                    <Label htmlFor="vis-mat" className="text-sm">Visible en Matrícula</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={visibleEnCurso} onCheckedChange={(v) => { setVisibleEnCurso(v); markDirty(); }} id="vis-cur" />
+                    <Label htmlFor="vis-cur" className="text-sm">Visible en Curso</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={activo} onCheckedChange={(v) => { setActivo(v); markDirty(); }} id="activo" />
+                    <Label htmlFor="activo" className="text-sm">Activo</Label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* B. Firmas */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Firmas Requeridas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Checkbox checked={firmaAprendiz} onCheckedChange={(c) => { setFirmaAprendiz(!!c); markDirty(); }} id="f-apr" />
+                    <Label htmlFor="f-apr">Firma del aprendiz</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Checkbox checked={firmaEntrenador} onCheckedChange={(c) => { setFirmaEntrenador(!!c); markDirty(); }} id="f-ent" />
+                    <Label htmlFor="f-ent">Firma del entrenador</Label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Checkbox checked={firmaSupervisor} onCheckedChange={(c) => { setFirmaSupervisor(!!c); markDirty(); }} id="f-sup" />
+                    <Label htmlFor="f-sup">Firma del supervisor</Label>
+                  </div>
+                  {(firmaEntrenador || firmaSupervisor) && (
+                    <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+                      💡 Las firmas de entrenador y supervisor se obtienen automáticamente desde el módulo de Gestión de Personal, a través del curso asociado.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* C. Constructor de bloques */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Constructor de Bloques
+                  <Badge variant="secondary" className="ml-2">{bloques.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {bloques.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">
+                      Agrega bloques desde el panel lateral para construir el formato
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {bloques.map((bloque, index) => (
+                      <BloqueItem
+                        key={bloque.id}
+                        bloque={bloque}
+                        index={index}
+                        onChange={(updated) => updateBloque(index, updated)}
+                        onDelete={() => deleteBloque(index)}
+                        onDuplicate={() => duplicateBloque(index)}
+                        onMoveUp={() => moveBloque(index, -1)}
+                        onMoveDown={() => moveBloque(index, 1)}
+                        isFirst={index === 0}
+                        isLast={index === bloques.length - 1}
+                      />
                     ))}
                   </div>
                 )}
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-2">
-                  <Switch checked={visibleEnMatricula} onCheckedChange={setVisibleEnMatricula} id="vis-mat" />
-                  <Label htmlFor="vis-mat" className="text-sm">Visible en Matrícula</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={visibleEnCurso} onCheckedChange={setVisibleEnCurso} id="vis-cur" />
-                  <Label htmlFor="vis-cur" className="text-sm">Visible en Curso</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={activo} onCheckedChange={setActivo} id="activo" />
-                  <Label htmlFor="activo" className="text-sm">Activo</Label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* B. Firmas */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Firmas Requeridas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Checkbox checked={firmaAprendiz} onCheckedChange={(c) => setFirmaAprendiz(!!c)} id="f-apr" />
-                  <Label htmlFor="f-apr">Firma del aprendiz</Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox checked={firmaEntrenador} onCheckedChange={(c) => setFirmaEntrenador(!!c)} id="f-ent" />
-                  <Label htmlFor="f-ent">Firma del entrenador</Label>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Checkbox checked={firmaSupervisor} onCheckedChange={(c) => setFirmaSupervisor(!!c)} id="f-sup" />
-                  <Label htmlFor="f-sup">Firma del supervisor</Label>
-                </div>
-                {(firmaEntrenador || firmaSupervisor) && (
-                  <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
-                    💡 Las firmas de entrenador y supervisor se obtienen automáticamente desde el módulo de Gestión de Personal, a través del curso asociado.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* C. Constructor de bloques */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                Constructor de Bloques
-                <Badge variant="secondary" className="ml-2">{bloques.length}</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {bloques.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">
-                    Agrega bloques desde el panel lateral para construir el formato
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {bloques.map((bloque, index) => (
-                    <BloqueItem
-                      key={bloque.id}
-                      bloque={bloque}
-                      index={index}
-                      onChange={(updated) => updateBloque(index, updated)}
-                      onDelete={() => deleteBloque(index)}
-                      onDuplicate={() => duplicateBloque(index)}
-                      onMoveUp={() => moveBloque(index, -1)}
-                      onMoveDown={() => moveBloque(index, 1)}
-                      isFirst={index === 0}
-                      isLast={index === bloques.length - 1}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Sidebar: Block palette */}
-        <div className="space-y-4">
-          <Card className="sticky top-4">
+        {/* Panel derecho */}
+        <aside className="w-80 shrink-0 border-l overflow-y-auto bg-background p-5">
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">Bloques Disponibles</CardTitle>
             </CardHeader>
@@ -650,7 +724,7 @@ export default function FormatoEditorPage() {
               ))}
             </CardContent>
           </Card>
-        </div>
+        </aside>
       </div>
 
       {/* Preview */}

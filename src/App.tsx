@@ -91,8 +91,8 @@ const App = () => (
 
           {/* Módulo F - Gestión de Formatos */}
           <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
-          <Route path="/gestion-formatos/nuevo" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
-          <Route path="/gestion-formatos/:id/editar" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
+          <Route path="/gestion-formatos/nuevo" element={<FormatoEditorPage />} />
+          <Route path="/gestion-formatos/:id/editar" element={<FormatoEditorPage />} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

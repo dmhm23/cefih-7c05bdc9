@@ -10,7 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select";
+import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES, getAutoFieldLabel, getAutoFieldOption } from "@/data/autoFieldCatalog";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -153,30 +154,27 @@ function BloqueItem({ bloque, index, onChange, onDelete, onDuplicate, onMoveUp, 
               onChange({ ...bloque, props: { ...(bloque as any).props, key: v } } as Bloque)
             }
           >
-            <SelectTrigger className="h-8 text-sm w-64">
-              <SelectValue />
+            <SelectTrigger className="h-8 text-sm w-72">
+              <SelectValue>
+                {getAutoFieldLabel((bloque as any).props?.key || "nombre_aprendiz")}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="nombre_aprendiz">Nombre aprendiz</SelectItem>
-              <SelectItem value="documento_aprendiz">Documento aprendiz</SelectItem>
-              <SelectItem value="tipo_documento_aprendiz">Tipo documento</SelectItem>
-              <SelectItem value="genero_aprendiz">Género</SelectItem>
-              <SelectItem value="fecha_nacimiento_aprendiz">Fecha nacimiento</SelectItem>
-              <SelectItem value="pais_nacimiento_aprendiz">País nacimiento</SelectItem>
-              <SelectItem value="nivel_educativo_aprendiz">Nivel educativo</SelectItem>
-              <SelectItem value="rh_aprendiz">RH</SelectItem>
-              <SelectItem value="contacto_emergencia_nombre">Contacto emergencia</SelectItem>
-              <SelectItem value="contacto_emergencia_telefono">Tel. emergencia</SelectItem>
-              <SelectItem value="empresa_nombre">Empresa</SelectItem>
-              <SelectItem value="empresa_cargo">Cargo</SelectItem>
-              <SelectItem value="empresa_nivel_formacion">Nivel formación empresa</SelectItem>
-              <SelectItem value="area_trabajo">Área de trabajo</SelectItem>
-              <SelectItem value="fecha_inicio_curso">Fecha inicio curso</SelectItem>
-              <SelectItem value="fecha_fin_curso">Fecha fin curso</SelectItem>
-              <SelectItem value="nombre_curso">Nombre curso</SelectItem>
-              <SelectItem value="tipo_formacion_curso">Tipo formación</SelectItem>
-              <SelectItem value="entrenador_nombre">Entrenador</SelectItem>
-              <SelectItem value="supervisor_nombre">Supervisor</SelectItem>
+              {AUTO_FIELD_CATEGORIES.map((cat) => (
+                <SelectGroup key={cat}>
+                  <SelectLabel className="text-xs font-semibold text-muted-foreground">{cat}</SelectLabel>
+                  {AUTO_FIELD_CATALOG.filter((f) => f.category === cat).map((opt) => (
+                    <SelectItem key={opt.key} value={opt.key}>
+                      <span className="flex items-center gap-2">
+                        <span>{opt.label}</span>
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-normal">
+                          {opt.source}
+                        </Badge>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
             </SelectContent>
           </Select>
         )}
@@ -253,14 +251,17 @@ function PreviewDialog({ open, onOpenChange, formato }: { open: boolean; onOpenC
                     {(bloque as any).props?.text || "Texto del párrafo..."}
                   </p>
                 )}
-                {bloque.type === "auto_field" && (
-                  <div className="py-1">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{bloque.label}</p>
-                    <p className="text-sm font-medium text-muted-foreground/50 italic">
-                      [Auto: {(bloque as any).props?.key}]
-                    </p>
-                  </div>
-                )}
+                {bloque.type === "auto_field" && (() => {
+                  const opt = getAutoFieldOption((bloque as any).props?.key);
+                  return (
+                    <div className="py-1">
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{bloque.label}</p>
+                      <p className="text-sm font-medium text-muted-foreground/50 italic">
+                        [Auto: {opt ? `${opt.label} — ${opt.category}` : (bloque as any).props?.key}]
+                      </p>
+                    </div>
+                  );
+                })()}
                 {["text", "date", "number"].includes(bloque.type) && (
                   <div className="py-1">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">

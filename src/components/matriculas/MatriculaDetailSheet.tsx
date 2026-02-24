@@ -35,6 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
+import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
+import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { PersonaFormData } from "@/types/persona";
 import {
   Matricula, ESTADO_MATRICULA_LABELS, EstadoMatricula,
@@ -126,7 +128,7 @@ export function MatriculaDetailSheet({
 
   const persona = personas.find((p) => p.id === matricula.personaId);
   const curso = cursos.find((c) => c.id === matricula.cursoId);
-
+  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
   const handleFieldChange = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
@@ -552,12 +554,12 @@ export function MatriculaDetailSheet({
         {/* Formatos para Formación */}
         <DetailSection title="Formatos para Formación">
           <FormatosList
-            formatos={[
-              { id: "info_aprendiz", nombre: "Información del Aprendiz", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
-              { id: "registro_asistencia", nombre: "Registro de Asistencia", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
-              { id: "participacion_pta_ats", nombre: "Participación PTA - ATS", estado: (!matricula.autorizacionDatos || !matricula.firmaCapturada) ? "borrador" : "completo" },
-              { id: "evaluacion_reentrenamiento", nombre: "Evaluación Reentrenamiento (FIH04-019)", estado: matricula.evaluacionCompletada ? "completo" : "borrador" },
-            ]}
+            formatos={(formatosDinamicos ?? []).map((f) => ({
+              id: f.legacyComponentId || f.id,
+              nombre: f.nombre,
+              codigo: f.codigo,
+              estado: resolveFormatoEstado(f, matricula),
+            }))}
             onPreview={(id) => setPreviewFormato(id)}
             onDownload={(id) => setPreviewFormato(id)}
           />

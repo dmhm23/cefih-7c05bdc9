@@ -1,85 +1,88 @@
 
 
-## Parte 3 -- Integracion con Matriculas (render dinamico desde configuracion)
+## Mejora del bloque "Campo Automatico" en el Editor de Formatos
 
 ### Objetivo
 
-Reemplazar las listas hardcodeadas de formatos en `MatriculaDetallePage.tsx` y `MatriculaDetailSheet.tsx` por una consulta dinamica al servicio `formatoFormacionService.getForMatricula(tipoCurso)`. Los 4 formatos legacy siguen usando sus componentes hardcodeados existentes (via `legacyComponentId`), pero ahora se resuelven dinamicamente segun el tipo de curso.
+Mejorar la experiencia del administrador al insertar bloques de tipo `auto_field` en el constructor de formatos. Actualmente el selector muestra una lista plana de 20 claves tecnicas. El cambio organiza estos campos por categoria, agrega nuevos campos disponibles desde la matricula, y muestra claramente de donde proviene cada dato.
 
 ---
 
-### Cambio 1: Resolver formatos dinamicamente en MatriculaDetallePage
+### Cambios por archivo
 
-**Archivo:** `src/pages/matriculas/MatriculaDetallePage.tsx`
+#### 1. `src/types/formatoFormacion.ts` -- Agregar nuevas claves de AutoFieldKey
 
-- Importar `useFormatosMatricula` de `@/hooks/useFormatosFormacion`.
-- Llamar `useFormatosMatricula(curso?.tipoFormacion)` para obtener los formatos aplicables.
-- Reemplazar el array literal hardcodeado (lineas 746-770) por un `.map()` sobre los formatos devueltos por el hook.
-- Para determinar el `estado` de cada formato:
-  - Si tiene `legacyComponentId === 'evaluacion_reentrenamiento'`: usa `matricula.evaluacionCompletada`.
-  - Para los demas legacy: usa `(!matricula.autorizacionDatos || !matricula.firmaCapturada)` como borrador.
-- Para el `onPreview`: mapear `formato.legacyComponentId` al `previewFormato` state (mantiene el switch existente de dialogs legacy).
-- Los dialogs de preview legacy (lineas 837-864) se mantienen sin cambios.
+Ampliar el tipo `AutoFieldKey` con campos adicionales provenientes de la Matricula y Persona que actualmente no estan disponibles:
 
----
+- `telefono_aprendiz` (Persona.telefono)
+- `email_aprendiz` (Persona.email)
+- `eps_aprendiz` (Matricula.eps)
+- `arl_aprendiz` (Matricula.arl)
+- `sector_economico` (Matricula.sectorEconomico / Persona.sectorEconomico)
+- `empresa_nit` (Matricula.empresaNit)
+- `empresa_representante_legal` (Matricula.empresaRepresentanteLegal)
+- `tipo_vinculacion` (Matricula.tipoVinculacion)
+- `nivel_previo` (Matricula.nivelPrevio)
+- `centro_formacion_previo` (Matricula.centroFormacionPrevio)
+- `numero_curso` (Curso.numeroCurso)
+- `duracion_dias_curso` (Curso.duracionDias)
+- `horas_totales_curso` (Curso.horasTotales)
 
-### Cambio 2: Resolver formatos dinamicamente en MatriculaDetailSheet
+#### 2. `src/data/autoFieldCatalog.ts` -- Nuevo archivo: catalogo centralizado
 
-**Archivo:** `src/components/matriculas/MatriculaDetailSheet.tsx`
-
-- Mismo patron: importar `useFormatosMatricula`, llamar con `curso?.tipoFormacion`.
-- Reemplazar el array hardcodeado (lineas 554-560) por la lista dinamica.
-- Misma logica de `estado` y `onPreview` que en el cambio 1.
-- Los dialogs de preview legacy (lineas 698-725) se mantienen sin cambios.
-
----
-
-### Cambio 3: Actualizar FormatosList para aceptar el nuevo formato de datos
-
-**Archivo:** `src/components/matriculas/formatos/FormatosList.tsx`
-
-- Actualizar la interfaz `FormatoItem` para incluir `codigo?: string` (mostrar codigo del formato si existe).
-- Sin cambios funcionales mayores; la interfaz sigue recibiendo `id`, `nombre`, `estado`.
-
----
-
-### Cambio 4: Agregar helper de estado en un util compartido
-
-Para evitar duplicar la logica de resolucion de estado entre las dos vistas, crear una funcion helper:
+Crear un catalogo que agrupe los campos automaticos por origen/categoria, con metadata legible:
 
 ```typescript
-// En un archivo util o inline
-function resolveFormatoEstado(
-  formato: FormatoFormacion, 
-  matricula: Matricula
-): EstadoFormato {
-  if (formato.legacyComponentId === 'evaluacion_reentrenamiento') {
-    return matricula.evaluacionCompletada ? 'completo' : 'borrador';
-  }
-  if (formato.legacyComponentId) {
-    return (!matricula.autorizacionDatos || !matricula.firmaCapturada) 
-      ? 'borrador' : 'completo';
-  }
-  return 'borrador'; // formatos nuevos: pendiente por defecto
+export interface AutoFieldOption {
+  key: AutoFieldKey;
+  label: string;         // Nombre legible (ej: "Nombre completo")
+  category: string;      // Grupo (ej: "Datos del aprendiz")
+  source: string;        // Origen tecnico (ej: "Persona")
+  description?: string;  // Tooltip opcional
 }
+
+export const AUTO_FIELD_CATALOG: AutoFieldOption[] = [
+  // --- Datos del Aprendiz (Persona) ---
+  { key: 'nombre_aprendiz', label: 'Nombre completo', category: 'Datos del Aprendiz', source: 'Persona' },
+  { key: 'documento_aprendiz', label: 'Numero de documento', category: 'Datos del Aprendiz', source: 'Persona' },
+  { key: 'tipo_documento_aprendiz', label: 'Tipo de documento', category: 'Datos del Aprendiz', source: 'Persona' },
+  // ... (todos los campos de Persona)
+
+  // --- Datos Laborales (Matricula) ---
+  { key: 'empresa_nombre', label: 'Nombre de la empresa', category: 'Datos Laborales', source: 'Matricula' },
+  { key: 'empresa_cargo', label: 'Cargo', category: 'Datos Laborales', source: 'Matricula' },
+  // ... (todos los campos laborales)
+
+  // --- Datos del Curso ---
+  { key: 'nombre_curso', label: 'Nombre del curso', category: 'Datos del Curso', source: 'Curso' },
+  { key: 'fecha_inicio_curso', label: 'Fecha de inicio', category: 'Datos del Curso', source: 'Curso' },
+  // ... (todos los campos del curso)
+
+  // --- Personal asignado ---
+  { key: 'entrenador_nombre', label: 'Entrenador', category: 'Personal Asignado', source: 'Curso' },
+  { key: 'supervisor_nombre', label: 'Supervisor', category: 'Personal Asignado', source: 'Curso' },
+];
+
+export const AUTO_FIELD_CATEGORIES = [...new Set(AUTO_FIELD_CATALOG.map(f => f.category))];
 ```
 
-Esta funcion se definira inline o en un util ligero y se usara en ambos archivos.
+#### 3. `src/pages/formatos/FormatoEditorPage.tsx` -- Mejorar el selector de auto_field
+
+Reemplazar el `<Select>` plano actual (lineas 149-182) por un selector agrupado por categorias:
+
+- Usar `<Select>` con `<SelectGroup>` + `<SelectLabel>` por cada categoria (Datos del Aprendiz, Datos Laborales, Datos del Curso, Personal Asignado).
+- Cada opcion muestra el label legible, con un indicador sutil del origen (ej: badge con "Persona", "Matricula", "Curso").
+- Importar el catalogo desde `autoFieldCatalog.ts` en vez de listar `<SelectItem>` inline.
+
+Ademas, en la vista previa (`PreviewDialog`), cuando se renderiza un `auto_field`:
+- Mostrar el label legible del catalogo en vez de la key tecnica.
+- Indicar la categoria de origen entre parentesis.
 
 ---
 
-### Archivos a modificar
+### Detalles tecnicos
 
-| Archivo | Cambio |
-|---|---|
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Reemplazar array hardcodeado por query dinamica con `useFormatosMatricula` |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Reemplazar array hardcodeado por query dinamica con `useFormatosMatricula` |
-| `src/components/matriculas/formatos/FormatosList.tsx` | Agregar `codigo` opcional a la interfaz |
-
-### Lo que NO cambia en esta parte
-
-- Los 4 componentes Document y PreviewDialog legacy permanecen intactos.
-- La persistencia de respuestas sigue en campos planos de `Matricula`.
-- No se construye aun el renderer generico de bloques (eso sera Parte futura).
-- El mapeo `legacyComponentId` a dialog especifico se mantiene como puente.
+- El catalogo es un array constante exportado, sin logica de fetching. Se usa tanto en el editor como en la vista previa.
+- Las nuevas `AutoFieldKey` se agregan al union type existente. La resolucion real de valores (cuando se construya el renderer en partes futuras) leera de Persona, Matricula o Curso segun corresponda.
+- No se modifica ninguna logica de matriculas ni formatos existentes. Solo se amplia la paleta de campos disponibles y se mejora la UX del editor.
 

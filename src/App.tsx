@@ -37,6 +37,10 @@ import GestionPersonalPage from "./pages/personal/GestionPersonalPage";
 import PersonalFormPage from "./pages/personal/PersonalFormPage";
 import PersonalDetallePage from "./pages/personal/PersonalDetallePage";
 
+// Gestión de Formatos (Módulo F)
+import FormatosPage from "./pages/formatos/FormatosPage";
+import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
+
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout
@@ -84,6 +88,11 @@ const App = () => (
           <Route path="/gestion-personal/nuevo" element={<WithLayout><PersonalFormPage /></WithLayout>} />
           <Route path="/gestion-personal/:id" element={<WithLayout><PersonalDetallePage /></WithLayout>} />
           <Route path="/gestion-personal/:id/editar" element={<WithLayout><PersonalFormPage /></WithLayout>} />
+
+          {/* Módulo F - Gestión de Formatos */}
+          <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
+          <Route path="/gestion-formatos/nuevo" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
+          <Route path="/gestion-formatos/:id/editar" element={<WithLayout><FormatoEditorPage /></WithLayout>} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

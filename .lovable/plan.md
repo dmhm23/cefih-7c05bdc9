@@ -1,47 +1,33 @@
 
 
-## Fix: Content Overflow + Nivel de Formacion Dropdown in Matriculas
+## Fix: Content Overflow in All Detail Sheet Panels
 
-### Problem 1 — Content overflows to the right in the detail sheet
+### Root Cause
 
-The `DetailSheet` uses a fixed width of 480px (`w-[480px]`). Inside, the content uses `grid grid-cols-2 gap-4` which works fine for most fields, but some fields (like long labels, Combobox triggers, or the "Sector Economico" span-2) push content beyond the panel width.
+The `DetailSheet` component uses Radix `ScrollArea` whose internal `Viewport` element has `overflow: scroll` on both axes by default. The inner content wrapper already has `overflow-hidden min-w-0`, but this doesn't help because the Viewport itself allows horizontal expansion before that constraint kicks in.
 
-**Root cause**: The `ScrollArea` content div (`px-6 py-4`) doesn't constrain its children's width. Combined with some fields not having `min-w-0` or `overflow-hidden`, text and interactive elements overflow horizontally.
+In a flex column layout (`flex flex-col` on SheetContent), the `ScrollArea` (as a flex child with `flex-1`) doesn't have `min-w-0`, so it can grow beyond its parent's width. Combined with grid children (like `grid grid-cols-2`) and long text in `EditableField` / `Combobox` triggers, content overflows to the right.
 
-**Fix**: Add `overflow-hidden` to the content wrapper inside `DetailSheet.tsx` and ensure the children container constrains width properly. Also add `min-w-0` to grid children in `MatriculaDetailSheet.tsx` where needed.
+### Fix
 
----
+Two targeted CSS changes in `DetailSheet.tsx`:
 
-### Problem 2 — Nivel de Formacion shows a text input instead of dropdown
+1. **Add `min-w-0` to the ScrollArea** -- This constrains the flex child so it can't grow wider than the SheetContent.
 
-In both `MatriculaDetailSheet.tsx` (lines 448-454) and `MatriculaDetallePage.tsx` (lines 480-485), the "Nivel de Formacion" `EditableField` is missing `type="select"` and `options` props. Without these, `EditableField` defaults to `type="text"` rendering a plain text input.
+2. **Force the Radix Viewport to clip horizontal overflow** using a Tailwind selector: `[&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden` on the ScrollArea. This ensures only vertical scrolling is allowed.
 
-The fix already exists in `MatriculaFormPage.tsx` which correctly fetches niveles and maps them to options:
-```typescript
-const { data: nivelesFormacion = [] } = useNivelesFormacion();
-const nivelesOptions = nivelesFormacion.map((n) => ({
-  value: n.id,
-  label: n.nombreNivel,
-}));
-```
+These two changes fix the overflow for every module that uses `DetailSheet` (Matriculas, Personas, Cursos, Personal) without modifying any individual sheet component or the shared `scroll-area.tsx`.
 
-**Fix**: Apply the same pattern to both the detail sheet and the detail page:
-1. Import `useNivelesFormacion` hook
-2. Build `nivelesOptions` array from the fetched data
-3. Add `type="select"` and `options={nivelesOptions}` to the "Nivel de Formacion" `EditableField`
-
----
-
-### Files to modify
+### File to modify
 
 | File | Change |
 |---|---|
-| `src/components/shared/DetailSheet.tsx` | Add `overflow-hidden` and `min-w-0` to the ScrollArea content wrapper to prevent horizontal overflow |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | 1) Import `useNivelesFormacion`, build options array. 2) Add `type="select"` and `options` to "Nivel de Formacion" field. 3) Add `overflow-hidden min-w-0` to the main content div |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | 1) Import `useNivelesFormacion` (already imported), build options array from hook data. 2) Add `type="select"` and `options` to "Nivel de Formacion" field |
+| `src/components/shared/DetailSheet.tsx` | Line 138: Add `min-w-0` and viewport overflow-x constraint to ScrollArea className |
 
 ### What does NOT change
-- EditableField component logic (already supports select with Combobox for 4+ options)
+
+- Individual detail sheet components (MatriculaDetailSheet, PersonaDetailSheet, etc.)
+- The shared `scroll-area.tsx` component
 - Sheet width or layout structure
-- Any other fields or sections
+- EditableField component
 

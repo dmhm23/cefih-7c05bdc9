@@ -69,6 +69,7 @@ import {
   ARL_OPTIONS,
 } from "@/data/formOptions";
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
 type PreviewFormatoId = string | null;
 
@@ -120,6 +121,8 @@ export function MatriculaDetailSheet({
   const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
   const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
   const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
+  const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
 
   useEffect(() => {
     setFormData({});
@@ -450,6 +453,8 @@ export function MatriculaDetailSheet({
               value={getValue("empresaNivelFormacion") || ""}
               displayValue={getValue("empresaNivelFormacion") ? resolveNivelFormacionLabel(getValue("empresaNivelFormacion") as string) : undefined}
               onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+              type="select"
+              options={nivelesOptions}
               icon={GraduationCap}
             />
             <EditableField

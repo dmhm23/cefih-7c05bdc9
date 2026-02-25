@@ -89,6 +89,8 @@ export default function MatriculaDetallePage() {
   const cambiarEstado = useCambiarEstadoMatricula();
   const uploadDocumento = useUploadDocumento();
   const updatePersona = useUpdatePersona();
+  const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
 
   useEffect(() => {
     setFormData({});
@@ -482,6 +484,8 @@ export default function MatriculaDetallePage() {
                 value={getValue("empresaNivelFormacion")}
                 displayValue={resolveNivelFormacionLabel(getValue("empresaNivelFormacion"))}
                 onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+                type="select"
+                options={nivelesOptions}
               />
               <EditableField
                 label="Área de Trabajo"

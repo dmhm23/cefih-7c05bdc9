@@ -5,7 +5,7 @@ import {
   Sheet,
   SheetContent,
 } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { cn } from "@/lib/utils";
 
 interface DetailSheetProps {
@@ -135,11 +135,11 @@ export function DetailSheet({
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 min-w-0 [&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden">
-          <div className="px-6 py-4 overflow-hidden min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+          <div className="px-6 py-4 min-w-0">
             {children}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
         {footer && (

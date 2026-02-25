@@ -1,33 +1,50 @@
 
 
-## Fix: Content Overflow in All Detail Sheet Panels
+## Fix: Desbordamiento retardado en el panel deslizable de Matrículas
 
-### Root Cause
+### Diagnostico
 
-The `DetailSheet` component uses Radix `ScrollArea` whose internal `Viewport` element has `overflow: scroll` on both axes by default. The inner content wrapper already has `overflow-hidden min-w-0`, but this doesn't help because the Viewport itself allows horizontal expansion before that constraint kicks in.
+El problema ocurre porque el componente `ScrollArea` de Radix UI aplica un `style="overflow: scroll"` como **estilo inline** en su elemento Viewport interno, y lo hace **despues del render inicial** (por eso se ve bien al principio y luego se desborda). Aunque ya se agrego `[&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden` como clase CSS, el estilo inline de Radix se aplica con un pequeno retraso y puede competir con la clase CSS, causando el efecto de "se ve bien y luego se rompe".
 
-In a flex column layout (`flex flex-col` on SheetContent), the `ScrollArea` (as a flex child with `flex-1`) doesn't have `min-w-0`, so it can grow beyond its parent's width. Combined with grid children (like `grid grid-cols-2`) and long text in `EditableField` / `Combobox` triggers, content overflows to the right.
+### Solucion
 
-### Fix
+Reemplazar el `ScrollArea` de Radix en `DetailSheet.tsx` por un `div` nativo con `overflow-y-auto overflow-x-hidden`. Esto elimina por completo la dependencia del Viewport de Radix y su estilo inline problematico. Solo se necesita scroll vertical en este panel, asi que no se pierde funcionalidad.
 
-Two targeted CSS changes in `DetailSheet.tsx`:
+### Cambio
 
-1. **Add `min-w-0` to the ScrollArea** -- This constrains the flex child so it can't grow wider than the SheetContent.
+**Archivo:** `src/components/shared/DetailSheet.tsx`
 
-2. **Force the Radix Viewport to clip horizontal overflow** using a Tailwind selector: `[&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden` on the ScrollArea. This ensures only vertical scrolling is allowed.
+Linea 138 actual:
+```
+<ScrollArea className="flex-1 min-w-0 [&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden">
+  <div className="px-6 py-4 overflow-hidden min-w-0">
+    {children}
+  </div>
+</ScrollArea>
+```
 
-These two changes fix the overflow for every module that uses `DetailSheet` (Matriculas, Personas, Cursos, Personal) without modifying any individual sheet component or the shared `scroll-area.tsx`.
+Reemplazar por:
+```
+<div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+  <div className="px-6 py-4 min-w-0">
+    {children}
+  </div>
+</div>
+```
 
-### File to modify
+Tambien se elimina el import de `ScrollArea` ya que deja de usarse en este archivo.
 
-| File | Change |
-|---|---|
-| `src/components/shared/DetailSheet.tsx` | Line 138: Add `min-w-0` and viewport overflow-x constraint to ScrollArea className |
+### Por que funciona
 
-### What does NOT change
+- Un `div` nativo con `overflow-x-hidden` no tiene estilos inline que compitan.
+- Se aplica desde el primer render, sin retraso.
+- `overflow-y-auto` mantiene el scroll vertical solo cuando el contenido excede la altura.
+- `min-w-0` evita que el flex child crezca mas alla del contenedor padre.
 
-- Individual detail sheet components (MatriculaDetailSheet, PersonaDetailSheet, etc.)
-- The shared `scroll-area.tsx` component
-- Sheet width or layout structure
-- EditableField component
+### Que NO cambia
+
+- El componente `ScrollArea` sigue disponible para otros usos en la app.
+- La estructura del `SheetContent`, header y footer no cambian.
+- Ningun otro modulo se ve afectado (el fix es solo en `DetailSheet`).
+- Los paneles de Personas, Cursos y Personal que usan `DetailSheet` tambien se benefician automaticamente.
 

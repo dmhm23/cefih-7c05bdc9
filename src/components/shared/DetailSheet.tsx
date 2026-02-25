@@ -136,7 +136,7 @@ export function DetailSheet({
 
         {/* Content */}
         <ScrollArea className="flex-1">
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 overflow-hidden min-w-0">
             {children}
           </div>
         </ScrollArea>

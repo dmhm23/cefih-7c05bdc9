@@ -34,7 +34,7 @@ function SelectableOption({
   return (
     <label
       className={cn(
-        "flex items-center gap-3 w-full p-3 rounded-xl border-2 cursor-pointer transition-all",
+        "flex items-center gap-3 w-full p-2 rounded-xl border-2 cursor-pointer transition-all",
         selected
           ? "border-primary bg-primary/5 shadow-sm"
           : "border-border hover:border-muted-foreground/30 hover:bg-muted/50"

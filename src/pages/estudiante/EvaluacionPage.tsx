@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +12,50 @@ import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
 import { useEvaluacionFormato, useDocumentosPortal, useEnviarDocumento } from '@/hooks/usePortalEstudiante';
 import { BloqueEvaluationQuiz, BloqueSatisfactionSurvey } from '@/types/formatoFormacion';
 import { QuizReviewCard } from '@/components/estudiante/QuizReviewCard';
+import { cn } from '@/lib/utils';
+
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+function SelectableOption({
+  letter,
+  text,
+  value,
+  selected,
+  groupValue,
+  onSelect,
+}: {
+  letter: string;
+  text: string;
+  value: string;
+  selected: boolean;
+  groupValue: string | undefined;
+  onSelect: (v: string) => void;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex items-center gap-3 w-full p-4 rounded-xl border-2 cursor-pointer transition-all",
+        selected
+          ? "border-primary bg-primary/5 shadow-sm"
+          : "border-border hover:border-muted-foreground/30 hover:bg-muted/50"
+      )}
+      onClick={() => onSelect(value)}
+    >
+      <span
+        className={cn(
+          "shrink-0 w-8 h-8 rounded-lg border-2 flex items-center justify-center text-sm font-bold transition-colors",
+          selected
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border text-muted-foreground"
+        )}
+      >
+        {letter}
+      </span>
+      <span className="text-sm font-medium leading-snug flex-1">{text}</span>
+      <RadioGroupItem value={value} className="sr-only" />
+    </label>
+  );
+}
 
 export default function EvaluacionPage() {
   const navigate = useNavigate();
@@ -34,14 +77,11 @@ export default function EvaluacionPage() {
 
   const docEstado = docData?.estados.find(d => d.key === 'evaluacion');
   const yaAprobado = docEstado?.estado === 'completado' && (docEstado?.metadata as any)?.aprobado === true;
-
-  // Detect if there's a previous failed attempt → allow retry automatically
   const prevReprobado = docEstado?.estado === 'pendiente' && (docEstado?.metadata as any)?.aprobado === false;
 
   useEffect(() => {
     if (prevReprobado && docEstado && !isRetry && !submitted) {
       setIsRetry(true);
-      // Pre-load survey answers from previous attempt
       const prevResp = docEstado.respuestas as any;
       if (prevResp?.encuesta) {
         setSavedSurvey(prevResp.encuesta);
@@ -90,7 +130,7 @@ export default function EvaluacionPage() {
 
   const allQuizAnswered = Object.keys(quizAnswers).length === preguntas.length;
   const allSurveyAnswered = isRetry
-    ? true // survey already completed in previous attempt
+    ? true
     : surveyBloque
       ? Object.keys(surveyAnswers).length === (surveyProps?.escalaPreguntas.length || 0) &&
         (!surveyProps?.preguntaSiNo || siNoAnswer !== null)
@@ -109,7 +149,7 @@ export default function EvaluacionPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <CheckCircle2 className="h-5 w-5 text-success" />
               Evaluación completada
             </CardTitle>
           </CardHeader>
@@ -118,7 +158,7 @@ export default function EvaluacionPage() {
               <span className="text-sm text-muted-foreground">Puntaje obtenido</span>
               <span className="text-2xl font-bold">{prev?.puntaje?.toFixed(0)}%</span>
             </div>
-            <Badge variant="default" className="text-sm">Aprobado</Badge>
+            <Badge className="text-sm bg-success text-success-foreground hover:bg-success/90">Aprobado</Badge>
             {numIntentos > 1 && (
               <p className="text-xs text-muted-foreground">Aprobado en el intento #{numIntentos}</p>
             )}
@@ -139,14 +179,14 @@ export default function EvaluacionPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <CheckCircle2 className="h-5 w-5 text-success" />
                 Resultado de la Evaluación
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center space-y-1">
                 <p className="text-4xl font-bold">{result.puntaje.toFixed(0)}%</p>
-                <Badge variant="default" className="text-sm">Aprobado</Badge>
+                <Badge className="text-sm bg-success text-success-foreground hover:bg-success/90">Aprobado</Badge>
                 <p className="text-sm text-muted-foreground">
                   {result.correctas} de {result.total} respuestas correctas
                 </p>
@@ -187,7 +227,6 @@ export default function EvaluacionPage() {
         <Button
           className="w-full"
           onClick={() => {
-            // Save current survey for reuse
             if (!savedSurvey) {
               setSavedSurvey({ escala: { ...surveyAnswers }, siNo: siNoAnswer });
             }
@@ -212,7 +251,6 @@ export default function EvaluacionPage() {
     const puntaje = (correctas / preguntas.length) * 100;
     const aprobado = puntaje >= umbral;
 
-    // For retries, reuse saved survey; for first attempt, use current answers
     const encuestaResp = isRetry && savedSurvey
       ? savedSurvey
       : surveyBloque
@@ -254,7 +292,7 @@ export default function EvaluacionPage() {
       </div>
 
       {/* Quiz Section */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 text-primary" />
           <h2 className="font-semibold text-base">Evaluación de Conocimientos</h2>
@@ -266,23 +304,26 @@ export default function EvaluacionPage() {
         {preguntas.map((pregunta, idx) => (
           <Card key={pregunta.id} className="overflow-hidden">
             <CardHeader className="py-3 px-4 bg-muted/30">
-              <p className="text-xs font-medium text-muted-foreground">
-                Pregunta {idx + 1} de {preguntas.length}
+              <p className="text-sm font-semibold">
+                {idx + 1}. {pregunta.texto}
               </p>
             </CardHeader>
-            <CardContent className="p-4 space-y-3">
-              <p className="text-sm font-medium leading-snug">{pregunta.texto}</p>
+            <CardContent className="p-3 space-y-2">
               <RadioGroup
                 value={quizAnswers[pregunta.id]?.toString()}
                 onValueChange={(v) => setQuizAnswers(prev => ({ ...prev, [pregunta.id]: parseInt(v) }))}
+                className="space-y-2"
               >
                 {pregunta.opciones.map((opcion, oi) => (
-                  <div key={oi} className="flex items-start gap-2">
-                    <RadioGroupItem value={oi.toString()} id={`q${pregunta.id}-o${oi}`} className="mt-0.5" />
-                    <Label htmlFor={`q${pregunta.id}-o${oi}`} className="text-sm leading-snug cursor-pointer">
-                      {opcion}
-                    </Label>
-                  </div>
+                  <SelectableOption
+                    key={oi}
+                    letter={OPTION_LETTERS[oi]}
+                    text={opcion}
+                    value={oi.toString()}
+                    selected={quizAnswers[pregunta.id] === oi}
+                    groupValue={quizAnswers[pregunta.id]?.toString()}
+                    onSelect={(v) => setQuizAnswers(prev => ({ ...prev, [pregunta.id]: parseInt(v) }))}
+                  />
                 ))}
               </RadioGroup>
             </CardContent>
@@ -293,13 +334,13 @@ export default function EvaluacionPage() {
       {/* Survey Section — hidden on retry */}
       {isRetry ? (
         <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <CheckCircle2 className="h-4 w-4 text-primary" />
+          <CheckCircle2 className="h-4 w-4 text-success" />
           <span className="text-sm text-muted-foreground">Encuesta de satisfacción ya completada</span>
         </div>
       ) : surveyBloque && surveyProps ? (
         <>
           <Separator />
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-primary" />
               <h2 className="font-semibold text-base">Encuesta de Satisfacción</h2>
@@ -307,20 +348,27 @@ export default function EvaluacionPage() {
 
             {surveyProps.escalaPreguntas.map((pregunta, idx) => (
               <Card key={idx}>
-                <CardContent className="p-4 space-y-3">
-                  <p className="text-sm font-medium leading-snug">{pregunta}</p>
+                <CardHeader className="py-3 px-4 bg-muted/30">
+                  <p className="text-sm font-semibold">
+                    {idx + 1}. {pregunta}
+                  </p>
+                </CardHeader>
+                <CardContent className="p-3 space-y-2">
                   <RadioGroup
                     value={surveyAnswers[idx]}
                     onValueChange={(v) => setSurveyAnswers(prev => ({ ...prev, [idx]: v }))}
-                    className="flex flex-wrap gap-2"
+                    className="space-y-2"
                   >
-                    {surveyProps.escalaOpciones.map(opt => (
-                      <div key={opt.value} className="flex items-center gap-1.5">
-                        <RadioGroupItem value={opt.value} id={`s${idx}-${opt.value}`} />
-                        <Label htmlFor={`s${idx}-${opt.value}`} className="text-xs cursor-pointer whitespace-nowrap">
-                          {opt.label}
-                        </Label>
-                      </div>
+                    {surveyProps.escalaOpciones.map((opt, oi) => (
+                      <SelectableOption
+                        key={opt.value}
+                        letter={OPTION_LETTERS[oi]}
+                        text={opt.label}
+                        value={opt.value}
+                        selected={surveyAnswers[idx] === opt.value}
+                        groupValue={surveyAnswers[idx]}
+                        onSelect={(v) => setSurveyAnswers(prev => ({ ...prev, [idx]: v }))}
+                      />
                     ))}
                   </RadioGroup>
                 </CardContent>
@@ -329,21 +377,33 @@ export default function EvaluacionPage() {
 
             {surveyProps.preguntaSiNo && (
               <Card>
-                <CardContent className="p-4 space-y-3">
-                  <p className="text-sm font-medium leading-snug">{surveyProps.preguntaSiNo}</p>
+                <CardHeader className="py-3 px-4 bg-muted/30">
+                  <p className="text-sm font-semibold">
+                    {(surveyProps.escalaPreguntas.length || 0) + 1}. {surveyProps.preguntaSiNo}
+                  </p>
+                </CardHeader>
+                <CardContent className="p-3 space-y-2">
                   <RadioGroup
                     value={siNoAnswer || undefined}
                     onValueChange={setSiNoAnswer}
-                    className="flex gap-4"
+                    className="space-y-2"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <RadioGroupItem value="si" id="sino-si" />
-                      <Label htmlFor="sino-si" className="text-sm cursor-pointer">Sí</Label>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <RadioGroupItem value="no" id="sino-no" />
-                      <Label htmlFor="sino-no" className="text-sm cursor-pointer">No</Label>
-                    </div>
+                    <SelectableOption
+                      letter="A"
+                      text="Sí"
+                      value="si"
+                      selected={siNoAnswer === 'si'}
+                      groupValue={siNoAnswer || undefined}
+                      onSelect={setSiNoAnswer}
+                    />
+                    <SelectableOption
+                      letter="B"
+                      text="No"
+                      value="no"
+                      selected={siNoAnswer === 'no'}
+                      groupValue={siNoAnswer || undefined}
+                      onSelect={setSiNoAnswer}
+                    />
                   </RadioGroup>
                 </CardContent>
               </Card>

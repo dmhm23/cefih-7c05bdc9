@@ -1,5 +1,5 @@
 import { mockMatriculas, mockCursos, mockPersonas } from '@/data/mockData';
-import { PORTAL_DOCUMENTOS_CONFIG } from '@/data/portalEstudianteConfig';
+import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
 import { DocumentoPortalConfig, DocumentoPortalEstado, PortalEstudianteData } from '@/types/portalEstudiante';
 import { Matricula } from '@/types/matricula';
 import { Persona } from '@/types/persona';
@@ -47,11 +47,16 @@ export const portalEstudianteService = {
 
     const { matricula, curso } = candidatas[0];
 
+    // Filter docs by curso's tipoFormacion
+    const docsForNivel = portalDocumentosCatalogo
+      .filter(d => d.habilitadoPorNivel[curso!.tipoFormacion])
+      .sort((a, b) => a.orden - b.orden);
+
     // Inicializar portalEstudiante si no existe
     if (!matricula.portalEstudiante) {
       matricula.portalEstudiante = {
         habilitado: true,
-        documentos: PORTAL_DOCUMENTOS_CONFIG.map(doc => ({
+        documentos: docsForNivel.map(doc => ({
           key: doc.key,
           estado: 'pendiente' as const,
         })),
@@ -61,9 +66,14 @@ export const portalEstudianteService = {
     return { matricula, persona, curso: curso! };
   },
 
-  async getPortalConfig(): Promise<DocumentoPortalConfig[]> {
+  async getPortalConfig(tipoFormacion?: string): Promise<DocumentoPortalConfig[]> {
     await delay(300);
-    return [...PORTAL_DOCUMENTOS_CONFIG];
+    let docs = portalDocumentosCatalogo.map(({ habilitadoPorNivel, ...rest }) => rest);
+    if (tipoFormacion) {
+      const full = portalDocumentosCatalogo.filter(d => d.habilitadoPorNivel[tipoFormacion as keyof typeof d.habilitadoPorNivel]);
+      docs = full.map(({ habilitadoPorNivel, ...rest }) => rest);
+    }
+    return docs.sort((a, b) => a.orden - b.orden);
   },
 
   async getDocumentosEstado(matriculaId: string): Promise<{
@@ -80,7 +90,12 @@ export const portalEstudianteService = {
       documentos: [],
     };
 
-    const config = PORTAL_DOCUMENTOS_CONFIG;
+    // Get config filtered by curso nivel
+    const curso = mockCursos.find(c => c.id === matricula.cursoId);
+    const config = portalDocumentosCatalogo
+      .filter(d => !curso || d.habilitadoPorNivel[curso.tipoFormacion])
+      .map(({ habilitadoPorNivel, ...rest }) => rest)
+      .sort((a, b) => a.orden - b.orden);
 
     // Calcular estados con dependencias
     const estados: DocumentoPortalEstado[] = config.map(docConfig => {

@@ -312,7 +312,7 @@ export default function EvaluacionPage() {
               <RadioGroup
                 value={quizAnswers[pregunta.id]?.toString()}
                 onValueChange={(v) => setQuizAnswers(prev => ({ ...prev, [pregunta.id]: parseInt(v) }))}
-                className="space-y-2"
+                className="space-y-1"
               >
                 {pregunta.opciones.map((opcion, oi) => (
                   <SelectableOption
@@ -357,7 +357,7 @@ export default function EvaluacionPage() {
                   <RadioGroup
                     value={surveyAnswers[idx]}
                     onValueChange={(v) => setSurveyAnswers(prev => ({ ...prev, [idx]: v }))}
-                    className="space-y-2"
+                    className="space-y-1"
                   >
                     {surveyProps.escalaOpciones.map((opt, oi) => (
                       <SelectableOption
@@ -386,7 +386,7 @@ export default function EvaluacionPage() {
                   <RadioGroup
                     value={siNoAnswer || undefined}
                     onValueChange={setSiNoAnswer}
-                    className="space-y-2"
+                    className="space-y-1"
                   >
                     <SelectableOption
                       letter="A"

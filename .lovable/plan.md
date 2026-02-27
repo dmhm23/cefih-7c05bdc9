@@ -1,18 +1,25 @@
 
 
-## Fix: Firma no habilita envío + mejora UI botón Limpiar
+## Plan: Auto-marcar "Acepto" al firmar
 
-### Causa raíz
+### Diagnóstico
 
-En `FirmaCaptura`, `onBegin` llama `setIsEmpty(false)` y luego `onEnd` llama `handleEnd`. Pero `handleEnd` usa el estado `isEmpty` que aún es `true` en el closure del primer trazo (React no ha re-renderizado). Por eso `onGuardar` nunca se ejecuta en el primer trazo y `firmaBase64` queda `null`.
+El flujo actual requiere **dos acciones independientes**: marcar "Acepto" en el radio Y dibujar la firma. Si el usuario solo firma sin marcar "Acepto", `autorizacion` queda `null` y `puedeEnviar` es `false`. Esto es lo que está pasando.
 
-### Cambios
+### Cambio
 
-#### `src/components/matriculas/FirmaCaptura.tsx`
+**`src/pages/estudiante/InfoAprendizPage.tsx`** -- modificar `handleFirmaChange` (linea 50-52):
 
-1. **Agregar un `useRef` para rastrear vacío** — `isEmptyRef` se actualiza sincrónicamente, sin depender del ciclo de render.
-2. **`onBegin`**: setear `isEmptyRef.current = false` además de `setIsEmpty(false)`.
-3. **`handleEnd`**: usar `!isEmptyRef.current` en vez de `!isEmpty`.
-4. **`handleClear`**: setear `isEmptyRef.current = true`.
-5. **Mejora UI botón Limpiar**: cuando hay firma (`!isEmpty`), mostrar variante `destructive` outline para que se note visualmente el cambio de estado (de gris deshabilitado a rojo activo).
+Cuando recibe una firma no vacía, auto-setear `autorizacion = 'acepto'`:
+
+```typescript
+const handleFirmaChange = (base64: string) => {
+  setFirmaBase64(base64 || null);
+  if (base64) {
+    setAutorizacion('acepto');
+  }
+};
+```
+
+Esto habilita inmediatamente tanto el botón "Limpiar" (ya funciona) como "Enviar documento" con un solo gesto del usuario.
 

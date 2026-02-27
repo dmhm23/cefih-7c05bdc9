@@ -20,6 +20,7 @@ export interface DocumentoPortalEstado {
   puntaje?: number;
   respuestas?: unknown;
   metadata?: Record<string, unknown>;
+  intentos?: DocumentoPortalEstado[];
 }
 
 export interface PortalEstudianteData {

@@ -18,6 +18,14 @@ export function useDocumentosPortal(matriculaId: string | null) {
   });
 }
 
+export function useInfoAprendizData(matriculaId: string | null) {
+  return useQuery({
+    queryKey: ['portal-estudiante', 'info-aprendiz', matriculaId],
+    queryFn: () => portalEstudianteService.getInfoAprendizData(matriculaId!),
+    enabled: !!matriculaId,
+  });
+}
+
 export function useEnviarDocumento() {
   const queryClient = useQueryClient();
 
@@ -34,6 +42,9 @@ export function useEnviarDocumento() {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['portal-estudiante', 'documentos', variables.matriculaId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['portal-estudiante', 'info-aprendiz', variables.matriculaId],
       });
     },
   });

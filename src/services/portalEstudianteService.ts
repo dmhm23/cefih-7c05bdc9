@@ -146,4 +146,23 @@ export const portalEstudianteService = {
 
     return nuevoEstado;
   },
+
+  async getInfoAprendizData(matriculaId: string): Promise<{
+    persona: Persona;
+    matricula: Matricula;
+    curso: Curso;
+  }> {
+    await delay(500);
+
+    const matricula = mockMatriculas.find(m => m.id === matriculaId);
+    if (!matricula) throw new Error('Matrícula no encontrada');
+
+    const persona = mockPersonas.find(p => p.id === matricula.personaId);
+    if (!persona) throw new Error('Persona no encontrada');
+
+    const curso = mockCursos.find(c => c.id === matricula.cursoId);
+    if (!curso) throw new Error('Curso no encontrado');
+
+    return { persona, matricula, curso };
+  },
 };

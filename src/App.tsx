@@ -44,6 +44,7 @@ import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
 import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
+import InfoAprendizPage from "./pages/estudiante/InfoAprendizPage";
 import PortalGuard from "./pages/estudiante/PortalGuard";
 import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
 
@@ -103,7 +104,8 @@ const App = () => (
           {/* Portal Estudiante (público, mobile-first) */}
           <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />
           <Route path="/estudiante/inicio" element={<PortalEstudianteProvider><PortalGuard><PanelDocumentosPage /></PortalGuard></PortalEstudianteProvider>} />
-          <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Documento en construcción (Parte 3-4)</p></div></PortalGuard></PortalEstudianteProvider>} />
+          <Route path="/estudiante/documentos/info_aprendiz" element={<PortalEstudianteProvider><PortalGuard><InfoAprendizPage /></PortalGuard></PortalEstudianteProvider>} />
+          <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Documento en construcción</p></div></PortalGuard></PortalEstudianteProvider>} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

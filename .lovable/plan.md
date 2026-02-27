@@ -1,44 +1,19 @@
 
 
-## Plan: Reintento de evaluación reprobada con historial
+## Fix: Botón "Guardar Firma" no funciona
 
-### Cambios
+### Causa raiz
 
-#### 1. `src/types/portalEstudiante.ts`
-- Agregar campo `intentos?: DocumentoPortalEstado[]` a `DocumentoPortalEstado` para almacenar historial de intentos reprobados.
+El metodo `sigRef.current.isEmpty()` de `react-signature-canvas` usa internamente `trimCanvas`, la misma funcion que causa el error `(0, import_trim_canvas.default) is not a function`. Por eso el boton "Guardar Firma" falla silenciosamente.
 
-#### 2. `src/services/portalEstudianteService.ts` — `enviarDocumento`
-- Si `documentoKey === 'evaluacion'` y ya existe un registro previo reprobado (`metadata.aprobado === false`):
-  - Mover el registro anterior al array `intentos[]` del nuevo registro.
-  - El nuevo registro reemplaza al anterior (mantiene estado `completado` si aprueba, o `pendiente` si reprueba para permitir reintento).
-- Si aprueba: estado = `completado`. Si reprueba: estado = `pendiente` (permite reintentar).
-- Acumular todos los intentos previos en `intentos[]`.
+### Solucion
 
-#### 3. `src/pages/estudiante/EvaluacionPage.tsx` — Cambios principales
-
-**Post-submit cuando reprueba** (reemplaza la vista actual de resultado):
-- Mostrar puntaje y badge "Reprobado".
-- Mostrar revisión de cada pregunta del quiz:
-  - Respuesta del estudiante marcada con ✓ verde (correcta) o ✗ rojo (incorrecta).
-  - Si incorrecta, mostrar cuál era la respuesta correcta.
-- Botón "Reintentar evaluación" que:
-  - Resetea `quizAnswers` a `{}` y `submitted`/`result` a falso.
-  - Pre-carga `surveyAnswers` y `siNoAnswer` con las respuestas de encuesta del intento anterior.
-  - Oculta la sección de encuesta (ya fue respondida), mostrando solo un chip informativo "Encuesta ya completada".
-
-**Post-submit cuando aprueba**: Mantener vista actual (puntaje + "Aprobado" + volver).
-
-**Vista "ya completado"**: Solo se muestra cuando el último intento fue aprobado (`metadata.aprobado === true`). Si fue reprobado, mostrar el formulario para reintentar.
-
-**Lógica de envío en reintento**:
-- Solo enviar datos del quiz. Reutilizar la encuesta del primer intento (`encuestaResp` del registro anterior).
-- El servicio acumula los intentos en el array `intentos[]`.
-
-### Resumen de archivos
+Reemplazar `sigRef.current.isEmpty()` por el estado local `isEmpty` que ya se trackea via `onBegin`. Esto aplica a los 2 archivos que usan `SignatureCanvas`:
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/portalEstudiante.ts` | Agregar `intentos?: DocumentoPortalEstado[]` |
-| `src/services/portalEstudianteService.ts` | Lógica de acumulación de intentos reprobados; estado `pendiente` si reprueba |
-| `src/pages/estudiante/EvaluacionPage.tsx` | Vista de revisión post-reprobación, botón reintentar, pre-carga de encuesta, ocultamiento de encuesta en reintentos |
+| `src/components/matriculas/FirmaCaptura.tsx` | Linea 23: cambiar `if (sigRef.current && !sigRef.current.isEmpty())` por `if (sigRef.current && !isEmpty)` |
+| `src/components/personal/FirmaPersonal.tsx` | Linea 33: mismo cambio — `!sigRef.current.isEmpty()` → `!isEmpty` |
+
+Son 2 lineas. El estado `isEmpty` ya se pone en `false` cuando el usuario empieza a dibujar (`onBegin`), por lo que es funcionalmente equivalente.
 

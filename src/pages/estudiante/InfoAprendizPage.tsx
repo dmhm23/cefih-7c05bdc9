@@ -47,6 +47,10 @@ export default function InfoAprendizPage() {
   const [autorizacion, setAutorizacion] = useState<'acepto' | 'no_acepto' | null>(null);
   const [firmaBase64, setFirmaBase64] = useState<string | null>(null);
 
+  const handleFirmaChange = (base64: string) => {
+    setFirmaBase64(base64 || null);
+  };
+
   const docEstado = docData?.estados.find(d => d.key === 'info_aprendiz');
   const yaCompletado = docEstado?.estado === 'completado';
 
@@ -313,8 +317,7 @@ export default function InfoAprendizPage() {
                 <h3 className="text-sm font-semibold">Firma del estudiante</h3>
               </div>
               <FirmaCaptura
-                firmaExistente={firmaBase64 || undefined}
-                onGuardar={(base64) => setFirmaBase64(base64)}
+                onGuardar={handleFirmaChange}
                 disabled={autorizacion !== 'acepto'}
               />
             </Card>

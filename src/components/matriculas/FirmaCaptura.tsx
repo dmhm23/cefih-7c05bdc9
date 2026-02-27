@@ -11,9 +11,15 @@ interface FirmaCapturaProps {
 export function FirmaCaptura({ onGuardar, disabled }: FirmaCapturaProps) {
   const sigRef = useRef<SignatureCanvas>(null);
   const [isEmpty, setIsEmpty] = useState(true);
+  const isEmptyRef = useRef(true);
+
+  const handleBegin = () => {
+    setIsEmpty(false);
+    isEmptyRef.current = false;
+  };
 
   const handleEnd = () => {
-    if (sigRef.current && !isEmpty) {
+    if (sigRef.current && !isEmptyRef.current) {
       const base64 = sigRef.current.getCanvas().toDataURL("image/png");
       onGuardar(base64);
     }
@@ -22,6 +28,7 @@ export function FirmaCaptura({ onGuardar, disabled }: FirmaCapturaProps) {
   const handleClear = () => {
     sigRef.current?.clear();
     setIsEmpty(true);
+    isEmptyRef.current = true;
     onGuardar("");
   };
 
@@ -40,17 +47,24 @@ export function FirmaCaptura({ onGuardar, disabled }: FirmaCapturaProps) {
           }}
           penColor="black"
           backgroundColor="white"
-          onBegin={() => setIsEmpty(false)}
+          onBegin={handleBegin}
           onEnd={handleEnd}
         />
       </div>
       <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={isEmpty || disabled}>
+        <Button
+          type="button"
+          variant={isEmpty ? "outline" : "destructive"}
+          size="sm"
+          onClick={handleClear}
+          disabled={isEmpty || disabled}
+          className={isEmpty ? "opacity-50" : ""}
+        >
           <RotateCcw className="h-3.5 w-3.5 mr-1" />
           Limpiar
         </Button>
         {!isEmpty && (
-          <span className="text-xs text-emerald-600 font-medium">✓ Firma lista</span>
+          <span className="text-xs text-primary font-medium">✓ Firma lista</span>
         )}
       </div>
     </div>

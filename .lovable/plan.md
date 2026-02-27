@@ -1,50 +1,155 @@
 
 
-## Fix: Desbordamiento retardado en el panel deslizable de Matrículas
+# Plan: Portal Estudiante — Partes 0, 1 y 2
 
-### Diagnostico
+## Resumen
 
-El problema ocurre porque el componente `ScrollArea` de Radix UI aplica un `style="overflow: scroll"` como **estilo inline** en su elemento Viewport interno, y lo hace **despues del render inicial** (por eso se ve bien al principio y luego se desborda). Aunque ya se agrego `[&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden` como clase CSS, el estilo inline de Radix se aplica con un pequeno retraso y puede competir con la clase CSS, causando el efecto de "se ve bien y luego se rompe".
+Implementar la base tecnica del portal, el acceso por cedula con resolucion de matricula vigente, y el panel de documentos habilitados. Todo con backend emulado (mock services) siguiendo los patrones existentes del proyecto.
 
-### Solucion
+---
 
-Reemplazar el `ScrollArea` de Radix en `DetailSheet.tsx` por un `div` nativo con `overflow-y-auto overflow-x-hidden`. Esto elimina por completo la dependencia del Viewport de Radix y su estilo inline problematico. Solo se necesita scroll vertical en este panel, asi que no se pierde funcionalidad.
+## PARTE 0 — Base tecnica
 
-### Cambio
+### 0.1 Tipos (`src/types/portalEstudiante.ts`)
 
-**Archivo:** `src/components/shared/DetailSheet.tsx`
+```typescript
+type DocumentoPortalKey = 'info_aprendiz' | 'evaluacion' | string;
+type EstadoDocPortal = 'bloqueado' | 'pendiente' | 'completado';
+type TipoDocPortal = 'firma_autorizacion' | 'evaluacion' | 'formulario' | 'solo_lectura';
 
-Linea 138 actual:
+interface DocumentoPortalConfig {
+  key: DocumentoPortalKey;
+  nombre: string;
+  tipo: TipoDocPortal;
+  requiereFirma: boolean;
+  dependeDe: DocumentoPortalKey[];
+  orden: number;
+}
+
+interface DocumentoPortalEstado {
+  key: DocumentoPortalKey;
+  estado: EstadoDocPortal;
+  enviadoEn?: string;
+  firmaBase64?: string;
+  firmaFecha?: string;
+  puntaje?: number;
+  respuestas?: unknown;
+  metadata?: Record<string, unknown>;
+}
+
+interface PortalEstudianteData {
+  habilitado: boolean;
+  documentos: DocumentoPortalEstado[];
+}
 ```
-<ScrollArea className="flex-1 min-w-0 [&>[data-radix-scroll-area-viewport]]:!overflow-x-hidden">
-  <div className="px-6 py-4 overflow-hidden min-w-0">
-    {children}
-  </div>
-</ScrollArea>
+
+### 0.2 Extender tipo Matricula (`src/types/matricula.ts`)
+
+Agregar campo opcional `portalEstudiante?: PortalEstudianteData` al interface `Matricula`.
+
+### 0.3 Configuracion global por defecto (`src/data/portalEstudianteConfig.ts`)
+
+Catalogo de documentos disponibles con dependencias:
+- `info_aprendiz`: orden 1, tipo `firma_autorizacion`, sin dependencias
+- `evaluacion`: orden 2, tipo `evaluacion`, depende de `info_aprendiz`
+
+### 0.4 Servicio portal (`src/services/portalEstudianteService.ts`)
+
+Funciones mock:
+- `buscarMatriculaVigente(cedula)` — filtra mockMatriculas + mockCursos con regla de vigencia
+- `getPortalConfig()` — retorna catalogo de documentos
+- `getDocumentosEstado(matriculaId)` — calcula estado de cada doc (bloqueado/pendiente/completado)
+- `enviarDocumento(matriculaId, documentoKey, payload)` — persiste en mockMatriculas
+
+### 0.5 Hook (`src/hooks/usePortalEstudiante.ts`)
+
+React Query hooks:
+- `useBuscarMatriculaVigente(cedula)`
+- `useDocumentosPortal(matriculaId)`
+- `useEnviarDocumento()`
+
+---
+
+## PARTE 1 — Acceso por cedula
+
+### 1.1 Pagina `/estudiante` (`src/pages/estudiante/AccesoEstudiantePage.tsx`)
+
+- Layout mobile-first, sin sidebar (ruta publica, sin `MainLayout`)
+- Logo centrado + titulo "Portal del Estudiante"
+- Input de cedula con validacion (solo digitos, min 6 caracteres)
+- Boton "Continuar"
+- Al buscar: llama `buscarMatriculaVigente(cedula)`
+- Si encuentra: guarda contexto en estado + localStorage, navega a `/estudiante/inicio`
+- Si no encuentra: muestra alerta "No se encontro matricula vigente"
+- Loading state durante busqueda
+
+### 1.2 Contexto de sesion (`src/contexts/PortalEstudianteContext.tsx`)
+
+React context + provider que persiste en localStorage:
+- `matriculaId`, `personaId`, `cedula`, `nombreEstudiante`
+- `clearSession()` para logout
+- Proteccion: si no hay sesion y la ruta es `/estudiante/*` (excepto `/estudiante`), redirige a `/estudiante`
+
+### 1.3 Ruta protegida wrapper
+
+Componente `PortalGuard` que verifica contexto antes de renderizar children.
+
+---
+
+## PARTE 2 — Panel de documentos
+
+### 2.1 Pagina `/estudiante/inicio` (`src/pages/estudiante/PanelDocumentosPage.tsx`)
+
+- Header con nombre del estudiante + cedula + boton "Salir"
+- Nombre del curso + fechas
+- Lista de cards (una por documento habilitado):
+  - Icono segun tipo
+  - Nombre del documento
+  - Badge de estado: `Bloqueado` (gris), `Pendiente` (amarillo), `Completado` (verde)
+  - Boton "Completar" (si pendiente), "Ver" (si completado), deshabilitado (si bloqueado)
+  - Si bloqueado: texto "Completa primero: [nombre dependencia]"
+- Clic en card navega a `/estudiante/documentos/:documentoKey`
+- Barra de progreso: X de Y completados
+- Mensaje de felicitacion cuando todos estan completados
+
+### 2.2 Layout mobile-first
+
+- Max-width 480px centrado
+- Sin sidebar
+- Colores del sistema pero optimizado para movil
+- Touch-friendly (botones min 44px)
+
+---
+
+## Rutas a agregar en App.tsx
+
+```
+/estudiante                    → AccesoEstudiantePage
+/estudiante/inicio             → PanelDocumentosPage (protegida)
+/estudiante/documentos/:key    → (placeholder para Partes 3-4)
 ```
 
-Reemplazar por:
-```
-<div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
-  <div className="px-6 py-4 min-w-0">
-    {children}
-  </div>
-</div>
-```
+Todas sin `MainLayout` (son publicas, mobile-first).
 
-Tambien se elimina el import de `ScrollArea` ya que deja de usarse en este archivo.
+---
 
-### Por que funciona
+## Archivos nuevos (8)
 
-- Un `div` nativo con `overflow-x-hidden` no tiene estilos inline que compitan.
-- Se aplica desde el primer render, sin retraso.
-- `overflow-y-auto` mantiene el scroll vertical solo cuando el contenido excede la altura.
-- `min-w-0` evita que el flex child crezca mas alla del contenedor padre.
+| Archivo | Descripcion |
+|---|---|
+| `src/types/portalEstudiante.ts` | Tipos del portal |
+| `src/data/portalEstudianteConfig.ts` | Catalogo de documentos por defecto |
+| `src/services/portalEstudianteService.ts` | Servicio mock |
+| `src/hooks/usePortalEstudiante.ts` | React Query hooks |
+| `src/contexts/PortalEstudianteContext.tsx` | Contexto de sesion |
+| `src/pages/estudiante/AccesoEstudiantePage.tsx` | Pantalla de acceso |
+| `src/pages/estudiante/PanelDocumentosPage.tsx` | Panel de documentos |
+| `src/pages/estudiante/PortalGuard.tsx` | Guard de ruta protegida |
 
-### Que NO cambia
+## Archivos modificados (2)
 
-- El componente `ScrollArea` sigue disponible para otros usos en la app.
-- La estructura del `SheetContent`, header y footer no cambian.
-- Ningun otro modulo se ve afectado (el fix es solo en `DetailSheet`).
-- Los paneles de Personas, Cursos y Personal que usan `DetailSheet` tambien se benefician automaticamente.
+| Archivo | Cambio |
+|---|---|
+| `src/types/matricula.ts` | Agregar `portalEstudiante?` al interface |
+| `src/App.tsx` | Agregar 3 rutas publicas del portal |
 

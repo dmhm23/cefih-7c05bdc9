@@ -1,155 +1,102 @@
+## Plan: Parte 3 — Documento "Información del Aprendiz"
 
+### Resumen
 
-# Plan: Portal Estudiante — Partes 0, 1 y 2
-
-## Resumen
-
-Implementar la base tecnica del portal, el acceso por cedula con resolucion de matricula vigente, y el panel de documentos habilitados. Todo con backend emulado (mock services) siguiendo los patrones existentes del proyecto.
-
----
-
-## PARTE 0 — Base tecnica
-
-### 0.1 Tipos (`src/types/portalEstudiante.ts`)
-
-```typescript
-type DocumentoPortalKey = 'info_aprendiz' | 'evaluacion' | string;
-type EstadoDocPortal = 'bloqueado' | 'pendiente' | 'completado';
-type TipoDocPortal = 'firma_autorizacion' | 'evaluacion' | 'formulario' | 'solo_lectura';
-
-interface DocumentoPortalConfig {
-  key: DocumentoPortalKey;
-  nombre: string;
-  tipo: TipoDocPortal;
-  requiereFirma: boolean;
-  dependeDe: DocumentoPortalKey[];
-  orden: number;
-}
-
-interface DocumentoPortalEstado {
-  key: DocumentoPortalKey;
-  estado: EstadoDocPortal;
-  enviadoEn?: string;
-  firmaBase64?: string;
-  firmaFecha?: string;
-  puntaje?: number;
-  respuestas?: unknown;
-  metadata?: Record<string, unknown>;
-}
-
-interface PortalEstudianteData {
-  habilitado: boolean;
-  documentos: DocumentoPortalEstado[];
-}
-```
-
-### 0.2 Extender tipo Matricula (`src/types/matricula.ts`)
-
-Agregar campo opcional `portalEstudiante?: PortalEstudianteData` al interface `Matricula`.
-
-### 0.3 Configuracion global por defecto (`src/data/portalEstudianteConfig.ts`)
-
-Catalogo de documentos disponibles con dependencias:
-- `info_aprendiz`: orden 1, tipo `firma_autorizacion`, sin dependencias
-- `evaluacion`: orden 2, tipo `evaluacion`, depende de `info_aprendiz`
-
-### 0.4 Servicio portal (`src/services/portalEstudianteService.ts`)
-
-Funciones mock:
-- `buscarMatriculaVigente(cedula)` — filtra mockMatriculas + mockCursos con regla de vigencia
-- `getPortalConfig()` — retorna catalogo de documentos
-- `getDocumentosEstado(matriculaId)` — calcula estado de cada doc (bloqueado/pendiente/completado)
-- `enviarDocumento(matriculaId, documentoKey, payload)` — persiste en mockMatriculas
-
-### 0.5 Hook (`src/hooks/usePortalEstudiante.ts`)
-
-React Query hooks:
-- `useBuscarMatriculaVigente(cedula)`
-- `useDocumentosPortal(matriculaId)`
-- `useEnviarDocumento()`
+Crear la pagina `/estudiante/documentos/info_aprendiz` con acordeones de solo lectura mostrando datos de la matricula/persona, seccion interactiva de autorizacion, captura de firma digital y envio unico. Tambien un nuevo servicio para cargar los datos completos necesarios.  
+  
+Nota: revisar los formatos ya creados en formatos para formación.
 
 ---
 
-## PARTE 1 — Acceso por cedula
+### Archivos nuevos (1)
 
-### 1.1 Pagina `/estudiante` (`src/pages/estudiante/AccesoEstudiantePage.tsx`)
 
-- Layout mobile-first, sin sidebar (ruta publica, sin `MainLayout`)
-- Logo centrado + titulo "Portal del Estudiante"
-- Input de cedula con validacion (solo digitos, min 6 caracteres)
-- Boton "Continuar"
-- Al buscar: llama `buscarMatriculaVigente(cedula)`
-- Si encuentra: guarda contexto en estado + localStorage, navega a `/estudiante/inicio`
-- Si no encuentra: muestra alerta "No se encontro matricula vigente"
-- Loading state durante busqueda
+| Archivo                                     | Descripcion                   |
+| ------------------------------------------- | ----------------------------- |
+| `src/pages/estudiante/InfoAprendizPage.tsx` | Pagina completa del documento |
 
-### 1.2 Contexto de sesion (`src/contexts/PortalEstudianteContext.tsx`)
 
-React context + provider que persiste en localStorage:
-- `matriculaId`, `personaId`, `cedula`, `nombreEstudiante`
-- `clearSession()` para logout
-- Proteccion: si no hay sesion y la ruta es `/estudiante/*` (excepto `/estudiante`), redirige a `/estudiante`
+### Archivos modificados (3)
 
-### 1.3 Ruta protegida wrapper
 
-Componente `PortalGuard` que verifica contexto antes de renderizar children.
+| Archivo                                   | Cambio                                                                             |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/App.tsx`                             | Reemplazar placeholder de ruta `documentoKey` por router condicional               |
+| `src/services/portalEstudianteService.ts` | Agregar `getInfoAprendizData(matriculaId)` que retorna persona + matricula + curso |
+| `src/hooks/usePortalEstudiante.ts`        | Agregar hook `useInfoAprendizData(matriculaId)`                                    |
+
 
 ---
 
-## PARTE 2 — Panel de documentos
+### Detalle de implementacion
 
-### 2.1 Pagina `/estudiante/inicio` (`src/pages/estudiante/PanelDocumentosPage.tsx`)
+#### 1. Servicio: `getInfoAprendizData`
 
-- Header con nombre del estudiante + cedula + boton "Salir"
-- Nombre del curso + fechas
-- Lista de cards (una por documento habilitado):
-  - Icono segun tipo
-  - Nombre del documento
-  - Badge de estado: `Bloqueado` (gris), `Pendiente` (amarillo), `Completado` (verde)
-  - Boton "Completar" (si pendiente), "Ver" (si completado), deshabilitado (si bloqueado)
-  - Si bloqueado: texto "Completa primero: [nombre dependencia]"
-- Clic en card navega a `/estudiante/documentos/:documentoKey`
-- Barra de progreso: X de Y completados
-- Mensaje de felicitacion cuando todos estan completados
+Nuevo metodo en `portalEstudianteService` que recibe `matriculaId` y retorna `{ persona, matricula, curso }` resolviendo las relaciones desde mockData.
 
-### 2.2 Layout mobile-first
+#### 2. Hook: `useInfoAprendizData`
 
-- Max-width 480px centrado
-- Sin sidebar
-- Colores del sistema pero optimizado para movil
-- Touch-friendly (botones min 44px)
+React Query wrapper sobre el nuevo servicio.
+
+#### 3. Pagina `InfoAprendizPage`
+
+**Layout mobile-first** (max-w-md, sin sidebar):
+
+- **Header**: Boton "Volver" + titulo "Informacion del Aprendiz"
+- **Estado completado**: Si el documento ya esta completado, mostrar vista de solo lectura con firma capturada, fecha de envio y boton "Volver al inicio". No permitir reenvio.
+
+**Acordeones (Accordion de Radix)** — todos en solo lectura:
+
+1. **Datos Personales**: nombre, documento, genero, fecha nacimiento, RH, nivel educativo, email, telefono, contacto emergencia. Datos de `persona`.
+2. **Vinculacion Laboral**: tipo vinculacion (empresa/independiente), empresa nombre, NIT, representante legal, cargo, sector economico, area trabajo, EPS, ARL. Datos de `matricula`.
+3. **Consentimiento de Salud**: restriccion medica, alergias, medicamentos, lectoescritura. Datos de `matricula`. Reutilizar la estructura visual del componente `ConsentimientoSalud` con prop `readOnly=true`.
+
+**Seccion interactiva — Autorizacion**:
+
+- Texto legal: "Autorizo el tratamiento de mis datos personales..." (texto expandible en Sheet lateral para lectura completa).
+- Radio group: "Acepto" / "No acepto".
+- Si selecciona "No acepto" → mensaje de advertencia, boton enviar deshabilitado.
+
+**Firma digital**:
+
+- Reutilizar componente `FirmaCaptura` existente.
+- Canvas de firma con botones limpiar/guardar.
+
+**Boton "Enviar"**:
+
+- Deshabilitado si: no acepta autorizacion O no hay firma.
+- Al enviar: llama `enviarDocumento(matriculaId, 'info_aprendiz', { firmaBase64, firmaFecha, metadata: { autorizacionAceptada: true } })`.
+- Post envio: toast de exito + navegar a `/estudiante/inicio`.
+
+#### 4. Router en App.tsx
+
+Reemplazar el placeholder actual (linea 106) por un componente que resuelve `documentoKey` del param y renderiza `InfoAprendizPage` si es `info_aprendiz`, o un placeholder para otros keys.
+
+#### 5. Campos mostrados en cada acordeon
+
+**Datos Personales** (grid 2 cols):
+
+- Nombres / Apellidos
+- Tipo documento / Numero documento
+- Genero / Fecha nacimiento
+- RH / Nivel educativo
+- Email / Telefono
+- Contacto emergencia (nombre, telefono, parentesco)
+
+**Vinculacion Laboral** (grid 2 cols):
+
+- Tipo vinculacion
+- Empresa / NIT (si aplica)
+- Representante legal / Cargo
+- Area trabajo / Sector economico
+- EPS / ARL
+
+**Consentimiento Salud**:
+
+- Renderizar `ConsentimientoSalud` con `readOnly={true}` pasando los datos de la matricula.
 
 ---
 
-## Rutas a agregar en App.tsx
+### Resolucion de labels
 
-```
-/estudiante                    → AccesoEstudiantePage
-/estudiante/inicio             → PanelDocumentosPage (protegida)
-/estudiante/documentos/:key    → (placeholder para Partes 3-4)
-```
-
-Todas sin `MainLayout` (son publicas, mobile-first).
-
----
-
-## Archivos nuevos (8)
-
-| Archivo | Descripcion |
-|---|---|
-| `src/types/portalEstudiante.ts` | Tipos del portal |
-| `src/data/portalEstudianteConfig.ts` | Catalogo de documentos por defecto |
-| `src/services/portalEstudianteService.ts` | Servicio mock |
-| `src/hooks/usePortalEstudiante.ts` | React Query hooks |
-| `src/contexts/PortalEstudianteContext.tsx` | Contexto de sesion |
-| `src/pages/estudiante/AccesoEstudiantePage.tsx` | Pantalla de acceso |
-| `src/pages/estudiante/PanelDocumentosPage.tsx` | Panel de documentos |
-| `src/pages/estudiante/PortalGuard.tsx` | Guard de ruta protegida |
-
-## Archivos modificados (2)
-
-| Archivo | Cambio |
-|---|---|
-| `src/types/matricula.ts` | Agregar `portalEstudiante?` al interface |
-| `src/App.tsx` | Agregar 3 rutas publicas del portal |
-
+Para campos como `genero`, `nivelEducativo`, `sectorEconomico`, etc., resolver el label legible desde los catalogos en `formOptions.ts` (ej. `M` → `Masculino`, `construccion` → `Construccion`).

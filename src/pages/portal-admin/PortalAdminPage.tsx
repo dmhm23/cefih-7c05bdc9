@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Smartphone, Settings, BarChart3 } from 'lucide-react';
 import { DocumentosCatalogoTable } from '@/components/portal-admin/DocumentosCatalogoTable';
 import { NivelesHabilitacionGrid } from '@/components/portal-admin/NivelesHabilitacionGrid';
+import { MonitoreoTable } from '@/components/portal-admin/MonitoreoTable';
 import {
   usePortalAdminConfig,
   useSaveDocumentoConfig,
@@ -93,13 +94,7 @@ export default function PortalAdminPage() {
         </TabsContent>
 
         <TabsContent value="monitoreo" className="mt-4">
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <BarChart3 className="h-12 w-12 text-muted-foreground/40 mb-4" />
-            <h3 className="text-lg font-semibold text-muted-foreground">Monitoreo operativo</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Próximamente: seguimiento masivo del estado de documentos por matrícula.
-            </p>
-          </div>
+          <MonitoreoTable />
         </TabsContent>
       </Tabs>
     </div>

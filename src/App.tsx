@@ -41,6 +41,12 @@ import PersonalDetallePage from "./pages/personal/PersonalDetallePage";
 import FormatosPage from "./pages/formatos/FormatosPage";
 import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
 
+// Portal Estudiante (público)
+import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
+import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
+import PortalGuard from "./pages/estudiante/PortalGuard";
+import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
+
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout
@@ -93,6 +99,11 @@ const App = () => (
           <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
           <Route path="/gestion-formatos/nuevo" element={<FormatoEditorPage />} />
           <Route path="/gestion-formatos/:id/editar" element={<FormatoEditorPage />} />
+
+          {/* Portal Estudiante (público, mobile-first) */}
+          <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />
+          <Route path="/estudiante/inicio" element={<PortalEstudianteProvider><PortalGuard><PanelDocumentosPage /></PortalGuard></PortalEstudianteProvider>} />
+          <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Documento en construcción (Parte 3-4)</p></div></PortalGuard></PortalEstudianteProvider>} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />

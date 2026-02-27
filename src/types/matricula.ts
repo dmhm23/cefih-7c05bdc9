@@ -1,3 +1,5 @@
+import { PortalEstudianteData } from './portalEstudiante';
+
 export type EstadoMatricula = 
   | 'creada' 
   | 'pendiente' 
@@ -131,6 +133,9 @@ export interface Matricula {
 
   // Encuesta de satisfacción (4 escalas + 1 Sí/No = 5 elementos)
   encuestaRespuestas?: string[];
+
+  // Portal Estudiante
+  portalEstudiante?: PortalEstudianteData;
 
   // Observaciones
   observaciones?: string;

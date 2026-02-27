@@ -20,7 +20,7 @@ export function FirmaCaptura({ firmaExistente, onGuardar, isPending, disabled }:
   };
 
   const handleSave = () => {
-    if (sigRef.current && !sigRef.current.isEmpty()) {
+    if (sigRef.current && !isEmpty) {
       const base64 = sigRef.current.getCanvas().toDataURL("image/png");
       onGuardar(base64);
     }

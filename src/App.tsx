@@ -41,6 +41,9 @@ import PersonalDetallePage from "./pages/personal/PersonalDetallePage";
 import FormatosPage from "./pages/formatos/FormatosPage";
 import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
 
+// Portal Admin (Módulo G)
+import PortalAdminPage from "./pages/portal-admin/PortalAdminPage";
+
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
 import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
@@ -101,6 +104,9 @@ const App = () => (
           <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
           <Route path="/gestion-formatos/nuevo" element={<FormatoEditorPage />} />
           <Route path="/gestion-formatos/:id/editar" element={<FormatoEditorPage />} />
+
+          {/* Módulo G - Portal Estudiante Admin */}
+          <Route path="/portal-estudiante" element={<WithLayout><PortalAdminPage /></WithLayout>} />
 
           {/* Portal Estudiante (público, mobile-first) */}
           <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />

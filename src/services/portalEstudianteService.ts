@@ -127,16 +127,31 @@ export const portalEstudianteService = {
     }
 
     const now = new Date().toISOString();
-    const nuevoEstado: DocumentoPortalEstado = {
-      key: documentoKey,
-      estado: 'completado',
-      enviadoEn: now,
-      ...payload,
-    };
+
+    // Determine estado for evaluaciones based on aprobado
+    let finalEstado: 'completado' | 'pendiente' = 'completado';
+    if (documentoKey === 'evaluacion' && payload.metadata && (payload.metadata as any).aprobado === false) {
+      finalEstado = 'pendiente';
+    }
 
     const docIndex = matricula.portalEstudiante.documentos.findIndex(
       d => d.key === documentoKey
     );
+
+    // Accumulate previous attempts for evaluacion
+    let intentosPrevios: DocumentoPortalEstado[] = [];
+    if (documentoKey === 'evaluacion' && docIndex >= 0) {
+      const prev = matricula.portalEstudiante.documentos[docIndex];
+      intentosPrevios = [...(prev.intentos || []), { ...prev, intentos: undefined }];
+    }
+
+    const nuevoEstado: DocumentoPortalEstado = {
+      key: documentoKey,
+      estado: finalEstado,
+      enviadoEn: now,
+      ...payload,
+      ...(documentoKey === 'evaluacion' && intentosPrevios.length > 0 ? { intentos: intentosPrevios } : {}),
+    };
 
     if (docIndex >= 0) {
       matricula.portalEstudiante.documentos[docIndex] = nuevoEstado;

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, XCircle, ClipboardList, Star } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, ClipboardList, Star, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
 import { useEvaluacionFormato, useDocumentosPortal, useEnviarDocumento } from '@/hooks/usePortalEstudiante';
 import { BloqueEvaluationQuiz, BloqueSatisfactionSurvey } from '@/types/formatoFormacion';
+import { QuizReviewCard } from '@/components/estudiante/QuizReviewCard';
 
 export default function EvaluacionPage() {
   const navigate = useNavigate();
@@ -28,9 +29,28 @@ export default function EvaluacionPage() {
   const [siNoAnswer, setSiNoAnswer] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ puntaje: number; aprobado: boolean; correctas: number; total: number } | null>(null);
+  const [isRetry, setIsRetry] = useState(false);
+  const [savedSurvey, setSavedSurvey] = useState<{ escala: Record<number, string>; siNo: string | null } | null>(null);
 
   const docEstado = docData?.estados.find(d => d.key === 'evaluacion');
-  const yaCompletado = docEstado?.estado === 'completado';
+  const yaAprobado = docEstado?.estado === 'completado' && (docEstado?.metadata as any)?.aprobado === true;
+
+  // Detect if there's a previous failed attempt → allow retry automatically
+  const prevReprobado = docEstado?.estado === 'pendiente' && (docEstado?.metadata as any)?.aprobado === false;
+
+  useEffect(() => {
+    if (prevReprobado && docEstado && !isRetry && !submitted) {
+      setIsRetry(true);
+      // Pre-load survey answers from previous attempt
+      const prevResp = docEstado.respuestas as any;
+      if (prevResp?.encuesta) {
+        setSavedSurvey(prevResp.encuesta);
+        const escala = prevResp.encuesta.escala || {};
+        setSurveyAnswers(escala);
+        setSiNoAnswer(prevResp.encuesta.siNo || null);
+      }
+    }
+  }, [prevReprobado, docEstado, isRetry, submitted]);
 
   if (isLoading) {
     return (
@@ -65,20 +85,22 @@ export default function EvaluacionPage() {
 
   const preguntas = quizBloque.props.preguntas;
   const umbral = quizBloque.props.umbralAprobacion;
-
   const surveyProps = surveyBloque?.props;
   const totalSurveyQuestions = (surveyProps?.escalaPreguntas.length || 0) + (surveyProps?.preguntaSiNo ? 1 : 0);
 
   const allQuizAnswered = Object.keys(quizAnswers).length === preguntas.length;
-  const allSurveyAnswered = surveyBloque
-    ? Object.keys(surveyAnswers).length === (surveyProps?.escalaPreguntas.length || 0) &&
-      (!surveyProps?.preguntaSiNo || siNoAnswer !== null)
-    : true;
+  const allSurveyAnswered = isRetry
+    ? true // survey already completed in previous attempt
+    : surveyBloque
+      ? Object.keys(surveyAnswers).length === (surveyProps?.escalaPreguntas.length || 0) &&
+        (!surveyProps?.preguntaSiNo || siNoAnswer !== null)
+      : true;
   const canSubmit = allQuizAnswered && allSurveyAnswered && !submitted;
 
-  // --- Already completed view ---
-  if (yaCompletado) {
+  // --- Already approved view ---
+  if (yaAprobado) {
     const prev = docEstado;
+    const numIntentos = (prev?.intentos?.length || 0) + 1;
     return (
       <div className="min-h-screen bg-background p-4 max-w-md mx-auto space-y-4">
         <Button variant="ghost" size="sm" onClick={() => navigate('/estudiante/inicio')}>
@@ -96,9 +118,10 @@ export default function EvaluacionPage() {
               <span className="text-sm text-muted-foreground">Puntaje obtenido</span>
               <span className="text-2xl font-bold">{prev?.puntaje?.toFixed(0)}%</span>
             </div>
-            <Badge variant={(prev?.metadata as any)?.aprobado ? 'default' : 'destructive'} className="text-sm">
-              {(prev?.metadata as any)?.aprobado ? 'Aprobado' : 'Reprobado'}
-            </Badge>
+            <Badge variant="default" className="text-sm">Aprobado</Badge>
+            {numIntentos > 1 && (
+              <p className="text-xs text-muted-foreground">Aprobado en el intento #{numIntentos}</p>
+            )}
             <p className="text-xs text-muted-foreground">
               Enviado el {prev?.enviadoEn ? new Date(prev.enviadoEn).toLocaleString('es-CO') : '—'}
             </p>
@@ -110,33 +133,73 @@ export default function EvaluacionPage() {
 
   // --- Post-submit result view ---
   if (submitted && result) {
+    if (result.aprobado) {
+      return (
+        <div className="min-h-screen bg-background p-4 max-w-md mx-auto space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                Resultado de la Evaluación
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-center space-y-1">
+                <p className="text-4xl font-bold">{result.puntaje.toFixed(0)}%</p>
+                <Badge variant="default" className="text-sm">Aprobado</Badge>
+                <p className="text-sm text-muted-foreground">
+                  {result.correctas} de {result.total} respuestas correctas
+                </p>
+              </div>
+              <Separator />
+              <Button className="w-full" onClick={() => navigate('/estudiante/inicio')}>
+                Volver al panel
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Failed — show review + retry button
     return (
-      <div className="min-h-screen bg-background p-4 max-w-md mx-auto space-y-4">
+      <div className="min-h-screen bg-background p-4 max-w-md mx-auto space-y-4 pb-24">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              {result.aprobado
-                ? <CheckCircle2 className="h-5 w-5 text-primary" />
-                : <XCircle className="h-5 w-5 text-destructive" />}
+              <XCircle className="h-5 w-5 text-destructive" />
               Resultado de la Evaluación
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center space-y-1">
               <p className="text-4xl font-bold">{result.puntaje.toFixed(0)}%</p>
-              <Badge variant={result.aprobado ? 'default' : 'destructive'} className="text-sm">
-                {result.aprobado ? 'Aprobado' : 'Reprobado'}
-              </Badge>
+              <Badge variant="destructive" className="text-sm">Reprobado</Badge>
               <p className="text-sm text-muted-foreground">
-                {result.correctas} de {result.total} respuestas correctas
+                {result.correctas} de {result.total} respuestas correctas · Mínimo requerido: {umbral}%
               </p>
             </div>
-            <Separator />
-            <Button className="w-full" onClick={() => navigate('/estudiante/inicio')}>
-              Volver al panel
-            </Button>
           </CardContent>
         </Card>
+
+        <QuizReviewCard preguntas={preguntas} respuestas={quizAnswers} />
+
+        <Button
+          className="w-full"
+          onClick={() => {
+            // Save current survey for reuse
+            if (!savedSurvey) {
+              setSavedSurvey({ escala: { ...surveyAnswers }, siNo: siNoAnswer });
+            }
+            setQuizAnswers({});
+            setSubmitted(false);
+            setResult(null);
+            setIsRetry(true);
+          }}
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reintentar evaluación
+        </Button>
       </div>
     );
   }
@@ -149,10 +212,12 @@ export default function EvaluacionPage() {
     const puntaje = (correctas / preguntas.length) * 100;
     const aprobado = puntaje >= umbral;
 
-    const encuestaResp = surveyBloque ? {
-      escala: surveyAnswers,
-      siNo: siNoAnswer,
-    } : undefined;
+    // For retries, reuse saved survey; for first attempt, use current answers
+    const encuestaResp = isRetry && savedSurvey
+      ? savedSurvey
+      : surveyBloque
+        ? { escala: surveyAnswers, siNo: siNoAnswer }
+        : undefined;
 
     try {
       await enviarMutation.mutateAsync({
@@ -183,7 +248,7 @@ export default function EvaluacionPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-lg font-semibold">Evaluación y Encuesta</h1>
+          <h1 className="text-lg font-semibold">Evaluación{isRetry ? ' — Reintento' : ' y Encuesta'}</h1>
           <p className="text-xs text-muted-foreground">{formato.nombre}</p>
         </div>
       </div>
@@ -225,8 +290,13 @@ export default function EvaluacionPage() {
         ))}
       </div>
 
-      {/* Survey Section */}
-      {surveyBloque && surveyProps && (
+      {/* Survey Section — hidden on retry */}
+      {isRetry ? (
+        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+          <span className="text-sm text-muted-foreground">Encuesta de satisfacción ya completada</span>
+        </div>
+      ) : surveyBloque && surveyProps ? (
         <>
           <Separator />
           <div className="space-y-3">
@@ -280,14 +350,14 @@ export default function EvaluacionPage() {
             )}
           </div>
         </>
-      )}
+      ) : null}
 
       {/* Progress & Submit */}
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
         <div className="max-w-md mx-auto space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Quiz: {Object.keys(quizAnswers).length}/{preguntas.length}</span>
-            {surveyBloque && (
+            {!isRetry && surveyBloque && (
               <span>Encuesta: {Object.keys(surveyAnswers).length + (siNoAnswer ? 1 : 0)}/{totalSurveyQuestions}</span>
             )}
           </div>
@@ -296,7 +366,7 @@ export default function EvaluacionPage() {
             disabled={!canSubmit || enviarMutation.isPending}
             onClick={handleSubmit}
           >
-            {enviarMutation.isPending ? 'Enviando…' : 'Enviar evaluación'}
+            {enviarMutation.isPending ? 'Enviando…' : isRetry ? 'Enviar reintento' : 'Enviar evaluación'}
           </Button>
         </div>
       </div>

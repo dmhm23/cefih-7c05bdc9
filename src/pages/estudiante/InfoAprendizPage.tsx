@@ -46,6 +46,7 @@ export default function InfoAprendizPage() {
 
   const [autorizacion, setAutorizacion] = useState<'acepto' | 'no_acepto' | null>(null);
   const [firmaBase64, setFirmaBase64] = useState<string | null>(null);
+  const [consentimientoData, setConsentimientoData] = useState<Record<string, unknown> | null>(null);
 
   const handleFirmaChange = (base64: string) => {
     setFirmaBase64(base64 || null);
@@ -75,16 +76,31 @@ export default function InfoAprendizPage() {
 
   const { persona, matricula } = data;
 
-  const consentimientoData = {
-    consentimientoSalud: matricula.consentimientoSalud,
-    restriccionMedica: matricula.restriccionMedica,
-    restriccionMedicaDetalle: matricula.restriccionMedicaDetalle,
-    alergias: matricula.alergias,
-    alergiasDetalle: matricula.alergiasDetalle,
-    consumoMedicamentos: matricula.consumoMedicamentos,
-    consumoMedicamentosDetalle: matricula.consumoMedicamentosDetalle,
-    embarazo: matricula.embarazo,
-    nivelLectoescritura: matricula.nivelLectoescritura,
+  // Initialize consentimiento from matricula data (only once)
+  if (!consentimientoData && data) {
+    setConsentimientoData({
+      consentimientoSalud: matricula.consentimientoSalud,
+      restriccionMedica: matricula.restriccionMedica,
+      restriccionMedicaDetalle: matricula.restriccionMedicaDetalle,
+      alergias: matricula.alergias,
+      alergiasDetalle: matricula.alergiasDetalle,
+      consumoMedicamentos: matricula.consumoMedicamentos,
+      consumoMedicamentosDetalle: matricula.consumoMedicamentosDetalle,
+      embarazo: matricula.embarazo,
+      nivelLectoescritura: matricula.nivelLectoescritura,
+    });
+  }
+
+  const consentimiento = consentimientoData || {
+    consentimientoSalud: false,
+    restriccionMedica: false,
+    alergias: false,
+    consumoMedicamentos: false,
+    nivelLectoescritura: false,
+  };
+
+  const handleConsentimientoChange = (field: string, value: unknown) => {
+    setConsentimientoData(prev => ({ ...prev, [field]: value }));
   };
 
   const puedeEnviar = autorizacion === 'acepto' && !!firmaBase64 && !enviarMutation.isPending;
@@ -99,7 +115,7 @@ export default function InfoAprendizPage() {
         payload: {
           firmaBase64,
           firmaFecha: new Date().toISOString(),
-          metadata: { autorizacionAceptada: true },
+          metadata: { autorizacionAceptada: true, consentimientoSalud: consentimientoData },
         },
       },
       {
@@ -127,7 +143,7 @@ export default function InfoAprendizPage() {
             <p className="text-xs text-muted-foreground">Revise sus datos y firme al final</p>
           </div>
           {yaCompletado && (
-            <Badge variant="default" className="shrink-0">
+            <Badge className="shrink-0 bg-success text-success-foreground hover:bg-success/90">
               <CheckCircle2 className="h-3 w-3 mr-1" /> Completado
             </Badge>
           )}
@@ -230,10 +246,10 @@ export default function InfoAprendizPage() {
             </AccordionTrigger>
             <AccordionContent>
               <ConsentimientoSalud
-                data={consentimientoData}
-                onChange={() => {}}
+                data={consentimiento as any}
+                onChange={handleConsentimientoChange}
                 showEmbarazo={persona.genero === 'F'}
-                readOnly
+                readOnly={yaCompletado}
               />
             </AccordionContent>
           </AccordionItem>

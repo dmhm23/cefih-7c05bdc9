@@ -34,7 +34,7 @@ function SelectableOption({
   return (
     <label
       className={cn(
-        "flex items-center gap-3 w-full p-4 rounded-xl border-2 cursor-pointer transition-all",
+        "flex items-center gap-3 w-full p-3 rounded-xl border-2 cursor-pointer transition-all",
         selected
           ? "border-primary bg-primary/5 shadow-sm"
           : "border-border hover:border-muted-foreground/30 hover:bg-muted/50"
@@ -51,7 +51,7 @@ function SelectableOption({
       >
         {letter}
       </span>
-      <span className="text-sm font-medium leading-snug flex-1">{text}</span>
+      <span className="text-base font-medium leading-snug flex-1">{text}</span>
       <RadioGroupItem value={value} className="sr-only" />
     </label>
   );

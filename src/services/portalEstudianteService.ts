@@ -4,7 +4,9 @@ import { DocumentoPortalConfig, DocumentoPortalEstado, PortalEstudianteData } fr
 import { Matricula } from '@/types/matricula';
 import { Persona } from '@/types/persona';
 import { Curso } from '@/types/curso';
+import { FormatoFormacion } from '@/types/formatoFormacion';
 import { delay } from './api';
+import { formatoFormacionService } from './formatoFormacionService';
 
 export interface MatriculaVigenteResult {
   matricula: Matricula;
@@ -164,5 +166,35 @@ export const portalEstudianteService = {
     if (!curso) throw new Error('Curso no encontrado');
 
     return { persona, matricula, curso };
+  },
+
+  async getEvaluacionFormato(matriculaId: string): Promise<{
+    formato: FormatoFormacion;
+    persona: Persona;
+    matricula: Matricula;
+    curso: Curso;
+  } | null> {
+    await delay(500);
+
+    const matricula = mockMatriculas.find(m => m.id === matriculaId);
+    if (!matricula) return null;
+
+    const curso = mockCursos.find(c => c.id === matricula.cursoId);
+    if (!curso) return null;
+
+    const persona = mockPersonas.find(p => p.id === matricula.personaId);
+    if (!persona) return null;
+
+    // Buscar formato con bloques evaluation_quiz cuyo tipoCursoKeys incluya el tipo del curso
+    const allFormatos = await formatoFormacionService.getAll();
+    const formato = allFormatos.find(f =>
+      f.activo &&
+      f.tipoCursoKeys.includes(curso.tipoFormacion) &&
+      f.bloques.some(bl => bl.type === 'evaluation_quiz')
+    );
+
+    if (!formato) return null;
+
+    return { formato, persona, matricula, curso };
   },
 };

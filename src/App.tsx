@@ -45,6 +45,7 @@ import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
 import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
 import InfoAprendizPage from "./pages/estudiante/InfoAprendizPage";
+import EvaluacionPage from "./pages/estudiante/EvaluacionPage";
 import PortalGuard from "./pages/estudiante/PortalGuard";
 import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
 
@@ -105,6 +106,7 @@ const App = () => (
           <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />
           <Route path="/estudiante/inicio" element={<PortalEstudianteProvider><PortalGuard><PanelDocumentosPage /></PortalGuard></PortalEstudianteProvider>} />
           <Route path="/estudiante/documentos/info_aprendiz" element={<PortalEstudianteProvider><PortalGuard><InfoAprendizPage /></PortalGuard></PortalEstudianteProvider>} />
+          <Route path="/estudiante/documentos/evaluacion" element={<PortalEstudianteProvider><PortalGuard><EvaluacionPage /></PortalGuard></PortalEstudianteProvider>} />
           <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><div className="min-h-screen bg-background flex items-center justify-center"><p className="text-muted-foreground">Documento en construcción</p></div></PortalGuard></PortalEstudianteProvider>} />
 
           {/* Catch-all */}

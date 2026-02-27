@@ -26,6 +26,14 @@ export function useInfoAprendizData(matriculaId: string | null) {
   });
 }
 
+export function useEvaluacionFormato(matriculaId: string | null) {
+  return useQuery({
+    queryKey: ['portal-estudiante', 'evaluacion-formato', matriculaId],
+    queryFn: () => portalEstudianteService.getEvaluacionFormato(matriculaId!),
+    enabled: !!matriculaId,
+  });
+}
+
 export function useEnviarDocumento() {
   const queryClient = useQueryClient();
 
@@ -45,6 +53,9 @@ export function useEnviarDocumento() {
       });
       queryClient.invalidateQueries({
         queryKey: ['portal-estudiante', 'info-aprendiz', variables.matriculaId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['portal-estudiante', 'evaluacion-formato', variables.matriculaId],
       });
     },
   });

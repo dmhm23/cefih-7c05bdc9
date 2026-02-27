@@ -1,21 +1,18 @@
 
 
-## Plan: Auto-guardar firma al enviar documento
+## Fix: Firma no habilita envío + mejora UI botón Limpiar
 
-### Enfoque
+### Causa raíz
 
-Eliminar el botón "Guardar Firma" de `FirmaCaptura` y capturar automáticamente la firma cada vez que el usuario termine un trazo (`onEnd`). Así, cuando el usuario presione "Enviar documento", la firma ya estará lista sin pasos intermedios.
+En `FirmaCaptura`, `onBegin` llama `setIsEmpty(false)` y luego `onEnd` llama `handleEnd`. Pero `handleEnd` usa el estado `isEmpty` que aún es `true` en el closure del primer trazo (React no ha re-renderizado). Por eso `onGuardar` nunca se ejecuta en el primer trazo y `firmaBase64` queda `null`.
 
 ### Cambios
 
-| Archivo | Cambio |
-|---|---|
-| `src/components/matriculas/FirmaCaptura.tsx` | Agregar callback `onEnd` en `SignatureCanvas` que llame `onGuardar(base64)` automáticamente al terminar cada trazo. Eliminar el botón "Guardar Firma". Eliminar el estado intermedio "Firma capturada" (el canvas sigue visible). Mantener solo el botón "Limpiar" (que además llame `onGuardar("")` o un `onLimpiar` para resetear). |
-| `src/pages/estudiante/InfoAprendizPage.tsx` | Ajustar `puedeEnviar`: validar que `firmaBase64` tenga contenido y `autorizacion === 'acepto'`. Al limpiar la firma, resetear `firmaBase64` a `null`. Sin más cambios. |
+#### `src/components/matriculas/FirmaCaptura.tsx`
 
-### Detalle del flujo resultante
-
-1. Estudiante dibuja en el canvas → `onEnd` extrae base64 y lo pasa al padre vía `onGuardar`.
-2. Estudiante presiona "Limpiar" → se limpia canvas y se resetea firma en el padre.
-3. Estudiante presiona "Enviar documento" → la firma ya está en `firmaBase64`, se envía todo junto.
+1. **Agregar un `useRef` para rastrear vacío** — `isEmptyRef` se actualiza sincrónicamente, sin depender del ciclo de render.
+2. **`onBegin`**: setear `isEmptyRef.current = false` además de `setIsEmpty(false)`.
+3. **`handleEnd`**: usar `!isEmptyRef.current` en vez de `!isEmpty`.
+4. **`handleClear`**: setear `isEmptyRef.current = true`.
+5. **Mejora UI botón Limpiar**: cuando hay firma (`!isEmpty`), mostrar variante `destructive` outline para que se note visualmente el cambio de estado (de gris deshabilitado a rojo activo).
 

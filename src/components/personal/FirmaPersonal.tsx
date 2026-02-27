@@ -24,7 +24,7 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
   };
 
   const handleSaveDrawn = () => {
-    if (sigRef.current && !sigRef.current.isEmpty()) {
+    if (sigRef.current && !isEmpty) {
       const base64 = sigRef.current.getCanvas().toDataURL("image/png");
       onGuardarFirma(base64);
     }

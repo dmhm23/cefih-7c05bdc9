@@ -304,7 +304,7 @@ export default function EvaluacionPage() {
         {preguntas.map((pregunta, idx) => (
           <Card key={pregunta.id} className="overflow-hidden">
             <CardHeader className="py-3 px-4 bg-muted/30">
-               <p className="text-base font-semibold">
+               <p className="text-base">
                 {idx + 1}. {pregunta.texto}
               </p>
             </CardHeader>
@@ -349,7 +349,7 @@ export default function EvaluacionPage() {
             {surveyProps.escalaPreguntas.map((pregunta, idx) => (
               <Card key={idx}>
                 <CardHeader className="py-3 px-4 bg-muted/30">
-                   <p className="text-base font-semibold">
+                   <p className="text-base">
                     {idx + 1}. {pregunta}
                   </p>
                 </CardHeader>
@@ -378,7 +378,7 @@ export default function EvaluacionPage() {
             {surveyProps.preguntaSiNo && (
               <Card>
                 <CardHeader className="py-3 px-4 bg-muted/30">
-                  <p className="text-base font-semibold">
+                  <p className="text-base">
                     {(surveyProps.escalaPreguntas.length || 0) + 1}. {surveyProps.preguntaSiNo}
                   </p>
                 </CardHeader>

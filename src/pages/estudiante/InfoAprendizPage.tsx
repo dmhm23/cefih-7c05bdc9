@@ -49,6 +49,9 @@ export default function InfoAprendizPage() {
 
   const handleFirmaChange = (base64: string) => {
     setFirmaBase64(base64 || null);
+    if (base64) {
+      setAutorizacion('acepto');
+    }
   };
 
   const docEstado = docData?.estados.find(d => d.key === 'info_aprendiz');

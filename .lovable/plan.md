@@ -1,78 +1,48 @@
 
 
-## Plan: PARTE 5 — Modulo Admin: Configuracion del Portal Estudiante
+## Plan: PARTE 6 — Monitoreo Operativo del Portal Estudiante
 
 ### Resumen
 
-Crear un nuevo modulo administrativo en `/portal-estudiante` con dos sub-secciones: **Configuracion** (catalogo de documentos, reglas por nivel, dependencias) y preparacion para el **Monitoreo** (PARTE 6). Se integra en la navegacion principal del sidebar.
+Reemplazar el placeholder "Monitoreo" en la tab existente de `PortalAdminPage` con una tabla de monitoreo masivo que muestre todas las matriculas con estado de documentos del portal, filtros por curso/nivel/estado, y un modal de detalle por matricula.
 
 ---
 
 ### Archivos nuevos
 
-#### 1. `src/types/portalAdmin.ts`
-- Tipo `PortalDocumentoConfigAdmin` extendiendo `DocumentoPortalConfig` con campo `habilitadoPorNivel: Record<TipoFormacion, boolean>` para controlar que documentos aplican a cada nivel.
-- Tipo `PortalConfigGlobal` con `portalActivoPorDefecto: boolean` y `documentos: PortalDocumentoConfigAdmin[]`.
+#### 1. `src/services/portalMonitoreoService.ts`
+- `getMonitoreoData()` — cruza `mockMatriculas` + `mockPersonas` + `mockCursos` + `portalDocumentosCatalogo` para generar filas de monitoreo.
+- Cada fila: `matriculaId`, `personaNombre`, `personaCedula`, `cursoNombre`, `cursoNumeroCurso`, `tipoFormacion`, `fechaInicio`, `fechaFin`, `portalHabilitado`, `documentosEstado: { key, nombre, estado, enviadoEn?, puntaje?, firmaBase64? }[]`.
+- Filtrado server-side mock por curso, nivel, estado de documento pendiente.
 
-#### 2. `src/data/portalAdminConfig.ts`
-- Mock inicial con los 2 documentos existentes (`info_aprendiz`, `evaluacion`) mapeados a todos los niveles de formacion.
-- Exportar array mutable para CRUD en mock.
+#### 2. `src/hooks/usePortalMonitoreo.ts`
+- `usePortalMonitoreo(filtros?)` — React Query hook que llama al service.
 
-#### 3. `src/services/portalAdminService.ts`
-- `getConfigGlobal()` — retorna configuracion completa.
-- `saveDocumentoConfig(doc)` — crear/editar documento en catalogo.
-- `deleteDocumentoConfig(key)` — eliminar documento del catalogo.
-- `togglePortalGlobal(activo)` — toggle global.
-- `updateOrdenDocumentos(keys[])` — reordenar.
-- `updateDependencias(key, dependeDe[])` — actualizar dependencias.
-- `updateHabilitacionNivel(key, nivel, activo)` — toggle por nivel.
+#### 3. `src/components/portal-admin/MonitoreoTable.tsx`
+- Tabla con columnas: Estudiante (nombre + cedula) | Curso | Nivel | Estado por documento (chips de color por cada doc del catalogo) | Fecha envio | Puntaje.
+- Toolbar con busqueda + filtros (FilterPopover): curso, nivel de formacion, documento pendiente.
+- Click en fila abre `MonitoreoDetalleDialog`.
 
-#### 4. `src/hooks/usePortalAdmin.ts`
-- Hooks con React Query: `usePortalAdminConfig`, `useSaveDocumentoConfig`, `useDeleteDocumentoConfig`, `useTogglePortalGlobal`, `useUpdateOrdenDocumentos`.
-
-#### 5. `src/pages/portal-admin/PortalAdminPage.tsx`
-- Pagina principal con layout `MainLayout`.
-- Tabs: "Configuracion" (default) | "Monitoreo" (placeholder para PARTE 6).
-- Header con titulo "Portal Estudiante — Administracion" y toggle global activo/inactivo.
-
-#### 6. `src/components/portal-admin/DocumentosCatalogoTable.tsx`
-- Tabla con columnas: Orden | Nombre | Tipo | Requiere Firma | Depende de | Niveles habilitados | Acciones.
-- Drag-and-drop para reordenar (usando `@dnd-kit/sortable` ya instalado).
-- Acciones por fila: Editar, Eliminar.
-- Boton "Agregar documento" en toolbar.
-
-#### 7. `src/components/portal-admin/DocumentoConfigDialog.tsx`
-- Dialog para crear/editar un documento del catalogo.
-- Campos: `key` (solo creacion), nombre, tipo (select: firma_autorizacion, evaluacion, formulario, solo_lectura), requiere firma (switch), depende de (multi-select de keys existentes).
-- Seccion "Habilitado por nivel": checkboxes para cada `TipoFormacion` (Reentrenamiento, Jefe de Area, Trabajador Autorizado, Coordinador T.A.).
-
-#### 8. `src/components/portal-admin/NivelesHabilitacionGrid.tsx`
-- Grid visual que muestra la matriz documentos x niveles con toggles.
+#### 4. `src/components/portal-admin/MonitoreoDetalleDialog.tsx`
+- Dialog/Sheet que muestra detalle del portal para una matricula especifica:
+  - Datos del estudiante (nombre, cedula).
+  - Datos del curso (nombre, nivel, fechas).
+  - Toggle portal habilitado.
+  - Lista de documentos con: nombre, estado (badge), fecha envio, firma (imagen si existe), puntaje (si aplica).
 
 ---
 
 ### Archivos modificados
 
-#### 9. `src/components/layout/AppSidebar.tsx`
-- Agregar item "Portal Estudiante" con icono `Smartphone` apuntando a `/portal-estudiante`.
-
-#### 10. `src/App.tsx`
-- Importar `PortalAdminPage`.
-- Agregar ruta `/portal-estudiante` con `WithLayout`.
-
-#### 11. `src/data/portalEstudianteConfig.ts`
-- Actualizar `PORTAL_DOCUMENTOS_CONFIG` para que se alimente del catalogo admin (importar desde `portalAdminConfig`).
-
-#### 12. `src/services/portalEstudianteService.ts`
-- Modificar `getPortalConfig()` y `getDocumentosEstado()` para que consulten la configuracion admin y filtren por el `tipoFormacion` del curso de la matricula.
+#### 5. `src/pages/portal-admin/PortalAdminPage.tsx`
+- Reemplazar placeholder de tab "Monitoreo" con componente `<MonitoreoTable />`.
 
 ---
 
 ### Detalles tecnicos
 
-- **Patron de datos**: El catalogo admin es la fuente de verdad. El portal publico filtra segun el nivel del curso.
-- **Reordenamiento**: Usa `@dnd-kit/sortable` (ya instalado) en la tabla del catalogo.
-- **Persistencia mock**: Array mutable en `portalAdminConfig.ts`, manipulado por `portalAdminService.ts`.
-- **Tipos de documento**: Se reutiliza `TipoDocPortal` existente (`firma_autorizacion | evaluacion | formulario | solo_lectura`).
-- **Niveles**: Se reutiliza `TipoFormacion` del tipo `Curso` para los checkboxes de habilitacion.
+- Reutiliza `DataTable`, `TableToolbar`, `FilterPopover`, `StatusBadge` existentes.
+- Los chips de estado por documento usan colores: verde (completado), amarillo (pendiente), gris (bloqueado).
+- La firma se muestra como imagen en miniatura en el detalle.
+- Filtros usan `FilterConfig` con opciones derivadas de cursos y niveles existentes en mock.
 

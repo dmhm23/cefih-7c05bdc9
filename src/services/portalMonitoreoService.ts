@@ -50,7 +50,7 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
       return {
         key: docConfig.key,
         nombre: docConfig.nombre,
-        estado: portalDoc?.estado ?? (mat.portalEstudiante?.habilitado ? 'pendiente' : 'bloqueado'),
+        estado: portalDoc?.estado ?? 'pendiente',
         enviadoEn: portalDoc?.enviadoEn,
         puntaje: portalDoc?.puntaje,
         firmaBase64: portalDoc?.firmaBase64,

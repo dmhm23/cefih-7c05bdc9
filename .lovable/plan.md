@@ -1,14 +1,30 @@
 
 
-## Plan: Tooltip en etiqueta "Bloqueado" del Monitoreo
+## Plan: PARTE 7 — Habilitación por matrícula (control fino)
 
-### Archivo modificado
+### Resumen
 
-**`src/components/portal-admin/MonitoreoTable.tsx`**
+Agregar controles interactivos al `MonitoreoDetalleDialog` existente para permitir toggle del portal y override de documentos habilitados por matrícula individual.
 
-1. Importar `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` desde `@/components/ui/tooltip`.
-2. Envolver el `Badge` de estado "bloqueado" (líneas ~152-157) con un `Tooltip` que muestre un mensaje explicativo al hacer hover.
-3. El tooltip solo aparece cuando `estado === 'bloqueado'`; para los demás estados el Badge se renderiza sin tooltip.
-4. Texto del tooltip: *"Este documento aún no está disponible. Puede deberse a que el portal no está habilitado para esta matrícula o a que existe un documento previo que debe completarse primero."*
-5. Envolver la tabla (o la sección relevante) con `<TooltipProvider delayDuration={200}>` para un hover responsivo.
+---
+
+### Archivos nuevos
+
+#### 1. `src/services/portalMatriculaService.ts`
+- `togglePortalMatricula(matriculaId, habilitado)` — modifica `mockMatriculas[i].portalEstudiante.habilitado`.
+- `resetDocumentoMatricula(matriculaId, documentoKey)` — resetea el estado de un documento a `pendiente` (solo si está en `completado`).
+
+### Archivos modificados
+
+#### 2. `src/hooks/usePortalMonitoreo.ts`
+- Agregar mutations: `useTogglePortalMatricula` y `useResetDocumentoMatricula` que invalidan `portal-monitoreo` on success.
+
+#### 3. `src/components/portal-admin/MonitoreoDetalleDialog.tsx`
+- **Sección Portal**: Reemplazar el `Badge` estático de portal habilitado/deshabilitado por un `Switch` interactivo que llama a `togglePortalMatricula`.
+- **Sección Documentos**: Para cada documento con estado `completado`, agregar un botón pequeño "Reabrir" (icono `RotateCcw`) que resetea el documento a pendiente tras confirmación (`ConfirmDialog`).
+- Importar `Switch`, `ConfirmDialog`, `Button`, iconos necesarios.
+- Recibir callback `onDataChange` para refrescar la fila tras mutaciones.
+
+#### 4. `src/components/portal-admin/MonitoreoTable.tsx`
+- Pasar callback `onDataChange` al `MonitoreoDetalleDialog` que ejecuta `refetch` del query de monitoreo para actualizar la tabla tras cambios en el detalle.
 

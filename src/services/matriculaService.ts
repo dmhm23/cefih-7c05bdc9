@@ -3,6 +3,7 @@ import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } fro
 import { mockMatriculas, mockCursos, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 import { getDocumentosRequeridos } from './documentoService';
+import { initPortalEstudiante } from './portalInitService';
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {
@@ -89,6 +90,8 @@ export const matriculaService = {
     // Actualizar curso con la nueva matrícula
     if (curso) {
       curso.matriculasIds.push(newMatricula.id);
+      // Auto-inicializar portal del estudiante
+      initPortalEstudiante(newMatricula, curso);
     }
 
     // Log de auditoría
@@ -121,6 +124,14 @@ export const matriculaService = {
       ...data,
       updatedAt: now,
     };
+
+    // Auto-inicializar portal si se asignó un curso y no tenía portal
+    if (data.cursoId && !mockMatriculas[index].portalEstudiante) {
+      const curso = mockCursos.find(c => c.id === data.cursoId);
+      if (curso) {
+        initPortalEstudiante(mockMatriculas[index], curso);
+      }
+    }
 
     // Log de auditoría
     mockAuditLogs.push({

@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Curso, CursoFormData, EstadoCurso } from '@/types/curso';
 import { mockCursos, mockMatriculas, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
+import { initPortalEstudiante } from './portalInitService';
 
 export const cursoService = {
   async getAll(): Promise<Curso[]> {
@@ -282,11 +283,12 @@ export const cursoService = {
       mockCursos[index].estado = 'en_progreso';
     }
 
-    // Actualizar cursoId en cada matrícula
+    // Actualizar cursoId en cada matrícula e inicializar portal
     for (const mId of nuevosIds) {
       const mIndex = mockMatriculas.findIndex(m => m.id === mId);
       if (mIndex !== -1) {
         mockMatriculas[mIndex].cursoId = cursoId;
+        initPortalEstudiante(mockMatriculas[mIndex], mockCursos[index]);
       }
     }
 

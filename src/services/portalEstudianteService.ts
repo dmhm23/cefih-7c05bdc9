@@ -7,6 +7,7 @@ import { Curso } from '@/types/curso';
 import { FormatoFormacion } from '@/types/formatoFormacion';
 import { delay } from './api';
 import { formatoFormacionService } from './formatoFormacionService';
+import { initPortalEstudiante } from './portalInitService';
 
 export interface MatriculaVigenteResult {
   matricula: Matricula;
@@ -47,21 +48,8 @@ export const portalEstudianteService = {
 
     const { matricula, curso } = candidatas[0];
 
-    // Filter docs by curso's tipoFormacion
-    const docsForNivel = portalDocumentosCatalogo
-      .filter(d => d.habilitadoPorNivel[curso!.tipoFormacion])
-      .sort((a, b) => a.orden - b.orden);
-
-    // Inicializar portalEstudiante si no existe
-    if (!matricula.portalEstudiante) {
-      matricula.portalEstudiante = {
-        habilitado: true,
-        documentos: docsForNivel.map(doc => ({
-          key: doc.key,
-          estado: 'pendiente' as const,
-        })),
-      };
-    }
+    // Fallback: inicializar portalEstudiante si no existe (datos legacy)
+    initPortalEstudiante(matricula, curso!);
 
     return { matricula, persona, curso: curso! };
   },

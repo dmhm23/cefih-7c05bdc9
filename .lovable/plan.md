@@ -1,48 +1,14 @@
 
 
-## Plan: PARTE 6 — Monitoreo Operativo del Portal Estudiante
+## Plan: Tooltip en etiqueta "Bloqueado" del Monitoreo
 
-### Resumen
+### Archivo modificado
 
-Reemplazar el placeholder "Monitoreo" en la tab existente de `PortalAdminPage` con una tabla de monitoreo masivo que muestre todas las matriculas con estado de documentos del portal, filtros por curso/nivel/estado, y un modal de detalle por matricula.
+**`src/components/portal-admin/MonitoreoTable.tsx`**
 
----
-
-### Archivos nuevos
-
-#### 1. `src/services/portalMonitoreoService.ts`
-- `getMonitoreoData()` — cruza `mockMatriculas` + `mockPersonas` + `mockCursos` + `portalDocumentosCatalogo` para generar filas de monitoreo.
-- Cada fila: `matriculaId`, `personaNombre`, `personaCedula`, `cursoNombre`, `cursoNumeroCurso`, `tipoFormacion`, `fechaInicio`, `fechaFin`, `portalHabilitado`, `documentosEstado: { key, nombre, estado, enviadoEn?, puntaje?, firmaBase64? }[]`.
-- Filtrado server-side mock por curso, nivel, estado de documento pendiente.
-
-#### 2. `src/hooks/usePortalMonitoreo.ts`
-- `usePortalMonitoreo(filtros?)` — React Query hook que llama al service.
-
-#### 3. `src/components/portal-admin/MonitoreoTable.tsx`
-- Tabla con columnas: Estudiante (nombre + cedula) | Curso | Nivel | Estado por documento (chips de color por cada doc del catalogo) | Fecha envio | Puntaje.
-- Toolbar con busqueda + filtros (FilterPopover): curso, nivel de formacion, documento pendiente.
-- Click en fila abre `MonitoreoDetalleDialog`.
-
-#### 4. `src/components/portal-admin/MonitoreoDetalleDialog.tsx`
-- Dialog/Sheet que muestra detalle del portal para una matricula especifica:
-  - Datos del estudiante (nombre, cedula).
-  - Datos del curso (nombre, nivel, fechas).
-  - Toggle portal habilitado.
-  - Lista de documentos con: nombre, estado (badge), fecha envio, firma (imagen si existe), puntaje (si aplica).
-
----
-
-### Archivos modificados
-
-#### 5. `src/pages/portal-admin/PortalAdminPage.tsx`
-- Reemplazar placeholder de tab "Monitoreo" con componente `<MonitoreoTable />`.
-
----
-
-### Detalles tecnicos
-
-- Reutiliza `DataTable`, `TableToolbar`, `FilterPopover`, `StatusBadge` existentes.
-- Los chips de estado por documento usan colores: verde (completado), amarillo (pendiente), gris (bloqueado).
-- La firma se muestra como imagen en miniatura en el detalle.
-- Filtros usan `FilterConfig` con opciones derivadas de cursos y niveles existentes en mock.
+1. Importar `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` desde `@/components/ui/tooltip`.
+2. Envolver el `Badge` de estado "bloqueado" (líneas ~152-157) con un `Tooltip` que muestre un mensaje explicativo al hacer hover.
+3. El tooltip solo aparece cuando `estado === 'bloqueado'`; para los demás estados el Badge se renderiza sin tooltip.
+4. Texto del tooltip: *"Este documento aún no está disponible. Puede deberse a que el portal no está habilitado para esta matrícula o a que existe un documento previo que debe completarse primero."*
+5. Envolver la tabla (o la sección relevante) con `<TooltipProvider delayDuration={200}>` para un hover responsivo.
 

@@ -1,30 +1,30 @@
 
 
-## Plan: PARTE 7 — Habilitación por matrícula (control fino)
+## Plan: Auto-habilitación del portal al crear/asignar matrícula
 
-### Resumen
+### Problema actual
 
-Agregar controles interactivos al `MonitoreoDetalleDialog` existente para permitir toggle del portal y override de documentos habilitados por matrícula individual.
+El campo `portalEstudiante` de una matrícula solo se inicializa cuando el estudiante accede al portal por primera vez (`buscarMatriculaVigente`). Esto significa que en el monitoreo, las matrículas nuevas aparecen sin datos de portal hasta que el estudiante ingrese su cédula.
 
----
+### Cambios
 
-### Archivos nuevos
+#### 1. `src/services/matriculaService.ts`
+- En `create()`: después de crear la matrícula, si tiene `cursoId`, consultar `portalDocumentosCatalogo` para obtener los documentos habilitados por nivel del curso e inicializar `portalEstudiante: { habilitado: true, documentos: [...] }` automáticamente.
+- En `update()`: si se cambia el `cursoId` y la matrícula no tenía `portalEstudiante`, inicializarlo con los documentos del nuevo curso.
 
-#### 1. `src/services/portalMatriculaService.ts`
-- `togglePortalMatricula(matriculaId, habilitado)` — modifica `mockMatriculas[i].portalEstudiante.habilitado`.
-- `resetDocumentoMatricula(matriculaId, documentoKey)` — resetea el estado de un documento a `pendiente` (solo si está en `completado`).
+#### 2. `src/hooks/useCursos.ts` — `useAgregarEstudiantesCurso`
+- Revisar la mutación que asigna matrículas a un curso. Si reasigna `cursoId`, asegurar que el `portalEstudiante` se inicialice con los documentos correspondientes al tipo de formación del curso.
 
-### Archivos modificados
+#### 3. `src/services/portalEstudianteService.ts`
+- Extraer la lógica de inicialización de `portalEstudiante` a una función reutilizable `initPortalEstudiante(matricula, curso)` que pueda llamarse tanto desde `create` como desde `buscarMatriculaVigente`.
+- En `buscarMatriculaVigente`, mantener la inicialización lazy como fallback (por si hay datos legacy sin portal).
 
-#### 2. `src/hooks/usePortalMonitoreo.ts`
-- Agregar mutations: `useTogglePortalMatricula` y `useResetDocumentoMatricula` que invalidan `portal-monitoreo` on success.
+#### 4. `src/services/portalMonitoreoService.ts`
+- En `getMonitoreoData()`, si una matrícula no tiene `portalEstudiante`, tratarla con `portalHabilitado: true` y todos los documentos en estado `pendiente` (en lugar de `bloqueado`), ya que ahora se espera que siempre esté inicializado.
 
-#### 3. `src/components/portal-admin/MonitoreoDetalleDialog.tsx`
-- **Sección Portal**: Reemplazar el `Badge` estático de portal habilitado/deshabilitado por un `Switch` interactivo que llama a `togglePortalMatricula`.
-- **Sección Documentos**: Para cada documento con estado `completado`, agregar un botón pequeño "Reabrir" (icono `RotateCcw`) que resetea el documento a pendiente tras confirmación (`ConfirmDialog`).
-- Importar `Switch`, `ConfirmDialog`, `Button`, iconos necesarios.
-- Recibir callback `onDataChange` para refrescar la fila tras mutaciones.
+### No se modifica
 
-#### 4. `src/components/portal-admin/MonitoreoTable.tsx`
-- Pasar callback `onDataChange` al `MonitoreoDetalleDialog` que ejecuta `refetch` del query de monitoreo para actualizar la tabla tras cambios en el detalle.
+- La lógica del `Switch` de deshabilitación manual en `MonitoreoDetalleDialog` permanece igual.
+- La lógica de dependencias entre documentos no cambia.
+- El `PortalGuard` y acceso por cédula no cambian.
 

@@ -17,6 +17,12 @@ import { usePortalMonitoreo } from '@/hooks/usePortalMonitoreo';
 import { getFilterOptions, MonitoreoRow, MonitoreoFiltros } from '@/services/portalMonitoreoService';
 import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
 import { Filter, Eye } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
 
 const estadoChipClass: Record<string, string> = {
   completado: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -106,82 +112,96 @@ export function MonitoreoTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Estudiante</TableHead>
-              <TableHead>Curso</TableHead>
-              <TableHead>Nivel</TableHead>
-              {docColumns.map((doc) => (
-                <TableHead key={doc.key} className="text-center">
-                  {doc.nombre}
-                </TableHead>
-              ))}
-              <TableHead className="text-center">Portal</TableHead>
-              <TableHead className="w-10" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(!rows || rows.length === 0) ? (
+      <TooltipProvider delayDuration={200}>
+        <div className="rounded-lg border overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4 + docColumns.length + 1} className="text-center py-8 text-muted-foreground">
-                  No se encontraron matrículas.
-                </TableCell>
+                <TableHead>Estudiante</TableHead>
+                <TableHead>Curso</TableHead>
+                <TableHead>Nivel</TableHead>
+                {docColumns.map((doc) => (
+                  <TableHead key={doc.key} className="text-center">
+                    {doc.nombre}
+                  </TableHead>
+                ))}
+                <TableHead className="text-center">Portal</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
-            ) : (
-              rows.map((row) => (
-                <TableRow
-                  key={row.matriculaId}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedRow(row)}
-                >
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-sm">{row.personaNombre}</p>
-                      <p className="text-xs text-muted-foreground">{row.personaCedula}</p>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {(!rows || rows.length === 0) ? (
+                <TableRow>
+                  <TableCell colSpan={4 + docColumns.length + 1} className="text-center py-8 text-muted-foreground">
+                    No se encontraron matrículas.
                   </TableCell>
-                  <TableCell className="text-sm">{row.cursoNumeroCurso}</TableCell>
-                  <TableCell className="text-sm">{row.tipoFormacionLabel}</TableCell>
-                  {docColumns.map((docCol) => {
-                    const docEstado = row.documentosEstado.find((d) => d.key === docCol.key);
-                    const estado = docEstado?.estado ?? 'bloqueado';
-                    return (
-                      <TableCell key={docCol.key} className="text-center">
+                </TableRow>
+              ) : (
+                rows.map((row) => (
+                  <TableRow
+                    key={row.matriculaId}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedRow(row)}
+                  >
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{row.personaNombre}</p>
+                        <p className="text-xs text-muted-foreground">{row.personaCedula}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{row.cursoNumeroCurso}</TableCell>
+                    <TableCell className="text-sm">{row.tipoFormacionLabel}</TableCell>
+                    {docColumns.map((docCol) => {
+                      const docEstado = row.documentosEstado.find((d) => d.key === docCol.key);
+                      const estado = docEstado?.estado ?? 'bloqueado';
+                      const badge = (
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 ${estadoChipClass[estado]}`}
                         >
                           {estadoChipLabel[estado]}
                         </Badge>
-                      </TableCell>
-                    );
-                  })}
-                  <TableCell className="text-center">
-                    <Badge variant={row.portalHabilitado ? 'default' : 'secondary'} className="text-[10px]">
-                      {row.portalHabilitado ? 'Sí' : 'No'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedRow(row);
-                      }}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                      );
+                      return (
+                        <TableCell key={docCol.key} className="text-center">
+                          {estado === 'bloqueado' ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>{badge}</TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                                Este documento aún no está disponible. Puede deberse a que el portal no está habilitado para esta matrícula o a que existe un documento previo que debe completarse primero.
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            badge
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell className="text-center">
+                      <Badge variant={row.portalHabilitado ? 'default' : 'secondary'} className="text-[10px]">
+                        {row.portalHabilitado ? 'Sí' : 'No'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRow(row);
+                        }}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </TooltipProvider>
 
       {/* Detail dialog */}
       <MonitoreoDetalleDialog

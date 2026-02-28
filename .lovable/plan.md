@@ -1,30 +1,37 @@
 
 
-## Plan: Auto-habilitación del portal al crear/asignar matrícula
+## Plan: PARTE 8 — Escalabilidad: nuevos documentos habilitables
 
 ### Problema actual
 
-El campo `portalEstudiante` de una matrícula solo se inicializa cuando el estudiante accede al portal por primera vez (`buscarMatriculaVigente`). Esto significa que en el monitoreo, las matrículas nuevas aparecen sin datos de portal hasta que el estudiante ingrese su cédula.
+Las rutas del portal estudiante están hardcodeadas: `/estudiante/documentos/info_aprendiz` y `/estudiante/documentos/evaluacion` apuntan a componentes específicos. Agregar un nuevo documento requiere crear una ruta nueva en `App.tsx` y un componente dedicado.
 
 ### Cambios
 
-#### 1. `src/services/matriculaService.ts`
-- En `create()`: después de crear la matrícula, si tiene `cursoId`, consultar `portalDocumentosCatalogo` para obtener los documentos habilitados por nivel del curso e inicializar `portalEstudiante: { habilitado: true, documentos: [...] }` automáticamente.
-- En `update()`: si se cambia el `cursoId` y la matrícula no tenía `portalEstudiante`, inicializarlo con los documentos del nuevo curso.
+#### 1. Crear `src/pages/estudiante/DocumentoRendererPage.tsx` (nuevo)
+- Página genérica que recibe `:documentoKey` de la URL.
+- Consulta la config del documento (`useDocumentosPortal`) para obtener su `tipo`.
+- Usa un registro de renderers por `TipoDocPortal` para despachar al componente correcto:
+  - `firma_autorizacion` → `InfoAprendizPage` (componente existente, extraído como renderer)
+  - `evaluacion` → `EvaluacionPage` (componente existente)
+  - `formulario` → placeholder "Formulario en construcción"
+  - `solo_lectura` → placeholder "Documento de solo lectura"
+- Si el documento está bloqueado, redirige a `/estudiante/inicio`.
+- Si no existe config para el key, muestra mensaje de error.
 
-#### 2. `src/hooks/useCursos.ts` — `useAgregarEstudiantesCurso`
-- Revisar la mutación que asigna matrículas a un curso. Si reasigna `cursoId`, asegurar que el `portalEstudiante` se inicialice con los documentos correspondientes al tipo de formación del curso.
+#### 2. Simplificar `src/App.tsx`
+- Eliminar las rutas hardcodeadas de `info_aprendiz` y `evaluacion`.
+- Dejar una sola ruta genérica: `/estudiante/documentos/:documentoKey` → `DocumentoRendererPage`.
+- Eliminar el placeholder inline actual de "Documento en construcción".
 
-#### 3. `src/services/portalEstudianteService.ts`
-- Extraer la lógica de inicialización de `portalEstudiante` a una función reutilizable `initPortalEstudiante(matricula, curso)` que pueda llamarse tanto desde `create` como desde `buscarMatriculaVigente`.
-- En `buscarMatriculaVigente`, mantener la inicialización lazy como fallback (por si hay datos legacy sin portal).
+#### 3. Ajustar `InfoAprendizPage` y `EvaluacionPage`
+- Ambos ya reciben `matriculaId` desde el contexto de sesión, no necesitan cambios funcionales.
+- `DocumentoRendererPage` simplemente renderiza el componente correcto basándose en el tipo.
 
-#### 4. `src/services/portalMonitoreoService.ts`
-- En `getMonitoreoData()`, si una matrícula no tiene `portalEstudiante`, tratarla con `portalHabilitado: true` y todos los documentos en estado `pendiente` (en lugar de `bloqueado`), ya que ahora se espera que siempre esté inicializado.
+#### 4. `PanelDocumentosPage` — sin cambios
+- Ya se alimenta del catálogo/config dinámicamente, no tiene nada hardcodeado. Las cards ya son dinámicas.
 
-### No se modifica
-
-- La lógica del `Switch` de deshabilitación manual en `MonitoreoDetalleDialog` permanece igual.
-- La lógica de dependencias entre documentos no cambia.
-- El `PortalGuard` y acceso por cédula no cambian.
+### Resultado
+- Agregar un nuevo documento solo requiere: (1) crearlo en el catálogo admin, (2) opcionalmente registrar un renderer si es un tipo nuevo.
+- Los tipos existentes (`firma_autorizacion`, `evaluacion`) funcionan automáticamente para cualquier nuevo documento de ese tipo.
 

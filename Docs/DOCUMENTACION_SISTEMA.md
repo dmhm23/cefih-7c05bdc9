@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.4  
-> Última actualización: 23 de Febrero 2026  
+> Versión: 1.5  
+> Última actualización: 1 de Marzo 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -17,14 +17,16 @@
 5. [Módulo de Cursos](#5-módulo-de-cursos)
 6. [Módulo de Niveles de Formación](#6-módulo-de-niveles-de-formación)
 7. [Módulo de Gestión de Personal](#7-módulo-de-gestión-de-personal)
-8. [Dashboard](#8-dashboard)
-9. [Componentes Compartidos](#9-componentes-compartidos)
-10. [Capa de Servicios y Datos](#10-capa-de-servicios-y-datos)
-11. [Hooks (React Query)](#11-hooks-react-query)
-12. [Relación entre Módulos](#12-relación-entre-módulos)
-13. [Catálogos y Datos de Referencia](#13-catálogos-y-datos-de-referencia)
-14. [Auditoría y Trazabilidad](#14-auditoría-y-trazabilidad)
-15. [Historial de Cambios](#15-historial-de-cambios)
+8. [Portal Estudiante (Admin)](#8-portal-estudiante-admin)
+9. [Portal Estudiante (Público)](#9-portal-estudiante-público)
+10. [Dashboard](#10-dashboard)
+11. [Componentes Compartidos](#11-componentes-compartidos)
+12. [Capa de Servicios y Datos](#12-capa-de-servicios-y-datos)
+13. [Hooks (React Query)](#13-hooks-react-query)
+14. [Relación entre Módulos](#14-relación-entre-módulos)
+15. [Catálogos y Datos de Referencia](#15-catálogos-y-datos-de-referencia)
+16. [Auditoría y Trazabilidad](#16-auditoría-y-trazabilidad)
+17. [Historial de Cambios](#17-historial-de-cambios)
 
 ---
 
@@ -36,7 +38,7 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca cinco módulos principales:
+El sistema abarca siete módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
@@ -45,6 +47,8 @@ El sistema abarca cinco módulos principales:
 | **Cursos** | Programación, control de capacidad, calendario y estadísticas de cursos |
 | **Niveles de Formación** | Configuración dinámica de niveles, documentos requeridos y campos adicionales |
 | **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
+| **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
+| **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 
@@ -81,6 +85,9 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  personaService · matriculaService · cursoService        │
 │  comentarioService · documentoService · driveService     │
 │  nivelFormacionService · personalService                 │
+│  portalAdminService · portalEstudianteService            │
+│  portalMatriculaService · portalMonitoreoService         │
+│  portalInitService · formatoFormacionService             │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
@@ -89,9 +96,11 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 ┌──────────────────────▼──────────────────────────────────┐
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
+│  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
 │  mockComentarios · mockAuditLogs                         │
+│  portalDocumentosCatalogo                                │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -108,23 +117,33 @@ src/
 ├── components/
 │   ├── layout/          # MainLayout, AppSidebar
 │   ├── cursos/          # Componentes específicos de cursos
+│   ├── estudiante/      # Componentes del portal estudiante (QuizReviewCard)
+│   ├── formatos/        # Editor y preview de formatos de formación
 │   ├── matriculas/      # Componentes específicos de matrículas
 │   │   └── formatos/    # Documentos PDF previsualizables
 │   ├── niveles/         # Componentes de niveles de formación
 │   ├── personal/        # Componentes de gestión de personal
 │   ├── personas/        # Componentes específicos de personas
+│   ├── portal-admin/    # Componentes de administración del portal
 │   ├── shared/          # Componentes reutilizables
 │   └── ui/              # shadcn/ui base components
+├── contexts/
+│   └── PortalEstudianteContext.tsx  # Sesión del portal estudiante
 ├── data/
 │   ├── mockData.ts      # Datos iniciales en memoria
-│   └── formOptions.ts   # Catálogos para selectores
+│   ├── formOptions.ts   # Catálogos para selectores
+│   ├── portalAdminConfig.ts  # Catálogo de documentos del portal
+│   └── portalEstudianteConfig.ts  # Configuración del portal público
 ├── hooks/               # Custom hooks (React Query)
 ├── pages/               # Páginas por módulo
 │   ├── cursos/
+│   ├── estudiante/      # Páginas del portal público (AccesoEstudiante, PanelDocumentos, etc.)
+│   ├── formatos/
 │   ├── matriculas/
 │   ├── niveles/
 │   ├── personal/
-│   └── personas/
+│   ├── personas/
+│   └── portal-admin/    # Administración del portal estudiante
 ├── services/            # Capa de servicios (API emulada)
 ├── types/               # Definiciones TypeScript
 └── utils/               # Utilidades (CSV, resolvers)
@@ -154,8 +173,15 @@ src/
 | `/gestion-personal/nuevo` | `PersonalFormPage` | Crear perfil de personal |
 | `/gestion-personal/:id` | `PersonalDetallePage` | Detalle de personal |
 | `/gestion-personal/:id/editar` | `PersonalFormPage` | Editar perfil de personal |
+| `/gestion-formatos` | `FormatosPage` | Listado de formatos de formación |
+| `/gestion-formatos/nuevo` | `FormatoEditorPage` | Crear formato |
+| `/gestion-formatos/:id/editar` | `FormatoEditorPage` | Editar formato |
+| `/portal-estudiante` | `PortalAdminPage` | Administración del portal estudiante |
+| `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
+| `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
+| `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
 
-Todas las rutas protegidas se envuelven en `MainLayout` que provee el sidebar de navegación.
+Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`.
 
 ---
 
@@ -887,9 +913,238 @@ Integración con Cursos:
 
 ---
 
-## 8. Dashboard
+## 8. Portal Estudiante (Admin)
 
-### 8.1 Métricas Globales
+### 8.1 Propósito
+
+Módulo administrativo accesible en `/portal-estudiante` que permite gestionar centralizadamente la configuración del portal público del estudiante. Comprende dos áreas funcionales: **Configuración** (catálogo de documentos y habilitación por nivel) y **Monitoreo** (seguimiento de progreso por matrícula).
+
+### 8.2 Tipos y Entidades
+
+```typescript
+interface PortalDocumentoConfigAdmin extends DocumentoPortalConfig {
+  habilitadoPorNivel: Record<TipoFormacion, boolean>;
+}
+
+interface PortalConfigGlobal {
+  portalActivoPorDefecto: boolean;
+  documentos: PortalDocumentoConfigAdmin[];
+}
+```
+
+Tipos base del portal:
+
+```typescript
+type DocumentoPortalKey = 'info_aprendiz' | 'evaluacion' | string;
+type EstadoDocPortal = 'bloqueado' | 'pendiente' | 'completado';
+type TipoDocPortal = 'firma_autorizacion' | 'evaluacion' | 'formulario' | 'solo_lectura';
+
+interface DocumentoPortalConfig {
+  key: DocumentoPortalKey;
+  nombre: string;
+  tipo: TipoDocPortal;
+  requiereFirma: boolean;
+  dependeDe: DocumentoPortalKey[];
+  orden: number;
+}
+
+interface DocumentoPortalEstado {
+  key: DocumentoPortalKey;
+  estado: EstadoDocPortal;
+  enviadoEn?: string;
+  firmaBase64?: string;
+  firmaFecha?: string;
+  puntaje?: number;
+  respuestas?: unknown;
+  metadata?: Record<string, unknown>;
+  intentos?: DocumentoPortalEstado[];
+}
+```
+
+### 8.3 Pestaña Configuración
+
+#### Catálogo de Documentos
+
+Tabla administrable con las siguientes funcionalidades:
+- **CRUD de documentos**: Crear, editar y eliminar documentos del catálogo via `DocumentoConfigDialog`.
+- **Ordenamiento drag-and-drop**: Los documentos pueden reordenarse arrastrándolos, lo que define el orden de aparición en el portal público.
+- **Dependencias lógicas**: Cada documento puede configurarse para depender de otros documentos (el estudiante debe completar las dependencias antes de acceder).
+- **Tipos de documento**: `firma_autorizacion`, `evaluacion`, `formulario`, `solo_lectura`.
+- **Sincronización de formulario**: El dialog de configuración utiliza un `useEffect` para resetear los campos locales al abrir/cambiar entre documentos, evitando datos estancados.
+
+#### Habilitación por Nivel de Formación
+
+Grid que cruza documentos × niveles de formación (`TipoFormacion`). Permite activar/desactivar cada documento para cada nivel (reentrenamiento, jefe de área, trabajador autorizado, coordinador T.A.).
+
+#### Toggle Global
+
+Switch "Portal activo por defecto" que determina si las nuevas matrículas tendrán el portal habilitado automáticamente. **Protección**: desactivar requiere confirmación via `ConfirmDialog` para prevenir deshabilitaciones accidentales.
+
+### 8.4 Pestaña Monitoreo
+
+Vista de tabla que muestra el estado de progreso de cada matrícula en el portal.
+
+#### Resumen estadístico
+
+Tres chips sobre la tabla:
+- **Total matrículas**: Conteo general.
+- **Todo completo**: Matrículas con todos los documentos completados.
+- **Con pendientes**: Matrículas con al menos un documento pendiente.
+
+#### Tabla de monitoreo
+
+| Columna | Descripción |
+|---------|-------------|
+| Estudiante | Nombre + cédula |
+| Curso | Número de curso |
+| Nivel | Tipo de formación |
+| Progreso | Barra `<Progress>` + ratio `completados/total` |
+| Documentos (dinámicas) | Badge por documento: Completado (verde), Pendiente (ámbar), Bloqueado (gris) |
+| Acceso | Badge Activo/Inactivo |
+
+**Filtros**: Búsqueda por nombre/cédula/curso, filtro por curso, nivel de formación, y documento pendiente.
+
+**Contador de resultados**: Texto "Mostrando X matrículas" bajo los filtros.
+
+#### Dialog de detalle (`MonitoreoDetalleDialog`)
+
+Al hacer clic en una fila, se abre un dialog con:
+- Datos del estudiante y curso.
+- Switch para habilitar/deshabilitar el portal de esa matrícula.
+- Lista de documentos con estado, fecha de envío, puntaje (si aplica) y firma (si capturada).
+- Botón "Reabrir" para documentos completados (con confirmación).
+- **Refresco en tiempo real**: Tras mutaciones (toggle portal, reabrir documento), se invoca `onDataChange` que ejecuta `refetch()` y actualiza la fila seleccionada con datos frescos.
+
+### 8.5 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `PortalAdminPage` | Página principal con tabs Configuración/Monitoreo y toggle global con confirmación |
+| `DocumentosCatalogoTable` | Tabla de catálogo con drag-and-drop |
+| `DocumentoConfigDialog` | Dialog de creación/edición de documentos con useEffect de sincronización |
+| `NivelesHabilitacionGrid` | Grid documentos × niveles con toggles |
+| `MonitoreoTable` | Tabla de monitoreo con chips de resumen, progreso y filtros |
+| `MonitoreoDetalleDialog` | Dialog de detalle con mutaciones y refresco en tiempo real |
+
+### 8.6 Datos del Catálogo (`portalAdminConfig.ts`)
+
+Array mutable `portalDocumentosCatalogo` con los documentos preconfigurados:
+
+| Key | Nombre | Tipo | Depende de |
+|-----|--------|------|------------|
+| `info_aprendiz` | Información del Aprendiz | `firma_autorizacion` | — |
+| `evaluacion` | Evaluación y Encuesta | `evaluacion` | `info_aprendiz` |
+
+Variable `portalActivoPorDefecto` controla el estado global del portal.
+
+---
+
+## 9. Portal Estudiante (Público)
+
+### 9.1 Propósito
+
+Interfaz pública mobile-first accesible en `/estudiante` que permite a los estudiantes completar documentos de su proceso de formación (firmas, evaluaciones, formularios) desde cualquier dispositivo.
+
+### 9.2 Flujo de Acceso
+
+```
+/estudiante (AccesoEstudiantePage)
+  └── Ingresar número de cédula
+      └── Buscar matrícula vigente
+          ├── Reglas de resolución:
+          │   ├── Curso no cerrado
+          │   ├── Fecha actual ≤ fecha de fin del curso
+          │   └── Prioridad: curso con fecha de inicio más reciente
+          ├── [Encontrada] → Crear sesión → Redirigir a /estudiante/inicio
+          └── [No encontrada] → Mensaje de error
+```
+
+### 9.3 Sesión del Portal (`PortalEstudianteContext`)
+
+Contexto React persistido en `localStorage` que almacena:
+
+```typescript
+interface PortalSession {
+  matriculaId: string;
+  personaId: string;
+  cedula: string;
+  nombreEstudiante: string;
+  cursoNombre: string;
+  cursoFechaInicio?: string;
+  cursoFechaFin?: string;
+}
+```
+
+**Operaciones**: `setSession()` (guarda en localStorage), `clearSession()` (limpia localStorage), acceso via hook `usePortalEstudianteSession()`.
+
+**Protección de rutas**: `PortalGuard` verifica existencia de sesión antes de renderizar rutas internas. Redirige a `/estudiante` si no hay sesión activa.
+
+### 9.4 Panel de Documentos (`PanelDocumentosPage`)
+
+Dashboard del estudiante que muestra:
+- **Header**: Nombre, cédula y botón "Salir".
+- **Info del curso**: Nombre y fechas.
+- **Barra de progreso**: Porcentaje y conteo de documentos completados.
+- **Mensaje de finalización**: Card con ícono de celebración cuando todos los documentos están completos.
+- **Lista de documentos**: Cards clickeables con:
+  - Ícono según tipo de documento.
+  - Badge de estado (Bloqueado/Pendiente/Completado).
+  - Dependencias: texto "Completa primero: [nombre]" para documentos bloqueados.
+  - Fecha de envío para documentos completados.
+
+### 9.5 Despacho Genérico de Documentos (`DocumentoRendererPage`)
+
+Ruta única `/estudiante/documentos/:documentoKey` que actúa como orquestador central:
+
+1. Extrae `documentoKey` de la URL.
+2. Consulta la config del documento via `useDocumentosPortal`.
+3. Identifica el `TipoDocPortal` en el catálogo.
+4. Despacha al componente especializado usando un registro de renderers:
+
+```typescript
+const RENDERERS: Record<TipoDocPortal, React.ComponentType> = {
+  firma_autorizacion: InfoAprendizPage,
+  evaluacion: EvaluacionPage,
+  formulario: FormularioPlaceholder,
+  solo_lectura: SoloLecturaPlaceholder,
+};
+```
+
+**Manejo de estados**:
+- Documento bloqueado → Redirige a `/estudiante/inicio`.
+- Documento no encontrado → Mensaje de error con key.
+- Cargando → Skeleton.
+
+**Escalabilidad**: Agregar un nuevo documento solo requiere (1) crearlo en el catálogo admin y (2) opcionalmente registrar un renderer si es un tipo nuevo.
+
+### 9.6 Tipos de Documento y Renderers
+
+| Tipo | Renderer | Descripción |
+|------|----------|-------------|
+| `firma_autorizacion` | `InfoAprendizPage` | Muestra datos del aprendiz y captura firma de autorización |
+| `evaluacion` | `EvaluacionPage` | Cuestionario dinámico con preguntas del formato de formación |
+| `formulario` | Placeholder | Formulario en construcción (extensible) |
+| `solo_lectura` | Placeholder | Documento de solo lectura (extensible) |
+
+### 9.7 Subsistema de Evaluación
+
+El `EvaluacionPage` consume un formato de formación con bloques `evaluation_quiz`:
+- Las preguntas se cargan dinámicamente del formato asociado al tipo de curso.
+- Los resultados se almacenan en `portalEstudiante.documentos[evaluacion]` con puntaje, respuestas y metadata.
+- Si el estudiante no aprueba, el documento queda en estado `pendiente` y se acumulan los intentos previos.
+- El umbral de aprobación depende del formato (configurable).
+
+### 9.8 Subsistema de Inicialización (`portalInitService`)
+
+Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `portalEstudiante` en una matrícula si no existe (compatibilidad con datos legacy):
+- Crea `{ habilitado: portalActivoPorDefecto, documentos: [] }`.
+- Se invoca automáticamente al resolver la matrícula vigente.
+
+---
+
+## 10. Dashboard
+
+### 10.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|
@@ -898,7 +1153,7 @@ Integración con Cursos:
 | **Total Cursos** | `cursos.length` + activos (`estado === 'abierto' \|\| 'en_progreso'`) |
 | **Tasa de Certificación** | `(certificadas + completas) / total * 100` |
 
-### 8.2 Secciones
+### 10.2 Secciones
 
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.
@@ -906,9 +1161,9 @@ Integración con Cursos:
 
 ---
 
-## 9. Componentes Compartidos
+## 11. Componentes Compartidos
 
-### 9.1 DataTable
+### 11.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.
@@ -921,7 +1176,7 @@ Tabla genérica reutilizable con:
 - Columnas configurables (`ColumnSelector`)
 - Toolbar con búsqueda y filtros (`TableToolbar`)
 
-### 9.2 DetailSheet
+### 11.2 DetailSheet
 
 Panel lateral deslizable (Sheet de Radix UI) con:
 - Título y subtítulo
@@ -931,7 +1186,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Footer configurable (para botones de guardar/cancelar)
 - **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
-### 9.3 EditableField
+### 11.3 EditableField
 
 Campo editable inline que soporta:
 - **Tipos**: `text`, `select`, `date`
@@ -940,7 +1195,7 @@ Campo editable inline que soporta:
 - **Badge mode**: Muestra valor como Badge
 - **Opciones**: Array de `{ value, label }` para selects
 
-### 9.4 ComentariosSection
+### 11.4 ComentariosSection
 
 Sistema de comentarios con:
 - Historial cronológico (más recientes primero)
@@ -950,7 +1205,7 @@ Sistema de comentarios con:
 - Registro de usuario y timestamp
 - Indicador de "editado" con fecha
 
-### 9.5 Otros Componentes Compartidos
+### 11.5 Otros Componentes Compartidos
 
 | Componente | Descripción |
 |------------|-------------|
@@ -965,9 +1220,9 @@ Sistema de comentarios con:
 
 ---
 
-## 10. Capa de Servicios y Datos
+## 12. Capa de Servicios y Datos
 
-### 10.1 Servicios
+### 12.1 Servicios
 
 #### `api.ts` — Utilidades Base
 
@@ -1078,7 +1333,52 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `uploadDocumento(mId, tipo, file, meta)` | Simula subida individual a Google Drive. Retorna URL ficticia. |
 | `uploadConsolidado(mId, file, tipos, meta)` | Simula subida de PDF consolidado. Retorna URL + tipos incluidos. |
 
-### 10.2 Datos Mock (`mockData.ts`)
+### 12.2 Servicios del Portal
+
+#### `portalAdminService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getConfigGlobal()` | Retorna configuración global (toggle + documentos ordenados) |
+| `saveDocumentoConfig(doc)` | Crear o actualizar documento en el catálogo |
+| `deleteDocumentoConfig(key)` | Eliminar documento y limpiar dependencias |
+| `togglePortalGlobal(activo)` | Activar/desactivar portal por defecto |
+| `updateOrdenDocumentos(keys)` | Reordenar documentos según array de keys |
+| `updateDependencias(key, dependeDe)` | Actualizar dependencias de un documento |
+| `updateHabilitacionNivel(key, nivel, activo)` | Toggle de habilitación por nivel |
+
+#### `portalEstudianteService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `buscarMatriculaVigente(cedula)` | Busca matrícula vigente para una cédula (curso no cerrado, fecha vigente, prioriza más reciente) |
+| `getPortalConfig(tipoFormacion?)` | Retorna documentos del catálogo filtrados por nivel |
+| `getDocumentosEstado(matriculaId)` | Config + estados con resolución de dependencias |
+| `enviarDocumento(matriculaId, key, payload)` | Guarda resultado de un documento (firma, evaluación, etc.) con acumulación de intentos |
+| `getInfoAprendizData(matriculaId)` | Datos de persona, matrícula y curso para el formato InfoAprendiz |
+| `getEvaluacionFormato(matriculaId)` | Formato de evaluación con bloques quiz para el tipo de curso |
+
+#### `portalMatriculaService.ts`
+
+| Función | Descripción |
+|---------|-------------|
+| `togglePortalMatricula(matriculaId, habilitado)` | Habilitar/deshabilitar portal para una matrícula |
+| `resetDocumentoMatricula(matriculaId, documentoKey)` | Reabrir un documento completado (reset a pendiente) |
+
+#### `portalMonitoreoService.ts`
+
+| Función | Descripción |
+|---------|-------------|
+| `getMonitoreoData(filtros?)` | Lista de monitoreo con estados por matrícula. Filtros: búsqueda, curso, nivel, documento pendiente |
+| `getFilterOptions()` | Opciones de filtro dinámicas (cursos, niveles, documentos) |
+
+#### `portalInitService.ts`
+
+| Función | Descripción |
+|---------|-------------|
+| `initPortalEstudiante(matricula, curso)` | Inicializa `portalEstudiante` en matrícula si no existe (compatibilidad legacy) |
+
+### 12.3 Datos Mock (`mockData.ts`)
 
 Arrays exportados mutables que sirven como "base de datos" en memoria:
 
@@ -1095,9 +1395,9 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 
 ---
 
-## 11. Hooks (React Query)
+## 13. Hooks (React Query)
 
-### 11.1 Hooks de Personas (`usePersonas.ts`)
+### 13.1 Hooks de Personas (`usePersonas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1109,7 +1409,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdatePersona()` | Mutation | Invalida `['personas']`, `['persona', id]` | Actualizar persona |
 | `useDeletePersona()` | Mutation | Invalida `['personas']` | Eliminar persona |
 
-### 11.2 Hooks de Matrículas (`useMatriculas.ts`)
+### 13.2 Hooks de Matrículas (`useMatriculas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1128,7 +1428,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useDeleteMatricula()` | Mutation | Invalida matrículas + cursos | Eliminar matrícula |
 | `useUploadDocumento()` | Mutation | Invalida matrícula + matrículas | Subir documento (Drive + updateDocumento) |
 
-### 11.3 Hooks de Cursos (`useCursos.ts`)
+### 13.3 Hooks de Cursos (`useCursos.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1144,7 +1444,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useAgregarEstudiantesCurso()` | Mutation | Invalida cursos + curso + matrículas | Agregar estudiantes |
 | `useRemoverEstudianteCurso()` | Mutation | Invalida cursos + curso + matrículas | Remover estudiante |
 
-### 11.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
+### 13.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1155,7 +1455,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateNivelFormacion()` | Mutation | Invalida niveles + nivel específico | Actualizar nivel |
 | `useDeleteNivelFormacion()` | Mutation | Invalida `['niveles-formacion']` | Eliminar nivel |
 
-### 11.5 Hooks de Personal (`usePersonal.ts`)
+### 13.5 Hooks de Personal (`usePersonal.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1174,7 +1474,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateCargo()` | Mutation | Invalida `['cargos']` | Editar cargo |
 | `useDeleteCargo()` | Mutation | Invalida `['cargos']` | Eliminar cargo |
 
-### 11.6 Hooks de Comentarios (`useComentarios.ts`)
+### 13.6 Hooks de Comentarios (`useComentarios.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1183,11 +1483,40 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateComentario()` | Mutation | Invalida `['comentarios']` | Editar comentario |
 | `useDeleteComentario()` | Mutation | Invalida `['comentarios']` | Eliminar comentario |
 
+### 13.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `usePortalAdminConfig()` | Query | `['portal-admin-config']` | Configuración global del portal |
+| `useSaveDocumentoConfig()` | Mutation | Invalida `['portal-admin-config']` | Guardar documento en catálogo |
+| `useDeleteDocumentoConfig()` | Mutation | Invalida `['portal-admin-config']` | Eliminar documento del catálogo |
+| `useTogglePortalGlobal()` | Mutation | Invalida `['portal-admin-config']` | Toggle portal activo por defecto |
+| `useUpdateOrdenDocumentos()` | Mutation | Invalida `['portal-admin-config']` | Reordenar documentos |
+| `useUpdateHabilitacionNivel()` | Mutation | Invalida `['portal-admin-config']` | Toggle habilitación por nivel |
+
+### 13.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useBuscarMatriculaVigente(cedula)` | Query | `['portal-estudiante', 'matricula-vigente', cedula]` | Buscar matrícula vigente (6+ chars) |
+| `useDocumentosPortal(matriculaId)` | Query | `['portal-estudiante', 'documentos', matriculaId]` | Config + estados de documentos |
+| `useInfoAprendizData(matriculaId)` | Query | `['portal-estudiante', 'info-aprendiz', matriculaId]` | Datos para formato InfoAprendiz |
+| `useEvaluacionFormato(matriculaId)` | Query | `['portal-estudiante', 'evaluacion-formato', matriculaId]` | Formato de evaluación con quiz |
+| `useEnviarDocumento()` | Mutation | Invalida documentos + info-aprendiz + evaluación | Enviar documento completado |
+
+### 13.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `usePortalMonitoreo(filtros?)` | Query | `['portal-monitoreo', filtros]` | Datos de monitoreo filtrados |
+| `useTogglePortalMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Toggle portal de una matrícula |
+| `useResetDocumentoMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Reabrir documento completado |
+
 ---
 
-## 12. Relación entre Módulos
+## 14. Relación entre Módulos
 
-### 12.1 Diagrama de Entidades
+### 14.1 Diagrama de Entidades
 
 ```
 ┌──────────┐     1:N     ┌────────────┐     N:1     ┌──────────┐
@@ -1226,7 +1555,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
                                         └─────────────────────┘
 ```
 
-### 12.2 Relaciones
+### 14.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|
@@ -1238,7 +1567,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 12.3 Interacciones entre Módulos
+### 14.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.
@@ -1249,10 +1578,12 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 7. **Crear/editar curso** → Selecciona entrenador y supervisor desde el módulo de Personal (filtrado por tipo de cargo).
 8. **Formatos de matrículas** → Consultan firma digital del entrenador/supervisor desde Personal para insertar en documentos generados.
 9. **Dashboard** → Consume datos de los tres módulos principales para calcular métricas globales.
+10. **Portal Estudiante (Admin)** → Consume `portalDocumentosCatalogo` para configuración y `mockMatriculas` para monitoreo.
+11. **Portal Estudiante (Público)** → Resuelve matrícula vigente cruzando personas, matrículas y cursos. Consume catálogo de documentos filtrado por nivel de formación del curso.
 
 ---
 
-## 13. Catálogos y Datos de Referencia
+## 15. Catálogos y Datos de Referencia
 
 Definidos en `src/data/formOptions.ts`:
 
@@ -1277,9 +1608,9 @@ Definidos en `src/data/formOptions.ts`:
 
 ---
 
-## 14. Auditoría y Trazabilidad
+## 16. Auditoría y Trazabilidad
 
-### 14.1 Entidad: `AuditLog`
+### 16.1 Entidad: `AuditLog`
 
 ```typescript
 interface AuditLog {
@@ -1296,7 +1627,7 @@ interface AuditLog {
 }
 ```
 
-### 14.2 Eventos Auditados
+### 16.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|
@@ -1308,7 +1639,7 @@ interface AuditLog {
 | Personal | ✓ | ✓ (incluye firma y adjuntos) | ✓ |
 | Cargo | ✓ | ✓ (con diff) | ✓ |
 
-### 14.3 Cobertura de Auditoría
+### 16.3 Cobertura de Auditoría
 
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.
@@ -1318,7 +1649,7 @@ interface AuditLog {
 
 ---
 
-## 15. Historial de Cambios
+## 17. Historial de Cambios
 
 ### v1.2 — 20 de Febrero 2026
 
@@ -1445,6 +1776,54 @@ Nuevo módulo completo para administrar perfiles de staff interno del centro de 
 - **Enrutamiento**: 8 nuevas rutas para los módulos de Niveles y Personal.
 - **Auditoría ampliada**: `TipoEntidad` extendido con `'nivel_formacion' | 'personal' | 'cargo'`. Todas las operaciones CRUD de los nuevos módulos generan logs de auditoría.
 - **Datos mock**: Nuevos arrays `mockNivelesFormacion`, `mockPersonalStaff` y `mockCargos` en `mockData.ts`.
+
+---
+
+### v1.5 — 1 de Marzo 2026
+
+#### Portal Estudiante (Admin) — Módulo nuevo
+
+Nuevo módulo completo de administración del portal público del estudiante:
+
+- **Configuración centralizada**: Catálogo de documentos con drag-and-drop para ordenamiento, dependencias lógicas entre documentos, y habilitación granular por nivel de formación (TipoFormacion).
+- **Tipos de documento**: `firma_autorizacion`, `evaluacion`, `formulario`, `solo_lectura` — extensibles.
+- **Grid de habilitación**: Matriz documentos × niveles con toggles individuales.
+- **Toggle global protegido**: Switch "Portal activo por defecto" con `ConfirmDialog` obligatorio al desactivar.
+- **Sincronización de formulario**: `DocumentoConfigDialog` utiliza `useEffect` para resetear campos locales al abrir/cambiar entre documentos.
+
+#### Portal Estudiante (Admin) — Monitoreo
+
+- **Chips de resumen**: Total matrículas, todo completo, con pendientes.
+- **Columna de progreso**: Barra `<Progress>` + ratio `completados/total` por fila.
+- **Columna "Acceso"**: Badge Activo/Inactivo (reemplaza "Portal Sí/No").
+- **Contador de resultados**: "Mostrando X matrículas".
+- **Dialog de detalle con refresco en tiempo real**: Tras toggle portal o reabrir documento, `onDataChange` ejecuta `refetch()` y actualiza la fila seleccionada con datos frescos del query invalidado.
+- **Filtros**: Búsqueda por nombre/cédula/curso, filtro por curso, nivel de formación, documento pendiente.
+
+#### Portal Estudiante (Público) — Módulo nuevo
+
+Interfaz pública mobile-first para que estudiantes completen documentos de formación:
+
+- **Acceso por cédula**: Resolución automática de matrícula vigente (curso no cerrado, fecha vigente, prioriza más reciente).
+- **Sesión persistida**: `PortalEstudianteContext` con localStorage y `PortalGuard` para protección de rutas.
+- **Panel de documentos**: Dashboard con progreso, lista de documentos con estados (bloqueado/pendiente/completado), dependencias visuales.
+- **Despacho genérico** (`DocumentoRendererPage`): Ruta `/estudiante/documentos/:documentoKey` con registro de renderers por `TipoDocPortal`. Escalable sin modificar rutas.
+- **Evaluaciones dinámicas**: Quiz consumido desde formatos de formación con acumulación de intentos y cálculo de aprobación configurable.
+- **Inicialización legacy**: `portalInitService` garantiza compatibilidad con matrículas sin estructura `portalEstudiante`.
+
+**Archivos creados:**
+- `src/types/portalEstudiante.ts`, `src/types/portalAdmin.ts`
+- `src/services/portalAdminService.ts`, `src/services/portalEstudianteService.ts`, `src/services/portalMatriculaService.ts`, `src/services/portalMonitoreoService.ts`, `src/services/portalInitService.ts`
+- `src/hooks/usePortalAdmin.ts`, `src/hooks/usePortalEstudiante.ts`, `src/hooks/usePortalMonitoreo.ts`
+- `src/contexts/PortalEstudianteContext.tsx`
+- `src/data/portalAdminConfig.ts`, `src/data/portalEstudianteConfig.ts`
+- `src/pages/portal-admin/PortalAdminPage.tsx`
+- `src/pages/estudiante/AccesoEstudiantePage.tsx`, `PanelDocumentosPage.tsx`, `DocumentoRendererPage.tsx`, `EvaluacionPage.tsx`, `InfoAprendizPage.tsx`, `PortalGuard.tsx`
+- `src/components/portal-admin/DocumentoConfigDialog.tsx`, `DocumentosCatalogoTable.tsx`, `NivelesHabilitacionGrid.tsx`, `MonitoreoTable.tsx`, `MonitoreoDetalleDialog.tsx`
+
+**Archivos modificados:**
+- `src/App.tsx` — Nuevas rutas del portal admin y estudiante
+- `src/components/layout/AppSidebar.tsx` — Entrada "Portal Estudiante" en sidebar
 
 ---
 

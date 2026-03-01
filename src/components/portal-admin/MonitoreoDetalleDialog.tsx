@@ -22,6 +22,7 @@ interface MonitoreoDetalleDialogProps {
   row: MonitoreoRow | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDataChange?: () => void;
 }
 
 const estadoConfig = {
@@ -30,7 +31,7 @@ const estadoConfig = {
   bloqueado: { label: 'Bloqueado', icon: Lock, className: 'bg-muted text-muted-foreground border-border' },
 };
 
-export function MonitoreoDetalleDialog({ row, open, onOpenChange }: MonitoreoDetalleDialogProps) {
+export function MonitoreoDetalleDialog({ row, open, onOpenChange, onDataChange }: MonitoreoDetalleDialogProps) {
   const [confirmReset, setConfirmReset] = useState<string | null>(null);
 
   const toggleMutation = useTogglePortalMatricula();
@@ -42,7 +43,10 @@ export function MonitoreoDetalleDialog({ row, open, onOpenChange }: MonitoreoDet
     toggleMutation.mutate(
       { matriculaId: row.matriculaId, habilitado: checked },
       {
-        onSuccess: () => toast.success(checked ? 'Portal habilitado' : 'Portal deshabilitado'),
+        onSuccess: () => {
+          toast.success(checked ? 'Portal habilitado' : 'Portal deshabilitado');
+          onDataChange?.();
+        },
         onError: () => toast.error('Error al cambiar estado del portal'),
       }
     );
@@ -56,6 +60,7 @@ export function MonitoreoDetalleDialog({ row, open, onOpenChange }: MonitoreoDet
         onSuccess: () => {
           toast.success('Documento reabierto exitosamente');
           setConfirmReset(null);
+          onDataChange?.();
         },
         onError: () => toast.error('Error al reabrir documento'),
       }

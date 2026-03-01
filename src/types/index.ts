@@ -13,3 +13,4 @@ export * from './audit';
 export * from './nivelFormacion';
 export * from './personal';
 export * from './formatoFormacion';
+export * from './certificado';

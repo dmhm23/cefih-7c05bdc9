@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, SlidersHorizontal } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -9,11 +9,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -26,11 +29,19 @@ const menuItems = [
   { title: "Portal Estudiante", url: "/portal-estudiante", icon: Smartphone },
 ];
 
+const certificacionItems = [
+  { title: "Historial", url: "/certificacion/historial", icon: History },
+  { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage },
+  { title: "Tipos de Certificado", url: "/certificacion/tipos", icon: SlidersHorizontal },
+];
+
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
   const handleLogout = () => {
     navigate("/");
@@ -78,6 +89,42 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Certificación - Collapsible */}
+              <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Certificación"
+                      isActive={isCertificacionActive}
+                    >
+                      <Award className="h-4 w-4" />
+                      <span>Certificación</span>
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {certificacionItems.map((sub) => {
+                        const isSubActive = location.pathname === sub.url;
+                        return (
+                          <SidebarMenuSubItem key={sub.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isSubActive}
+                            >
+                              <button onClick={() => navigate(sub.url)} className="w-full">
+                                <sub.icon className="h-3.5 w-3.5" />
+                                <span>{sub.title}</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

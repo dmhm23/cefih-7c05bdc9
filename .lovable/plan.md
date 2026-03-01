@@ -1,81 +1,75 @@
-
-
-## Plan: FASE 1 — Estructura Base del Módulo de Certificación
+## Plan: FASE 2 — Motor Básico de Generación de Certificados
 
 ### Alcance
 
-Crear la arquitectura base: tipos, servicios mock, hooks, páginas placeholder, navegación y rutas. No se implementa lógica de generación (eso es Fase 2).
+Implementar generación simulado de certificados desde la vista de matrícula: validación de elegibilidad, reemplazo de tokens SVG, generación de PDF, y sección visual completa.
 
 ---
 
 ### Archivos nuevos
 
-#### 1. `src/types/certificado.ts`
-Tipos principales:
-- `EstadoCertificado`: `'elegible' | 'generado' | 'bloqueado' | 'revocado'`
-- `CertificadoGenerado`: id, matriculaId, cursoId, personaId, plantillaId, tipoCertificadoId, codigo, estado, snapshotDatos, svgFinal, version, fechaGeneracion, etc.
-- `PlantillaCertificado`: id, nombre, svgRaw, tokens detectados, activa, versión, historial.
-- `TipoCertificado`: id, nombre, tipoFormacion asociado, plantillaId, reglas (requierePago, requiereDocumentos, requiereFormatos, incluyeEmpresa, incluyeFirmas), regla de código.
-- `SolicitudExcepcionCertificado`: id, matriculaId, solicitadoPor, motivo, estado (pendiente/aprobada/rechazada), resueltoPor, fechas.
+#### 1. `src/components/matriculas/CertificacionSection.tsx`
 
-#### 2. `src/services/certificadoService.ts`
-CRUD mock sobre array en memoria (`mockCertificados`). Métodos: `getAll`, `getById`, `getByMatricula`, `getByCurso`, `create`, `revocar`.
+Componente que reemplaza la sección "Certificado" actual (líneas 678-697 de `MatriculaDetallePage`). Muestra:
 
-#### 3. `src/services/plantillaService.ts`
-CRUD mock para plantillas SVG. Métodos: `getAll`, `getById`, `getActiva`, `create`, `update`, `detectarTokens`.
+- **Estado de elegibilidad** con badge (Elegible / Bloqueado / Generado / Revocado)
+- **Motivos de bloqueo** listados si no es elegible (pago pendiente, documentos incompletos, formatos incompletos)
+- **Botón "Generar Certificado"** (solo si elegible y no existe certificado previo)
+- **Botón "Descargar PDF"** (si ya fue generado)
+- **Botón "Solicitar excepción"** (si bloqueado, abre dialog simple con textarea para motivo)
+- **Fechas** de generación y entrega (editables)
+- Consume `useCertificadosByMatricula` para obtener certificados existentes
 
-#### 4. `src/services/tipoCertificadoService.ts`
-CRUD mock para tipos de certificado. Métodos: `getAll`, `getById`, `getByTipoFormacion`, `create`, `update`.
+Props: `matricula`, `persona`, `curso`, `formatosDinamicos`, `onFieldChange`, `getValue`
 
-#### 5. `src/services/excepcionCertificadoService.ts`
-CRUD mock para excepciones. Métodos: `getAll`, `getById`, `getByMatricula`, `solicitar`, `aprobar`, `rechazar`.
+#### 2. `src/utils/certificadoGenerator.ts`
 
-#### 6. `src/hooks/useCertificados.ts`
-Hooks React Query: `useCertificados`, `useCertificado`, `useCertificadosByMatricula`, `useCertificadosByCurso`, `useCreateCertificado`, `useRevocarCertificado`.
+Lógica pura de generación:
 
-#### 7. `src/hooks/usePlantillas.ts`
-Hooks: `usePlantillas`, `usePlantilla`, `usePlantillaActiva`, `useCreatePlantilla`, `useUpdatePlantilla`.
+- `evaluarElegibilidad(matricula, formatosDinamicos)` → `{ elegible: boolean, motivos: string[] }` — valida pagado, docs completos, formatos completos
+- `construirDiccionarioTokens(persona, curso, matricula)` → `Record<string, string>` — mapea tokens como `nombreCompleto`, `numeroDocumento`, `numeroCurso`, `fechaInicio`, `fechaFin`, `tipoFormacion`, `empresaNombre`, `entrenadorNombre`, etc.
+- `reemplazarTokens(svgRaw, diccionario)` → `string` — reemplaza `{{token}}` en el SVG
+- `generarCodigoCertificado(curso, matricula)` → `string` — código provisional (ej: `{numeroCurso}-{consecutivo}`)
 
-#### 8. `src/hooks/useTiposCertificado.ts`
-Hooks: `useTiposCertificado`, `useTipoCertificado`, `useCreateTipoCertificado`, `useUpdateTipoCertificado`.
+#### 3. `src/utils/certificadoPdf.ts`
 
-#### 9. `src/hooks/useExcepcionesCertificado.ts`
-Hooks: `useExcepcionesCertificado`, `useSolicitarExcepcion`, `useAprobarExcepcion`, `useRechazarExcepcion`.
-
-#### 10. Páginas placeholder
-- `src/pages/certificacion/HistorialCertificadosPage.tsx` — Tabla vacía con filtros placeholder.
-- `src/pages/certificacion/PlantillasPage.tsx` — Lista de plantillas placeholder.
-- `src/pages/certificacion/TiposCertificadoPage.tsx` — Lista de tipos placeholder.
-
-#### 11. `src/data/mockCertificados.ts`
-Arrays iniciales vacíos para certificados, plantillas, tipos y excepciones.
+- `descargarCertificadoPdf(svgFinal: string, codigo: string)` — abre ventana con el SVG renderizado y ejecuta `window.print()` con estilos de impresión (patrón existente en el proyecto)
 
 ---
 
 ### Archivos modificados
 
-#### 12. `src/components/layout/AppSidebar.tsx`
-Agregar sección "Certificación" con subitems colapsables:
-- Historial → `/certificacion/historial`
-- Plantillas → `/certificacion/plantillas`
-- Tipos de Certificado → `/certificacion/tipos`
+#### 4. `src/services/certificadoService.ts`
 
-Usar `Collapsible` o `SidebarGroup` con sub-menú, icono `Award`.
+Agregar método `generar(matriculaId, cursoId, personaId, plantillaId, tipoCertificadoId, svgFinal, snapshotDatos, codigo)` que crea el `CertificadoGenerado` con estado `'generado'` y registra audit log.
 
-#### 13. `src/App.tsx`
-Agregar rutas:
-- `/certificacion/historial` → `HistorialCertificadosPage`
-- `/certificacion/plantillas` → `PlantillasPage`
-- `/certificacion/tipos` → `TiposCertificadoPage`
+#### 5. `src/hooks/useCertificados.ts`
 
-#### 14. `src/types/index.ts`
-Agregar `export * from './certificado'`.
+Agregar hook `useGenerarCertificado()` — mutation que llama al servicio completo de generación e invalida queries de certificados y matrícula.
 
-#### 15. `src/types/audit.ts`
-Agregar `'certificado' | 'plantilla_certificado' | 'excepcion_certificado'` a `TipoEntidad`.
+#### 6. `src/pages/matriculas/MatriculaDetallePage.tsx`
+
+- Reemplazar la sección "Certificado" (líneas 678-697) por `<CertificacionSection>`.
+- Importar el nuevo componente.
+- No se modifica nada más de la página.
 
 ---
 
-### Resultado
-Módulo integrado en la navegación con páginas funcionales (vacías), servicios y hooks listos para consumir en Fase 2.
+### Flujo de generación (dentro de `CertificacionSection`)
 
+1. Click en "Generar Certificado"
+2. `evaluarElegibilidad()` — doble check
+3. `plantillaService.getActiva()` — obtener SVG base
+4. `construirDiccionarioTokens()` — armar datos
+5. `reemplazarTokens()` — SVG final
+6. `certificadoService.generar()` — persistir con snapshot
+7. Actualizar matrícula con `fechaGeneracionCertificado`
+8. Toast de éxito, actualizar UI
+
+### Resultado
+
+Desde `/matriculas/:id` se puede evaluar elegibilidad y generar certificado real con plantilla SVG. Se puede descargar como PDF. Se pueden solicitar excepciones si está bloqueado.  
+  
+Nota: En **/certificacion/plantillas** se debe unificar la sección de **tipos de certificado** dentro de **plantillas de certificado**.
+
+Al cargar una nueva plantilla, deben mostrarse todas las opciones de tipos disponibles y todos los parámetros configurables asociados a la plantilla.

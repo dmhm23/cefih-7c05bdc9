@@ -1,54 +1,81 @@
 
 
-## Plan: Mejoras UX en /portal-estudiante (admin)
+## Plan: FASE 1 — Estructura Base del Módulo de Certificación
 
-### Problemas detectados
+### Alcance
 
-1. **MonitoreoDetalleDialog no refleja cambios en tiempo real**: El dialog usa los datos del `row` que se pasó al abrirlo (snapshot). Cuando el admin hace toggle del portal o reabre un documento, el dialog no actualiza su contenido — los badges y el switch quedan desactualizados hasta cerrar y reabrir.
-
-2. **Monitoreo sin contadores de resumen**: La tabla muestra filas individuales pero no hay indicadores globales (ej. "12 pendientes, 3 completados, 1 bloqueado") que den contexto rápido al admin.
-
-3. **Tabla de monitoreo sin paginación**: Si hay muchas matrículas, la tabla carga todo sin paginación ni indicador de cantidad de resultados.
-
-4. **DocumentoConfigDialog no resetea formulario al abrir**: Los campos internos (`key`, `nombre`, `tipo`, etc.) se inicializan con `useState(documento?.xxx)` pero no se actualizan cuando cambia `documento` (props). Si abres un documento para editar y luego abres otro, los campos pueden quedar con datos del anterior.
-
-5. **Toggle global "Portal activo por defecto" sin confirmación**: Un clic accidental puede desactivar el portal globalmente sin aviso previo.
-
-6. **Columna "Portal" en tabla de monitoreo es confusa**: Dice "Sí/No" pero no comunica bien qué significa ni permite acción directa.
-
-7. **Sin indicador de progreso por fila**: En la tabla de monitoreo, no se puede ver de un vistazo el progreso general de cada estudiante (ej. "1/2 completados").
+Crear la arquitectura base: tipos, servicios mock, hooks, páginas placeholder, navegación y rutas. No se implementa lógica de generación (eso es Fase 2).
 
 ---
 
-### Cambios propuestos
+### Archivos nuevos
 
-#### 1. Refrescar `MonitoreoDetalleDialog` tras mutaciones
-- Cambiar la arquitectura: en lugar de pasar `row` como dato estático, pasar `matriculaId` y que el dialog consulte los datos frescos del query `portal-monitoreo` (o re-derive del cache invalidado).
-- Alternativa más simple: pasar `onDataChange` al dialog, que tras cada mutación exitosa haga `refetch` y actualice el `selectedRow` en `MonitoreoTable` con los datos frescos.
+#### 1. `src/types/certificado.ts`
+Tipos principales:
+- `EstadoCertificado`: `'elegible' | 'generado' | 'bloqueado' | 'revocado'`
+- `CertificadoGenerado`: id, matriculaId, cursoId, personaId, plantillaId, tipoCertificadoId, codigo, estado, snapshotDatos, svgFinal, version, fechaGeneracion, etc.
+- `PlantillaCertificado`: id, nombre, svgRaw, tokens detectados, activa, versión, historial.
+- `TipoCertificado`: id, nombre, tipoFormacion asociado, plantillaId, reglas (requierePago, requiereDocumentos, requiereFormatos, incluyeEmpresa, incluyeFirmas), regla de código.
+- `SolicitudExcepcionCertificado`: id, matriculaId, solicitadoPor, motivo, estado (pendiente/aprobada/rechazada), resueltoPor, fechas.
 
-#### 2. Agregar chips de resumen sobre la tabla de monitoreo
-- Encima de la barra de búsqueda, mostrar 3 chips: total matrículas, cantidad con todo completado, cantidad con documentos pendientes.
+#### 2. `src/services/certificadoService.ts`
+CRUD mock sobre array en memoria (`mockCertificados`). Métodos: `getAll`, `getById`, `getByMatricula`, `getByCurso`, `create`, `revocar`.
 
-#### 3. Corregir `DocumentoConfigDialog` — sincronizar estado con props
-- Agregar un `useEffect` que actualice los estados locales cuando `documento` o `open` cambien.
+#### 3. `src/services/plantillaService.ts`
+CRUD mock para plantillas SVG. Métodos: `getAll`, `getById`, `getActiva`, `create`, `update`, `detectarTokens`.
 
-#### 4. Agregar confirmación al toggle global
-- Envolver el `Switch` de "Portal activo por defecto" con un `ConfirmDialog` cuando se desactiva (solo al desactivar, activar no requiere confirmación).
+#### 4. `src/services/tipoCertificadoService.ts`
+CRUD mock para tipos de certificado. Métodos: `getAll`, `getById`, `getByTipoFormacion`, `create`, `update`.
 
-#### 5. Agregar columna de progreso en tabla de monitoreo
-- Reemplazar o complementar los chips individuales de documentos con una mini barra de progreso o texto "1/2" por fila que resuma el avance.
+#### 5. `src/services/excepcionCertificadoService.ts`
+CRUD mock para excepciones. Métodos: `getAll`, `getById`, `getByMatricula`, `solicitar`, `aprobar`, `rechazar`.
 
-#### 6. Indicador de cantidad de resultados
-- Bajo la barra de búsqueda/filtros, mostrar "Mostrando X matrículas" para dar contexto.
+#### 6. `src/hooks/useCertificados.ts`
+Hooks React Query: `useCertificados`, `useCertificado`, `useCertificadosByMatricula`, `useCertificadosByCurso`, `useCreateCertificado`, `useRevocarCertificado`.
+
+#### 7. `src/hooks/usePlantillas.ts`
+Hooks: `usePlantillas`, `usePlantilla`, `usePlantillaActiva`, `useCreatePlantilla`, `useUpdatePlantilla`.
+
+#### 8. `src/hooks/useTiposCertificado.ts`
+Hooks: `useTiposCertificado`, `useTipoCertificado`, `useCreateTipoCertificado`, `useUpdateTipoCertificado`.
+
+#### 9. `src/hooks/useExcepcionesCertificado.ts`
+Hooks: `useExcepcionesCertificado`, `useSolicitarExcepcion`, `useAprobarExcepcion`, `useRechazarExcepcion`.
+
+#### 10. Páginas placeholder
+- `src/pages/certificacion/HistorialCertificadosPage.tsx` — Tabla vacía con filtros placeholder.
+- `src/pages/certificacion/PlantillasPage.tsx` — Lista de plantillas placeholder.
+- `src/pages/certificacion/TiposCertificadoPage.tsx` — Lista de tipos placeholder.
+
+#### 11. `src/data/mockCertificados.ts`
+Arrays iniciales vacíos para certificados, plantillas, tipos y excepciones.
 
 ---
 
-### Archivos a modificar
+### Archivos modificados
 
-| Archivo | Cambio |
-|---|---|
-| `MonitoreoTable.tsx` | Chips resumen, columna progreso, contador de resultados, pasar `onDataChange` al dialog |
-| `MonitoreoDetalleDialog.tsx` | Recibir `onDataChange`, llamarlo tras mutaciones exitosas para refrescar datos |
-| `DocumentoConfigDialog.tsx` | `useEffect` para sincronizar estado local con props `documento` |
-| `PortalAdminPage.tsx` | Confirmación al desactivar toggle global |
+#### 12. `src/components/layout/AppSidebar.tsx`
+Agregar sección "Certificación" con subitems colapsables:
+- Historial → `/certificacion/historial`
+- Plantillas → `/certificacion/plantillas`
+- Tipos de Certificado → `/certificacion/tipos`
+
+Usar `Collapsible` o `SidebarGroup` con sub-menú, icono `Award`.
+
+#### 13. `src/App.tsx`
+Agregar rutas:
+- `/certificacion/historial` → `HistorialCertificadosPage`
+- `/certificacion/plantillas` → `PlantillasPage`
+- `/certificacion/tipos` → `TiposCertificadoPage`
+
+#### 14. `src/types/index.ts`
+Agregar `export * from './certificado'`.
+
+#### 15. `src/types/audit.ts`
+Agregar `'certificado' | 'plantilla_certificado' | 'excepcion_certificado'` a `TipoEntidad`.
+
+---
+
+### Resultado
+Módulo integrado en la navegación con páginas funcionales (vacías), servicios y hooks listos para consumir en Fase 2.
 

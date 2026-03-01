@@ -1,0 +1,78 @@
+import type { TipoFormacion } from './curso';
+
+export type EstadoCertificado = 'elegible' | 'generado' | 'bloqueado' | 'revocado';
+export type EstadoExcepcion = 'pendiente' | 'aprobada' | 'rechazada';
+
+export interface CertificadoGenerado {
+  id: string;
+  matriculaId: string;
+  cursoId: string;
+  personaId: string;
+  plantillaId: string;
+  tipoCertificadoId: string;
+  codigo: string;
+  estado: EstadoCertificado;
+  snapshotDatos: Record<string, unknown>;
+  svgFinal: string;
+  version: number;
+  fechaGeneracion: string;
+  revocadoPor?: string;
+  motivoRevocacion?: string;
+  fechaRevocacion?: string;
+  autorizadoExcepcional?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlantillaVersion {
+  version: number;
+  svgRaw: string;
+  fecha: string;
+  modificadoPor: string;
+}
+
+export interface PlantillaCertificado {
+  id: string;
+  nombre: string;
+  svgRaw: string;
+  tokensDetectados: string[];
+  activa: boolean;
+  version: number;
+  historial: PlantillaVersion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReglaTipoCertificado {
+  requierePago: boolean;
+  requiereDocumentos: boolean;
+  requiereFormatos: boolean;
+  incluyeEmpresa: boolean;
+  incluyeFirmas: boolean;
+}
+
+export interface TipoCertificado {
+  id: string;
+  nombre: string;
+  tipoFormacion: TipoFormacion;
+  plantillaId: string;
+  reglas: ReglaTipoCertificado;
+  reglaCodigo: string; // ej: "{numeroCurso}-{prefijoNivel}-{consecutivoAnual}"
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SolicitudExcepcionCertificado {
+  id: string;
+  matriculaId: string;
+  solicitadoPor: string;
+  motivo: string;
+  estado: EstadoExcepcion;
+  resueltoPor?: string;
+  fechaSolicitud: string;
+  fechaResolucion?: string;
+}
+
+export type CertificadoFormData = Omit<CertificadoGenerado, 'id' | 'createdAt' | 'updatedAt'>;
+export type PlantillaFormData = Omit<PlantillaCertificado, 'id' | 'createdAt' | 'updatedAt' | 'historial' | 'tokensDetectados'>;
+export type TipoCertificadoFormData = Omit<TipoCertificado, 'id' | 'createdAt' | 'updatedAt'>;

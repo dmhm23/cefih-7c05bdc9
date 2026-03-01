@@ -44,6 +44,11 @@ import FormatoEditorPage from "./pages/formatos/FormatoEditorPage";
 // Portal Admin (Módulo G)
 import PortalAdminPage from "./pages/portal-admin/PortalAdminPage";
 
+// Certificación (Módulo H)
+import HistorialCertificadosPage from "./pages/certificacion/HistorialCertificadosPage";
+import PlantillasPage from "./pages/certificacion/PlantillasPage";
+import TiposCertificadoPage from "./pages/certificacion/TiposCertificadoPage";
+
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
 import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
@@ -106,6 +111,11 @@ const App = () => (
 
           {/* Módulo G - Portal Estudiante Admin */}
           <Route path="/portal-estudiante" element={<WithLayout><PortalAdminPage /></WithLayout>} />
+
+          {/* Módulo H - Certificación */}
+          <Route path="/certificacion/historial" element={<WithLayout><HistorialCertificadosPage /></WithLayout>} />
+          <Route path="/certificacion/plantillas" element={<WithLayout><PlantillasPage /></WithLayout>} />
+          <Route path="/certificacion/tipos" element={<WithLayout><TiposCertificadoPage /></WithLayout>} />
 
           {/* Portal Estudiante (público, mobile-first) */}
           <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />

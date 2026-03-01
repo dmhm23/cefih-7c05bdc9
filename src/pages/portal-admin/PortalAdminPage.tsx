@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -6,6 +7,7 @@ import { Smartphone, Settings, BarChart3 } from 'lucide-react';
 import { DocumentosCatalogoTable } from '@/components/portal-admin/DocumentosCatalogoTable';
 import { NivelesHabilitacionGrid } from '@/components/portal-admin/NivelesHabilitacionGrid';
 import { MonitoreoTable } from '@/components/portal-admin/MonitoreoTable';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {
   usePortalAdminConfig,
   useSaveDocumentoConfig,
@@ -16,6 +18,7 @@ import {
 } from '@/hooks/usePortalAdmin';
 
 export default function PortalAdminPage() {
+  const [confirmDesactivar, setConfirmDesactivar] = useState(false);
   const { data: config, isLoading } = usePortalAdminConfig();
   const saveDoc = useSaveDocumentoConfig();
   const deleteDoc = useDeleteDocumentoConfig();
@@ -51,10 +54,29 @@ export default function PortalAdminPage() {
           <Switch
             id="portal-global"
             checked={config?.portalActivoPorDefecto ?? true}
-            onCheckedChange={(checked) => toggleGlobal.mutate(checked)}
+            onCheckedChange={(checked) => {
+              if (!checked) {
+                setConfirmDesactivar(true);
+              } else {
+                toggleGlobal.mutate(true);
+              }
+            }}
           />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDesactivar}
+        onOpenChange={setConfirmDesactivar}
+        title="Desactivar portal por defecto"
+        description="Al desactivar esta opción, las nuevas matrículas no tendrán acceso al portal a menos que se habilite manualmente. ¿Deseas continuar?"
+        confirmText="Desactivar"
+        variant="destructive"
+        onConfirm={() => {
+          toggleGlobal.mutate(false);
+          setConfirmDesactivar(false);
+        }}
+      />
 
       {/* Tabs */}
       <Tabs defaultValue="configuracion">

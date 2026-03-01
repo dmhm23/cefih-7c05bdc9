@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,14 +36,26 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
   const [tipo, setTipo] = useState<TipoDocPortal>(documento?.tipo || 'formulario');
   const [requiereFirma, setRequiereFirma] = useState(documento?.requiereFirma || false);
   const [dependeDe, setDependeDe] = useState<string[]>(documento?.dependeDe || []);
+  const defaultNiveles: Record<TipoFormacion, boolean> = {
+    reentrenamiento: true,
+    jefe_area: true,
+    trabajador_autorizado: true,
+    coordinador_ta: true,
+  };
   const [habilitadoPorNivel, setHabilitadoPorNivel] = useState<Record<TipoFormacion, boolean>>(
-    documento?.habilitadoPorNivel || {
-      reentrenamiento: true,
-      jefe_area: true,
-      trabajador_autorizado: true,
-      coordinador_ta: true,
-    }
+    documento?.habilitadoPorNivel || defaultNiveles
   );
+
+  useEffect(() => {
+    if (open) {
+      setKey(documento?.key || '');
+      setNombre(documento?.nombre || '');
+      setTipo(documento?.tipo || 'formulario');
+      setRequiereFirma(documento?.requiereFirma || false);
+      setDependeDe(documento?.dependeDe || []);
+      setHabilitadoPorNivel(documento?.habilitadoPorNivel || defaultNiveles);
+    }
+  }, [open, documento]);
 
   const handleSave = () => {
     if (!key.trim() || !nombre.trim()) return;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
+import { CertificacionSection } from "@/components/matriculas/CertificacionSection";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -675,26 +676,15 @@ export default function MatriculaDetallePage() {
             </div>
           </div>
 
-          {/* Certificado */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Certificado
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <EditableField
-                label="Fecha de generación"
-                value={getValue("fechaGeneracionCertificado")}
-                onChange={(v) => handleFieldChange("fechaGeneracionCertificado", v)}
-                type="date"
-              />
-              <EditableField
-                label="Fecha de entrega"
-                value={getValue("fechaEntregaCertificado")}
-                onChange={(v) => handleFieldChange("fechaEntregaCertificado", v)}
-                type="date"
-              />
-            </div>
-          </div>
+          {/* Certificación */}
+          <CertificacionSection
+            matricula={matricula}
+            persona={persona}
+            curso={curso}
+            formatosDinamicos={formatosDinamicos}
+            onFieldChange={handleFieldChange}
+            getValue={getValue}
+          />
 
           {/* Observaciones - Sistema de comentarios */}
           <div className="border rounded-lg p-4 shadow-sm">

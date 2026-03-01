@@ -26,6 +26,26 @@ export function useCreateCertificado() {
   });
 }
 
+export function useGenerarCertificado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: {
+      matriculaId: string;
+      cursoId: string;
+      personaId: string;
+      plantillaId: string;
+      tipoCertificadoId: string;
+      svgFinal: string;
+      snapshotDatos: Record<string, unknown>;
+      codigo: string;
+    }) => certificadoService.generar(params),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['certificados'] });
+      qc.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+}
+
 export function useRevocarCertificado() {
   const qc = useQueryClient();
   return useMutation({

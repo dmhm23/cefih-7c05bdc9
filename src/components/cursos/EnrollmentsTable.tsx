@@ -65,6 +65,29 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     }, {});
   }, [certificados]);
 
+  const getArlDate = (m: Matricula) => {
+    const doc = m.documentos?.find((d) => d.tipo === "arl");
+    return doc?.fechaInicioCobertura || doc?.fechaCarga || "—";
+  };
+
+  const getExamDate = (m: Matricula) => {
+    const doc = m.documentos?.find((d) => d.tipo === "examen_medico");
+    return doc?.fechaDocumento || doc?.fechaCarga || "—";
+  };
+
+  const getDocStatus = (m: Matricula) => {
+    if (!m.documentos || m.documentos.length === 0) return "pendiente";
+    const pendientes = m.documentos.filter((d) => d.estado === "pendiente" && !d.opcional);
+    if (pendientes.length === 0) return "completo";
+    return "pendiente";
+  };
+
+  const getFinancialStatus = (m: Matricula) => {
+    if (m.pagado) return "pagado";
+    if (m.abono && m.abono > 0) return "abonado";
+    return "pendiente";
+  };
+
   const filtered = matriculas.filter((m) => {
     if (filterDocumental !== "todos") {
       const ds = getDocStatus(m);
@@ -94,29 +117,6 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     } else {
       setSelectedIds(new Set(filtered.map((m) => m.id)));
     }
-  };
-
-  const getArlDate = (m: Matricula) => {
-    const doc = m.documentos?.find((d) => d.tipo === "arl");
-    return doc?.fechaInicioCobertura || doc?.fechaCarga || "—";
-  };
-
-  const getExamDate = (m: Matricula) => {
-    const doc = m.documentos?.find((d) => d.tipo === "examen_medico");
-    return doc?.fechaDocumento || doc?.fechaCarga || "—";
-  };
-
-  const getDocStatus = (m: Matricula) => {
-    if (!m.documentos || m.documentos.length === 0) return "pendiente";
-    const pendientes = m.documentos.filter((d) => d.estado === "pendiente" && !d.opcional);
-    if (pendientes.length === 0) return "completo";
-    return "pendiente";
-  };
-
-  const getFinancialStatus = (m: Matricula) => {
-    if (m.pagado) return "pagado";
-    if (m.abono && m.abono > 0) return "abonado";
-    return "pendiente";
   };
 
   const getCertStatus = (m: Matricula): { estado: "generado" | "elegible" | "bloqueado" | "revocado"; motivos?: string[]; cert?: CertificadoGenerado } => {

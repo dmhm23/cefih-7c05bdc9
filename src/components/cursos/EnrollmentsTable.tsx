@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, Trash2, Users, Award, Download } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -41,8 +41,11 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
-  const [filterDocumental, setFilterDocumental] = useState<string>("todos");
-  const [filterFinanciero, setFilterFinanciero] = useState<string>("todos");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string | string[]>>({
+    documental: "todos",
+    financiero: "todos",
+  });
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -88,14 +91,31 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     return "pendiente";
   };
 
+  const filterConfigs: FilterConfig[] = [
+    { key: "documental", label: "Estado Documental", type: "select", options: [
+      { value: "pendiente", label: "Pendiente" },
+      { value: "completo", label: "Completo" },
+    ]},
+    { key: "financiero", label: "Estado Financiero", type: "select", options: [
+      { value: "pagado", label: "Pagado" },
+      { value: "abonado", label: "Abonado" },
+      { value: "pendiente", label: "Sin pagar" },
+    ]},
+  ];
+
+  const activeFilterCount = Object.entries(filters).filter(([, value]) => {
+    if (Array.isArray(value)) return value.length > 0;
+    return value && value !== "todos";
+  }).length;
+
   const filtered = matriculas.filter((m) => {
-    if (filterDocumental !== "todos") {
+    if (filters.documental !== "todos") {
       const ds = getDocStatus(m);
-      if (ds !== filterDocumental) return false;
+      if (ds !== filters.documental) return false;
     }
-    if (filterFinanciero !== "todos") {
+    if (filters.financiero !== "todos") {
       const fs = getFinancialStatus(m);
-      if (fs !== filterFinanciero) return false;
+      if (fs !== filters.financiero) return false;
     }
     return true;
   });
@@ -265,27 +285,25 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
               <Badge variant="secondary" className="text-xs">{matriculas.length}</Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Select value={filterDocumental} onValueChange={setFilterDocumental}>
-                <SelectTrigger className="h-7 text-xs w-[130px]">
-                  <SelectValue placeholder="Documental" />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  <SelectItem value="todos">Documental: Todos</SelectItem>
-                  <SelectItem value="pendiente">Pendiente</SelectItem>
-                  <SelectItem value="completo">Completo</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterFinanciero} onValueChange={setFilterFinanciero}>
-                <SelectTrigger className="h-7 text-xs w-[130px]">
-                  <SelectValue placeholder="Financiero" />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  <SelectItem value="todos">Financiero: Todos</SelectItem>
-                  <SelectItem value="pagado">Pagado</SelectItem>
-                  <SelectItem value="abonado">Abonado</SelectItem>
-                  <SelectItem value="pendiente">Sin pagar</SelectItem>
-                </SelectContent>
-              </Select>
+              <FilterPopover
+                open={filterOpen}
+                onOpenChange={setFilterOpen}
+                filters={filterConfigs}
+                values={filters}
+                onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
+                onClear={() => setFilters({ documental: "todos", financiero: "todos" })}
+                trigger={
+                  <Button variant="outline" size="sm" className="h-9 gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filtro
+                    {activeFilterCount > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                }
+              />
               {!readOnly && (
                 <Button
                   variant="outline"
@@ -310,7 +328,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {(filterDocumental !== "todos" || filterFinanciero !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
+              {(filters.documental !== "todos" || filters.financiero !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
             </div>
           ) : (
             <div className="overflow-x-auto">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, Trash2, Users, Award, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,7 +41,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
-  const [filter, setFilter] = useState<"todos" | "pendientes">("todos");
+  const [filterDocumental, setFilterDocumental] = useState<string>("todos");
+  const [filterFinanciero, setFilterFinanciero] = useState<string>("todos");
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -63,11 +65,17 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     }, {});
   }, [certificados]);
 
-  const filtered = filter === "pendientes"
-    ? matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente")
-    : matriculas;
-
-  const pendientesCount = matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente").length;
+  const filtered = matriculas.filter((m) => {
+    if (filterDocumental !== "todos") {
+      const ds = getDocStatus(m);
+      if (ds !== filterDocumental) return false;
+    }
+    if (filterFinanciero !== "todos") {
+      const fs = getFinancialStatus(m);
+      if (fs !== filterFinanciero) return false;
+    }
+    return true;
+  });
 
   const allFilteredSelected = filtered.length > 0 && filtered.every((m) => selectedIds.has(m.id));
 
@@ -257,29 +265,36 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
               <Badge variant="secondary" className="text-xs">{matriculas.length}</Badge>
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex rounded-md border overflow-hidden text-xs">
-                <button
-                  className={`px-3 py-1 transition-colors ${filter === "todos" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-                  onClick={() => setFilter("todos")}
-                >
-                  Todos
-                </button>
-                <button
-                  className={`px-3 py-1 transition-colors ${filter === "pendientes" ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"}`}
-                  onClick={() => setFilter("pendientes")}
-                >
-                  Pendientes ({pendientesCount})
-                </button>
-              </div>
-              {!readOnly && selectedIds.size > 0 && (
+              <Select value={filterDocumental} onValueChange={setFilterDocumental}>
+                <SelectTrigger className="h-7 text-xs w-[130px]">
+                  <SelectValue placeholder="Documental" />
+                </SelectTrigger>
+                <SelectContent side="bottom">
+                  <SelectItem value="todos">Documental: Todos</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                  <SelectItem value="completo">Completo</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterFinanciero} onValueChange={setFilterFinanciero}>
+                <SelectTrigger className="h-7 text-xs w-[130px]">
+                  <SelectValue placeholder="Financiero" />
+                </SelectTrigger>
+                <SelectContent side="bottom">
+                  <SelectItem value="todos">Financiero: Todos</SelectItem>
+                  <SelectItem value="pagado">Pagado</SelectItem>
+                  <SelectItem value="abonado">Abonado</SelectItem>
+                  <SelectItem value="pendiente">Sin pagar</SelectItem>
+                </SelectContent>
+              </Select>
+              {!readOnly && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleGeneracionMasiva}
-                  disabled={masivaGenerating}
+                  disabled={selectedIds.size === 0 || masivaGenerating}
                 >
                   <Award className="h-4 w-4 mr-1" />
-                  Generar ({selectedIds.size})
+                  {selectedIds.size > 0 ? `Generar (${selectedIds.size})` : "Generar certificados"}
                 </Button>
               )}
               {!readOnly && (
@@ -295,7 +310,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {filter === "pendientes" ? "No hay matrículas pendientes" : "No hay estudiantes inscritos"}
+              {(filterDocumental !== "todos" || filterFinanciero !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -349,16 +364,27 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           {getExamDate(m) !== "—" ? format(new Date(getExamDate(m)), "dd/MM/yyyy") : "—"}
                         </td>
                         <td className="py-2 pr-3">
-                          <Badge variant={docStatus === "completo" ? "default" : "outline"} className="text-xs">
+                          <Badge
+                            variant={docStatus === "completo" ? "default" : "secondary"}
+                            className={docStatus === "completo"
+                              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs"
+                              : "bg-amber-500/10 text-amber-600 text-xs"}
+                          >
                             {docStatus === "completo" ? "Completo" : "Pendiente"}
                           </Badge>
                         </td>
                         <td className="py-2 pr-3">
                           <Badge
-                            variant={finStatus === "pagado" ? "default" : "outline"}
-                            className="text-xs"
+                            variant={finStatus === "pagado" ? "default" : "secondary"}
+                            className={
+                              finStatus === "pagado"
+                                ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs"
+                                : finStatus === "abonado"
+                                ? "bg-blue-500/10 text-blue-600 text-xs"
+                                : "bg-amber-500/10 text-amber-600 text-xs"
+                            }
                           >
-                            {finStatus === "pagado" ? "Pagado" : finStatus === "abonado" ? "Abonado" : "Pendiente"}
+                            {finStatus === "pagado" ? "Pagado" : finStatus === "abonado" ? "Abonado" : "Sin pagar"}
                           </Badge>
                         </td>
                         <td className="py-2 pr-3">

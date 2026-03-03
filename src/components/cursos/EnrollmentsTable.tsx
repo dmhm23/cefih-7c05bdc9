@@ -1,18 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, Trash2, Users } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Users, Award, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AgregarEstudiantesModal } from "@/components/cursos/AgregarEstudiantesModal";
+import { GeneracionMasivaDialog } from "@/components/cursos/GeneracionMasivaDialog";
 import { Curso } from "@/types/curso";
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import { useRemoverEstudianteCurso } from "@/hooks/useCursos";
+import { useCertificadosByCurso, useGenerarCertificado } from "@/hooks/useCertificados";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import {
+  evaluarElegibilidad,
+  construirDiccionarioTokens,
+  reemplazarTokens,
+  generarCodigoCertificado,
+} from "@/utils/certificadoGenerator";
+import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
+import { plantillaService } from "@/services/plantillaService";
+import type { CertificadoGenerado } from "@/types/certificado";
 
 interface EnrollmentsTableProps {
   curso: Curso;
@@ -25,15 +37,56 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const navigate = useNavigate();
   const { toast } = useToast();
   const removerEstudiante = useRemoverEstudianteCurso();
+  const generarCertificado = useGenerarCertificado();
+  const { data: certificados } = useCertificadosByCurso(curso.id);
+
   const [filter, setFilter] = useState<"todos" | "pendientes">("todos");
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [masivaDlg, setMasivaDlg] = useState(false);
+  const [masivaGenerating, setMasivaGenerating] = useState(false);
+  const [masivaProgreso, setMasivaProgreso] = useState(0);
+  const [masivaTotal, setMasivaTotal] = useState(0);
+  const [masivaResultados, setMasivaResultados] = useState<{
+    generados: number;
+    bloqueados: { nombre: string; motivos: string[] }[];
+  } | null>(null);
 
   const getPersona = (personaId: string) => personas.find((p) => p.id === personaId);
+
+  const certMap = useMemo(() => {
+    if (!certificados) return {} as Record<string, CertificadoGenerado>;
+    return certificados.reduce<Record<string, CertificadoGenerado>>((acc, c) => {
+      acc[c.matriculaId] = c;
+      return acc;
+    }, {});
+  }, [certificados]);
 
   const filtered = filter === "pendientes"
     ? matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente")
     : matriculas;
+
+  const pendientesCount = matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente").length;
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((m) => selectedIds.has(m.id));
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((m) => m.id)));
+    }
+  };
 
   const getArlDate = (m: Matricula) => {
     const doc = m.documentos?.find((d) => d.tipo === "arl");
@@ -58,7 +111,139 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     return "pendiente";
   };
 
-  const pendientesCount = matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente").length;
+  const getCertStatus = (m: Matricula): { estado: "generado" | "elegible" | "bloqueado" | "revocado"; motivos?: string[]; cert?: CertificadoGenerado } => {
+    const cert = certMap[m.id];
+    if (cert) {
+      if (cert.estado === "revocado") return { estado: "revocado", cert };
+      return { estado: "generado", cert };
+    }
+    const { elegible, motivos } = evaluarElegibilidad(m);
+    return elegible ? { estado: "elegible" } : { estado: "bloqueado", motivos };
+  };
+
+  const handleGenerarIndividual = useCallback(async (m: Matricula) => {
+    const persona = getPersona(m.personaId);
+    if (!persona) return;
+    try {
+      const plantilla = await plantillaService.getActiva();
+      if (!plantilla) {
+        toast({ title: "No hay plantilla activa", variant: "destructive" });
+        return;
+      }
+      const dict = construirDiccionarioTokens(persona, curso, m);
+      const codigo = generarCodigoCertificado(curso, m);
+      dict.codigoCertificado = codigo;
+      const svgFinal = reemplazarTokens(plantilla.svgRaw, dict);
+      await generarCertificado.mutateAsync({
+        matriculaId: m.id,
+        cursoId: curso.id,
+        personaId: m.personaId,
+        plantillaId: plantilla.id,
+        tipoCertificadoId: "",
+        svgFinal,
+        snapshotDatos: dict as unknown as Record<string, unknown>,
+        codigo,
+      });
+      toast({ title: "Certificado generado" });
+    } catch {
+      toast({ title: "Error al generar certificado", variant: "destructive" });
+    }
+  }, [curso, personas, generarCertificado, toast]);
+
+  const handleDescargar = (cert: CertificadoGenerado) => {
+    descargarCertificadoPdf(cert.svgFinal, cert.codigo);
+  };
+
+  const handleGeneracionMasiva = useCallback(async () => {
+    const selMatriculas = matriculas.filter((m) => selectedIds.has(m.id));
+    setMasivaTotal(selMatriculas.length);
+    setMasivaProgreso(0);
+    setMasivaResultados(null);
+    setMasivaGenerating(true);
+    setMasivaDlg(true);
+
+    let generados = 0;
+    const bloqueados: { nombre: string; motivos: string[] }[] = [];
+
+    const plantilla = await plantillaService.getActiva();
+    if (!plantilla) {
+      setMasivaGenerating(false);
+      setMasivaResultados({ generados: 0, bloqueados: [{ nombre: "Sistema", motivos: ["No hay plantilla activa"] }] });
+      return;
+    }
+
+    for (let i = 0; i < selMatriculas.length; i++) {
+      const m = selMatriculas[i];
+      const persona = getPersona(m.personaId);
+      const nombre = persona ? `${persona.nombres} ${persona.apellidos}` : m.id;
+
+      if (certMap[m.id]) {
+        bloqueados.push({ nombre, motivos: ["Ya tiene certificado"] });
+        setMasivaProgreso(i + 1);
+        continue;
+      }
+
+      const { elegible, motivos } = evaluarElegibilidad(m);
+      if (!elegible) {
+        bloqueados.push({ nombre, motivos });
+        setMasivaProgreso(i + 1);
+        continue;
+      }
+
+      try {
+        const dict = construirDiccionarioTokens(persona!, curso, m);
+        const codigo = generarCodigoCertificado(curso, m, generados + 1);
+        dict.codigoCertificado = codigo;
+        const svgFinal = reemplazarTokens(plantilla.svgRaw, dict);
+        await generarCertificado.mutateAsync({
+          matriculaId: m.id,
+          cursoId: curso.id,
+          personaId: m.personaId,
+          plantillaId: plantilla.id,
+          tipoCertificadoId: "",
+          svgFinal,
+          snapshotDatos: dict as unknown as Record<string, unknown>,
+          codigo,
+        });
+        generados++;
+      } catch {
+        bloqueados.push({ nombre, motivos: ["Error al generar"] });
+      }
+      setMasivaProgreso(i + 1);
+    }
+
+    setMasivaGenerating(false);
+    setMasivaResultados({ generados, bloqueados });
+    setSelectedIds(new Set());
+  }, [matriculas, selectedIds, certMap, curso, personas, generarCertificado]);
+
+  const certBadge = (estado: string, motivos?: string[]) => {
+    switch (estado) {
+      case "generado":
+        return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-200 text-xs">Generado</Badge>;
+      case "elegible":
+        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs">Elegible</Badge>;
+      case "revocado":
+        return <Badge variant="destructive" className="text-xs">Revocado</Badge>;
+      case "bloqueado":
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="bg-amber-500/15 text-amber-700 border-amber-200 text-xs cursor-help">Bloqueado</Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <ul className="text-xs space-y-0.5">
+                  {motivos?.map((m, i) => <li key={i}>• {m}</li>)}
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -86,6 +271,17 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   Pendientes ({pendientesCount})
                 </button>
               </div>
+              {!readOnly && selectedIds.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneracionMasiva}
+                  disabled={masivaGenerating}
+                >
+                  <Award className="h-4 w-4 mr-1" />
+                  Generar ({selectedIds.size})
+                </Button>
+              )}
               {!readOnly && (
                 <Button variant="outline" size="sm" onClick={() => setModalAgregarOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
@@ -106,12 +302,21 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-xs text-muted-foreground">
+                    {!readOnly && (
+                      <th className="py-2 pr-2 w-8">
+                        <Checkbox
+                          checked={allFilteredSelected}
+                          onCheckedChange={toggleAll}
+                        />
+                      </th>
+                    )}
                     <th className="text-left py-2 pr-3 font-medium">Nombre</th>
                     <th className="text-left py-2 pr-3 font-medium">Empresa</th>
                     <th className="text-left py-2 pr-3 font-medium">Cobertura ARL</th>
                     <th className="text-left py-2 pr-3 font-medium">Examen</th>
                     <th className="text-left py-2 pr-3 font-medium">Documental</th>
                     <th className="text-left py-2 pr-3 font-medium">Financiero</th>
+                    <th className="text-left py-2 pr-3 font-medium">Certificado</th>
                     <th className="text-right py-2 font-medium">Acciones</th>
                   </tr>
                 </thead>
@@ -120,8 +325,17 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
                     const finStatus = getFinancialStatus(m);
+                    const certInfo = getCertStatus(m);
                     return (
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                        {!readOnly && (
+                          <td className="py-2 pr-2">
+                            <Checkbox
+                              checked={selectedIds.has(m.id)}
+                              onCheckedChange={() => toggleSelect(m.id)}
+                            />
+                          </td>
+                        )}
                         <td className="py-2 pr-3">
                           <p className="font-medium">{persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}</p>
                         </td>
@@ -146,6 +360,33 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           >
                             {finStatus === "pagado" ? "Pagado" : finStatus === "abonado" ? "Abonado" : "Pendiente"}
                           </Badge>
+                        </td>
+                        <td className="py-2 pr-3">
+                          <div className="flex items-center gap-1.5">
+                            {certBadge(certInfo.estado, certInfo.motivos)}
+                            {certInfo.estado === "elegible" && !readOnly && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleGenerarIndividual(m)}
+                                title="Generar certificado"
+                              >
+                                <Award className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {certInfo.estado === "generado" && certInfo.cert && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => handleDescargar(certInfo.cert!)}
+                                title="Descargar PDF"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2 text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -211,6 +452,15 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           }
           setEstudianteAEliminar(null);
         }}
+      />
+
+      <GeneracionMasivaDialog
+        open={masivaDlg}
+        onOpenChange={setMasivaDlg}
+        resultados={masivaResultados}
+        isGenerating={masivaGenerating}
+        total={masivaTotal}
+        progreso={masivaProgreso}
       />
     </>
   );

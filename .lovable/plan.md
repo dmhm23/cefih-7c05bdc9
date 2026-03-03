@@ -1,54 +1,31 @@
 
 
-## Plan: FASE 3 — Integración de Certificación en Tabla de Curso
+## Plan: Ajustes en EnrollmentsTable — Botón, Badges y Filtros
 
-### Alcance
-Agregar columna "Certificado" a la tabla de matriculados del curso, con estado individual, acciones por fila, y botón de generación masiva.
+### Cambios en `src/components/cursos/EnrollmentsTable.tsx`
 
----
+#### 1. Botón "Generar certificados" siempre visible
+- Mover el botón fuera del condicional `selectedIds.size > 0`
+- Mantenerlo siempre renderizado con `disabled={selectedIds.size === 0 || masivaGenerating}`
+- Texto: "Generar certificados" cuando no hay selección, "Generar (N)" cuando hay seleccionados
 
-### Archivos modificados
+#### 2. Badges con estilos consistentes con Matrículas
+Adoptar exactamente los mismos estilos de `/matriculas`:
+- **Completo**: `variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"`
+- **Pendiente** (documental): `variant="secondary" className="bg-amber-500/10 text-amber-600"`
+- **Pagado**: `variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"`
+- **Abonado**: `variant="secondary" className="bg-blue-500/10 text-blue-600"` (nuevo, no existe en Matrículas pero es un estado intermedio)
+- **Sin pagar**: `variant="secondary" className="bg-amber-500/10 text-amber-600"`
 
-#### 1. `src/components/cursos/EnrollmentsTable.tsx`
-Cambios principales:
-- Importar `useCertificadosByCurso`, `useGenerarCertificado`, `evaluarElegibilidad`, `construirDiccionarioTokens`, `reemplazarTokens`, `generarCodigoCertificado`, `descargarCertificadoPdf`, `plantillaService`
-- Recibir `cursoId` adicional o derivarlo de `curso.id` (ya disponible en props)
-- Agregar state para checkboxes de selección: `selectedIds`, `setSelectedIds`
-- **Nueva columna "Certificado"** entre "Financiero" y "Acciones":
-  - Si ya tiene certificado generado → Badge verde "Generado" + botón descargar
-  - Si elegible → Badge azul "Elegible" + botón "Generar"
-  - Si bloqueado → Badge amarilla "Bloqueado" (tooltip con motivos)
-  - Si revocado → Badge roja "Revocado"
-- **Checkboxes por fila** (columna izquierda) para selección masiva
-- **Botón "Generar certificados"** en el header (junto a "Agregar"), habilitado solo cuando hay seleccionados
-  - Al hacer clic: evalúa elegibilidad de cada seleccionado, genera solo los elegibles, muestra dialog de resumen con conteo de generados vs bloqueados (con motivos)
-- Usar `useCertificadosByCurso(curso.id)` para consultar certificados existentes y mapearlos por `matriculaId`
-
-#### 2. `src/components/cursos/GeneracionMasivaDialog.tsx` (nuevo)
-Dialog que muestra el resultado de la generación masiva:
-- Props: `open`, `onOpenChange`, `resultados: { generados: number, bloqueados: { nombre: string, motivos: string[] }[] }`, `isGenerating: boolean`
-- Muestra spinner durante generación
-- Al terminar: lista de éxitos y lista de bloqueados con motivos
-- Botón "Cerrar"
-
----
-
-### Flujo de generación individual (por fila)
-1. Click botón "Generar" en la fila
-2. Obtener plantilla activa
-3. Construir diccionario de tokens
-4. Reemplazar tokens en SVG
-5. Llamar `certificadoService.generar()`
-6. Toast de éxito, refrescar query
-
-### Flujo de generación masiva
-1. Seleccionar matrículas con checkboxes
-2. Click "Generar certificados seleccionados"
-3. Abrir `GeneracionMasivaDialog` en estado "generando"
-4. Iterar seleccionados: evaluar elegibilidad → generar si elegible, acumular bloqueados
-5. Mostrar resumen: X generados, Y bloqueados (con motivos por estudiante)
-6. Refrescar queries
+#### 3. Reemplazar toggle "Todos/Pendientes" por dos filtros Select
+- Eliminar el toggle actual y su estado `filter`
+- Agregar dos estados: `filterDocumental` y `filterFinanciero` (valores: `"todos"` | opciones específicas)
+- Dos `<Select>` compactos en el header:
+  - **Documental**: Todos, Pendiente, Completo
+  - **Financiero**: Todos, Pagado, Abonado, Sin pagar
+- La lógica de `filtered` combinará ambos filtros simultáneamente
+- Usar `Select` de radix (componente existente) con tamaño compacto (`text-xs`)
 
 ### Resultado
-Desde `/cursos/:id` se puede ver el estado de certificación de cada estudiante, generar individualmente o en masa, y descargar certificados generados.
+Botón siempre visible (disabled sin selección), badges idénticos a Matrículas, y filtrado combinable por estado documental y financiero.
 

@@ -1,31 +1,25 @@
 
 
-## Plan: Ajustes en EnrollmentsTable — Botón, Badges y Filtros
+## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
 
-### Cambios en `src/components/cursos/EnrollmentsTable.tsx`
+### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
 
-#### 1. Botón "Generar certificados" siempre visible
-- Mover el botón fuera del condicional `selectedIds.size > 0`
-- Mantenerlo siempre renderizado con `disabled={selectedIds.size === 0 || masivaGenerating}`
-- Texto: "Generar certificados" cuando no hay selección, "Generar (N)" cuando hay seleccionados
+Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
 
-#### 2. Badges con estilos consistentes con Matrículas
-Adoptar exactamente los mismos estilos de `/matriculas`:
-- **Completo**: `variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"`
-- **Pendiente** (documental): `variant="secondary" className="bg-amber-500/10 text-amber-600"`
-- **Pagado**: `variant="default" className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20"`
-- **Abonado**: `variant="secondary" className="bg-blue-500/10 text-blue-600"` (nuevo, no existe en Matrículas pero es un estado intermedio)
-- **Sin pagar**: `variant="secondary" className="bg-amber-500/10 text-amber-600"`
+**Cambios concretos:**
 
-#### 3. Reemplazar toggle "Todos/Pendientes" por dos filtros Select
-- Eliminar el toggle actual y su estado `filter`
-- Agregar dos estados: `filterDocumental` y `filterFinanciero` (valores: `"todos"` | opciones específicas)
-- Dos `<Select>` compactos en el header:
-  - **Documental**: Todos, Pendiente, Completo
-  - **Financiero**: Todos, Pagado, Abonado, Sin pagar
-- La lógica de `filtered` combinará ambos filtros simultáneamente
-- Usar `Select` de radix (componente existente) con tamaño compacto (`text-xs`)
+1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
+
+2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
+
+3. **FilterConfig**: Definir array de configs:
+   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
+   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
+
+4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
+
+5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
 
 ### Resultado
-Botón siempre visible (disabled sin selección), badges idénticos a Matrículas, y filtrado combinable por estado documental y financiero.
+El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
 

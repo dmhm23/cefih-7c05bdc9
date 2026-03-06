@@ -38,6 +38,7 @@ export function useGenerarCertificado() {
       svgFinal: string;
       snapshotDatos: Record<string, unknown>;
       codigo: string;
+      autorizadoExcepcional?: boolean;
     }) => certificadoService.generar(params),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['certificados'] });
@@ -52,5 +53,21 @@ export function useRevocarCertificado() {
     mutationFn: ({ id, revocadoPor, motivo }: { id: string; revocadoPor: string; motivo: string }) =>
       certificadoService.revocar(id, revocadoPor, motivo),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['certificados'] }),
+  });
+}
+
+export function useReemitirCertificado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: {
+      certificadoAnteriorId: string;
+      svgFinal: string;
+      snapshotDatos: Record<string, unknown>;
+      codigo: string;
+    }) => certificadoService.reemitir(params),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['certificados'] });
+      qc.invalidateQueries({ queryKey: ['matriculas'] });
+    },
   });
 }

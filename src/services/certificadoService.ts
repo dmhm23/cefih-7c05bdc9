@@ -41,6 +41,7 @@ export const certificadoService = {
     svgFinal: string;
     snapshotDatos: Record<string, unknown>;
     codigo: string;
+    autorizadoExcepcional?: boolean;
   }): Promise<CertificadoGenerado> {
     const now = new Date().toISOString();
     const nuevo: CertificadoGenerado = {
@@ -56,6 +57,7 @@ export const certificadoService = {
       svgFinal: params.svgFinal,
       version: 1,
       fechaGeneracion: now,
+      autorizadoExcepcional: params.autorizadoExcepcional || false,
       createdAt: now,
       updatedAt: now,
     };
@@ -76,5 +78,48 @@ export const certificadoService = {
       updatedAt: now,
     };
     return simulateApiCall(mockCertificados[idx]);
+  },
+
+  async reemitir(params: {
+    certificadoAnteriorId: string;
+    svgFinal: string;
+    snapshotDatos: Record<string, unknown>;
+    codigo: string;
+  }): Promise<CertificadoGenerado> {
+    const anteriorIdx = mockCertificados.findIndex(c => c.id === params.certificadoAnteriorId);
+    if (anteriorIdx === -1) throw new Error('Certificado anterior no encontrado');
+
+    const anterior = mockCertificados[anteriorIdx];
+    const now = new Date().toISOString();
+
+    // Mark previous as revoked (preserve history)
+    mockCertificados[anteriorIdx] = {
+      ...anterior,
+      estado: 'revocado',
+      motivoRevocacion: 'Reemitido con nueva versión',
+      fechaRevocacion: now,
+      updatedAt: now,
+    };
+
+    // Create new version
+    const nuevo: CertificadoGenerado = {
+      id: uuidv4(),
+      matriculaId: anterior.matriculaId,
+      cursoId: anterior.cursoId,
+      personaId: anterior.personaId,
+      plantillaId: anterior.plantillaId,
+      tipoCertificadoId: anterior.tipoCertificadoId,
+      codigo: params.codigo,
+      estado: 'generado',
+      snapshotDatos: params.snapshotDatos,
+      svgFinal: params.svgFinal,
+      version: anterior.version + 1,
+      fechaGeneracion: now,
+      autorizadoExcepcional: anterior.autorizadoExcepcional,
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockCertificados.push(nuevo);
+    return simulateApiCall(nuevo);
   },
 };

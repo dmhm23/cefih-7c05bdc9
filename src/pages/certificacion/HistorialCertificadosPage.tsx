@@ -1,4 +1,4 @@
-import { Award, Search, Download } from "lucide-react";
+import { Award, Search, Download, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -43,10 +43,15 @@ const filterConfigs: FilterConfig[] = [
 export default function HistorialCertificadosPage() {
   const { data: certificados, isLoading } = useCertificados();
   const [busqueda, setBusqueda] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     excepcional: "todos",
   });
+
+  const activeFilterCount = Object.values(filters).filter(v =>
+    Array.isArray(v) ? v.length > 0 : v && v !== "todos"
+  ).length;
 
   const filtered = (certificados ?? []).filter(c => {
     if (filters.estado !== "todos" && c.estado !== filters.estado) return false;
@@ -74,9 +79,23 @@ export default function HistorialCertificadosPage() {
           <Input placeholder="Buscar por código..." value={busqueda} onChange={e => setBusqueda(e.target.value)} className="pl-9" />
         </div>
         <FilterPopover
-          configs={filterConfigs}
-          filters={filters}
-          onFiltersChange={setFilters}
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          filters={filterConfigs}
+          values={filters}
+          onChange={(key, value) => setFilters(prev => ({ ...prev, [key]: value }))}
+          onClear={() => setFilters({ estado: "todos", excepcional: "todos" })}
+          trigger={
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filtros
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          }
         />
       </div>
 

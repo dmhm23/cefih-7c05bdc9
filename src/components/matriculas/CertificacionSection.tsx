@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Award, Download, ShieldAlert, ShieldCheck, FileWarning, Loader2 } from "lucide-react";
+import { Award, Download, ShieldAlert, ShieldCheck, FileWarning, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditableField } from "@/components/shared/EditableField";
@@ -11,12 +11,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useCertificadosByMatricula, useGenerarCertificado } from "@/hooks/useCertificados";
+import { useCertificadosByMatricula, useGenerarCertificado, useRevocarCertificado, useReemitirCertificado } from "@/hooks/useCertificados";
 import { usePlantillaActiva } from "@/hooks/usePlantillas";
-import { useSolicitarExcepcion } from "@/hooks/useExcepcionesCertificado";
+import { useSolicitarExcepcion, useExcepcionesByMatricula } from "@/hooks/useExcepcionesCertificado";
 import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens, generarCodigoCertificado } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { useToast } from "@/hooks/use-toast";
+import { ExcepcionesPanel } from "./ExcepcionesPanel";
+import { RevocacionDialog } from "./RevocacionDialog";
+import { HistorialVersiones } from "./HistorialVersiones";
 import type { Matricula } from "@/types/matricula";
 import type { Persona } from "@/types/persona";
 import type { Curso } from "@/types/curso";
@@ -43,25 +46,33 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const { toast } = useToast();
   const [excepcionOpen, setExcepcionOpen] = useState(false);
   const [excepcionMotivo, setExcepcionMotivo] = useState("");
+  const [revocacionOpen, setRevocacionOpen] = useState(false);
   const [generando, setGenerando] = useState(false);
+  const [reemitiendo, setReemitiendo] = useState(false);
 
   const { data: certificados = [] } = useCertificadosByMatricula(matricula.id);
+  const { data: excepciones = [] } = useExcepcionesByMatricula(matricula.id);
   const { data: plantillaActiva } = usePlantillaActiva();
   const generarCertificado = useGenerarCertificado();
+  const revocarCertificado = useRevocarCertificado();
+  const reemitirCertificado = useReemitirCertificado();
   const solicitarExcepcion = useSolicitarExcepcion();
 
   const certificadoExistente = certificados.find(c => c.estado === 'generado');
   const certificadoRevocado = certificados.find(c => c.estado === 'revocado');
   const { elegible, motivos } = evaluarElegibilidad(matricula, formatosDinamicos);
+  const tieneExcepcionAprobada = excepciones.some(e => e.estado === 'aprobada');
 
   // Determine display state
   let estadoDisplay: EstadoCertificado;
+  let esExcepcional = false;
   if (certificadoExistente) {
     estadoDisplay = 'generado';
   } else if (certificadoRevocado && !certificadoExistente) {
     estadoDisplay = 'revocado';
-  } else if (elegible) {
+  } else if (elegible || tieneExcepcionAprobada) {
     estadoDisplay = 'elegible';
+    esExcepcional = !elegible && tieneExcepcionAprobada;
   } else {
     estadoDisplay = 'bloqueado';
   }
@@ -69,7 +80,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const config = ESTADO_CONFIG[estadoDisplay];
   const Icon = config.icon;
 
-  const handleGenerar = async () => {
+  const handleGenerar = async (autorizadoExcepcional = false) => {
     if (!persona || !curso) {
       toast({ title: "Datos incompletos", description: "No se encontró persona o curso.", variant: "destructive" });
       return;
@@ -95,6 +106,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         svgFinal,
         snapshotDatos: diccionario,
         codigo,
+        autorizadoExcepcional,
       });
 
       onFieldChange("fechaGeneracionCertificado", new Date().toISOString().split('T')[0]);
@@ -109,6 +121,59 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const handleDescargar = () => {
     if (!certificadoExistente) return;
     descargarCertificadoPdf(certificadoExistente.svgFinal, certificadoExistente.codigo);
+  };
+
+  const handleRevocar = async (motivo: string) => {
+    if (!certificadoExistente) return;
+    try {
+      await revocarCertificado.mutateAsync({
+        id: certificadoExistente.id,
+        revocadoPor: "admin",
+        motivo,
+      });
+      toast({ title: "Certificado revocado", description: `El certificado ${certificadoExistente.codigo} ha sido revocado.` });
+      setRevocacionOpen(false);
+    } catch {
+      toast({ title: "Error al revocar certificado", variant: "destructive" });
+    }
+  };
+
+  const handleReemitir = async () => {
+    if (!persona || !curso || !plantillaActiva) {
+      toast({ title: "Datos incompletos", variant: "destructive" });
+      return;
+    }
+
+    // Find the latest revoked certificate to base the reemission on
+    const ultimoRevocado = [...certificados]
+      .filter(c => c.estado === 'revocado')
+      .sort((a, b) => b.version - a.version)[0];
+
+    if (!ultimoRevocado) return;
+
+    setReemitiendo(true);
+    try {
+      const newVersion = ultimoRevocado.version + 1;
+      const codigoBase = ultimoRevocado.codigo.replace(/-v\d+$/, '');
+      const codigo = `${codigoBase}-v${newVersion}`;
+      const diccionario = construirDiccionarioTokens(persona, curso, matricula);
+      diccionario.codigoCertificado = codigo;
+      const svgFinal = reemplazarTokens(plantillaActiva.svgRaw, diccionario);
+
+      await reemitirCertificado.mutateAsync({
+        certificadoAnteriorId: ultimoRevocado.id,
+        svgFinal,
+        snapshotDatos: diccionario,
+        codigo,
+      });
+
+      onFieldChange("fechaGeneracionCertificado", new Date().toISOString().split('T')[0]);
+      toast({ title: "Certificado reemitido", description: `Nueva versión: ${codigo}` });
+    } catch {
+      toast({ title: "Error al reemitir certificado", variant: "destructive" });
+    } finally {
+      setReemitiendo(false);
+    }
   };
 
   const handleSolicitarExcepcion = async () => {
@@ -136,10 +201,17 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Certificación
         </h3>
-        <Badge className={config.className}>
-          <Icon className="h-3 w-3 mr-1" />
-          {config.label}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          {(certificadoExistente?.autorizadoExcepcional || esExcepcional) && (
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+              Excepcional
+            </Badge>
+          )}
+          <Badge className={config.className}>
+            <Icon className="h-3 w-3 mr-1" />
+            {config.label}
+          </Badge>
+        </div>
       </div>
 
       {/* Motivos de bloqueo */}
@@ -155,15 +227,27 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
       {/* Acciones */}
       <div className="flex flex-wrap gap-2">
         {estadoDisplay === 'elegible' && (
-          <Button size="sm" onClick={handleGenerar} disabled={generando}>
+          <Button size="sm" onClick={() => handleGenerar(esExcepcional)} disabled={generando}>
             {generando ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Award className="h-4 w-4 mr-1" />}
             Generar Certificado
           </Button>
         )}
         {certificadoExistente && (
-          <Button size="sm" variant="outline" onClick={handleDescargar}>
-            <Download className="h-4 w-4 mr-1" />
-            Descargar PDF
+          <>
+            <Button size="sm" variant="outline" onClick={handleDescargar}>
+              <Download className="h-4 w-4 mr-1" />
+              Descargar PDF
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => setRevocacionOpen(true)}>
+              <FileWarning className="h-4 w-4 mr-1" />
+              Revocar
+            </Button>
+          </>
+        )}
+        {estadoDisplay === 'revocado' && (
+          <Button size="sm" onClick={handleReemitir} disabled={reemitiendo}>
+            {reemitiendo ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+            Reemitir Certificado
           </Button>
         )}
         {estadoDisplay === 'bloqueado' && (
@@ -198,7 +282,13 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         />
       </div>
 
-      {/* Dialog excepción */}
+      {/* Excepciones panel */}
+      <ExcepcionesPanel matriculaId={matricula.id} />
+
+      {/* Historial de versiones */}
+      <HistorialVersiones matriculaId={matricula.id} />
+
+      {/* Dialog solicitar excepción */}
       <Dialog open={excepcionOpen} onOpenChange={setExcepcionOpen}>
         <DialogContent>
           <DialogHeader>
@@ -223,6 +313,17 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog revocación */}
+      {certificadoExistente && (
+        <RevocacionDialog
+          open={revocacionOpen}
+          onOpenChange={setRevocacionOpen}
+          codigoCertificado={certificadoExistente.codigo}
+          onConfirm={handleRevocar}
+          isPending={revocarCertificado.isPending}
+        />
+      )}
     </div>
   );
 }

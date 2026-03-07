@@ -1,4 +1,4 @@
-import { FileText, Plus, Search, Settings2 } from "lucide-react";
+import { FileText, Pencil, Plus, Search, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";

@@ -47,6 +47,7 @@ import PortalAdminPage from "./pages/portal-admin/PortalAdminPage";
 // Certificación (Módulo H)
 import HistorialCertificadosPage from "./pages/certificacion/HistorialCertificadosPage";
 import PlantillasPage from "./pages/certificacion/PlantillasPage";
+import PlantillaEditorPage from "./pages/certificacion/PlantillaEditorPage";
 import TiposCertificadoPage from "./pages/certificacion/TiposCertificadoPage";
 
 // Portal Estudiante (público)
@@ -115,6 +116,7 @@ const App = () => (
           {/* Módulo H - Certificación */}
           <Route path="/certificacion/historial" element={<WithLayout><HistorialCertificadosPage /></WithLayout>} />
           <Route path="/certificacion/plantillas" element={<WithLayout><PlantillasPage /></WithLayout>} />
+          <Route path="/certificacion/plantillas/:id/editar" element={<PlantillaEditorPage />} />
           <Route path="/certificacion/tipos" element={<WithLayout><TiposCertificadoPage /></WithLayout>} />
 
           {/* Portal Estudiante (público, mobile-first) */}

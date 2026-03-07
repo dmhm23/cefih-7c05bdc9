@@ -29,3 +29,11 @@ export function useUpdatePlantilla() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['plantillas'] }),
   });
 }
+
+export function useRollbackPlantilla() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, version }: { id: string; version: number }) => plantillaService.rollback(id, version),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['plantillas'] }),
+  });
+}

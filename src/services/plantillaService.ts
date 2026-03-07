@@ -48,6 +48,26 @@ export const plantillaService = {
     return simulateApiCall(updated);
   },
 
+  async rollback(id: string, version: number): Promise<PlantillaCertificado> {
+    const idx = mockPlantillas.findIndex(p => p.id === id);
+    if (idx === -1) throw new Error('Plantilla no encontrada');
+    const plantilla = mockPlantillas[idx];
+    const entry = plantilla.historial.find(h => h.version === version);
+    if (!entry) throw new Error('Versión no encontrada');
+    const now = new Date().toISOString();
+    const newVersion = (plantilla.version || 0) + 1;
+    const updated: PlantillaCertificado = {
+      ...plantilla,
+      svgRaw: entry.svgRaw,
+      tokensDetectados: plantillaService.detectarTokens(entry.svgRaw),
+      version: newVersion,
+      historial: [...plantilla.historial, { version: newVersion, svgRaw: entry.svgRaw, fecha: now, modificadoPor: 'admin' }],
+      updatedAt: now,
+    };
+    mockPlantillas[idx] = updated;
+    return simulateApiCall(updated);
+  },
+
   detectarTokens(svg: string): string[] {
     const matches = svg.match(/\{\{(.*?)\}\}/g);
     if (!matches) return [];

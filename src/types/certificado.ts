@@ -73,6 +73,14 @@ export interface SolicitudExcepcionCertificado {
   fechaResolucion?: string;
 }
 
+export interface SvgEditableNode {
+  id: string;
+  type: 'text' | 'group';
+  content?: string;
+  attrs: Record<string, string>;
+  visible: boolean;
+}
+
 export type CertificadoFormData = Omit<CertificadoGenerado, 'id' | 'createdAt' | 'updatedAt'>;
 export type PlantillaFormData = Omit<PlantillaCertificado, 'id' | 'createdAt' | 'updatedAt' | 'historial' | 'tokensDetectados'>;
 export type TipoCertificadoFormData = Omit<TipoCertificado, 'id' | 'createdAt' | 'updatedAt'>;

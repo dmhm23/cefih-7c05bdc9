@@ -81,6 +81,12 @@ export interface SvgEditableNode {
   visible: boolean;
 }
 
+export interface PlantillaTagMapping {
+  elementId: string;
+  currentContent: string;
+  mappedToken: string | null;
+}
+
 export type CertificadoFormData = Omit<CertificadoGenerado, 'id' | 'createdAt' | 'updatedAt'>;
 export type PlantillaFormData = Omit<PlantillaCertificado, 'id' | 'createdAt' | 'updatedAt' | 'historial' | 'tokensDetectados'>;
 export type TipoCertificadoFormData = Omit<TipoCertificado, 'id' | 'createdAt' | 'updatedAt'>;

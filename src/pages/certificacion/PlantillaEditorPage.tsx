@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft, Link2, FileText } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -8,72 +8,68 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { usePlantilla, useUpdatePlantilla, useRollbackPlantilla } from "@/hooks/usePlantillas";
-import type { SvgEditableNode } from "@/types/certificado";
-import SvgNodeInspector from "@/components/certificacion/SvgNodeInspector";
-import PlaceholderSelector from "@/components/certificacion/PlaceholderSelector";
+import type { PlantillaTagMapping } from "@/types/certificado";
 import PlantillaTestDialog from "@/components/certificacion/PlantillaTestDialog";
 import PlantillaVersionHistory from "@/components/certificacion/PlantillaVersionHistory";
 
-// ---- SVG Parsing helpers ----
+// ---- Token catalog ----
 
-function parseSvgNodes(svgRaw: string): SvgEditableNode[] {
+const TOKEN_CATEGORIES: Record<string, { label: string; tokens: string[] }> = {
+  persona: {
+    label: 'Persona',
+    tokens: ['nombreCompleto', 'nombres', 'apellidos', 'tipoDocumento', 'numeroDocumento'],
+  },
+  curso: {
+    label: 'Curso',
+    tokens: ['numeroCurso', 'tipoFormacion', 'fechaInicio', 'fechaFin', 'duracionDias', 'horasTotales'],
+  },
+  personal: {
+    label: 'Personal',
+    tokens: ['entrenadorNombre', 'supervisorNombre'],
+  },
+  empresa: {
+    label: 'Empresa',
+    tokens: ['empresaNombre', 'empresaNit', 'empresaCargo'],
+  },
+  certificado: {
+    label: 'Certificado',
+    tokens: ['codigoCertificado', 'fechaGeneracion'],
+  },
+};
+
+// ---- SVG Parsing ----
+
+function extractTextTags(svgRaw: string): PlantillaTagMapping[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgRaw, 'image/svg+xml');
-  const nodes: SvgEditableNode[] = [];
+  const mappings: PlantillaTagMapping[] = [];
 
   doc.querySelectorAll('text[id]').forEach((el) => {
-    nodes.push({
-      id: el.getAttribute('id')!,
-      type: 'text',
-      content: el.textContent || '',
-      attrs: {
-        fontSize: el.getAttribute('font-size') || '',
-        fontWeight: el.getAttribute('font-weight') || 'normal',
-        fill: el.getAttribute('fill') || '#000000',
-        textAnchor: el.getAttribute('text-anchor') || 'start',
-        x: el.getAttribute('x') || '0',
-        y: el.getAttribute('y') || '0',
-      },
-      visible: true,
+    const content = el.textContent || '';
+    const tokenMatch = content.match(/^\{\{(\w+)\}\}$/);
+    mappings.push({
+      elementId: el.getAttribute('id')!,
+      currentContent: content,
+      mappedToken: tokenMatch ? tokenMatch[1] : null,
     });
   });
 
-  doc.querySelectorAll('g[id]').forEach((el) => {
-    nodes.push({
-      id: el.getAttribute('id')!,
-      type: 'group',
-      attrs: {},
-      visible: el.getAttribute('display') !== 'none',
-    });
-  });
-
-  return nodes;
+  return mappings;
 }
 
-function applyNodesToSvg(svgRaw: string, nodes: SvgEditableNode[]): string {
+function applyMappingsToSvg(svgRaw: string, mappings: PlantillaTagMapping[]): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgRaw, 'image/svg+xml');
 
-  nodes.forEach((node) => {
-    const el = doc.getElementById(node.id);
+  mappings.forEach((m) => {
+    const el = doc.getElementById(m.elementId);
     if (!el) return;
-
-    if (node.type === 'text') {
-      el.textContent = node.content || '';
-      if (node.attrs.fontSize) el.setAttribute('font-size', node.attrs.fontSize);
-      if (node.attrs.fontWeight) el.setAttribute('font-weight', node.attrs.fontWeight);
-      if (node.attrs.fill) el.setAttribute('fill', node.attrs.fill);
-      if (node.attrs.textAnchor) el.setAttribute('text-anchor', node.attrs.textAnchor);
-      if (node.attrs.x) el.setAttribute('x', node.attrs.x);
-      if (node.attrs.y) el.setAttribute('y', node.attrs.y);
-    }
-
-    if (node.type === 'group') {
-      if (!node.visible) el.setAttribute('display', 'none');
-      else el.removeAttribute('display');
-    }
+    el.textContent = m.mappedToken ? `{{${m.mappedToken}}}` : m.currentContent;
   });
 
   return new XMLSerializer().serializeToString(doc);
@@ -90,64 +86,58 @@ export default function PlantillaEditorPage() {
   const rollbackMutation = useRollbackPlantilla();
 
   const [svgContent, setSvgContent] = useState('');
-  const [editableNodes, setEditableNodes] = useState<SvgEditableNode[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [mappings, setMappings] = useState<PlantillaTagMapping[]>([]);
   const [isDirty, setIsDirty] = useState(false);
-  const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Load plantilla
   useEffect(() => {
     if (plantilla) {
       setSvgContent(plantilla.svgRaw);
-      setEditableNodes(parseSvgNodes(plantilla.svgRaw));
+      setMappings(extractTextTags(plantilla.svgRaw));
       setIsDirty(false);
-      setSelectedNodeId(null);
     }
   }, [plantilla]);
 
-  const selectedNode = useMemo(
-    () => editableNodes.find((n) => n.id === selectedNodeId) || null,
-    [editableNodes, selectedNodeId]
-  );
+  const renderedSvg = useMemo(() => applyMappingsToSvg(svgContent, mappings), [svgContent, mappings]);
 
-  const renderedSvg = useMemo(() => applyNodesToSvg(svgContent, editableNodes), [svgContent, editableNodes]);
+  const linkedCount = useMemo(() => mappings.filter(m => m.mappedToken).length, [mappings]);
 
-  const handleNodeChange = useCallback((updated: SvgEditableNode) => {
-    setEditableNodes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
+  const handleTokenChange = useCallback((elementId: string, token: string) => {
+    setMappings(prev => prev.map(m => {
+      if (m.elementId !== elementId) return m;
+      if (token === '__none__') {
+        return { ...m, mappedToken: null };
+      }
+      return { ...m, mappedToken: token, currentContent: `{{${token}}}` };
+    }));
     setIsDirty(true);
   }, []);
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const closest = target.closest('[id]') as HTMLElement | null;
-    if (closest) {
-      const nodeId = closest.getAttribute('id');
-      if (nodeId && editableNodes.some((n) => n.id === nodeId)) {
-        setSelectedNodeId(nodeId);
-        return;
-      }
-    }
-    setSelectedNodeId(null);
-  }, [editableNodes]);
-
-  const handleInsertPlaceholder = useCallback((token: string) => {
-    if (!selectedNodeId) return;
-    const node = editableNodes.find((n) => n.id === selectedNodeId);
-    if (!node || node.type !== 'text') return;
-    handleNodeChange({ ...node, content: (node.content || '') + `{{${token}}}` });
-  }, [selectedNodeId, editableNodes, handleNodeChange]);
+  const handleContentChange = useCallback((elementId: string, content: string) => {
+    setMappings(prev => prev.map(m =>
+      m.elementId === elementId ? { ...m, currentContent: content, mappedToken: null } : m
+    ));
+    setIsDirty(true);
+  }, []);
 
   const handleSave = useCallback(async () => {
     if (!id) return;
-    const finalSvg = applyNodesToSvg(svgContent, editableNodes);
+    const finalSvg = applyMappingsToSvg(svgContent, mappings);
     try {
-      await updateMutation.mutateAsync({ id, data: { svgRaw: finalSvg, nombre: plantilla?.nombre || '', activa: plantilla?.activa ?? false, version: plantilla?.version || 1 } });
+      await updateMutation.mutateAsync({
+        id,
+        data: {
+          svgRaw: finalSvg,
+          nombre: plantilla?.nombre || '',
+          activa: plantilla?.activa ?? false,
+          version: plantilla?.version || 1,
+        },
+      });
       toast({ title: 'Plantilla guardada', description: 'Se ha incrementado la versión.' });
       setIsDirty(false);
     } catch {
       toast({ title: 'Error', description: 'No se pudo guardar la plantilla.', variant: 'destructive' });
     }
-  }, [id, svgContent, editableNodes, updateMutation, plantilla, toast]);
+  }, [id, svgContent, mappings, updateMutation, plantilla, toast]);
 
   const handleRollback = useCallback(async (version: number) => {
     if (!id) return;
@@ -158,40 +148,6 @@ export default function PlantillaEditorPage() {
       toast({ title: 'Error', description: 'No se pudo restaurar la versión.', variant: 'destructive' });
     }
   }, [id, rollbackMutation, toast]);
-
-  // Drag for text nodes
-  const dragState = useRef<{ nodeId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName.toLowerCase() !== 'text') return;
-    const nodeId = target.getAttribute('id');
-    if (!nodeId) return;
-    const node = editableNodes.find((n) => n.id === nodeId && n.type === 'text');
-    if (!node) return;
-    dragState.current = { nodeId, startX: e.clientX, startY: e.clientY, origX: parseFloat(node.attrs.x) || 0, origY: parseFloat(node.attrs.y) || 0 };
-    e.preventDefault();
-  }, [editableNodes]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragState.current || !canvasRef.current) return;
-    const svgEl = canvasRef.current.querySelector('svg');
-    if (!svgEl) return;
-    const rect = svgEl.getBoundingClientRect();
-    const scaleX = (svgEl.viewBox?.baseVal?.width || rect.width) / rect.width;
-    const scaleY = (svgEl.viewBox?.baseVal?.height || rect.height) / rect.height;
-    const dx = (e.clientX - dragState.current.startX) * scaleX;
-    const dy = (e.clientY - dragState.current.startY) * scaleY;
-    const newX = String(Math.round(dragState.current.origX + dx));
-    const newY = String(Math.round(dragState.current.origY + dy));
-    setEditableNodes((prev) =>
-      prev.map((n) => n.id === dragState.current!.nodeId ? { ...n, attrs: { ...n.attrs, x: newX, y: newY } } : n)
-    );
-    setIsDirty(true);
-    setSelectedNodeId(dragState.current.nodeId);
-  }, []);
-
-  const handleMouseUp = useCallback(() => { dragState.current = null; }, []);
 
   if (isLoading) {
     return (
@@ -219,9 +175,15 @@ export default function PlantillaEditorPage() {
           </Button>
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem><BreadcrumbLink asChild><Link to="/certificacion/plantillas">Plantillas</Link></BreadcrumbLink></BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/certificacion/plantillas">Plantillas</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
               <BreadcrumbSeparator />
-              <BreadcrumbItem><BreadcrumbPage>{plantilla.nombre}</BreadcrumbPage></BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{plantilla.nombre}</BreadcrumbPage>
+              </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
           <Badge variant={isDirty ? 'secondary' : 'default'} className="text-xs">
@@ -236,70 +198,91 @@ export default function PlantillaEditorPage() {
         </div>
       </header>
 
-      {/* Editor body */}
+      {/* Body */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-        {/* Canvas */}
-        <ResizablePanel defaultSize={70} minSize={50}>
-          <div
-            ref={canvasRef}
-            className="h-full overflow-auto bg-muted/30 flex items-start justify-center p-8"
-            onClick={handleCanvasClick}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          >
+        {/* SVG Preview */}
+        <ResizablePanel defaultSize={60} minSize={40}>
+          <div className="h-full overflow-auto bg-muted/30 flex items-start justify-center p-8">
             <div
               className="bg-background shadow-lg rounded-lg border max-w-[900px] w-full"
               dangerouslySetInnerHTML={{ __html: renderedSvg }}
-              style={{ cursor: dragState.current ? 'grabbing' : 'default' }}
             />
           </div>
         </ResizablePanel>
 
         <ResizableHandle withHandle />
 
-        {/* Right Panel */}
-        <ResizablePanel defaultSize={30} minSize={22}>
+        {/* Mapping Panel */}
+        <ResizablePanel defaultSize={40} minSize={28}>
           <ScrollArea className="h-full">
             <div className="p-4 space-y-6">
-              {/* Editable nodes list */}
-              <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-foreground">Elementos editables</h3>
-                <div className="space-y-1">
-                  {editableNodes.map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => setSelectedNodeId(n.id)}
-                      className={`w-full text-left text-xs px-2 py-1.5 rounded-md transition-colors ${
-                        n.id === selectedNodeId
-                          ? 'bg-primary/10 text-primary font-medium'
-                          : 'hover:bg-muted text-foreground'
-                      } ${!n.visible ? 'opacity-40 line-through' : ''}`}
-                    >
-                      <span className="font-mono">{n.type === 'text' ? '¶' : '▣'}</span>{' '}
-                      {n.id}
-                    </button>
-                  ))}
+              {/* Summary */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Mapeo de etiquetas</h3>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {mappings.length} etiquetas detectadas · {linkedCount} vinculadas
+                </p>
               </div>
 
-              <Separator />
-
-              {/* Inspector */}
-              {selectedNode ? (
-                <SvgNodeInspector node={selectedNode} onChange={handleNodeChange} />
+              {/* Mapping table */}
+              {mappings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <FileText className="h-10 w-10 mb-3 opacity-30" />
+                  <p className="text-sm font-medium">Sin etiquetas</p>
+                  <p className="text-xs">El SVG no contiene elementos &lt;text&gt; con id.</p>
+                </div>
               ) : (
-                <p className="text-xs text-muted-foreground">Selecciona un elemento del canvas o la lista para editarlo.</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">ID</TableHead>
+                      <TableHead className="text-xs">Contenido</TableHead>
+                      <TableHead className="text-xs">Campo vinculado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mappings.map((m) => (
+                      <TableRow key={m.elementId}>
+                        <TableCell className="font-mono text-xs py-2">{m.elementId}</TableCell>
+                        <TableCell className="py-2">
+                          <Input
+                            value={m.mappedToken ? `{{${m.mappedToken}}}` : m.currentContent}
+                            onChange={(e) => handleContentChange(m.elementId, e.target.value)}
+                            disabled={!!m.mappedToken}
+                            className="h-8 text-xs"
+                          />
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <Select
+                            value={m.mappedToken || '__none__'}
+                            onValueChange={(v) => handleTokenChange(m.elementId, v)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Texto fijo" />
+                            </SelectTrigger>
+                            <SelectContent side="bottom">
+                              <SelectItem value="__none__">Texto fijo</SelectItem>
+                              {Object.entries(TOKEN_CATEGORIES).map(([key, cat]) => (
+                                <SelectGroup key={key}>
+                                  <SelectLabel className="text-xs">{cat.label}</SelectLabel>
+                                  {cat.tokens.map((t) => (
+                                    <SelectItem key={t} value={t} className="text-xs">
+                                      {`{{${t}}}`}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-
-              <Separator />
-
-              {/* Placeholders */}
-              <PlaceholderSelector
-                onInsert={handleInsertPlaceholder}
-                disabled={!selectedNode || selectedNode.type !== 'text'}
-              />
 
               <Separator />
 

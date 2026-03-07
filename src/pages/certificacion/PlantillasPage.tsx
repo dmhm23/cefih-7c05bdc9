@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePlantillas } from "@/hooks/usePlantillas";
@@ -11,6 +12,7 @@ import { TIPO_FORMACION_LABELS } from "@/types/curso";
 import { useState } from "react";
 
 export default function PlantillasPage() {
+  const navigate = useNavigate();
   const { data: plantillas, isLoading: loadingPlantillas } = usePlantillas();
   const { data: tipos, isLoading: loadingTipos } = useTiposCertificado();
   const [busqueda, setBusqueda] = useState("");
@@ -75,6 +77,7 @@ export default function PlantillasPage() {
                   <TableHead>Estado</TableHead>
                   <TableHead>Tokens</TableHead>
                   <TableHead>Versión</TableHead>
+                  <TableHead className="w-16"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -86,6 +89,11 @@ export default function PlantillasPage() {
                     </TableCell>
                     <TableCell>{p.tokensDetectados.length}</TableCell>
                     <TableCell>v{p.version}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => navigate(`/certificacion/plantillas/${p.id}/editar`)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

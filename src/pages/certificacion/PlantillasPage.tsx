@@ -1,4 +1,4 @@
-import { FileText, Pencil, Plus, Search, Settings2 } from "lucide-react";
+import { FileText, Pencil, Plus, Search, Settings2, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -6,16 +6,25 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePlantillas } from "@/hooks/usePlantillas";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { usePlantillas, useCreatePlantilla } from "@/hooks/usePlantillas";
 import { useTiposCertificado } from "@/hooks/useTiposCertificado";
 import { TIPO_FORMACION_LABELS } from "@/types/curso";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PlantillasPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { data: plantillas, isLoading: loadingPlantillas } = usePlantillas();
   const { data: tipos, isLoading: loadingTipos } = useTiposCertificado();
+  const createMutation = useCreatePlantilla();
   const [busqueda, setBusqueda] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [svgFile, setSvgFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const filteredPlantillas = (plantillas ?? []).filter(p =>
     !busqueda || p.nombre.toLowerCase().includes(busqueda.toLowerCase())
@@ -24,6 +33,26 @@ export default function PlantillasPage() {
   const filteredTipos = (tipos ?? []).filter(t =>
     !busqueda || t.nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
+
+  const handleCreate = async () => {
+    if (!svgFile || !nombre.trim()) return;
+    try {
+      const svgRaw = await svgFile.text();
+      const result = await createMutation.mutateAsync({
+        nombre: nombre.trim(),
+        svgRaw,
+        activa: false,
+        version: 1,
+      });
+      toast({ title: 'Plantilla creada', description: `"${result.nombre}" lista para mapear etiquetas.` });
+      setDialogOpen(false);
+      setNombre("");
+      setSvgFile(null);
+      navigate(`/certificacion/plantillas/${result.id}/editar`);
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo crear la plantilla.', variant: 'destructive' });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -35,7 +64,7 @@ export default function PlantillasPage() {
             <p className="text-sm text-muted-foreground">Gestión de plantillas SVG y tipos de certificado</p>
           </div>
         </div>
-        <Button disabled>
+        <Button onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Nueva Plantilla
         </Button>
@@ -152,6 +181,50 @@ export default function PlantillasPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Dialog: Nueva Plantilla */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nueva Plantilla SVG</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="nombre-plantilla">Nombre</Label>
+              <Input
+                id="nombre-plantilla"
+                placeholder="Ej: Certificado Trabajo en Alturas"
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Archivo SVG</Label>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".svg"
+                className="hidden"
+                onChange={e => setSvgFile(e.target.files?.[0] || null)}
+              />
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                {svgFile ? svgFile.name : 'Seleccionar archivo SVG'}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreate} disabled={!nombre.trim() || !svgFile || createMutation.isPending}>
+              Crear y mapear etiquetas
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1353,9 +1353,9 @@ Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
 
 ---
 
-## 11. Componentes Compartidos
+## 12. Componentes Compartidos
 
-### 11.1 DataTable
+### 12.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.

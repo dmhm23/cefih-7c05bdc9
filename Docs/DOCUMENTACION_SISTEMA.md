@@ -1852,7 +1852,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
                                         └─────────────────────┘
 ```
 
-### 14.2 Relaciones
+### 15.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|

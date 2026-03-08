@@ -1881,7 +1881,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 
 ---
 
-## 15. Catálogos y Datos de Referencia
+## 16. Catálogos y Datos de Referencia
 
 Definidos en `src/data/formOptions.ts`:
 

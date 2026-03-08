@@ -227,7 +227,6 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           cursoId: curso.id,
           personaId: m.personaId,
           plantillaId: plantilla.id,
-          tipoCertificadoId: "",
           svgFinal,
           snapshotDatos: dict as unknown as Record<string, unknown>,
           codigo,

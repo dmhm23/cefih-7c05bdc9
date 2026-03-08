@@ -30,4 +30,11 @@ export const tipoCertificadoService = {
     mockTiposCertificado[idx] = { ...mockTiposCertificado[idx], ...data, updatedAt: new Date().toISOString() };
     return simulateApiCall(mockTiposCertificado[idx]);
   },
+
+  async delete(id: string): Promise<void> {
+    const idx = mockTiposCertificado.findIndex(t => t.id === id);
+    if (idx === -1) throw new Error('Tipo de certificado no encontrado');
+    mockTiposCertificado.splice(idx, 1);
+    return simulateApiCall(undefined as void);
+  },
 };

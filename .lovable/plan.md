@@ -1,41 +1,25 @@
 
 
-## Plan: CRUD de Tipos de Certificado en pestaña de Plantillas + eliminar submenú
+## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
 
-### Cambios
+### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
 
-#### 1. `src/pages/certificacion/PlantillasPage.tsx` — Agregar CRUD de Tipos
+Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
 
-En la pestaña "Tipos de Certificado" existente:
+**Cambios concretos:**
 
-- Agregar botón **"Nuevo Tipo"** al lado del botón "Nueva Plantilla" (visible solo cuando la pestaña activa es "tipos")
-- Agregar botones **Editar** y **Eliminar** por fila en la tabla de tipos
-- Crear un **Dialog** para crear/editar tipo de certificado con campos:
-  - Nombre (Input)
-  - Tipo de Formación (Select con `TIPO_FORMACION_LABELS`)
-  - Plantilla vinculada (Select con plantillas disponibles)
-  - Regla de código (Input)
-  - Switches: Requiere Pago, Requiere Documentos, Requiere Formatos, Incluye Empresa, Incluye Firmas
-- Usar `useCreateTipoCertificado` y `useUpdateTipoCertificado` existentes
-- Agregar `useDeleteTipoCertificado` (nuevo)
+1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
 
-#### 2. `src/services/tipoCertificadoService.ts` — Agregar `delete`
+2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
 
-Agregar método `delete(id)` que elimina del array mock.
+3. **FilterConfig**: Definir array de configs:
+   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
+   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
 
-#### 3. `src/hooks/useTiposCertificado.ts` — Agregar `useDeleteTipoCertificado`
+4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
 
-Nueva mutation que llama `tipoCertificadoService.delete` e invalida query.
+5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
 
-#### 4. `src/components/layout/AppSidebar.tsx` — Eliminar submenú "Tipos de Certificado"
-
-Quitar `{ title: "Tipos de Certificado", url: "/certificacion/tipos", icon: SlidersHorizontal }` del array `certificacionItems`.
-
-#### 5. `src/App.tsx` — Eliminar ruta `/certificacion/tipos`
-
-Quitar la ruta y el import de `TiposCertificadoPage`.
-
-#### 6. `src/pages/certificacion/TiposCertificadoPage.tsx` — Eliminar archivo
-
-Ya no se necesita, toda la funcionalidad queda en PlantillasPage.
+### Resultado
+El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
 

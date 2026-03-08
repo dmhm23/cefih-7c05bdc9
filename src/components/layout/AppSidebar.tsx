@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, SlidersHorizontal } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -32,7 +32,6 @@ const menuItems = [
 const certificacionItems = [
   { title: "Historial", url: "/certificacion/historial", icon: History },
   { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage },
-  { title: "Tipos de Certificado", url: "/certificacion/tipos", icon: SlidersHorizontal },
 ];
 
 export function AppSidebar() {

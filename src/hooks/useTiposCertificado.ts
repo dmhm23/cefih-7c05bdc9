@@ -30,3 +30,11 @@ export function useUpdateTipoCertificado() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tipos-certificado'] }),
   });
 }
+
+export function useDeleteTipoCertificado() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tipoCertificadoService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tipos-certificado'] }),
+  });
+}

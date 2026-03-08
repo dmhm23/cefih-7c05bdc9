@@ -1864,7 +1864,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 14.3 Interacciones entre Módulos
+### 15.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.
@@ -1877,6 +1877,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 9. **Dashboard** → Consume datos de los tres módulos principales para calcular métricas globales.
 10. **Portal Estudiante (Admin)** → Consume `portalDocumentosCatalogo` para configuración y `mockMatriculas` para monitoreo.
 11. **Portal Estudiante (Público)** → Resuelve matrícula vigente cruzando personas, matrículas y cursos. Consume catálogo de documentos filtrado por nivel de formación del curso.
+12. **Certificación** → Consume plantillas SVG, tipos de certificado, y datos de matrícula/persona/curso para generar certificados. Las excepciones cruzan con matrículas para autorización especial.
 
 ---
 

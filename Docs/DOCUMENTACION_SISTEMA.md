@@ -39,7 +39,7 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca siete módulos principales:
+El sistema abarca ocho módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
@@ -50,6 +50,7 @@ El sistema abarca siete módulos principales:
 | **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
 | **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
+| **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 

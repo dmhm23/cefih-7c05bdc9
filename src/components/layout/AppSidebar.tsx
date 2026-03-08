@@ -32,7 +32,6 @@ const menuItems = [
 const certificacionItems = [
   { title: "Historial", url: "/certificacion/historial", icon: History },
   { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage },
-  { title: "Tipos de Certificado", url: "/certificacion/tipos", icon: SlidersHorizontal },
 ];
 
 export function AppSidebar() {

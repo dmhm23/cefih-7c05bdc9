@@ -1906,9 +1906,9 @@ Definidos en `src/data/formOptions.ts`:
 
 ---
 
-## 16. Auditoría y Trazabilidad
+## 17. Auditoría y Trazabilidad
 
-### 16.1 Entidad: `AuditLog`
+### 17.1 Entidad: `AuditLog`
 
 ```typescript
 interface AuditLog {

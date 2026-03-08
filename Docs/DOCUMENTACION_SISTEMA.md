@@ -123,6 +123,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 src/
 ├── components/
 │   ├── layout/          # MainLayout, AppSidebar
+│   ├── certificacion/   # Componentes de certificación (PlantillaTestDialog, PlantillaVersionHistory)
 │   ├── cursos/          # Componentes específicos de cursos
 │   ├── estudiante/      # Componentes del portal estudiante (QuizReviewCard)
 │   ├── formatos/        # Editor y preview de formatos de formación
@@ -138,11 +139,13 @@ src/
 │   └── PortalEstudianteContext.tsx  # Sesión del portal estudiante
 ├── data/
 │   ├── mockData.ts      # Datos iniciales en memoria
+│   ├── mockCertificados.ts  # Datos mock de certificación
 │   ├── formOptions.ts   # Catálogos para selectores
 │   ├── portalAdminConfig.ts  # Catálogo de documentos del portal
 │   └── portalEstudianteConfig.ts  # Configuración del portal público
 ├── hooks/               # Custom hooks (React Query)
 ├── pages/               # Páginas por módulo
+│   ├── certificacion/   # Páginas de certificación
 │   ├── cursos/
 │   ├── estudiante/      # Páginas del portal público (AccesoEstudiante, PanelDocumentos, etc.)
 │   ├── formatos/
@@ -153,7 +156,7 @@ src/
 │   └── portal-admin/    # Administración del portal estudiante
 ├── services/            # Capa de servicios (API emulada)
 ├── types/               # Definiciones TypeScript
-└── utils/               # Utilidades (CSV, resolvers)
+└── utils/               # Utilidades (CSV, resolvers, generador de certificados)
 ```
 
 ### 2.4 Enrutamiento

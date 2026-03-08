@@ -9,7 +9,6 @@ export interface CertificadoGenerado {
   cursoId: string;
   personaId: string;
   plantillaId: string;
-  tipoCertificadoId: string;
   codigo: string;
   estado: EstadoCertificado;
   snapshotDatos: Record<string, unknown>;
@@ -31,18 +30,6 @@ export interface PlantillaVersion {
   modificadoPor: string;
 }
 
-export interface PlantillaCertificado {
-  id: string;
-  nombre: string;
-  svgRaw: string;
-  tokensDetectados: string[];
-  activa: boolean;
-  version: number;
-  historial: PlantillaVersion[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ReglaTipoCertificado {
   requierePago: boolean;
   requiereDocumentos: boolean;
@@ -51,13 +38,19 @@ export interface ReglaTipoCertificado {
   incluyeFirmas: boolean;
 }
 
-export interface TipoCertificado {
+export interface PlantillaCertificado {
   id: string;
   nombre: string;
+  svgRaw: string;
+  tokensDetectados: string[];
+  activa: boolean;
+  version: number;
+  historial: PlantillaVersion[];
+  // Campos fusionados desde TipoCertificado
   tipoFormacion: TipoFormacion;
-  plantillaId: string;
+  reglaCodigo: string;
   reglas: ReglaTipoCertificado;
-  reglaCodigo: string; // ej: "{numeroCurso}-{prefijoNivel}-{consecutivoAnual}"
+  nivelesAsignados: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -89,4 +82,3 @@ export interface PlantillaTagMapping {
 
 export type CertificadoFormData = Omit<CertificadoGenerado, 'id' | 'createdAt' | 'updatedAt'>;
 export type PlantillaFormData = Omit<PlantillaCertificado, 'id' | 'createdAt' | 'updatedAt' | 'historial' | 'tokensDetectados'>;
-export type TipoCertificadoFormData = Omit<TipoCertificado, 'id' | 'createdAt' | 'updatedAt'>;

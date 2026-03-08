@@ -34,7 +34,6 @@ export function useGenerarCertificado() {
       cursoId: string;
       personaId: string;
       plantillaId: string;
-      tipoCertificadoId: string;
       svgFinal: string;
       snapshotDatos: Record<string, unknown>;
       codigo: string;

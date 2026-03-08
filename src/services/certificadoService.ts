@@ -37,7 +37,6 @@ export const certificadoService = {
     cursoId: string;
     personaId: string;
     plantillaId: string;
-    tipoCertificadoId: string;
     svgFinal: string;
     snapshotDatos: Record<string, unknown>;
     codigo: string;
@@ -50,7 +49,6 @@ export const certificadoService = {
       cursoId: params.cursoId,
       personaId: params.personaId,
       plantillaId: params.plantillaId,
-      tipoCertificadoId: params.tipoCertificadoId,
       codigo: params.codigo,
       estado: 'generado',
       snapshotDatos: params.snapshotDatos,
@@ -92,7 +90,6 @@ export const certificadoService = {
     const anterior = mockCertificados[anteriorIdx];
     const now = new Date().toISOString();
 
-    // Mark previous as revoked (preserve history)
     mockCertificados[anteriorIdx] = {
       ...anterior,
       estado: 'revocado',
@@ -101,14 +98,12 @@ export const certificadoService = {
       updatedAt: now,
     };
 
-    // Create new version
     const nuevo: CertificadoGenerado = {
       id: uuidv4(),
       matriculaId: anterior.matriculaId,
       cursoId: anterior.cursoId,
       personaId: anterior.personaId,
       plantillaId: anterior.plantillaId,
-      tipoCertificadoId: anterior.tipoCertificadoId,
       codigo: params.codigo,
       estado: 'generado',
       snapshotDatos: params.snapshotDatos,

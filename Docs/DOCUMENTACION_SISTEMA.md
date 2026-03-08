@@ -1678,7 +1678,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useDeleteMatricula()` | Mutation | Invalida matrículas + cursos | Eliminar matrícula |
 | `useUploadDocumento()` | Mutation | Invalida matrícula + matrículas | Subir documento (Drive + updateDocumento) |
 
-### 13.3 Hooks de Cursos (`useCursos.ts`)
+### 14.3 Hooks de Cursos (`useCursos.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

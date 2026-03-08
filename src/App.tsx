@@ -117,7 +117,7 @@ const App = () => (
           <Route path="/certificacion/historial" element={<WithLayout><HistorialCertificadosPage /></WithLayout>} />
           <Route path="/certificacion/plantillas" element={<WithLayout><PlantillasPage /></WithLayout>} />
           <Route path="/certificacion/plantillas/:id/editar" element={<PlantillaEditorPage />} />
-          <Route path="/certificacion/tipos" element={<WithLayout><TiposCertificadoPage /></WithLayout>} />
+          
 
           {/* Portal Estudiante (público, mobile-first) */}
           <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />

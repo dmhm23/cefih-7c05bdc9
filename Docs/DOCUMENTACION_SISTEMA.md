@@ -1659,7 +1659,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdatePersona()` | Mutation | Invalida `['personas']`, `['persona', id]` | Actualizar persona |
 | `useDeletePersona()` | Mutation | Invalida `['personas']` | Eliminar persona |
 
-### 13.2 Hooks de Matrículas (`useMatriculas.ts`)
+### 14.2 Hooks de Matrículas (`useMatriculas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

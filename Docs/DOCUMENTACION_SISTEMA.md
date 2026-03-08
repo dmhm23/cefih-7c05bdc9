@@ -1811,9 +1811,9 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 
 ---
 
-## 14. Relación entre Módulos
+## 15. Relación entre Módulos
 
-### 14.1 Diagrama de Entidades
+### 15.1 Diagrama de Entidades
 
 ```
 ┌──────────┐     1:N     ┌────────────┐     N:1     ┌──────────┐

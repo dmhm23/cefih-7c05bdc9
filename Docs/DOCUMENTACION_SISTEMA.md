@@ -1378,7 +1378,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Footer configurable (para botones de guardar/cancelar)
 - **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
-### 11.3 EditableField
+### 12.3 EditableField
 
 Campo editable inline que soporta:
 - **Tipos**: `text`, `select`, `date`

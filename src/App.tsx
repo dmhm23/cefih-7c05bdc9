@@ -48,7 +48,7 @@ import PortalAdminPage from "./pages/portal-admin/PortalAdminPage";
 import HistorialCertificadosPage from "./pages/certificacion/HistorialCertificadosPage";
 import PlantillasPage from "./pages/certificacion/PlantillasPage";
 import PlantillaEditorPage from "./pages/certificacion/PlantillaEditorPage";
-import TiposCertificadoPage from "./pages/certificacion/TiposCertificadoPage";
+
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";

@@ -1,7 +1,6 @@
 import type {
   CertificadoGenerado,
   PlantillaCertificado,
-  TipoCertificado,
   SolicitudExcepcionCertificado,
 } from '@/types/certificado';
 
@@ -68,9 +67,18 @@ export const mockPlantillas: PlantillaCertificado[] = [
     activa: true,
     version: 1,
     historial: [{ version: 1, svgRaw: MOCK_SVG, fecha: now, modificadoPor: 'admin' }],
+    tipoFormacion: 'jefe_area',
+    reglaCodigo: '{numeroCurso}-{prefijoNivel}-{consecutivoAnual}',
+    reglas: {
+      requierePago: true,
+      requiereDocumentos: true,
+      requiereFormatos: true,
+      incluyeEmpresa: true,
+      incluyeFirmas: true,
+    },
+    nivelesAsignados: [],
     createdAt: now,
     updatedAt: now,
   },
 ];
-export const mockTiposCertificado: TipoCertificado[] = [];
 export const mockExcepcionesCertificado: SolicitudExcepcionCertificado[] = [];

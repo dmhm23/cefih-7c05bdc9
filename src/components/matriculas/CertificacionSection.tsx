@@ -102,7 +102,6 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         cursoId: curso.id,
         personaId: persona.id,
         plantillaId: plantillaActiva.id,
-        tipoCertificadoId: '',
         svgFinal,
         snapshotDatos: diccionario,
         codigo,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Save, ArrowLeft, Link2, FileText } from "lucide-react";
+import { Save, ArrowLeft, Link2, FileText, Settings2 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,16 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { usePlantilla, useUpdatePlantilla, useRollbackPlantilla } from "@/hooks/usePlantillas";
-import type { PlantillaTagMapping } from "@/types/certificado";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { TIPO_FORMACION_LABELS, type TipoFormacion } from "@/types/curso";
+import type { PlantillaTagMapping, ReglaTipoCertificado } from "@/types/certificado";
 import PlantillaTestDialog from "@/components/certificacion/PlantillaTestDialog";
 import PlantillaVersionHistory from "@/components/certificacion/PlantillaVersionHistory";
 
@@ -41,6 +46,14 @@ const TOKEN_CATEGORIES: Record<string, { label: string; tokens: string[] }> = {
     tokens: ['codigoCertificado', 'fechaGeneracion'],
   },
 };
+
+const REGLA_LABELS: { key: keyof ReglaTipoCertificado; label: string }[] = [
+  { key: 'requierePago', label: 'Requiere pago' },
+  { key: 'requiereDocumentos', label: 'Requiere documentos' },
+  { key: 'requiereFormatos', label: 'Requiere formatos' },
+  { key: 'incluyeEmpresa', label: 'Incluye empresa' },
+  { key: 'incluyeFirmas', label: 'Incluye firmas' },
+];
 
 // ---- SVG Parsing ----
 
@@ -82,6 +95,7 @@ export default function PlantillaEditorPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: plantilla, isLoading } = usePlantilla(id!);
+  const { data: niveles = [] } = useNivelesFormacion();
   const updateMutation = useUpdatePlantilla();
   const rollbackMutation = useRollbackPlantilla();
 
@@ -89,10 +103,26 @@ export default function PlantillaEditorPage() {
   const [mappings, setMappings] = useState<PlantillaTagMapping[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
+  // Config state
+  const [tipoFormacion, setTipoFormacion] = useState<TipoFormacion>('jefe_area');
+  const [reglaCodigo, setReglaCodigo] = useState('');
+  const [reglas, setReglas] = useState<ReglaTipoCertificado>({
+    requierePago: true,
+    requiereDocumentos: true,
+    requiereFormatos: true,
+    incluyeEmpresa: true,
+    incluyeFirmas: true,
+  });
+  const [nivelesAsignados, setNivelesAsignados] = useState<string[]>([]);
+
   useEffect(() => {
     if (plantilla) {
       setSvgContent(plantilla.svgRaw);
       setMappings(extractTextTags(plantilla.svgRaw));
+      setTipoFormacion(plantilla.tipoFormacion);
+      setReglaCodigo(plantilla.reglaCodigo);
+      setReglas({ ...plantilla.reglas });
+      setNivelesAsignados([...plantilla.nivelesAsignados]);
       setIsDirty(false);
     }
   }, [plantilla]);
@@ -119,6 +149,10 @@ export default function PlantillaEditorPage() {
     setIsDirty(true);
   }, []);
 
+  const handleConfigChange = useCallback(() => {
+    setIsDirty(true);
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!id) return;
     const finalSvg = applyMappingsToSvg(svgContent, mappings);
@@ -130,6 +164,10 @@ export default function PlantillaEditorPage() {
           nombre: plantilla?.nombre || '',
           activa: plantilla?.activa ?? false,
           version: plantilla?.version || 1,
+          tipoFormacion,
+          reglaCodigo,
+          reglas,
+          nivelesAsignados,
         },
       });
       toast({ title: 'Plantilla guardada', description: 'Se ha incrementado la versión.' });
@@ -137,7 +175,7 @@ export default function PlantillaEditorPage() {
     } catch {
       toast({ title: 'Error', description: 'No se pudo guardar la plantilla.', variant: 'destructive' });
     }
-  }, [id, svgContent, mappings, updateMutation, plantilla, toast]);
+  }, [id, svgContent, mappings, updateMutation, plantilla, toast, tipoFormacion, reglaCodigo, reglas, nivelesAsignados]);
 
   const handleRollback = useCallback(async (version: number) => {
     if (!id) return;
@@ -148,6 +186,13 @@ export default function PlantillaEditorPage() {
       toast({ title: 'Error', description: 'No se pudo restaurar la versión.', variant: 'destructive' });
     }
   }, [id, rollbackMutation, toast]);
+
+  const toggleNivel = useCallback((nivelId: string) => {
+    setNivelesAsignados(prev =>
+      prev.includes(nivelId) ? prev.filter(n => n !== nivelId) : [...prev, nivelId]
+    );
+    setIsDirty(true);
+  }, []);
 
   if (isLoading) {
     return (
@@ -212,11 +257,11 @@ export default function PlantillaEditorPage() {
 
         <ResizableHandle withHandle />
 
-        {/* Mapping Panel */}
+        {/* Right Panel */}
         <ResizablePanel defaultSize={40} minSize={28}>
           <ScrollArea className="h-full">
             <div className="p-4 space-y-6">
-              {/* Summary */}
+              {/* Mapping Summary */}
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Link2 className="h-4 w-4 text-primary" />
@@ -283,6 +328,78 @@ export default function PlantillaEditorPage() {
                   </TableBody>
                 </Table>
               )}
+
+              <Separator />
+
+              {/* Configuration Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Configuración</h3>
+                </div>
+
+                {/* Tipo de formación */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tipo de formación</Label>
+                  <Select value={tipoFormacion} onValueChange={(v) => { setTipoFormacion(v as TipoFormacion); handleConfigChange(); }}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="bottom">
+                      {Object.entries(TIPO_FORMACION_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Regla de código */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Regla de código</Label>
+                  <Input
+                    value={reglaCodigo}
+                    onChange={e => { setReglaCodigo(e.target.value); handleConfigChange(); }}
+                    className="h-8 text-xs font-mono"
+                    placeholder="{numeroCurso}-{prefijoNivel}-{consecutivoAnual}"
+                  />
+                </div>
+
+                {/* Reglas de validación */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium">Reglas de validación</Label>
+                  {REGLA_LABELS.map(({ key, label }) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <Label className="text-xs font-normal">{label}</Label>
+                      <Switch
+                        checked={reglas[key]}
+                        onCheckedChange={(checked) => { setReglas(prev => ({ ...prev, [key]: checked })); handleConfigChange(); }}
+                        className="scale-90"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Niveles asignados */}
+                {niveles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Niveles asignados</Label>
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto border rounded-md p-2">
+                      {niveles.map(n => (
+                        <div key={n.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`editor-nivel-${n.id}`}
+                            checked={nivelesAsignados.includes(n.id)}
+                            onCheckedChange={() => toggleNivel(n.id)}
+                          />
+                          <Label htmlFor={`editor-nivel-${n.id}`} className="text-xs font-normal cursor-pointer">
+                            {n.nombreNivel}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <Separator />
 

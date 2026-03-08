@@ -1754,13 +1754,60 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useEvaluacionFormato(matriculaId)` | Query | `['portal-estudiante', 'evaluacion-formato', matriculaId]` | Formato de evaluación con quiz |
 | `useEnviarDocumento()` | Mutation | Invalida documentos + info-aprendiz + evaluación | Enviar documento completado |
 
-### 13.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
+### 14.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
 | `usePortalMonitoreo(filtros?)` | Query | `['portal-monitoreo', filtros]` | Datos de monitoreo filtrados |
 | `useTogglePortalMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Toggle portal de una matrícula |
 | `useResetDocumentoMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Reabrir documento completado |
+
+### 14.10 Hooks de Certificación
+
+#### `useCertificados.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useCertificados()` | Query | `['certificados']` | Todos los certificados |
+| `useCertificado(id)` | Query | `['certificados', id]` | Certificado por ID |
+| `useCertificadosByMatricula(mId)` | Query | `['certificados', 'matricula', mId]` | Certificados de una matrícula |
+| `useCertificadosByCurso(cId)` | Query | `['certificados', 'curso', cId]` | Certificados de un curso |
+| `useCreateCertificado()` | Mutation | Invalida `['certificados']` | Crear certificado |
+| `useGenerarCertificado()` | Mutation | Invalida certificados + matrículas | Generar certificado completo |
+| `useRevocarCertificado()` | Mutation | Invalida `['certificados']` | Revocar certificado |
+| `useReemitirCertificado()` | Mutation | Invalida certificados + matrículas | Reemitir certificado (nueva versión) |
+
+#### `usePlantillas.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `usePlantillas()` | Query | `['plantillas']` | Todas las plantillas |
+| `usePlantilla(id)` | Query | `['plantillas', id]` | Plantilla por ID |
+| `usePlantillaActiva()` | Query | `['plantillas', 'activa']` | Plantilla activa |
+| `useCreatePlantilla()` | Mutation | Invalida `['plantillas']` | Crear plantilla |
+| `useUpdatePlantilla()` | Mutation | Invalida `['plantillas']` | Actualizar plantilla |
+| `useRollbackPlantilla()` | Mutation | Invalida `['plantillas']` | Rollback a versión anterior |
+
+#### `useTiposCertificado.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useTiposCertificado()` | Query | `['tipos-certificado']` | Todos los tipos |
+| `useTipoCertificado(id)` | Query | `['tipos-certificado', id]` | Tipo por ID |
+| `useTiposCertificadoByFormacion(tipo)` | Query | `['tipos-certificado', 'formacion', tipo]` | Tipos filtrados por formación |
+| `useCreateTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Crear tipo |
+| `useUpdateTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Actualizar tipo |
+| `useDeleteTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Eliminar tipo |
+
+#### `useExcepcionesCertificado.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useExcepcionesCertificado()` | Query | `['excepciones-certificado']` | Todas las excepciones |
+| `useExcepcionesByMatricula(mId)` | Query | `['excepciones-certificado', 'matricula', mId]` | Excepciones por matrícula |
+| `useSolicitarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Solicitar excepción |
+| `useAprobarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Aprobar excepción |
+| `useRechazarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Rechazar excepción |
 
 ---
 

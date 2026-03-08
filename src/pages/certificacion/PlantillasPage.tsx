@@ -415,7 +415,7 @@ export default function PlantillasPage() {
         title="Eliminar tipo de certificado"
         description="¿Estás seguro de que deseas eliminar este tipo de certificado? Esta acción no se puede deshacer."
         onConfirm={handleDeleteTipo}
-        confirmLabel="Eliminar"
+        confirmText="Eliminar"
         variant="destructive"
       />
     </div>

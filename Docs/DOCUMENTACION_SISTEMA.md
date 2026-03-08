@@ -1368,7 +1368,7 @@ Tabla genérica reutilizable con:
 - Columnas configurables (`ColumnSelector`)
 - Toolbar con búsqueda y filtros (`TableToolbar`)
 
-### 11.2 DetailSheet
+### 12.2 DetailSheet
 
 Panel lateral deslizable (Sheet de Radix UI) con:
 - Título y subtítulo

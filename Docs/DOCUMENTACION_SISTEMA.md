@@ -1412,9 +1412,9 @@ Sistema de comentarios con:
 
 ---
 
-## 12. Capa de Servicios y Datos
+## 13. Capa de Servicios y Datos
 
-### 12.1 Servicios
+### 13.1 Servicios
 
 #### `api.ts` — Utilidades Base
 

@@ -90,6 +90,8 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalAdminService · portalEstudianteService            │
 │  portalMatriculaService · portalMonitoreoService         │
 │  portalInitService · formatoFormacionService             │
+│  certificadoService · plantillaService                   │
+│  tipoCertificadoService · excepcionCertificadoService    │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
@@ -98,10 +100,13 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 ┌──────────────────────▼──────────────────────────────────┐
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
+│  mockCertificados.ts (plantillas, tipos, certificados)   │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
 │  mockComentarios · mockAuditLogs                         │
+│  mockPlantillas · mockTiposCertificado                   │
+│  mockCertificados · mockExcepcionesCertificado           │
 │  portalDocumentosCatalogo                                │
 └─────────────────────────────────────────────────────────┘
 ```

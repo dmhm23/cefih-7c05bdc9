@@ -392,7 +392,7 @@ export default function PlantillaEditorPage() {
                             onCheckedChange={() => toggleNivel(n.id)}
                           />
                           <Label htmlFor={`editor-nivel-${n.id}`} className="text-xs font-normal cursor-pointer">
-                            {n.nombre}
+                            {n.nombreNivel}
                           </Label>
                         </div>
                       ))}

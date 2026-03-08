@@ -258,7 +258,7 @@ export default function PlantillasPage() {
                         onCheckedChange={() => toggleNivel(n.id)}
                       />
                       <Label htmlFor={`nivel-${n.id}`} className="text-sm font-normal cursor-pointer">
-                        {n.nombre}
+                        {n.nombreNivel}
                       </Label>
                     </div>
                   ))}

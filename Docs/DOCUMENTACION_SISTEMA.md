@@ -1744,7 +1744,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateOrdenDocumentos()` | Mutation | Invalida `['portal-admin-config']` | Reordenar documentos |
 | `useUpdateHabilitacionNivel()` | Mutation | Invalida `['portal-admin-config']` | Toggle habilitación por nivel |
 
-### 13.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
+### 14.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

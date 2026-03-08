@@ -187,11 +187,14 @@ src/
 | `/gestion-formatos/nuevo` | `FormatoEditorPage` | Crear formato |
 | `/gestion-formatos/:id/editar` | `FormatoEditorPage` | Editar formato |
 | `/portal-estudiante` | `PortalAdminPage` | Administración del portal estudiante |
+| `/certificacion/historial` | `HistorialCertificadosPage` | Historial de certificados generados |
+| `/certificacion/plantillas` | `PlantillasPage` | Gestión de plantillas SVG y tipos de certificado |
+| `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
 
-Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`.
+Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`. El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
 
 ---
 

@@ -19,14 +19,15 @@
 7. [Módulo de Gestión de Personal](#7-módulo-de-gestión-de-personal)
 8. [Portal Estudiante (Admin)](#8-portal-estudiante-admin)
 9. [Portal Estudiante (Público)](#9-portal-estudiante-público)
-10. [Dashboard](#10-dashboard)
-11. [Componentes Compartidos](#11-componentes-compartidos)
-12. [Capa de Servicios y Datos](#12-capa-de-servicios-y-datos)
-13. [Hooks (React Query)](#13-hooks-react-query)
-14. [Relación entre Módulos](#14-relación-entre-módulos)
-15. [Catálogos y Datos de Referencia](#15-catálogos-y-datos-de-referencia)
-16. [Auditoría y Trazabilidad](#16-auditoría-y-trazabilidad)
-17. [Historial de Cambios](#17-historial-de-cambios)
+10. [Módulo de Certificación](#10-módulo-de-certificación)
+11. [Dashboard](#11-dashboard)
+12. [Componentes Compartidos](#12-componentes-compartidos)
+13. [Capa de Servicios y Datos](#13-capa-de-servicios-y-datos)
+14. [Hooks (React Query)](#14-hooks-react-query)
+15. [Relación entre Módulos](#15-relación-entre-módulos)
+16. [Catálogos y Datos de Referencia](#16-catálogos-y-datos-de-referencia)
+17. [Auditoría y Trazabilidad](#17-auditoría-y-trazabilidad)
+18. [Historial de Cambios](#18-historial-de-cambios)
 
 ---
 

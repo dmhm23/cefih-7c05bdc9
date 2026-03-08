@@ -1155,9 +1155,188 @@ Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `
 
 ---
 
-## 10. Dashboard
+## 10. Módulo de Certificación
 
-### 10.1 Métricas Globales
+### 10.1 Propósito
+
+Módulo completo para la gestión del ciclo de certificación de estudiantes. Abarca la configuración de plantillas SVG, la definición de tipos de certificado con reglas de validación, la generación individual y masiva de certificados, y el manejo de excepciones para casos bloqueados.
+
+### 10.2 Entidades
+
+#### `PlantillaCertificado`
+
+```typescript
+interface PlantillaCertificado {
+  id: string;
+  nombre: string;
+  svgRaw: string;                    // SVG completo con tokens {{placeholder}}
+  tokensDetectados: string[];        // Tokens extraídos automáticamente del SVG
+  activa: boolean;
+  version: number;
+  historial: PlantillaVersion[];     // Historial de versiones del SVG
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PlantillaVersion {
+  version: number;
+  svgRaw: string;
+  fecha: string;
+  modificadoPor: string;
+}
+```
+
+#### `TipoCertificado`
+
+Configuración que define las **reglas de emisión** para cada clase de certificado:
+
+```typescript
+interface TipoCertificado {
+  id: string;
+  nombre: string;
+  tipoFormacion: TipoFormacion;      // jefe_area, trabajador_autorizado, reentrenamiento, coordinador_ta
+  plantillaId: string;               // Plantilla SVG vinculada
+  reglas: ReglaTipoCertificado;      // Reglas de validación
+  reglaCodigo: string;               // Patrón para código único
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReglaTipoCertificado {
+  requierePago: boolean;
+  requiereDocumentos: boolean;
+  requiereFormatos: boolean;
+  incluyeEmpresa: boolean;
+  incluyeFirmas: boolean;
+}
+```
+
+#### `CertificadoGenerado`
+
+```typescript
+interface CertificadoGenerado {
+  id: string;
+  matriculaId: string;
+  cursoId: string;
+  personaId: string;
+  plantillaId: string;
+  tipoCertificadoId: string;
+  codigo: string;
+  estado: 'elegible' | 'generado' | 'bloqueado' | 'revocado';
+  snapshotDatos: Record<string, unknown>;
+  svgFinal: string;
+  version: number;
+  fechaGeneracion: string;
+  revocadoPor?: string;
+  motivoRevocacion?: string;
+  fechaRevocacion?: string;
+  autorizadoExcepcional?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### `SolicitudExcepcionCertificado`
+
+```typescript
+interface SolicitudExcepcionCertificado {
+  id: string;
+  matriculaId: string;
+  solicitadoPor: string;
+  motivo: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  resueltoPor?: string;
+  fechaSolicitud: string;
+  fechaResolucion?: string;
+}
+```
+
+### 10.3 Plantillas SVG y Mapeo de Etiquetas
+
+El sistema emplea un modelo de **Mapeo de Etiquetas** para personalizar certificados:
+
+1. **Carga de SVG**: El administrador sube un archivo SVG con tokens `{{placeholder}}`.
+2. **Detección automática**: `plantillaService.detectarTokens()` extrae todos los tokens `{{...}}` del SVG.
+3. **Mapeo visual**: En `PlantillaEditorPage`, los elementos `<text>` con atributo `id` se vinculan a campos del sistema.
+4. **Versionado**: Cada modificación incrementa la versión y almacena el SVG anterior en `historial`.
+5. **Rollback**: Permite restaurar versiones anteriores via `plantillaService.rollback()`.
+
+**Tokens predefinidos en la plantilla estándar:**
+- `nombreCompleto`, `tipoDocumento`, `numeroDocumento`
+- `tipoFormacion`, `numeroCurso`, `duracionDias`, `horasTotales`
+- `fechaInicio`, `fechaFin`
+- `empresaNombre`, `empresaNit`, `empresaCargo`
+- `entrenadorNombre`, `supervisorNombre`
+- `codigoCertificado`, `fechaGeneracion`
+
+### 10.4 Tipos de Certificado — Gestión Integrada
+
+La gestión de Tipos de Certificado está **integrada en la página de Plantillas** (`PlantillasPage`) como pestaña independiente, eliminando la necesidad de una página separada.
+
+**Funcionalidades de la pestaña "Tipos de Certificado":**
+- **Tabla** con columnas: Nombre, Tipo de Formación, Pago, Docs, Formatos, Regla Código, Acciones.
+- **Crear nuevo tipo**: Dialog con campos para nombre, tipo de formación, plantilla vinculada, regla de código, y 5 switches de validación.
+- **Editar tipo existente**: Mismo dialog con datos precargados.
+- **Eliminar tipo**: Con diálogo de confirmación destructivo.
+
+**Reglas de validación (switches):**
+
+| Regla | Descripción |
+|-------|-------------|
+| `requierePago` | Requiere pago completo antes de emitir |
+| `requiereDocumentos` | Requiere documentos completos |
+| `requiereFormatos` | Requiere formatos firmados |
+| `incluyeEmpresa` | Incluye datos de empresa en el certificado |
+| `incluyeFirmas` | Incluye firmas del entrenador/supervisor |
+
+### 10.5 Ciclo de Certificación
+
+```
+1. ELEGIBILIDAD
+   └── Validar requisitos según TipoCertificado.reglas:
+       ├── Pago completo (si requierePago)
+       ├── Documentos completos (si requiereDocumentos)
+       └── Formatos firmados (si requiereFormatos)
+
+2. GENERACIÓN
+   ├── Individual: Desde matrícula
+   └── Masiva: Desde curso
+       ├── Reemplazar tokens en SVG
+       ├── Generar código único según reglaCodigo
+       ├── Snapshot de datos al momento
+       └── Estado: "generado"
+
+3. BLOQUEO → EXCEPCIÓN
+   └── Matrícula no cumple requisitos
+       ├── Solicitar excepción (editor)
+       ├── Aprobar excepción (admin) → Genera con autorizadoExcepcional=true
+       └── Rechazar excepción
+
+4. REVOCACIÓN / REEMISIÓN
+   └── Certificado emitido puede revocarse y reemitirse con nueva versión
+```
+
+### 10.6 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `PlantillasPage` | Página principal con tabs: Plantillas SVG y Tipos de Certificado. CRUD completo de ambas entidades. |
+| `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
+| `PlantillaVersionHistory` | Historial de versiones con rollback |
+| `PlantillaTestDialog` | Dialog para probar plantilla con datos de prueba |
+| `HistorialCertificadosPage` | Tabla de certificados generados |
+
+### 10.7 Navegación
+
+Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
+- **Historial**: `/certificacion/historial`
+- **Plantillas**: `/certificacion/plantillas` (incluye gestión de Tipos de Certificado)
+
+---
+
+## 11. Dashboard
+
+### 11.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|
@@ -1166,7 +1345,7 @@ Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `
 | **Total Cursos** | `cursos.length` + activos (`estado === 'abierto' \|\| 'en_progreso'`) |
 | **Tasa de Certificación** | `(certificadas + completas) / total * 100` |
 
-### 10.2 Secciones
+### 11.2 Secciones
 
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.

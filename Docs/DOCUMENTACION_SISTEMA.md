@@ -1925,7 +1925,7 @@ interface AuditLog {
 }
 ```
 
-### 16.2 Eventos Auditados
+### 17.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|

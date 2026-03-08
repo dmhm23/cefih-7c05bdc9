@@ -1570,9 +1570,58 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 |---------|-------------|
 | `initPortalEstudiante(matricula, curso)` | Inicializa `portalEstudiante` en matrícula si no existe (compatibilidad legacy) |
 
-### 12.3 Datos Mock (`mockData.ts`)
+### 13.3 Servicios de Certificación
 
-Arrays exportados mutables que sirven como "base de datos" en memoria:
+#### `certificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todos los certificados generados |
+| `getById(id)` | Certificado por ID |
+| `getByMatricula(matriculaId)` | Certificados de una matrícula |
+| `getByCurso(cursoId)` | Certificados de un curso |
+| `create(data)` | Crear certificado |
+| `generar(params)` | Generar certificado con SVG final, snapshot y código. Estado inicial: `generado` |
+| `revocar(id, revocadoPor, motivo)` | Revocar certificado con registro de motivo |
+| `reemitir(params)` | Reemitir: revoca anterior y crea nueva versión incrementada |
+
+#### `plantillaService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todas las plantillas |
+| `getById(id)` | Plantilla por ID |
+| `getActiva()` | Plantilla activa |
+| `create(data)` | Crear plantilla con detección automática de tokens |
+| `update(id, data)` | Actualizar plantilla. Si cambia el SVG: re-detecta tokens, incrementa versión, agrega al historial |
+| `rollback(id, version)` | Restaurar SVG de una versión anterior (crea nueva versión) |
+| `detectarTokens(svg)` | Extrae tokens `{{...}}` únicos del SVG |
+
+#### `tipoCertificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todos los tipos de certificado |
+| `getById(id)` | Tipo por ID |
+| `getByTipoFormacion(tipo)` | Tipos filtrados por tipo de formación |
+| `create(data)` | Crear tipo de certificado |
+| `update(id, data)` | Actualizar tipo de certificado |
+| `delete(id)` | Eliminar tipo de certificado |
+
+#### `excepcionCertificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todas las excepciones |
+| `getById(id)` | Excepción por ID |
+| `getByMatricula(matriculaId)` | Excepciones de una matrícula |
+| `solicitar(matriculaId, solicitadoPor, motivo)` | Crear solicitud de excepción (estado: `pendiente`) |
+| `aprobar(id, resueltoPor)` | Aprobar excepción |
+| `rechazar(id, resueltoPor)` | Rechazar excepción |
+
+### 13.4 Datos Mock
+
+#### `mockData.ts` — Arrays mutables principales:
 
 | Array | Contenido Inicial |
 |-------|-------------------|
@@ -1584,6 +1633,15 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `mockCargos` | Cargos precargados (Entrenador, Supervisor, etc.) |
 | `mockComentarios` | 3 comentarios de ejemplo en 2 secciones |
 | `mockAuditLogs` | Logs iniciales de ejemplo |
+
+#### `mockCertificados.ts` — Arrays de certificación:
+
+| Array | Contenido Inicial |
+|-------|-------------------|
+| `mockPlantillas` | 1 plantilla estándar CEFIH con SVG y 16 tokens predefinidos |
+| `mockTiposCertificado` | Array vacío (se crean desde la UI) |
+| `mockCertificados` | Array vacío (se generan en ejecución) |
+| `mockExcepcionesCertificado` | Array vacío |
 
 ---
 

@@ -2125,4 +2125,40 @@ Interfaz pública mobile-first para que estudiantes completen documentos de form
 
 ---
 
+### v1.6 — 8 de Marzo 2026
+
+#### Módulo de Certificación — Módulo nuevo
+
+Nuevo módulo completo para gestión del ciclo de certificación:
+
+- **Plantillas SVG**: Carga, detección automática de tokens `{{...}}`, versionado con historial y rollback. Editor de mapeo de etiquetas (`PlantillaEditorPage`).
+- **Tipos de Certificado**: CRUD integrado en la página de Plantillas (pestaña "Tipos de Certificado"). Define nombre, tipo de formación, plantilla vinculada, regla de código, y 5 switches de validación (pago, documentos, formatos, empresa, firmas).
+- **Certificados generados**: Generación individual/masiva con snapshot de datos, SVG final con tokens reemplazados, y código único. Estados: elegible → generado → revocado.
+- **Excepciones**: Flujo solicitar/aprobar/rechazar para matrículas que no cumplen requisitos. Generación con `autorizadoExcepcional=true`.
+- **Revocación y reemisión**: Certificados pueden revocarse con motivo y reemitirse con nueva versión.
+
+#### Consolidación de gestión
+
+- **Tipos de Certificado integrados en Plantillas**: La gestión de tipos de certificado se consolidó dentro de `PlantillasPage` como segunda pestaña, eliminando la página independiente `TiposCertificadoPage`.
+- **Sidebar simplificado**: Se eliminó la subentrada "Tipos de Certificado" del menú desplegable de Certificación. Queda: Historial y Plantillas.
+
+**Archivos creados:**
+- `src/types/certificado.ts`
+- `src/data/mockCertificados.ts`
+- `src/services/certificadoService.ts`, `src/services/plantillaService.ts`, `src/services/tipoCertificadoService.ts`, `src/services/excepcionCertificadoService.ts`
+- `src/hooks/useCertificados.ts`, `src/hooks/usePlantillas.ts`, `src/hooks/useTiposCertificado.ts`, `src/hooks/useExcepcionesCertificado.ts`
+- `src/pages/certificacion/PlantillasPage.tsx`, `PlantillaEditorPage.tsx`, `HistorialCertificadosPage.tsx`
+- `src/components/certificacion/PlantillaTestDialog.tsx`, `PlantillaVersionHistory.tsx`
+- `src/components/matriculas/CertificacionSection.tsx`, `ExcepcionesPanel.tsx`, `RevocacionDialog.tsx`, `HistorialVersiones.tsx`
+- `src/utils/certificadoGenerator.ts`, `src/utils/certificadoPdf.ts`
+
+**Archivos modificados:**
+- `src/App.tsx` — Nuevas rutas de certificación
+- `src/components/layout/AppSidebar.tsx` — Menú desplegable "Certificación" con Historial y Plantillas
+
+**Archivos eliminados:**
+- `src/pages/certificacion/TiposCertificadoPage.tsx` — Funcionalidad integrada en PlantillasPage
+
+---
+
 *Documento generado como referencia integral del sistema SAFA. Para dudas técnicas o funcionales, consultar el código fuente en el directorio `src/`.*

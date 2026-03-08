@@ -1724,7 +1724,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateCargo()` | Mutation | Invalida `['cargos']` | Editar cargo |
 | `useDeleteCargo()` | Mutation | Invalida `['cargos']` | Eliminar cargo |
 
-### 13.6 Hooks de Comentarios (`useComentarios.ts`)
+### 14.6 Hooks de Comentarios (`useComentarios.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

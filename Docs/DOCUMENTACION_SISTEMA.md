@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.5  
-> Última actualización: 1 de Marzo 2026  
+> Versión: 1.6  
+> Última actualización: 8 de Marzo 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -19,14 +19,15 @@
 7. [Módulo de Gestión de Personal](#7-módulo-de-gestión-de-personal)
 8. [Portal Estudiante (Admin)](#8-portal-estudiante-admin)
 9. [Portal Estudiante (Público)](#9-portal-estudiante-público)
-10. [Dashboard](#10-dashboard)
-11. [Componentes Compartidos](#11-componentes-compartidos)
-12. [Capa de Servicios y Datos](#12-capa-de-servicios-y-datos)
-13. [Hooks (React Query)](#13-hooks-react-query)
-14. [Relación entre Módulos](#14-relación-entre-módulos)
-15. [Catálogos y Datos de Referencia](#15-catálogos-y-datos-de-referencia)
-16. [Auditoría y Trazabilidad](#16-auditoría-y-trazabilidad)
-17. [Historial de Cambios](#17-historial-de-cambios)
+10. [Módulo de Certificación](#10-módulo-de-certificación)
+11. [Dashboard](#11-dashboard)
+12. [Componentes Compartidos](#12-componentes-compartidos)
+13. [Capa de Servicios y Datos](#13-capa-de-servicios-y-datos)
+14. [Hooks (React Query)](#14-hooks-react-query)
+15. [Relación entre Módulos](#15-relación-entre-módulos)
+16. [Catálogos y Datos de Referencia](#16-catálogos-y-datos-de-referencia)
+17. [Auditoría y Trazabilidad](#17-auditoría-y-trazabilidad)
+18. [Historial de Cambios](#18-historial-de-cambios)
 
 ---
 
@@ -38,7 +39,7 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca siete módulos principales:
+El sistema abarca ocho módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
@@ -49,6 +50,7 @@ El sistema abarca siete módulos principales:
 | **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
 | **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
+| **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 
@@ -88,6 +90,8 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalAdminService · portalEstudianteService            │
 │  portalMatriculaService · portalMonitoreoService         │
 │  portalInitService · formatoFormacionService             │
+│  certificadoService · plantillaService                   │
+│  tipoCertificadoService · excepcionCertificadoService    │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
@@ -96,10 +100,13 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 ┌──────────────────────▼──────────────────────────────────┐
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
+│  mockCertificados.ts (plantillas, tipos, certificados)   │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
 │  mockComentarios · mockAuditLogs                         │
+│  mockPlantillas · mockTiposCertificado                   │
+│  mockCertificados · mockExcepcionesCertificado           │
 │  portalDocumentosCatalogo                                │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -116,6 +123,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 src/
 ├── components/
 │   ├── layout/          # MainLayout, AppSidebar
+│   ├── certificacion/   # Componentes de certificación (PlantillaTestDialog, PlantillaVersionHistory)
 │   ├── cursos/          # Componentes específicos de cursos
 │   ├── estudiante/      # Componentes del portal estudiante (QuizReviewCard)
 │   ├── formatos/        # Editor y preview de formatos de formación
@@ -131,11 +139,13 @@ src/
 │   └── PortalEstudianteContext.tsx  # Sesión del portal estudiante
 ├── data/
 │   ├── mockData.ts      # Datos iniciales en memoria
+│   ├── mockCertificados.ts  # Datos mock de certificación
 │   ├── formOptions.ts   # Catálogos para selectores
 │   ├── portalAdminConfig.ts  # Catálogo de documentos del portal
 │   └── portalEstudianteConfig.ts  # Configuración del portal público
 ├── hooks/               # Custom hooks (React Query)
 ├── pages/               # Páginas por módulo
+│   ├── certificacion/   # Páginas de certificación
 │   ├── cursos/
 │   ├── estudiante/      # Páginas del portal público (AccesoEstudiante, PanelDocumentos, etc.)
 │   ├── formatos/
@@ -146,7 +156,7 @@ src/
 │   └── portal-admin/    # Administración del portal estudiante
 ├── services/            # Capa de servicios (API emulada)
 ├── types/               # Definiciones TypeScript
-└── utils/               # Utilidades (CSV, resolvers)
+└── utils/               # Utilidades (CSV, resolvers, generador de certificados)
 ```
 
 ### 2.4 Enrutamiento
@@ -177,11 +187,14 @@ src/
 | `/gestion-formatos/nuevo` | `FormatoEditorPage` | Crear formato |
 | `/gestion-formatos/:id/editar` | `FormatoEditorPage` | Editar formato |
 | `/portal-estudiante` | `PortalAdminPage` | Administración del portal estudiante |
+| `/certificacion/historial` | `HistorialCertificadosPage` | Historial de certificados generados |
+| `/certificacion/plantillas` | `PlantillasPage` | Gestión de plantillas SVG y tipos de certificado |
+| `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
 
-Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`.
+Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`. El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
 
 ---
 
@@ -1142,9 +1155,188 @@ Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `
 
 ---
 
-## 10. Dashboard
+## 10. Módulo de Certificación
 
-### 10.1 Métricas Globales
+### 10.1 Propósito
+
+Módulo completo para la gestión del ciclo de certificación de estudiantes. Abarca la configuración de plantillas SVG, la definición de tipos de certificado con reglas de validación, la generación individual y masiva de certificados, y el manejo de excepciones para casos bloqueados.
+
+### 10.2 Entidades
+
+#### `PlantillaCertificado`
+
+```typescript
+interface PlantillaCertificado {
+  id: string;
+  nombre: string;
+  svgRaw: string;                    // SVG completo con tokens {{placeholder}}
+  tokensDetectados: string[];        // Tokens extraídos automáticamente del SVG
+  activa: boolean;
+  version: number;
+  historial: PlantillaVersion[];     // Historial de versiones del SVG
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PlantillaVersion {
+  version: number;
+  svgRaw: string;
+  fecha: string;
+  modificadoPor: string;
+}
+```
+
+#### `TipoCertificado`
+
+Configuración que define las **reglas de emisión** para cada clase de certificado:
+
+```typescript
+interface TipoCertificado {
+  id: string;
+  nombre: string;
+  tipoFormacion: TipoFormacion;      // jefe_area, trabajador_autorizado, reentrenamiento, coordinador_ta
+  plantillaId: string;               // Plantilla SVG vinculada
+  reglas: ReglaTipoCertificado;      // Reglas de validación
+  reglaCodigo: string;               // Patrón para código único
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ReglaTipoCertificado {
+  requierePago: boolean;
+  requiereDocumentos: boolean;
+  requiereFormatos: boolean;
+  incluyeEmpresa: boolean;
+  incluyeFirmas: boolean;
+}
+```
+
+#### `CertificadoGenerado`
+
+```typescript
+interface CertificadoGenerado {
+  id: string;
+  matriculaId: string;
+  cursoId: string;
+  personaId: string;
+  plantillaId: string;
+  tipoCertificadoId: string;
+  codigo: string;
+  estado: 'elegible' | 'generado' | 'bloqueado' | 'revocado';
+  snapshotDatos: Record<string, unknown>;
+  svgFinal: string;
+  version: number;
+  fechaGeneracion: string;
+  revocadoPor?: string;
+  motivoRevocacion?: string;
+  fechaRevocacion?: string;
+  autorizadoExcepcional?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+#### `SolicitudExcepcionCertificado`
+
+```typescript
+interface SolicitudExcepcionCertificado {
+  id: string;
+  matriculaId: string;
+  solicitadoPor: string;
+  motivo: string;
+  estado: 'pendiente' | 'aprobada' | 'rechazada';
+  resueltoPor?: string;
+  fechaSolicitud: string;
+  fechaResolucion?: string;
+}
+```
+
+### 10.3 Plantillas SVG y Mapeo de Etiquetas
+
+El sistema emplea un modelo de **Mapeo de Etiquetas** para personalizar certificados:
+
+1. **Carga de SVG**: El administrador sube un archivo SVG con tokens `{{placeholder}}`.
+2. **Detección automática**: `plantillaService.detectarTokens()` extrae todos los tokens `{{...}}` del SVG.
+3. **Mapeo visual**: En `PlantillaEditorPage`, los elementos `<text>` con atributo `id` se vinculan a campos del sistema.
+4. **Versionado**: Cada modificación incrementa la versión y almacena el SVG anterior en `historial`.
+5. **Rollback**: Permite restaurar versiones anteriores via `plantillaService.rollback()`.
+
+**Tokens predefinidos en la plantilla estándar:**
+- `nombreCompleto`, `tipoDocumento`, `numeroDocumento`
+- `tipoFormacion`, `numeroCurso`, `duracionDias`, `horasTotales`
+- `fechaInicio`, `fechaFin`
+- `empresaNombre`, `empresaNit`, `empresaCargo`
+- `entrenadorNombre`, `supervisorNombre`
+- `codigoCertificado`, `fechaGeneracion`
+
+### 10.4 Tipos de Certificado — Gestión Integrada
+
+La gestión de Tipos de Certificado está **integrada en la página de Plantillas** (`PlantillasPage`) como pestaña independiente, eliminando la necesidad de una página separada.
+
+**Funcionalidades de la pestaña "Tipos de Certificado":**
+- **Tabla** con columnas: Nombre, Tipo de Formación, Pago, Docs, Formatos, Regla Código, Acciones.
+- **Crear nuevo tipo**: Dialog con campos para nombre, tipo de formación, plantilla vinculada, regla de código, y 5 switches de validación.
+- **Editar tipo existente**: Mismo dialog con datos precargados.
+- **Eliminar tipo**: Con diálogo de confirmación destructivo.
+
+**Reglas de validación (switches):**
+
+| Regla | Descripción |
+|-------|-------------|
+| `requierePago` | Requiere pago completo antes de emitir |
+| `requiereDocumentos` | Requiere documentos completos |
+| `requiereFormatos` | Requiere formatos firmados |
+| `incluyeEmpresa` | Incluye datos de empresa en el certificado |
+| `incluyeFirmas` | Incluye firmas del entrenador/supervisor |
+
+### 10.5 Ciclo de Certificación
+
+```
+1. ELEGIBILIDAD
+   └── Validar requisitos según TipoCertificado.reglas:
+       ├── Pago completo (si requierePago)
+       ├── Documentos completos (si requiereDocumentos)
+       └── Formatos firmados (si requiereFormatos)
+
+2. GENERACIÓN
+   ├── Individual: Desde matrícula
+   └── Masiva: Desde curso
+       ├── Reemplazar tokens en SVG
+       ├── Generar código único según reglaCodigo
+       ├── Snapshot de datos al momento
+       └── Estado: "generado"
+
+3. BLOQUEO → EXCEPCIÓN
+   └── Matrícula no cumple requisitos
+       ├── Solicitar excepción (editor)
+       ├── Aprobar excepción (admin) → Genera con autorizadoExcepcional=true
+       └── Rechazar excepción
+
+4. REVOCACIÓN / REEMISIÓN
+   └── Certificado emitido puede revocarse y reemitirse con nueva versión
+```
+
+### 10.6 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `PlantillasPage` | Página principal con tabs: Plantillas SVG y Tipos de Certificado. CRUD completo de ambas entidades. |
+| `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
+| `PlantillaVersionHistory` | Historial de versiones con rollback |
+| `PlantillaTestDialog` | Dialog para probar plantilla con datos de prueba |
+| `HistorialCertificadosPage` | Tabla de certificados generados |
+
+### 10.7 Navegación
+
+Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
+- **Historial**: `/certificacion/historial`
+- **Plantillas**: `/certificacion/plantillas` (incluye gestión de Tipos de Certificado)
+
+---
+
+## 11. Dashboard
+
+### 11.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|
@@ -1153,7 +1345,7 @@ Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `
 | **Total Cursos** | `cursos.length` + activos (`estado === 'abierto' \|\| 'en_progreso'`) |
 | **Tasa de Certificación** | `(certificadas + completas) / total * 100` |
 
-### 10.2 Secciones
+### 11.2 Secciones
 
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.
@@ -1161,9 +1353,9 @@ Función `initPortalEstudiante(matricula, curso)` que inicializa la estructura `
 
 ---
 
-## 11. Componentes Compartidos
+## 12. Componentes Compartidos
 
-### 11.1 DataTable
+### 12.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.
@@ -1176,7 +1368,7 @@ Tabla genérica reutilizable con:
 - Columnas configurables (`ColumnSelector`)
 - Toolbar con búsqueda y filtros (`TableToolbar`)
 
-### 11.2 DetailSheet
+### 12.2 DetailSheet
 
 Panel lateral deslizable (Sheet de Radix UI) con:
 - Título y subtítulo
@@ -1186,7 +1378,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Footer configurable (para botones de guardar/cancelar)
 - **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
-### 11.3 EditableField
+### 12.3 EditableField
 
 Campo editable inline que soporta:
 - **Tipos**: `text`, `select`, `date`
@@ -1195,7 +1387,7 @@ Campo editable inline que soporta:
 - **Badge mode**: Muestra valor como Badge
 - **Opciones**: Array de `{ value, label }` para selects
 
-### 11.4 ComentariosSection
+### 12.4 ComentariosSection
 
 Sistema de comentarios con:
 - Historial cronológico (más recientes primero)
@@ -1205,7 +1397,7 @@ Sistema de comentarios con:
 - Registro de usuario y timestamp
 - Indicador de "editado" con fecha
 
-### 11.5 Otros Componentes Compartidos
+### 12.5 Otros Componentes Compartidos
 
 | Componente | Descripción |
 |------------|-------------|
@@ -1220,9 +1412,9 @@ Sistema de comentarios con:
 
 ---
 
-## 12. Capa de Servicios y Datos
+## 13. Capa de Servicios y Datos
 
-### 12.1 Servicios
+### 13.1 Servicios
 
 #### `api.ts` — Utilidades Base
 
@@ -1333,7 +1525,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `uploadDocumento(mId, tipo, file, meta)` | Simula subida individual a Google Drive. Retorna URL ficticia. |
 | `uploadConsolidado(mId, file, tipos, meta)` | Simula subida de PDF consolidado. Retorna URL + tipos incluidos. |
 
-### 12.2 Servicios del Portal
+### 13.2 Servicios del Portal
 
 #### `portalAdminService.ts`
 
@@ -1378,9 +1570,58 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 |---------|-------------|
 | `initPortalEstudiante(matricula, curso)` | Inicializa `portalEstudiante` en matrícula si no existe (compatibilidad legacy) |
 
-### 12.3 Datos Mock (`mockData.ts`)
+### 13.3 Servicios de Certificación
 
-Arrays exportados mutables que sirven como "base de datos" en memoria:
+#### `certificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todos los certificados generados |
+| `getById(id)` | Certificado por ID |
+| `getByMatricula(matriculaId)` | Certificados de una matrícula |
+| `getByCurso(cursoId)` | Certificados de un curso |
+| `create(data)` | Crear certificado |
+| `generar(params)` | Generar certificado con SVG final, snapshot y código. Estado inicial: `generado` |
+| `revocar(id, revocadoPor, motivo)` | Revocar certificado con registro de motivo |
+| `reemitir(params)` | Reemitir: revoca anterior y crea nueva versión incrementada |
+
+#### `plantillaService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todas las plantillas |
+| `getById(id)` | Plantilla por ID |
+| `getActiva()` | Plantilla activa |
+| `create(data)` | Crear plantilla con detección automática de tokens |
+| `update(id, data)` | Actualizar plantilla. Si cambia el SVG: re-detecta tokens, incrementa versión, agrega al historial |
+| `rollback(id, version)` | Restaurar SVG de una versión anterior (crea nueva versión) |
+| `detectarTokens(svg)` | Extrae tokens `{{...}}` únicos del SVG |
+
+#### `tipoCertificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todos los tipos de certificado |
+| `getById(id)` | Tipo por ID |
+| `getByTipoFormacion(tipo)` | Tipos filtrados por tipo de formación |
+| `create(data)` | Crear tipo de certificado |
+| `update(id, data)` | Actualizar tipo de certificado |
+| `delete(id)` | Eliminar tipo de certificado |
+
+#### `excepcionCertificadoService.ts`
+
+| Método | Descripción |
+|--------|-------------|
+| `getAll()` | Todas las excepciones |
+| `getById(id)` | Excepción por ID |
+| `getByMatricula(matriculaId)` | Excepciones de una matrícula |
+| `solicitar(matriculaId, solicitadoPor, motivo)` | Crear solicitud de excepción (estado: `pendiente`) |
+| `aprobar(id, resueltoPor)` | Aprobar excepción |
+| `rechazar(id, resueltoPor)` | Rechazar excepción |
+
+### 13.4 Datos Mock
+
+#### `mockData.ts` — Arrays mutables principales:
 
 | Array | Contenido Inicial |
 |-------|-------------------|
@@ -1393,11 +1634,20 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `mockComentarios` | 3 comentarios de ejemplo en 2 secciones |
 | `mockAuditLogs` | Logs iniciales de ejemplo |
 
+#### `mockCertificados.ts` — Arrays de certificación:
+
+| Array | Contenido Inicial |
+|-------|-------------------|
+| `mockPlantillas` | 1 plantilla estándar CEFIH con SVG y 16 tokens predefinidos |
+| `mockTiposCertificado` | Array vacío (se crean desde la UI) |
+| `mockCertificados` | Array vacío (se generan en ejecución) |
+| `mockExcepcionesCertificado` | Array vacío |
+
 ---
 
-## 13. Hooks (React Query)
+## 14. Hooks (React Query)
 
-### 13.1 Hooks de Personas (`usePersonas.ts`)
+### 14.1 Hooks de Personas (`usePersonas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1409,7 +1659,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdatePersona()` | Mutation | Invalida `['personas']`, `['persona', id]` | Actualizar persona |
 | `useDeletePersona()` | Mutation | Invalida `['personas']` | Eliminar persona |
 
-### 13.2 Hooks de Matrículas (`useMatriculas.ts`)
+### 14.2 Hooks de Matrículas (`useMatriculas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1428,7 +1678,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useDeleteMatricula()` | Mutation | Invalida matrículas + cursos | Eliminar matrícula |
 | `useUploadDocumento()` | Mutation | Invalida matrícula + matrículas | Subir documento (Drive + updateDocumento) |
 
-### 13.3 Hooks de Cursos (`useCursos.ts`)
+### 14.3 Hooks de Cursos (`useCursos.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1444,7 +1694,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useAgregarEstudiantesCurso()` | Mutation | Invalida cursos + curso + matrículas | Agregar estudiantes |
 | `useRemoverEstudianteCurso()` | Mutation | Invalida cursos + curso + matrículas | Remover estudiante |
 
-### 13.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
+### 14.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1455,7 +1705,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateNivelFormacion()` | Mutation | Invalida niveles + nivel específico | Actualizar nivel |
 | `useDeleteNivelFormacion()` | Mutation | Invalida `['niveles-formacion']` | Eliminar nivel |
 
-### 13.5 Hooks de Personal (`usePersonal.ts`)
+### 14.5 Hooks de Personal (`usePersonal.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1474,7 +1724,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateCargo()` | Mutation | Invalida `['cargos']` | Editar cargo |
 | `useDeleteCargo()` | Mutation | Invalida `['cargos']` | Eliminar cargo |
 
-### 13.6 Hooks de Comentarios (`useComentarios.ts`)
+### 14.6 Hooks de Comentarios (`useComentarios.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1483,7 +1733,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateComentario()` | Mutation | Invalida `['comentarios']` | Editar comentario |
 | `useDeleteComentario()` | Mutation | Invalida `['comentarios']` | Eliminar comentario |
 
-### 13.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
+### 14.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1494,7 +1744,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useUpdateOrdenDocumentos()` | Mutation | Invalida `['portal-admin-config']` | Reordenar documentos |
 | `useUpdateHabilitacionNivel()` | Mutation | Invalida `['portal-admin-config']` | Toggle habilitación por nivel |
 
-### 13.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
+### 14.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1504,7 +1754,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useEvaluacionFormato(matriculaId)` | Query | `['portal-estudiante', 'evaluacion-formato', matriculaId]` | Formato de evaluación con quiz |
 | `useEnviarDocumento()` | Mutation | Invalida documentos + info-aprendiz + evaluación | Enviar documento completado |
 
-### 13.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
+### 14.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1512,11 +1762,58 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | `useTogglePortalMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Toggle portal de una matrícula |
 | `useResetDocumentoMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Reabrir documento completado |
 
+### 14.10 Hooks de Certificación
+
+#### `useCertificados.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useCertificados()` | Query | `['certificados']` | Todos los certificados |
+| `useCertificado(id)` | Query | `['certificados', id]` | Certificado por ID |
+| `useCertificadosByMatricula(mId)` | Query | `['certificados', 'matricula', mId]` | Certificados de una matrícula |
+| `useCertificadosByCurso(cId)` | Query | `['certificados', 'curso', cId]` | Certificados de un curso |
+| `useCreateCertificado()` | Mutation | Invalida `['certificados']` | Crear certificado |
+| `useGenerarCertificado()` | Mutation | Invalida certificados + matrículas | Generar certificado completo |
+| `useRevocarCertificado()` | Mutation | Invalida `['certificados']` | Revocar certificado |
+| `useReemitirCertificado()` | Mutation | Invalida certificados + matrículas | Reemitir certificado (nueva versión) |
+
+#### `usePlantillas.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `usePlantillas()` | Query | `['plantillas']` | Todas las plantillas |
+| `usePlantilla(id)` | Query | `['plantillas', id]` | Plantilla por ID |
+| `usePlantillaActiva()` | Query | `['plantillas', 'activa']` | Plantilla activa |
+| `useCreatePlantilla()` | Mutation | Invalida `['plantillas']` | Crear plantilla |
+| `useUpdatePlantilla()` | Mutation | Invalida `['plantillas']` | Actualizar plantilla |
+| `useRollbackPlantilla()` | Mutation | Invalida `['plantillas']` | Rollback a versión anterior |
+
+#### `useTiposCertificado.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useTiposCertificado()` | Query | `['tipos-certificado']` | Todos los tipos |
+| `useTipoCertificado(id)` | Query | `['tipos-certificado', id]` | Tipo por ID |
+| `useTiposCertificadoByFormacion(tipo)` | Query | `['tipos-certificado', 'formacion', tipo]` | Tipos filtrados por formación |
+| `useCreateTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Crear tipo |
+| `useUpdateTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Actualizar tipo |
+| `useDeleteTipoCertificado()` | Mutation | Invalida `['tipos-certificado']` | Eliminar tipo |
+
+#### `useExcepcionesCertificado.ts`
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useExcepcionesCertificado()` | Query | `['excepciones-certificado']` | Todas las excepciones |
+| `useExcepcionesByMatricula(mId)` | Query | `['excepciones-certificado', 'matricula', mId]` | Excepciones por matrícula |
+| `useSolicitarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Solicitar excepción |
+| `useAprobarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Aprobar excepción |
+| `useRechazarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Rechazar excepción |
+
 ---
 
-## 14. Relación entre Módulos
+## 15. Relación entre Módulos
 
-### 14.1 Diagrama de Entidades
+### 15.1 Diagrama de Entidades
 
 ```
 ┌──────────┐     1:N     ┌────────────┐     N:1     ┌──────────┐
@@ -1553,9 +1850,30 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
                                         │ valorAnterior/Nuevo │
                                         │ usuario + timestamp │
                                         └─────────────────────┘
+
+┌─────────────────────┐     N:1     ┌──────────────────┐
+│ CertificadoGenerado │─────────────│ TipoCertificado  │
+│                     │             │                  │
+│ matriculaId         │             │ nombre           │
+│ cursoId             │             │ tipoFormacion    │
+│ personaId           │             │ plantillaId ─────┼──→ PlantillaCertificado
+│ codigo              │             │ reglas           │
+│ estado              │             │ reglaCodigo      │
+│ svgFinal            │             └──────────────────┘
+│ snapshotDatos       │
+└─────────────────────┘
+
+┌──────────────────────────────┐
+│ SolicitudExcepcionCertificado│
+│                              │
+│ matriculaId                  │
+│ estado (pendiente/aprobada/  │
+│         rechazada)           │
+│ motivo                       │
+└──────────────────────────────┘
 ```
 
-### 14.2 Relaciones
+### 15.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|
@@ -1567,7 +1885,7 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 | Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 14.3 Interacciones entre Módulos
+### 15.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.
@@ -1580,10 +1898,11 @@ Arrays exportados mutables que sirven como "base de datos" en memoria:
 9. **Dashboard** → Consume datos de los tres módulos principales para calcular métricas globales.
 10. **Portal Estudiante (Admin)** → Consume `portalDocumentosCatalogo` para configuración y `mockMatriculas` para monitoreo.
 11. **Portal Estudiante (Público)** → Resuelve matrícula vigente cruzando personas, matrículas y cursos. Consume catálogo de documentos filtrado por nivel de formación del curso.
+12. **Certificación** → Consume plantillas SVG, tipos de certificado, y datos de matrícula/persona/curso para generar certificados. Las excepciones cruzan con matrículas para autorización especial.
 
 ---
 
-## 15. Catálogos y Datos de Referencia
+## 16. Catálogos y Datos de Referencia
 
 Definidos en `src/data/formOptions.ts`:
 
@@ -1608,9 +1927,9 @@ Definidos en `src/data/formOptions.ts`:
 
 ---
 
-## 16. Auditoría y Trazabilidad
+## 17. Auditoría y Trazabilidad
 
-### 16.1 Entidad: `AuditLog`
+### 17.1 Entidad: `AuditLog`
 
 ```typescript
 interface AuditLog {
@@ -1627,7 +1946,7 @@ interface AuditLog {
 }
 ```
 
-### 16.2 Eventos Auditados
+### 17.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|
@@ -1639,7 +1958,7 @@ interface AuditLog {
 | Personal | ✓ | ✓ (incluye firma y adjuntos) | ✓ |
 | Cargo | ✓ | ✓ (con diff) | ✓ |
 
-### 16.3 Cobertura de Auditoría
+### 17.3 Cobertura de Auditoría
 
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.
@@ -1649,7 +1968,7 @@ interface AuditLog {
 
 ---
 
-## 17. Historial de Cambios
+## 18. Historial de Cambios
 
 ### v1.2 — 20 de Febrero 2026
 
@@ -1824,6 +2143,42 @@ Interfaz pública mobile-first para que estudiantes completen documentos de form
 **Archivos modificados:**
 - `src/App.tsx` — Nuevas rutas del portal admin y estudiante
 - `src/components/layout/AppSidebar.tsx` — Entrada "Portal Estudiante" en sidebar
+
+---
+
+### v1.6 — 8 de Marzo 2026
+
+#### Módulo de Certificación — Módulo nuevo
+
+Nuevo módulo completo para gestión del ciclo de certificación:
+
+- **Plantillas SVG**: Carga, detección automática de tokens `{{...}}`, versionado con historial y rollback. Editor de mapeo de etiquetas (`PlantillaEditorPage`).
+- **Tipos de Certificado**: CRUD integrado en la página de Plantillas (pestaña "Tipos de Certificado"). Define nombre, tipo de formación, plantilla vinculada, regla de código, y 5 switches de validación (pago, documentos, formatos, empresa, firmas).
+- **Certificados generados**: Generación individual/masiva con snapshot de datos, SVG final con tokens reemplazados, y código único. Estados: elegible → generado → revocado.
+- **Excepciones**: Flujo solicitar/aprobar/rechazar para matrículas que no cumplen requisitos. Generación con `autorizadoExcepcional=true`.
+- **Revocación y reemisión**: Certificados pueden revocarse con motivo y reemitirse con nueva versión.
+
+#### Consolidación de gestión
+
+- **Tipos de Certificado integrados en Plantillas**: La gestión de tipos de certificado se consolidó dentro de `PlantillasPage` como segunda pestaña, eliminando la página independiente `TiposCertificadoPage`.
+- **Sidebar simplificado**: Se eliminó la subentrada "Tipos de Certificado" del menú desplegable de Certificación. Queda: Historial y Plantillas.
+
+**Archivos creados:**
+- `src/types/certificado.ts`
+- `src/data/mockCertificados.ts`
+- `src/services/certificadoService.ts`, `src/services/plantillaService.ts`, `src/services/tipoCertificadoService.ts`, `src/services/excepcionCertificadoService.ts`
+- `src/hooks/useCertificados.ts`, `src/hooks/usePlantillas.ts`, `src/hooks/useTiposCertificado.ts`, `src/hooks/useExcepcionesCertificado.ts`
+- `src/pages/certificacion/PlantillasPage.tsx`, `PlantillaEditorPage.tsx`, `HistorialCertificadosPage.tsx`
+- `src/components/certificacion/PlantillaTestDialog.tsx`, `PlantillaVersionHistory.tsx`
+- `src/components/matriculas/CertificacionSection.tsx`, `ExcepcionesPanel.tsx`, `RevocacionDialog.tsx`, `HistorialVersiones.tsx`
+- `src/utils/certificadoGenerator.ts`, `src/utils/certificadoPdf.ts`
+
+**Archivos modificados:**
+- `src/App.tsx` — Nuevas rutas de certificación
+- `src/components/layout/AppSidebar.tsx` — Menú desplegable "Certificación" con Historial y Plantillas
+
+**Archivos eliminados:**
+- `src/pages/certificacion/TiposCertificadoPage.tsx` — Funcionalidad integrada en PlantillasPage
 
 ---
 

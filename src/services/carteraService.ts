@@ -7,6 +7,7 @@ import {
   ActividadCartera,
   MetodoPago,
   TipoActividadCartera,
+  METODO_PAGO_LABELS,
 } from '@/types/cartera';
 import {
   mockResponsables,

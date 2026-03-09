@@ -58,6 +58,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   }, [niveles, curso.tipoFormacion]);
   const codigoConfig = nivelConfig?.configuracionCodigoEstudiante;
 
+  const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     documental: "todos",
     financiero: "todos",

@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PenTool, RotateCcw, Save, CheckCircle2, Upload, Trash2, ImageIcon } from "lucide-react";
+import { PenTool, RotateCcw, Save, CheckCircle2, Trash2, ImageIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 
 interface FirmaPersonalProps {
   firmaExistente?: string;

@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { Upload, FileText, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,11 +22,13 @@ const formatCurrency = (v: number) =>
 export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas }: Props) {
   const { toast } = useToast();
   const createFactura = useCreateFactura();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [numeroFactura, setNumeroFactura] = useState("");
   const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split("T")[0]);
   const [fechaVencimiento, setFechaVencimiento] = useState("");
+  const [archivo, setArchivo] = useState<File | null>(null);
 
   const subtotal = useMemo(
     () => matriculas.filter(m => selectedIds.includes(m.id)).reduce((s, m) => s + (m.valorCupo || 0), 0),
@@ -51,18 +54,19 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
       total: subtotal,
     });
 
-    toast({ title: "Factura creada exitosamente" });
+    toast({ title: "Factura registrada exitosamente" });
     onOpenChange(false);
     setSelectedIds([]);
     setNumeroFactura("");
     setFechaVencimiento("");
+    setArchivo(null);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Crear Factura</DialogTitle>
+          <DialogTitle>Registrar Factura</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -134,12 +138,56 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
               />
             </div>
           </div>
+
+          {/* Archivo de factura */}
+          <div className="space-y-1.5">
+            <Label>Archivo de Factura (PDF)</Label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) setArchivo(file);
+              }}
+            />
+            {archivo ? (
+              <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
+                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="text-sm flex-1 truncate">{archivo.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {(archivo.size / 1024).toFixed(0)} KB
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    setArchivo(null);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                Cargar archivo
+              </Button>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSubmit} disabled={createFactura.isPending}>
-            {createFactura.isPending ? "Creando..." : "Crear Factura"}
+            {createFactura.isPending ? "Registrando..." : "Registrar Factura"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -191,6 +191,8 @@ src/
 | `/certificacion/historial` | `HistorialCertificadosPage` | Historial de certificados generados |
 | `/certificacion/plantillas` | `PlantillasPage` | Gestión de plantillas SVG y tipos de certificado |
 | `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
+| `/cartera` | `CarteraPage` | Bandeja de grupos de cartera |
+| `/cartera/:id` | `GrupoCarteraDetallePage` | Detalle de grupo: facturas, pagos, seguimiento |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |

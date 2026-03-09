@@ -27,6 +27,8 @@ import { useCursos } from "@/hooks/useCursos";
 import {
   TIPO_RESPONSABLE_LABELS,
   METODO_PAGO_LABELS,
+  Factura,
+  RegistroPago,
 } from "@/types/cartera";
 import { format } from "date-fns";
 

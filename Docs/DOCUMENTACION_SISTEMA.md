@@ -2124,7 +2124,7 @@ interface AuditLog {
 
 ---
 
-## 18. Historial de Cambios
+## 19. Historial de Cambios
 
 ### v1.2 — 20 de Febrero 2026
 

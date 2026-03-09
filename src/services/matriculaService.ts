@@ -1,9 +1,10 @@
 import { v4 as uuid } from 'uuid';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
-import { mockMatriculas, mockCursos, mockAuditLogs } from '@/data/mockData';
+import { mockMatriculas, mockCursos, mockAuditLogs, mockPersonas } from '@/data/mockData';
 import { delay, ApiError } from './api';
 import { getDocumentosRequeridos } from './documentoService';
 import { initPortalEstudiante } from './portalInitService';
+import { asignarMatriculaACartera } from './carteraService';
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {

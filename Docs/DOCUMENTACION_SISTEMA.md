@@ -1985,6 +1985,24 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useAprobarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Aprobar excepción |
 | `useRechazarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Rechazar excepción |
 
+### 15.11 Hooks de Cartera (`useCartera.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useGruposCartera()` | Query | `['cartera', 'grupos']` | Todos los grupos |
+| `useGrupoCartera(id)` | Query | `['cartera', 'grupo', id]` | Grupo por ID |
+| `useResponsablesPago()` | Query | `['cartera', 'responsables']` | Todos los responsables |
+| `useResponsablePago(id)` | Query | `['cartera', 'responsable', id]` | Responsable por ID |
+| `useFacturasByGrupo(grupoId)` | Query | `['cartera', 'facturas', grupoId]` | Facturas de un grupo |
+| `usePagosByGrupo(grupoId)` | Query | `['cartera', 'pagos', grupoId]` | Pagos de un grupo |
+| `useActividadesCartera(grupoId)` | Query | `['cartera', 'actividades', grupoId]` | Actividades de un grupo |
+| `useCreateFactura()` | Mutation | Invalida `['cartera']` | Crear factura |
+| `useUpdateFactura()` | Mutation | Invalida `['cartera']` | Actualizar factura |
+| `useRegistrarPagoCartera()` | Mutation | Invalida `['cartera']` | Registrar pago |
+| `useUpdatePago()` | Mutation | Invalida `['cartera']` | Actualizar pago |
+| `useCreateResponsable()` | Mutation | Invalida `['cartera']` | Crear responsable |
+| `useRegistrarActividad()` | Mutation | Invalida `['cartera']` | Registrar actividad manual |
+
 ---
 
 ## 16. Relación entre Módulos

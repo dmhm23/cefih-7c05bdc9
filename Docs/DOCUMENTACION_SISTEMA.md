@@ -104,6 +104,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
 │  mockCertificados.ts (plantillas, tipos, certificados)   │
+│  mockCartera.ts (responsables, grupos, facturas, pagos)  │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │

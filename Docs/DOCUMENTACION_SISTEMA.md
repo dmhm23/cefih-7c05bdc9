@@ -2059,7 +2059,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 15.3 Interacciones entre Módulos
+### 16.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.

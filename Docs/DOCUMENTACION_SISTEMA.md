@@ -1928,7 +1928,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useEvaluacionFormato(matriculaId)` | Query | `['portal-estudiante', 'evaluacion-formato', matriculaId]` | Formato de evaluación con quiz |
 | `useEnviarDocumento()` | Mutation | Invalida documentos + info-aprendiz + evaluación | Enviar documento completado |
 
-### 14.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
+### 15.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

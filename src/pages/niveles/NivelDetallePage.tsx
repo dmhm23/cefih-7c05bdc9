@@ -57,8 +57,6 @@ export default function NivelDetallePage() {
   };
 
   const campos = nivel.camposAdicionales || [];
-  const configCodigo = nivel.configuracionCodigoEstudiante;
-  const previewCodigo = configCodigo ? generarPreviewCodigo(configCodigo) : null;
 
   return (
     <div className="space-y-4">

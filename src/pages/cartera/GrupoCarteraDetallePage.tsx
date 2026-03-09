@@ -326,7 +326,7 @@ export default function GrupoCarteraDetallePage() {
               {pagos.map(p => {
                 const factura = facturas.find(f => f.id === p.facturaId);
                 return (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className="cursor-pointer" onClick={() => setEditingPago(p)}>
                     <TableCell>{p.fechaPago}</TableCell>
                     <TableCell className="font-medium">{factura?.numeroFactura || "—"}</TableCell>
                     <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>

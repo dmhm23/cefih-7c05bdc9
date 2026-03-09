@@ -49,6 +49,8 @@ export default function GrupoCarteraDetallePage() {
 
   const [showCrearFactura, setShowCrearFactura] = useState(false);
   const [showRegistrarPago, setShowRegistrarPago] = useState(false);
+  const [editingFactura, setEditingFactura] = useState<Factura | null>(null);
+  const [editingPago, setEditingPago] = useState<RegistroPago | null>(null);
 
   const matriculasGrupo = useMemo(
     () => allMatriculas.filter(m => grupo?.matriculaIds.includes(m.id)),

@@ -42,31 +42,14 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
 
   return (
     <div className="space-y-3">
-      {/* Upload button */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          {adjuntos.length} {adjuntos.length === 1 ? "archivo" : "archivos"} adjuntos
-        </span>
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
-          <Button type="button" variant="outline" size="sm" asChild disabled={isUploading}>
-            <span>
-              {isUploading ? (
-                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5 mr-1" />
-              )}
-              {isUploading ? "Subiendo..." : "Cargar archivo"}
-            </span>
-          </Button>
-        </label>
-      </div>
+      {/* Upload zone */}
+      <FileDropZone
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+        onFile={handleFile}
+        disabled={isUploading}
+        label={isUploading ? "Subiendo..." : "Arrastra archivos aquí o haz clic para seleccionar"}
+        hint="PDF, JPG, PNG, DOC, DOCX · Máx. 10 MB"
+      />
 
       {/* File list */}
       {adjuntos.length === 0 ? (

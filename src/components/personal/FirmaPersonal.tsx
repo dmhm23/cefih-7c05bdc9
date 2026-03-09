@@ -107,23 +107,13 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
         </TabsContent>
 
         <TabsContent value="cargar" className="space-y-2 mt-2">
-          <p className="text-xs text-muted-foreground">
-            Suba una imagen PNG con fondo transparente para mejores resultados.
-          </p>
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              className="hidden"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleFileUpload}
-            />
-            <Button type="button" variant="outline" size="sm" className="w-full" asChild disabled={isPending}>
-              <span>
-                <Upload className="h-3.5 w-3.5 mr-1" />
-                {isPending ? "Guardando..." : "Seleccionar imagen"}
-              </span>
-            </Button>
-          </label>
+          <FileDropZone
+            accept="image/png,image/jpeg,image/webp"
+            onFile={handleFileUpload}
+            disabled={isPending}
+            label={isPending ? "Guardando..." : "Arrastra una imagen aquí o haz clic para seleccionar"}
+            hint="PNG con fondo transparente para mejores resultados"
+          />
         </TabsContent>
       </Tabs>
     </div>

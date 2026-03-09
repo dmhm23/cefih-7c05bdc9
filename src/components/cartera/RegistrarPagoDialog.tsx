@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { useRegistrarPagoCartera } from "@/hooks/useCartera";
 import { Factura, MetodoPago, METODO_PAGO_LABELS, ESTADO_FACTURA_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,6 @@ const formatCurrency = (v: number) =>
 export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
   const { toast } = useToast();
   const registrarPago = useRegistrarPagoCartera();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [facturaId, setFacturaId] = useState("");
   const [valorPago, setValorPago] = useState("");
@@ -118,45 +117,14 @@ export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
           {/* Soporte de pago */}
           <div className="space-y-1.5">
             <Label>Soporte de Pago (comprobante)</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
+            <FileDropZone
               accept=".pdf,.png,.jpg,.jpeg"
-              className="hidden"
-              onChange={e => {
-                const file = e.target.files?.[0];
-                if (file) setArchivo(file);
-              }}
+              onFile={setArchivo}
+              file={archivo}
+              onClear={() => setArchivo(null)}
+              label="Arrastra el comprobante aquí o haz clic para seleccionar"
+              hint="PDF, PNG, JPG"
             />
-            {archivo ? (
-              <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
-                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm flex-1 truncate">{archivo.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {(archivo.size / 1024).toFixed(0)} KB
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => {
-                    setArchivo(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-4 w-4" />
-                Cargar comprobante
-              </Button>
-            )}
           </div>
 
           <div className="space-y-1.5">

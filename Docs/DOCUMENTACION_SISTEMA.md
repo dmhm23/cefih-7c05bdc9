@@ -2120,7 +2120,7 @@ interface AuditLog {
 }
 ```
 
-### 17.2 Eventos Auditados
+### 18.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|

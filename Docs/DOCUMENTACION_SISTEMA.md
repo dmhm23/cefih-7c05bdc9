@@ -1681,7 +1681,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `uploadDocumento(mId, tipo, file, meta)` | Simula subida individual a Google Drive. Retorna URL ficticia. |
 | `uploadConsolidado(mId, file, tipos, meta)` | Simula subida de PDF consolidado. Retorna URL + tipos incluidos. |
 
-### 13.2 Servicios del Portal
+### 14.2 Servicios del Portal
 
 #### `portalAdminService.ts`
 

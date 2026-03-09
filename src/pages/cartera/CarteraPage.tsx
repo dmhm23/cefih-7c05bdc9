@@ -21,6 +21,7 @@ const ESTADO_OPTIONS = [
   { value: "facturado", label: "Facturado" },
   { value: "abonado", label: "Abonado" },
   { value: "pagado", label: "Pagado" },
+  { value: "vencido", label: "Vencido" },
 ];
 
 const filterConfigs: FilterConfig[] = [

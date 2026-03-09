@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Receipt, CreditCard, Building2, User, Phone, Mail, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Receipt, CreditCard, Building2, User, Phone, Mail, MapPin, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -14,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ComentariosSection } from "@/components/shared/ComentariosSection";
+import { ActividadCarteraSection } from "@/components/cartera/ActividadCarteraSection";
 import { CrearFacturaDialog } from "@/components/cartera/CrearFacturaDialog";
 import { RegistrarPagoDialog } from "@/components/cartera/RegistrarPagoDialog";
 import { useGrupoCartera, useResponsablePago, useFacturasByGrupo, usePagosByGrupo } from "@/hooks/useCartera";
@@ -50,6 +51,11 @@ export default function GrupoCarteraDetallePage() {
     [allMatriculas, grupo]
   );
 
+  const facturasVencidas = useMemo(() => {
+    const now = new Date();
+    return facturas.filter(f => f.estado !== 'pagada' && new Date(f.fechaVencimiento) < now);
+  }, [facturas]);
+
   const getPersona = (personaId: string) => personas.find(p => p.id === personaId);
   const getCurso = (cursoId: string) => cursos.find(c => c.id === cursoId);
 
@@ -78,6 +84,20 @@ export default function GrupoCarteraDetallePage() {
           </div>
         </div>
       </div>
+
+      {/* Alerta de vencimiento */}
+      {facturasVencidas.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            {facturasVencidas.length === 1
+              ? `La factura ${facturasVencidas[0].numeroFactura} está vencida.`
+              : `${facturasVencidas.length} facturas están vencidas.`
+            }
+            {" "}Saldo pendiente: {formatCurrency(grupo.saldo)}.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Info general + Resumen financiero */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -247,15 +267,23 @@ export default function GrupoCarteraDetallePage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {facturas.map(f => (
-                <TableRow key={f.id}>
-                  <TableCell className="font-medium">{f.numeroFactura}</TableCell>
-                  <TableCell>{f.fechaEmision}</TableCell>
-                  <TableCell>{f.fechaVencimiento}</TableCell>
-                  <TableCell className="font-medium">{formatCurrency(f.total)}</TableCell>
-                  <TableCell><StatusBadge status={f.estado === "pagada" ? "pagada" : f.estado === "parcial" ? "parcial" : "pendiente"} /></TableCell>
-                </TableRow>
-              ))}
+              {facturas.map(f => {
+                const isOverdue = f.estado !== 'pagada' && new Date(f.fechaVencimiento) < new Date();
+                return (
+                  <TableRow key={f.id} className={isOverdue ? "bg-red-50/50" : ""}>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-1.5">
+                        {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+                        {f.numeroFactura}
+                      </span>
+                    </TableCell>
+                    <TableCell>{f.fechaEmision}</TableCell>
+                    <TableCell className={isOverdue ? "text-destructive font-medium" : ""}>{f.fechaVencimiento}</TableCell>
+                    <TableCell className="font-medium">{formatCurrency(f.total)}</TableCell>
+                    <TableCell><StatusBadge status={f.estado === "pagada" ? "pagada" : f.estado === "parcial" ? "parcial" : "pendiente"} /></TableCell>
+                  </TableRow>
+                );
+              })}
               {facturas.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
@@ -321,7 +349,7 @@ export default function GrupoCarteraDetallePage() {
           <CardTitle className="text-base">Seguimiento</CardTitle>
         </CardHeader>
         <CardContent>
-          <ComentariosSection matriculaId={id!} seccion="cartera" />
+          <ActividadCarteraSection grupoCarteraId={id!} />
         </CardContent>
       </Card>
 

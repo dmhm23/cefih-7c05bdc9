@@ -2113,6 +2113,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 10. **Portal Estudiante (Admin)** → Consume `portalDocumentosCatalogo` para configuración y `mockMatriculas` para monitoreo.
 11. **Portal Estudiante (Público)** → Resuelve matrícula vigente cruzando personas, matrículas y cursos. Consume catálogo de documentos filtrado por nivel de formación del curso.
 12. **Certificación** → Consume plantillas SVG, tipos de certificado, y datos de matrícula/persona/curso para generar certificados. Las excepciones cruzan con matrículas para autorización especial.
+13. **Cartera** → Agrupa matrículas bajo responsables de pago. Consume datos de matrículas, personas y cursos para la vista de detalle. Gestiona facturación y pagos con recálculo automático de saldos. Registra actividades de seguimiento (manuales y automáticas del sistema).
 
 ---
 

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Upload, FileText, X } from "lucide-react";
+import { useState } from "react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

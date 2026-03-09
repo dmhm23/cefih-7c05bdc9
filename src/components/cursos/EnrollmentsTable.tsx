@@ -370,11 +370,14 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m) => {
+                  {filtered.map((m, idx) => {
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
                     const finStatus = getFinancialStatus(m);
                     const certInfo = getCertStatus(m);
+                    const codigoEstudiante = codigoConfig?.activo
+                      ? generarCodigoEstudiante({ config: codigoConfig, curso, indexEstudiante: idx })
+                      : null;
                     return (
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         {!readOnly && (
@@ -387,6 +390,15 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         )}
                         <td className="py-2 pr-3">
                           <p className="font-medium">{persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}</p>
+                        </td>
+                        <td className="py-2 pr-3">
+                          {codigoEstudiante ? (
+                            <span className="font-mono text-xs tracking-wide">{codigoEstudiante}</span>
+                          ) : !codigoConfig ? (
+                            <Badge variant="secondary" className="text-[10px]">Sin regla</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px]">Desactivado</Badge>
+                          )}
                         </td>
                         <td className="py-2 pr-3 text-muted-foreground">
                           {m.empresaNombre || "Independiente"}

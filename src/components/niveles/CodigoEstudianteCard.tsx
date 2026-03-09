@@ -143,30 +143,6 @@ export function CodigoEstudianteCard({ nivelId, config }: Props) {
               </div>
             </div>
 
-            {/* Switches */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                <Label className="text-xs">Incluir año</Label>
-                <Switch
-                  checked={draft.usarAnioCurso}
-                  onCheckedChange={(v) => patch({ usarAnioCurso: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                <Label className="text-xs">Incluir mes</Label>
-                <Switch
-                  checked={draft.usarMesCurso}
-                  onCheckedChange={(v) => patch({ usarMesCurso: v })}
-                />
-              </div>
-              <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                <Label className="text-xs">Consecutivo curso/mes</Label>
-                <Switch
-                  checked={draft.usarConsecutivoCursoMes}
-                  onCheckedChange={(v) => patch({ usarConsecutivoCursoMes: v })}
-                />
-              </div>
-            </div>
 
             {/* Help */}
             <p className="text-[11px] text-muted-foreground leading-relaxed">

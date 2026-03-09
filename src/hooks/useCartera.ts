@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { carteraService } from '@/services/carteraService';
-import { MetodoPago } from '@/types/cartera';
+import { MetodoPago, TipoActividadCartera } from '@/types/cartera';
 
 export const useGruposCartera = () =>
   useQuery({ queryKey: ['cartera', 'grupos'], queryFn: () => carteraService.getGrupos() });
@@ -19,6 +19,9 @@ export const useFacturasByGrupo = (grupoId: string) =>
 
 export const usePagosByGrupo = (grupoId: string) =>
   useQuery({ queryKey: ['cartera', 'pagos', grupoId], queryFn: () => carteraService.getPagosByGrupo(grupoId), enabled: !!grupoId });
+
+export const useActividadesCartera = (grupoId: string) =>
+  useQuery({ queryKey: ['cartera', 'actividades', grupoId], queryFn: () => carteraService.getActividadesByGrupo(grupoId), enabled: !!grupoId });
 
 export const useCreateFactura = () => {
   const qc = useQueryClient();
@@ -44,6 +47,16 @@ export const useCreateResponsable = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: carteraService.createResponsable,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};
+
+export const useRegistrarActividad = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: carteraService.registrarActividad,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cartera'] });
     },

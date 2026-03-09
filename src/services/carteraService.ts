@@ -4,15 +4,16 @@ import {
   GrupoCartera,
   Factura,
   RegistroPago,
-  EstadoGrupoCartera,
-  EstadoFactura,
+  ActividadCartera,
   MetodoPago,
+  TipoActividadCartera,
 } from '@/types/cartera';
 import {
   mockResponsables,
   mockGruposCartera,
   mockFacturas,
   mockPagos,
+  mockActividades,
 } from '@/data/mockCartera';
 import { delay } from './api';
 
@@ -23,10 +24,22 @@ function recalcGrupo(grupo: GrupoCartera) {
   grupo.totalAbonos = pagos.reduce((s, p) => s + p.valorPago, 0);
   grupo.saldo = grupo.totalValor - grupo.totalAbonos;
 
-  if (grupo.saldo <= 0) grupo.estado = 'pagado';
-  else if (grupo.totalAbonos > 0) grupo.estado = 'abonado';
-  else if (facturas.length > 0) grupo.estado = 'facturado';
-  else grupo.estado = 'pendiente';
+  if (grupo.saldo <= 0) {
+    grupo.estado = 'pagado';
+  } else {
+    // Check for overdue invoices
+    const now = new Date();
+    const hasOverdue = facturas.some(f => f.estado !== 'pagada' && new Date(f.fechaVencimiento) < now);
+    if (hasOverdue) {
+      grupo.estado = 'vencido';
+    } else if (grupo.totalAbonos > 0) {
+      grupo.estado = 'abonado';
+    } else if (facturas.length > 0) {
+      grupo.estado = 'facturado';
+    } else {
+      grupo.estado = 'pendiente';
+    }
+  }
 }
 
 function recalcFactura(factura: Factura) {
@@ -35,6 +48,17 @@ function recalcFactura(factura: Factura) {
   if (totalPagado >= factura.total) factura.estado = 'pagada';
   else if (totalPagado > 0) factura.estado = 'parcial';
   else factura.estado = 'pendiente';
+}
+
+function addSystemActivity(grupoCarteraId: string, descripcion: string) {
+  mockActividades.push({
+    id: uuid(),
+    grupoCarteraId,
+    tipo: 'sistema',
+    descripcion,
+    fecha: new Date().toISOString(),
+    usuario: 'Sistema',
+  });
 }
 
 // ─── service ──────────────────────────────────────────────
@@ -60,12 +84,16 @@ export const carteraService = {
   // Grupos
   async getGrupos(): Promise<GrupoCartera[]> {
     await delay(600);
+    // Recalc all groups to detect overdue on every fetch
+    mockGruposCartera.forEach(g => recalcGrupo(g));
     return [...mockGruposCartera];
   },
 
   async getGrupoById(id: string): Promise<GrupoCartera | null> {
     await delay(400);
-    return mockGruposCartera.find(g => g.id === id) || null;
+    const grupo = mockGruposCartera.find(g => g.id === id);
+    if (grupo) recalcGrupo(grupo);
+    return grupo || null;
   },
 
   // Facturas
@@ -99,6 +127,12 @@ export const carteraService = {
     // Update grupo state
     const grupo = mockGruposCartera.find(g => g.id === data.grupoCarteraId);
     if (grupo) recalcGrupo(grupo);
+
+    // Auto-log activity
+    addSystemActivity(
+      data.grupoCarteraId,
+      `Factura ${data.numeroFactura} creada por $${data.total.toLocaleString('es-CO')}.`
+    );
 
     return factura;
   },
@@ -134,9 +168,44 @@ export const carteraService = {
       recalcFactura(factura);
       // Recalc grupo
       const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-      if (grupo) recalcGrupo(grupo);
+      if (grupo) {
+        recalcGrupo(grupo);
+        // Auto-log activity
+        const metodoLabel = { transferencia: 'Transferencia', efectivo: 'Efectivo', consignacion: 'Consignación', tarjeta: 'Tarjeta' };
+        addSystemActivity(
+          grupo.id,
+          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`
+        );
+      }
     }
 
     return pago;
+  },
+
+  // Actividades
+  async getActividadesByGrupo(grupoId: string): Promise<ActividadCartera[]> {
+    await delay(400);
+    return mockActividades
+      .filter(a => a.grupoCarteraId === grupoId)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  },
+
+  async registrarActividad(data: {
+    grupoCarteraId: string;
+    tipo: TipoActividadCartera;
+    descripcion: string;
+    usuario?: string;
+  }): Promise<ActividadCartera> {
+    await delay(400);
+    const actividad: ActividadCartera = {
+      id: uuid(),
+      grupoCarteraId: data.grupoCarteraId,
+      tipo: data.tipo,
+      descripcion: data.descripcion,
+      fecha: new Date().toISOString(),
+      usuario: data.usuario || 'Admin',
+    };
+    mockActividades.push(actividad);
+    return actividad;
   },
 };

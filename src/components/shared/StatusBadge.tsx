@@ -5,7 +5,8 @@ type StatusType =
   | "abierto" | "en_progreso" | "cerrado"
   | "verde" | "amarillo" | "rojo"
   | "facturado" | "abonado" | "pagado"
-  | "parcial" | "pagada";
+  | "parcial" | "pagada"
+  | "vencido";
 
 interface StatusBadgeProps {
   status: StatusType;

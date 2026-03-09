@@ -1,9 +1,10 @@
 // ============ CARTERA ============
 
 export type TipoResponsable = 'empresa' | 'independiente' | 'arl';
-export type EstadoGrupoCartera = 'pendiente' | 'facturado' | 'abonado' | 'pagado';
+export type EstadoGrupoCartera = 'pendiente' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
 export type EstadoFactura = 'pendiente' | 'parcial' | 'pagada';
 export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
+export type TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
 
 export interface ResponsablePago {
   id: string;
@@ -58,6 +59,15 @@ export interface RegistroPago {
   observaciones?: string;
 }
 
+export interface ActividadCartera {
+  id: string;
+  grupoCarteraId: string;
+  tipo: TipoActividadCartera;
+  descripcion: string;
+  fecha: string;
+  usuario?: string;
+}
+
 // Labels
 export const TIPO_RESPONSABLE_LABELS: Record<TipoResponsable, string> = {
   empresa: 'Empresa',
@@ -70,6 +80,7 @@ export const ESTADO_GRUPO_CARTERA_LABELS: Record<EstadoGrupoCartera, string> = {
   facturado: 'Facturado',
   abonado: 'Abonado',
   pagado: 'Pagado',
+  vencido: 'Vencido',
 };
 
 export const ESTADO_FACTURA_LABELS: Record<EstadoFactura, string> = {
@@ -83,4 +94,11 @@ export const METODO_PAGO_LABELS: Record<MetodoPago, string> = {
   efectivo: 'Efectivo',
   consignacion: 'Consignación',
   tarjeta: 'Tarjeta',
+};
+
+export const TIPO_ACTIVIDAD_LABELS: Record<TipoActividadCartera, string> = {
+  llamada: 'Llamada',
+  promesa_pago: 'Promesa de pago',
+  comentario: 'Comentario',
+  sistema: 'Sistema',
 };

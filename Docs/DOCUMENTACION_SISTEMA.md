@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.6  
-> Última actualización: 8 de Marzo 2026  
+> Versión: 1.7  
+> Última actualización: 9 de Marzo 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -20,14 +20,15 @@
 8. [Portal Estudiante (Admin)](#8-portal-estudiante-admin)
 9. [Portal Estudiante (Público)](#9-portal-estudiante-público)
 10. [Módulo de Certificación](#10-módulo-de-certificación)
-11. [Dashboard](#11-dashboard)
-12. [Componentes Compartidos](#12-componentes-compartidos)
-13. [Capa de Servicios y Datos](#13-capa-de-servicios-y-datos)
-14. [Hooks (React Query)](#14-hooks-react-query)
-15. [Relación entre Módulos](#15-relación-entre-módulos)
-16. [Catálogos y Datos de Referencia](#16-catálogos-y-datos-de-referencia)
-17. [Auditoría y Trazabilidad](#17-auditoría-y-trazabilidad)
-18. [Historial de Cambios](#18-historial-de-cambios)
+11. [Módulo de Cartera](#11-módulo-de-cartera)
+12. [Dashboard](#12-dashboard)
+13. [Componentes Compartidos](#13-componentes-compartidos)
+14. [Capa de Servicios y Datos](#14-capa-de-servicios-y-datos)
+15. [Hooks (React Query)](#15-hooks-react-query)
+16. [Relación entre Módulos](#16-relación-entre-módulos)
+17. [Catálogos y Datos de Referencia](#17-catálogos-y-datos-de-referencia)
+18. [Auditoría y Trazabilidad](#18-auditoría-y-trazabilidad)
+19. [Historial de Cambios](#19-historial-de-cambios)
 
 ---
 
@@ -39,7 +40,7 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca ocho módulos principales:
+El sistema abarca nueve módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
@@ -51,6 +52,7 @@ El sistema abarca ocho módulos principales:
 | **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
 | **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |
+| **Cartera** | Facturación, seguimiento de pagos, control de saldos y gestión de cobros por responsable de pago |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 
@@ -92,6 +94,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalInitService · formatoFormacionService             │
 │  certificadoService · plantillaService                   │
 │  tipoCertificadoService · excepcionCertificadoService    │
+│  carteraService                                          │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
@@ -101,6 +104,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │                   CAPA DE DATOS                           │
 │  mockData.ts (arrays en memoria)                         │
 │  mockCertificados.ts (plantillas, tipos, certificados)   │
+│  mockCartera.ts (responsables, grupos, facturas, pagos)  │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
@@ -190,6 +194,8 @@ src/
 | `/certificacion/historial` | `HistorialCertificadosPage` | Historial de certificados generados |
 | `/certificacion/plantillas` | `PlantillasPage` | Gestión de plantillas SVG y tipos de certificado |
 | `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
+| `/cartera` | `CarteraPage` | Bandeja de grupos de cartera |
+| `/cartera/:id` | `GrupoCarteraDetallePage` | Detalle de grupo: facturas, pagos, seguimiento |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
@@ -1334,9 +1340,164 @@ Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
 
 ---
 
-## 11. Dashboard
+## 11. Módulo de Cartera
 
-### 11.1 Métricas Globales
+### 11.1 Objetivo
+
+El módulo de **Cartera** gestiona los procesos de facturación, seguimiento de pagos y control de saldos derivados de las matrículas. Permite consolidar múltiples matrículas bajo un mismo responsable de pago, gestionar facturación agrupada o individual, registrar pagos y abonos con soportes, y mantener trazabilidad del estado financiero.
+
+### 11.2 Entidades
+
+#### ResponsablePago
+
+Representa la entidad o persona responsable del pago.
+
+```typescript
+interface ResponsablePago {
+  id: string;
+  tipo: 'empresa' | 'independiente' | 'arl';
+  nombre: string;
+  nit: string;
+  contactoNombre?: string;
+  contactoTelefono?: string;
+  contactoEmail?: string;
+  direccionFacturacion?: string;
+  observaciones?: string;
+}
+```
+
+#### GrupoCartera
+
+Agrupa matrículas que comparten el mismo responsable de pago.
+
+```typescript
+interface GrupoCartera {
+  id: string;
+  responsablePagoId: string;           // FK → ResponsablePago
+  estado: 'pendiente' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
+  totalValor: number;
+  totalAbonos: number;
+  saldo: number;
+  matriculaIds: string[];
+  observaciones?: string;
+  createdAt: string;
+}
+```
+
+**Recálculo automático de estado:**
+- `pagado`: saldo ≤ 0
+- `vencido`: alguna factura no pagada con `fechaVencimiento` pasada
+- `abonado`: tiene pagos pero saldo > 0
+- `facturado`: tiene facturas pero sin pagos
+- `pendiente`: sin facturas
+
+#### Factura
+
+```typescript
+interface Factura {
+  id: string;
+  grupoCarteraId: string;
+  numeroFactura: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+  subtotal: number;
+  total: number;
+  estado: 'pendiente' | 'parcial' | 'pagada';
+  archivoFactura?: string;
+  matriculaIds: string[];
+}
+```
+
+#### RegistroPago
+
+```typescript
+interface RegistroPago {
+  id: string;
+  facturaId: string;
+  fechaPago: string;
+  valorPago: number;
+  metodoPago: 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
+  soportePago?: string;
+  observaciones?: string;
+}
+```
+
+#### ActividadCartera
+
+Registro de seguimiento (llamadas, promesas de pago, eventos del sistema).
+
+```typescript
+interface ActividadCartera {
+  id: string;
+  grupoCarteraId: string;
+  tipo: 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
+  descripcion: string;
+  fecha: string;
+  usuario?: string;
+}
+```
+
+### 11.3 Operaciones del Servicio (`carteraService`)
+
+| Operación | Descripción |
+|-----------|-------------|
+| `getGrupos()` | Lista todos los grupos con recálculo de estados |
+| `getGrupoById(id)` | Grupo individual con recálculo |
+| `getResponsables()` | Lista todos los responsables de pago |
+| `getResponsableById(id)` | Responsable individual |
+| `createResponsable(data)` | Crea responsable de pago |
+| `getFacturasByGrupo(grupoId)` | Facturas de un grupo |
+| `createFactura(data)` | Crea factura, recalcula grupo, registra actividad automática |
+| `updateFactura(id, data)` | Actualiza factura, recalcula saldos, registra actividad |
+| `getPagosByGrupo(grupoId)` | Pagos asociados a facturas del grupo |
+| `registrarPago(data)` | Registra pago, recalcula factura y grupo, registra actividad automática |
+| `updatePago(id, data)` | Actualiza pago, recalcula saldos, registra actividad |
+| `getActividadesByGrupo(grupoId)` | Historial de actividades ordenado por fecha desc |
+| `registrarActividad(data)` | Registra actividad manual (llamada, promesa, comentario) |
+
+### 11.4 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `CarteraPage` | Bandeja principal con tabla de grupos, búsqueda, filtros por tipo y estado, icono de alerta para vencidos |
+| `GrupoCarteraDetallePage` | Vista detalle: info de contacto, resumen financiero, matrículas asociadas, facturación, pagos, seguimiento |
+| `CrearFacturaDialog` | Dialog para crear factura con selección de matrículas y cálculo automático de subtotal |
+| `EditarFacturaDialog` | Dialog pre-poblado para editar factura existente (número, fechas, total) |
+| `RegistrarPagoDialog` | Dialog para registrar pago con selección de factura, método de pago y soporte |
+| `EditarPagoDialog` | Dialog pre-poblado para editar pago existente (valor, fecha, método, observaciones) |
+| `ActividadCarteraSection` | Timeline de actividades con iconos por tipo y formulario inline para agregar actividades manuales |
+
+### 11.5 Alertas de Vencimiento
+
+- **Bandeja**: Icono `AlertTriangle` en filas con estado `vencido`.
+- **Detalle**: Banner `Alert` destructivo cuando hay facturas vencidas, indicando cantidad y saldo pendiente.
+- **Filas de factura**: Fondo rojo sutil (`bg-red-50/50`) y fecha de vencimiento en color destructivo.
+- **StatusBadge**: Variante destructiva para el estado `vencido`.
+
+### 11.6 Edición Inline
+
+Las tablas de facturación y pagos en la vista de detalle permiten edición directa: al hacer clic en una fila se abre un dialog de edición pre-poblado. Los cambios recalculan automáticamente los saldos de factura y grupo, y registran una actividad de sistema.
+
+### 11.7 Flujo Operativo
+
+```
+1. Matrícula creada → Asignada a grupo de cartera por responsable
+2. Grupo visible en bandeja → Clic navega a detalle
+3. Crear factura → Seleccionar matrículas → Total auto-calculado
+4. Registrar pago → Seleccionar factura → Recálculo automático de saldos
+5. Seguimiento → Registrar llamadas, promesas de pago, comentarios
+6. Detección automática de vencimiento → Alertas visuales
+```
+
+### 11.8 Navegación
+
+Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/cartera/:id`.
+
+---
+
+## 12. Dashboard
+
+### 12.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|
@@ -1353,9 +1514,9 @@ Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
 
 ---
 
-## 12. Componentes Compartidos
+## 13. Componentes Compartidos
 
-### 12.1 DataTable
+### 13.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.
@@ -1368,7 +1529,7 @@ Tabla genérica reutilizable con:
 - Columnas configurables (`ColumnSelector`)
 - Toolbar con búsqueda y filtros (`TableToolbar`)
 
-### 12.2 DetailSheet
+### 13.2 DetailSheet
 
 Panel lateral deslizable (Sheet de Radix UI) con:
 - Título y subtítulo
@@ -1378,7 +1539,7 @@ Panel lateral deslizable (Sheet de Radix UI) con:
 - Footer configurable (para botones de guardar/cancelar)
 - **Detección de portales**: El handler de clic externo (`handleClickOutside`) detecta portales abiertos de Radix (poppers, selects, menús, **dialogs**) para evitar cierres accidentales del panel al interactuar con modales o dropdowns superpuestos.
 
-### 12.3 EditableField
+### 13.3 EditableField
 
 Campo editable inline que soporta:
 - **Tipos**: `text`, `select`, `date`
@@ -1387,7 +1548,7 @@ Campo editable inline que soporta:
 - **Badge mode**: Muestra valor como Badge
 - **Opciones**: Array de `{ value, label }` para selects
 
-### 12.4 ComentariosSection
+### 13.4 ComentariosSection
 
 Sistema de comentarios con:
 - Historial cronológico (más recientes primero)
@@ -1397,7 +1558,7 @@ Sistema de comentarios con:
 - Registro de usuario y timestamp
 - Indicador de "editado" con fecha
 
-### 12.5 Otros Componentes Compartidos
+### 13.5 Otros Componentes Compartidos
 
 | Componente | Descripción |
 |------------|-------------|
@@ -1412,9 +1573,9 @@ Sistema de comentarios con:
 
 ---
 
-## 13. Capa de Servicios y Datos
+## 14. Capa de Servicios y Datos
 
-### 13.1 Servicios
+### 14.1 Servicios
 
 #### `api.ts` — Utilidades Base
 
@@ -1525,7 +1686,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `uploadDocumento(mId, tipo, file, meta)` | Simula subida individual a Google Drive. Retorna URL ficticia. |
 | `uploadConsolidado(mId, file, tipos, meta)` | Simula subida de PDF consolidado. Retorna URL + tipos incluidos. |
 
-### 13.2 Servicios del Portal
+### 14.2 Servicios del Portal
 
 #### `portalAdminService.ts`
 
@@ -1570,7 +1731,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 |---------|-------------|
 | `initPortalEstudiante(matricula, curso)` | Inicializa `portalEstudiante` en matrícula si no existe (compatibilidad legacy) |
 
-### 13.3 Servicios de Certificación
+### 14.3 Servicios de Certificación
 
 #### `certificadoService.ts`
 
@@ -1619,7 +1780,25 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `aprobar(id, resueltoPor)` | Aprobar excepción |
 | `rechazar(id, resueltoPor)` | Rechazar excepción |
 
-### 13.4 Datos Mock
+### 14.4 Servicio de Cartera (`carteraService.ts`)
+
+| Método | Descripción |
+|--------|-------------|
+| `getGrupos()` | Lista grupos con recálculo de estados |
+| `getGrupoById(id)` | Grupo individual con recálculo |
+| `getResponsables()` | Lista responsables de pago |
+| `getResponsableById(id)` | Responsable individual |
+| `createResponsable(data)` | Crea responsable |
+| `getFacturasByGrupo(grupoId)` | Facturas de un grupo |
+| `createFactura(data)` | Crea factura + actividad sistema |
+| `updateFactura(id, data)` | Actualiza factura + recálculo + actividad |
+| `getPagosByGrupo(grupoId)` | Pagos del grupo |
+| `registrarPago(data)` | Registra pago + recálculo + actividad |
+| `updatePago(id, data)` | Actualiza pago + recálculo + actividad |
+| `getActividadesByGrupo(grupoId)` | Historial de actividades |
+| `registrarActividad(data)` | Registra actividad manual |
+
+### 14.5 Datos Mock
 
 #### `mockData.ts` — Arrays mutables principales:
 
@@ -1645,9 +1824,9 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 
 ---
 
-## 14. Hooks (React Query)
+## 15. Hooks (React Query)
 
-### 14.1 Hooks de Personas (`usePersonas.ts`)
+### 15.1 Hooks de Personas (`usePersonas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1659,7 +1838,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdatePersona()` | Mutation | Invalida `['personas']`, `['persona', id]` | Actualizar persona |
 | `useDeletePersona()` | Mutation | Invalida `['personas']` | Eliminar persona |
 
-### 14.2 Hooks de Matrículas (`useMatriculas.ts`)
+### 15.2 Hooks de Matrículas (`useMatriculas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1678,7 +1857,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useDeleteMatricula()` | Mutation | Invalida matrículas + cursos | Eliminar matrícula |
 | `useUploadDocumento()` | Mutation | Invalida matrícula + matrículas | Subir documento (Drive + updateDocumento) |
 
-### 14.3 Hooks de Cursos (`useCursos.ts`)
+### 15.3 Hooks de Cursos (`useCursos.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1694,7 +1873,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useAgregarEstudiantesCurso()` | Mutation | Invalida cursos + curso + matrículas | Agregar estudiantes |
 | `useRemoverEstudianteCurso()` | Mutation | Invalida cursos + curso + matrículas | Remover estudiante |
 
-### 14.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
+### 15.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1705,7 +1884,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateNivelFormacion()` | Mutation | Invalida niveles + nivel específico | Actualizar nivel |
 | `useDeleteNivelFormacion()` | Mutation | Invalida `['niveles-formacion']` | Eliminar nivel |
 
-### 14.5 Hooks de Personal (`usePersonal.ts`)
+### 15.5 Hooks de Personal (`usePersonal.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1724,7 +1903,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateCargo()` | Mutation | Invalida `['cargos']` | Editar cargo |
 | `useDeleteCargo()` | Mutation | Invalida `['cargos']` | Eliminar cargo |
 
-### 14.6 Hooks de Comentarios (`useComentarios.ts`)
+### 15.6 Hooks de Comentarios (`useComentarios.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1733,7 +1912,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateComentario()` | Mutation | Invalida `['comentarios']` | Editar comentario |
 | `useDeleteComentario()` | Mutation | Invalida `['comentarios']` | Eliminar comentario |
 
-### 14.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
+### 15.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1744,7 +1923,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateOrdenDocumentos()` | Mutation | Invalida `['portal-admin-config']` | Reordenar documentos |
 | `useUpdateHabilitacionNivel()` | Mutation | Invalida `['portal-admin-config']` | Toggle habilitación por nivel |
 
-### 14.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
+### 15.8 Hooks del Portal Estudiante (`usePortalEstudiante.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1754,7 +1933,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useEvaluacionFormato(matriculaId)` | Query | `['portal-estudiante', 'evaluacion-formato', matriculaId]` | Formato de evaluación con quiz |
 | `useEnviarDocumento()` | Mutation | Invalida documentos + info-aprendiz + evaluación | Enviar documento completado |
 
-### 14.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
+### 15.9 Hooks de Monitoreo (`usePortalMonitoreo.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|
@@ -1762,7 +1941,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useTogglePortalMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Toggle portal de una matrícula |
 | `useResetDocumentoMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Reabrir documento completado |
 
-### 14.10 Hooks de Certificación
+### 15.10 Hooks de Certificación
 
 #### `useCertificados.ts`
 
@@ -1809,11 +1988,29 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useAprobarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Aprobar excepción |
 | `useRechazarExcepcion()` | Mutation | Invalida `['excepciones-certificado']` | Rechazar excepción |
 
+### 15.11 Hooks de Cartera (`useCartera.ts`)
+
+| Hook | Tipo | Query Key | Descripción |
+|------|------|-----------|-------------|
+| `useGruposCartera()` | Query | `['cartera', 'grupos']` | Todos los grupos |
+| `useGrupoCartera(id)` | Query | `['cartera', 'grupo', id]` | Grupo por ID |
+| `useResponsablesPago()` | Query | `['cartera', 'responsables']` | Todos los responsables |
+| `useResponsablePago(id)` | Query | `['cartera', 'responsable', id]` | Responsable por ID |
+| `useFacturasByGrupo(grupoId)` | Query | `['cartera', 'facturas', grupoId]` | Facturas de un grupo |
+| `usePagosByGrupo(grupoId)` | Query | `['cartera', 'pagos', grupoId]` | Pagos de un grupo |
+| `useActividadesCartera(grupoId)` | Query | `['cartera', 'actividades', grupoId]` | Actividades de un grupo |
+| `useCreateFactura()` | Mutation | Invalida `['cartera']` | Crear factura |
+| `useUpdateFactura()` | Mutation | Invalida `['cartera']` | Actualizar factura |
+| `useRegistrarPagoCartera()` | Mutation | Invalida `['cartera']` | Registrar pago |
+| `useUpdatePago()` | Mutation | Invalida `['cartera']` | Actualizar pago |
+| `useCreateResponsable()` | Mutation | Invalida `['cartera']` | Crear responsable |
+| `useRegistrarActividad()` | Mutation | Invalida `['cartera']` | Registrar actividad manual |
+
 ---
 
-## 15. Relación entre Módulos
+## 16. Relación entre Módulos
 
-### 15.1 Diagrama de Entidades
+### 16.1 Diagrama de Entidades
 
 ```
 ┌──────────┐     1:N     ┌────────────┐     N:1     ┌──────────┐
@@ -1871,9 +2068,29 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 │         rechazada)           │
 │ motivo                       │
 └──────────────────────────────┘
+
+┌──────────────────┐     N:1     ┌──────────────────┐     1:N     ┌──────────┐
+│  GrupoCartera    │─────────────│ ResponsablePago  │             │ Factura  │
+│                  │             │                  │             │          │
+│ responsablePagoId│             │ tipo             │             │ grupoId  │
+│ estado           │             │ nombre           │             │ estado   │
+│ totalValor       │             │ nit              │             │ total    │
+│ saldo            │             └──────────────────┘             └────┬─────┘
+│ matriculaIds[]   │──── 1:N ──→ Factura                              │ 1:N
+└──────────────────┘                                            ┌─────▼──────┐
+                                                                │RegistroPago│
+┌──────────────────────┐                                        │            │
+│ ActividadCartera     │                                        │ facturaId  │
+│                      │                                        │ valorPago  │
+│ grupoCarteraId       │                                        │ metodoPago │
+│ tipo (llamada/       │                                        └────────────┘
+│  promesa/comentario/ │
+│  sistema)            │
+│ descripcion          │
+└──────────────────────┘
 ```
 
-### 15.2 Relaciones
+### 16.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|
@@ -1885,7 +2102,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | Personal → Cargo | N:1 | Cada perfil de personal tiene un cargo asignado |
 | Todas → AuditLog | N:1 | Registro transversal de todas las operaciones CRUD |
 
-### 15.3 Interacciones entre Módulos
+### 16.3 Interacciones entre Módulos
 
 1. **Crear matrícula** → Valida existencia del curso → Actualiza `matriculasIds` del curso.
 2. **Eliminar matrícula** → Remueve ID de `matriculasIds` del curso.
@@ -1899,10 +2116,11 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 10. **Portal Estudiante (Admin)** → Consume `portalDocumentosCatalogo` para configuración y `mockMatriculas` para monitoreo.
 11. **Portal Estudiante (Público)** → Resuelve matrícula vigente cruzando personas, matrículas y cursos. Consume catálogo de documentos filtrado por nivel de formación del curso.
 12. **Certificación** → Consume plantillas SVG, tipos de certificado, y datos de matrícula/persona/curso para generar certificados. Las excepciones cruzan con matrículas para autorización especial.
+13. **Cartera** → Agrupa matrículas bajo responsables de pago. Consume datos de matrículas, personas y cursos para la vista de detalle. Gestiona facturación y pagos con recálculo automático de saldos. Registra actividades de seguimiento (manuales y automáticas del sistema).
 
 ---
 
-## 16. Catálogos y Datos de Referencia
+## 17. Catálogos y Datos de Referencia
 
 Definidos en `src/data/formOptions.ts`:
 
@@ -1927,9 +2145,9 @@ Definidos en `src/data/formOptions.ts`:
 
 ---
 
-## 17. Auditoría y Trazabilidad
+## 18. Auditoría y Trazabilidad
 
-### 17.1 Entidad: `AuditLog`
+### 18.1 Entidad: `AuditLog`
 
 ```typescript
 interface AuditLog {
@@ -1946,7 +2164,7 @@ interface AuditLog {
 }
 ```
 
-### 17.2 Eventos Auditados
+### 18.2 Eventos Auditados
 
 | Entidad | Crear | Editar | Eliminar |
 |---------|-------|--------|----------|
@@ -1958,7 +2176,7 @@ interface AuditLog {
 | Personal | ✓ | ✓ (incluye firma y adjuntos) | ✓ |
 | Cargo | ✓ | ✓ (con diff) | ✓ |
 
-### 17.3 Cobertura de Auditoría
+### 18.3 Cobertura de Auditoría
 
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.
@@ -1968,7 +2186,7 @@ interface AuditLog {
 
 ---
 
-## 18. Historial de Cambios
+## 19. Historial de Cambios
 
 ### v1.2 — 20 de Febrero 2026
 
@@ -2179,6 +2397,37 @@ Nuevo módulo completo para gestión del ciclo de certificación:
 
 **Archivos eliminados:**
 - `src/pages/certificacion/TiposCertificadoPage.tsx` — Funcionalidad integrada en PlantillasPage
+
+---
+
+### v1.7 — 9 de Marzo 2026
+
+#### Módulo de Cartera — Módulo nuevo
+
+Nuevo módulo completo para gestión de facturación, pagos y seguimiento de cartera:
+
+- **Modelo de datos**: Responsables de pago (empresa/independiente/ARL), grupos de cartera, facturas, pagos, y actividades de seguimiento. Tipos definidos en `src/types/cartera.ts`.
+- **Bandeja de cartera** (`CarteraPage`): Tabla con búsqueda, filtros por tipo de responsable y estado, icono de alerta para grupos vencidos.
+- **Vista de detalle** (`GrupoCarteraDetallePage`): Información de contacto, resumen financiero, matrículas asociadas, tablas de facturación y pagos con edición inline, y sección de seguimiento.
+- **Facturación**: Creación de facturas con selección de matrículas y cálculo automático de subtotal. Edición de facturas existentes vía dialog.
+- **Pagos**: Registro de pagos con selección de factura, método de pago y soporte adjunto. Edición de pagos existentes vía dialog.
+- **Recálculo automático de saldos**: Al crear/editar facturas o pagos, el sistema recalcula automáticamente los saldos de factura y grupo, y actualiza el estado (pendiente → facturado → abonado → pagado / vencido).
+- **Detección de vencimiento**: Estado `vencido` asignado automáticamente cuando hay facturas no pagadas con fecha de vencimiento pasada. Alertas visuales en bandeja y detalle.
+- **Seguimiento** (`ActividadCarteraSection`): Timeline de actividades con iconos diferenciados por tipo (llamada, promesa de pago, comentario, sistema). Formulario inline para agregar actividades manuales. Registro automático de eventos del sistema (factura creada, pago registrado, actualizaciones).
+- **Edición inline**: Clic en filas de facturas o pagos abre dialog pre-poblado para edición directa.
+
+**Archivos creados:**
+- `src/types/cartera.ts`
+- `src/data/mockCartera.ts`
+- `src/services/carteraService.ts`
+- `src/hooks/useCartera.ts`
+- `src/pages/cartera/CarteraPage.tsx`, `GrupoCarteraDetallePage.tsx`
+- `src/components/cartera/CrearFacturaDialog.tsx`, `EditarFacturaDialog.tsx`, `RegistrarPagoDialog.tsx`, `EditarPagoDialog.tsx`, `ActividadCarteraSection.tsx`
+
+**Archivos modificados:**
+- `src/App.tsx` — Rutas `/cartera` y `/cartera/:id`
+- `src/components/layout/AppSidebar.tsx` — Entrada "Cartera" en sidebar
+- `src/components/shared/StatusBadge.tsx` — Variante destructiva para estado `vencido`
 
 ---
 

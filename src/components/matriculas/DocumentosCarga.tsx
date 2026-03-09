@@ -368,17 +368,27 @@ export function DocumentosCarga({
           {/* Block 2: Upload zone */}
           <div className="p-3 bg-muted/30 space-y-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Carga del PDF consolidado</p>
-            <label className="cursor-pointer">
-              <input type="file" className="hidden" accept=".pdf"
-                onChange={handleConsolidadoUpload} disabled={isUploading} />
-              <Button type="button" variant="outline" size="sm" className="w-full" asChild>
-                <span>
-                  <Upload className="h-3.5 w-3.5 mr-1" />
-                  Seleccionar PDF
-                  {tiposSeleccionados.length > 0 && ` (${tiposSeleccionados.length} docs)`}
-                </span>
-              </Button>
-            </label>
+            <FileDropZone
+              accept=".pdf"
+              onFile={(file) => {
+                if (!validateFileSize(file)) return;
+                if (onUploadConsolidado) {
+                  const tipos = tiposSeleccionados.length > 0
+                    ? tiposSeleccionados
+                    : documentos.filter((d) => d.estado === "pendiente").map((d) => d.tipo);
+                  onUploadConsolidado(file, tipos);
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  setConsolidadoPreview({ url: dataUrl, name: file.name, type: file.type, size: file.size });
+                };
+                reader.readAsDataURL(file);
+              }}
+              disabled={isUploading}
+              label={`Arrastra el PDF aquí o haz clic${tiposSeleccionados.length > 0 ? ` (${tiposSeleccionados.length} docs)` : ""}`}
+              hint="Archivo PDF consolidado"
+            />
             {consolidadoPreview && renderPreviewPanel(consolidadoPreview, closeConsolidadoPreview)}
           </div>
         </div>

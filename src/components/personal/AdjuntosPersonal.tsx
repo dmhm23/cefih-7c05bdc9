@@ -25,15 +25,9 @@ interface AdjuntosPersonalProps {
 export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, isDeleting }: AdjuntosPersonalProps) {
   const [previewId, setPreviewId] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_FILE_SIZE) {
-      return;
-    }
+  const handleFile = (file: File) => {
+    if (file.size > MAX_FILE_SIZE) return;
     onUpload(file);
-    // Reset input so the same file can be re-selected
-    e.target.value = "";
   };
 
   const handleDownload = (adj: AdjuntoPersonal) => {

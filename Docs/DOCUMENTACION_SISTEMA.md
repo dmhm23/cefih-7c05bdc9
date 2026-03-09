@@ -1543,7 +1543,7 @@ Campo editable inline que soporta:
 - **Badge mode**: Muestra valor como Badge
 - **Opciones**: Array de `{ value, label }` para selects
 
-### 12.4 ComentariosSection
+### 13.4 ComentariosSection
 
 Sistema de comentarios con:
 - Historial cronológico (más recientes primero)

@@ -276,7 +276,7 @@ export default function GrupoCarteraDetallePage() {
               {facturas.map(f => {
                 const isOverdue = f.estado !== 'pagada' && new Date(f.fechaVencimiento) < new Date();
                 return (
-                  <TableRow key={f.id} className={isOverdue ? "bg-red-50/50" : ""}>
+                  <TableRow key={f.id} className={`cursor-pointer ${isOverdue ? "bg-red-50/50" : ""}`} onClick={() => setEditingFactura(f)}>
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-1.5">
                         {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}

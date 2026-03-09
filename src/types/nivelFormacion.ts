@@ -25,6 +25,15 @@ export type AlcanceCampo =
   | 'solo_nivel'
   | 'todos_los_niveles';
 
+export interface CampoAdicional {
+  id: string;
+  nombre: string;
+  tipo: TipoCampoAdicional;
+  obligatorio: boolean;
+  opciones?: string[];
+  alcance: AlcanceCampo;
+}
+
 export interface ConfiguracionCodigoEstudiante {
   prefijoCodigo: string;
   codigoTipoFormacion: string;

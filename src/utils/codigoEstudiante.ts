@@ -23,7 +23,7 @@ export function generarCodigoEstudiante({ config, curso, indexEstudiante, consec
   }
 
   if (config.usarConsecutivoCursoMes) {
-    const consec = consecutivoCursoMes ?? parseInt(curso.numeroCurso) || 1;
+    const consec = consecutivoCursoMes ?? (parseInt(curso.numeroCurso) || 1);
     parts.push(String(consec).padStart(2, '0'));
   }
 

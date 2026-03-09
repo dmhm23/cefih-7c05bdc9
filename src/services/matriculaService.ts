@@ -95,6 +95,22 @@ export const matriculaService = {
       initPortalEstudiante(newMatricula, curso);
     }
 
+    // ── Auto-asignar a grupo de cartera ──
+    const persona = mockPersonas.find(p => p.id === data.personaId);
+    asignarMatriculaACartera({
+      matriculaId: newMatricula.id,
+      valorCupo: newMatricula.valorCupo || 0,
+      tipoVinculacion: newMatricula.tipoVinculacion || 'independiente',
+      empresaNombre: newMatricula.empresaNombre,
+      empresaNit: newMatricula.empresaNit,
+      empresaContactoNombre: newMatricula.empresaContactoNombre || newMatricula.cobroContactoNombre,
+      empresaContactoTelefono: newMatricula.empresaContactoTelefono || newMatricula.cobroContactoCelular,
+      personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+      personaDocumento: persona?.numeroDocumento,
+      personaTelefono: persona?.telefono,
+      personaEmail: persona?.email,
+    });
+
     // Log de auditoría
     mockAuditLogs.push({
       id: uuid(),

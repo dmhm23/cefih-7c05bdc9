@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2, FileText, Clock, Settings2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, FileText, Clock, Settings2, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,9 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useNivelFormacion, useDeleteNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { CATALOGO_DOCUMENTOS, TIPOS_CAMPO_LABELS } from "@/types/nivelFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
+import { generarPreviewCodigo } from "@/utils/codigoEstudiante";
 
 export default function NivelDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +57,8 @@ export default function NivelDetallePage() {
   };
 
   const campos = nivel.camposAdicionales || [];
+  const configCodigo = nivel.configuracionCodigoEstudiante;
+  const previewCodigo = configCodigo ? generarPreviewCodigo(configCodigo) : null;
 
   return (
     <div className="space-y-4">
@@ -144,6 +147,48 @@ export default function NivelDetallePage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Código de Estudiante */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Hash className="h-4 w-4" />
+                Código de Estudiante
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {configCodigo?.activo ? (
+                <div className="space-y-3">
+                  <div className="rounded-md border bg-muted/50 p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Formato</p>
+                    <p className="font-mono text-lg font-semibold tracking-wider">{previewCodigo}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Prefijo</p>
+                      <p className="font-medium">{configCodigo.prefijoCodigo}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tipo formación</p>
+                      <p className="font-medium">{configCodigo.codigoTipoFormacion}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Separador</p>
+                      <p className="font-medium font-mono">"{configCodigo.separadorCodigo}"</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {configCodigo.usarAnioCurso && <Badge variant="secondary" className="text-[10px]">Año</Badge>}
+                    {configCodigo.usarMesCurso && <Badge variant="secondary" className="text-[10px]">Mes</Badge>}
+                    {configCodigo.usarConsecutivoCursoMes && <Badge variant="secondary" className="text-[10px]">Consecutivo curso</Badge>}
+                    <Badge variant="secondary" className="text-[10px]">Consecutivo estudiante ({configCodigo.longitudConsecutivoEstudiante} dígitos)</Badge>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">Sin configurar</p>
+              )}
+            </CardContent>
+          </Card>
 
           {nivel.observaciones && (
             <Card>

@@ -30,9 +30,31 @@ export interface CampoAdicional {
   nombre: string;
   tipo: TipoCampoAdicional;
   obligatorio: boolean;
-  opciones?: string[]; // Solo para select / select_multiple
+  opciones?: string[];
   alcance: AlcanceCampo;
 }
+
+export interface ConfiguracionCodigoEstudiante {
+  prefijoCodigo: string;
+  codigoTipoFormacion: string;
+  separadorCodigo: string;
+  longitudConsecutivoEstudiante: number;
+  usarAnioCurso: boolean;
+  usarMesCurso: boolean;
+  usarConsecutivoCursoMes: boolean;
+  activo: boolean;
+}
+
+export const DEFAULT_CONFIG_CODIGO: ConfiguracionCodigoEstudiante = {
+  prefijoCodigo: 'FIH',
+  codigoTipoFormacion: 'R',
+  separadorCodigo: '-',
+  longitudConsecutivoEstudiante: 4,
+  usarAnioCurso: true,
+  usarMesCurso: true,
+  usarConsecutivoCursoMes: true,
+  activo: false,
+};
 
 export interface NivelFormacion {
   id: string;
@@ -41,6 +63,7 @@ export interface NivelFormacion {
   duracionDias?: number;
   documentosRequeridos: string[];
   camposAdicionales?: CampoAdicional[];
+  configuracionCodigoEstudiante?: ConfiguracionCodigoEstudiante;
   observaciones?: string;
   createdAt: string;
   updatedAt: string;

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ import {
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { generarCodigoEstudiante } from "@/utils/codigoEstudiante";
+import type { ConfiguracionCodigoEstudiante } from "@/types/nivelFormacion";
 
 interface EnrollmentsTableProps {
   curso: Curso;
@@ -40,6 +43,20 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const removerEstudiante = useRemoverEstudianteCurso();
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
+
+  const { data: niveles } = useNivelesFormacion();
+  const nivelConfig = useMemo(() => {
+    if (!niveles) return null;
+    const tipoToNivel: Record<string, string> = {
+      reentrenamiento: 'Reentrenamiento',
+      jefe_area: 'Jefe de Área',
+      trabajador_autorizado: 'Trabajador Autorizado',
+      coordinador_ta: 'Coordinador T.A.',
+    };
+    const nivelName = tipoToNivel[curso.tipoFormacion];
+    return niveles.find(n => n.nombreNivel === nivelName) || null;
+  }, [niveles, curso.tipoFormacion]);
+  const codigoConfig = nivelConfig?.configuracionCodigoEstudiante;
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
@@ -342,6 +359,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                       </th>
                     )}
                     <th className="text-left py-2 pr-3 font-medium">Nombre</th>
+                    <th className="text-left py-2 pr-3 font-medium">Código</th>
                     <th className="text-left py-2 pr-3 font-medium">Empresa</th>
                     <th className="text-left py-2 pr-3 font-medium">Cobertura ARL</th>
                     <th className="text-left py-2 pr-3 font-medium">Examen</th>
@@ -352,11 +370,14 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m) => {
+                  {filtered.map((m, idx) => {
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
                     const finStatus = getFinancialStatus(m);
                     const certInfo = getCertStatus(m);
+                    const codigoEstudiante = codigoConfig?.activo
+                      ? generarCodigoEstudiante({ config: codigoConfig, curso, indexEstudiante: idx })
+                      : null;
                     return (
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         {!readOnly && (
@@ -369,6 +390,15 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         )}
                         <td className="py-2 pr-3">
                           <p className="font-medium">{persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}</p>
+                        </td>
+                        <td className="py-2 pr-3">
+                          {codigoEstudiante ? (
+                            <span className="font-mono text-xs tracking-wide">{codigoEstudiante}</span>
+                          ) : !codigoConfig ? (
+                            <Badge variant="secondary" className="text-[10px]">Sin regla</Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px]">Desactivado</Badge>
+                          )}
                         </td>
                         <td className="py-2 pr-3 text-muted-foreground">
                           {m.empresaNombre || "Independiente"}

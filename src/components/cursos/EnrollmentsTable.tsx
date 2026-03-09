@@ -44,7 +44,20 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
-  const [filterOpen, setFilterOpen] = useState(false);
+  const { data: niveles } = useNivelesFormacion();
+  const nivelConfig = useMemo(() => {
+    if (!niveles) return null;
+    const tipoToNivel: Record<string, string> = {
+      reentrenamiento: 'Reentrenamiento',
+      jefe_area: 'Jefe de Área',
+      trabajador_autorizado: 'Trabajador Autorizado',
+      coordinador_ta: 'Coordinador T.A.',
+    };
+    const nivelName = tipoToNivel[curso.tipoFormacion];
+    return niveles.find(n => n.nombreNivel === nivelName) || null;
+  }, [niveles, curso.tipoFormacion]);
+  const codigoConfig = nivelConfig?.configuracionCodigoEstudiante;
+
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     documental: "todos",
     financiero: "todos",

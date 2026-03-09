@@ -1,4 +1,5 @@
-import { FileText, Pencil, Plus, Search, Upload } from "lucide-react";
+import { FileText, Pencil, Plus, Search } from "lucide-react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";

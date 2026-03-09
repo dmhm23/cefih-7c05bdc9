@@ -18,6 +18,8 @@ import {
 import { ActividadCarteraSection } from "@/components/cartera/ActividadCarteraSection";
 import { CrearFacturaDialog } from "@/components/cartera/CrearFacturaDialog";
 import { RegistrarPagoDialog } from "@/components/cartera/RegistrarPagoDialog";
+import { EditarFacturaDialog } from "@/components/cartera/EditarFacturaDialog";
+import { EditarPagoDialog } from "@/components/cartera/EditarPagoDialog";
 import { useGrupoCartera, useResponsablePago, useFacturasByGrupo, usePagosByGrupo } from "@/hooks/useCartera";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";

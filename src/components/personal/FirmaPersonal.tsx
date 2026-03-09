@@ -1,10 +1,9 @@
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PenTool, RotateCcw, Save, CheckCircle2, Upload, Trash2, ImageIcon } from "lucide-react";
+import { PenTool, RotateCcw, Save, CheckCircle2, Trash2, ImageIcon } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 
 interface FirmaPersonalProps {
   firmaExistente?: string;
@@ -30,11 +29,8 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = (file: File) => {
     if (!file.type.startsWith("image/")) return;
-
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
@@ -111,23 +107,13 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
         </TabsContent>
 
         <TabsContent value="cargar" className="space-y-2 mt-2">
-          <p className="text-xs text-muted-foreground">
-            Suba una imagen PNG con fondo transparente para mejores resultados.
-          </p>
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              className="hidden"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={handleFileUpload}
-            />
-            <Button type="button" variant="outline" size="sm" className="w-full" asChild disabled={isPending}>
-              <span>
-                <Upload className="h-3.5 w-3.5 mr-1" />
-                {isPending ? "Guardando..." : "Seleccionar imagen"}
-              </span>
-            </Button>
-          </label>
+          <FileDropZone
+            accept="image/png,image/jpeg,image/webp"
+            onFile={handleFileUpload}
+            disabled={isPending}
+            label={isPending ? "Guardando..." : "Arrastra una imagen aquí o haz clic para seleccionar"}
+            hint="PNG con fondo transparente para mejores resultados"
+          />
         </TabsContent>
       </Tabs>
     </div>

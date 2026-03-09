@@ -1,4 +1,5 @@
-import { FileText, Pencil, Plus, Search, Upload } from "lucide-react";
+import { FileText, Pencil, Plus, Search } from "lucide-react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -14,7 +15,7 @@ import { usePlantillas, useCreatePlantilla } from "@/hooks/usePlantillas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { TIPO_FORMACION_LABELS, type TipoFormacion } from "@/types/curso";
 import type { ReglaTipoCertificado } from "@/types/certificado";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_REGLAS: ReglaTipoCertificado = {
@@ -50,7 +51,7 @@ export default function PlantillasPage() {
   const [reglaCodigo, setReglaCodigo] = useState("{numeroCurso}-{prefijoNivel}-{consecutivoAnual}");
   const [reglas, setReglas] = useState<ReglaTipoCertificado>({ ...DEFAULT_REGLAS });
   const [nivelesAsignados, setNivelesAsignados] = useState<string[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  
 
   const filteredPlantillas = (plantillas ?? []).filter(p =>
     !busqueda || p.nombre.toLowerCase().includes(busqueda.toLowerCase())
@@ -187,21 +188,14 @@ export default function PlantillasPage() {
             {/* Archivo SVG */}
             <div className="space-y-2">
               <Label>Archivo SVG</Label>
-              <input
-                ref={fileRef}
-                type="file"
+              <FileDropZone
                 accept=".svg"
-                className="hidden"
-                onChange={e => setSvgFile(e.target.files?.[0] || null)}
+                onFile={setSvgFile}
+                file={svgFile}
+                onClear={() => setSvgFile(null)}
+                label="Arrastra el SVG aquí o haz clic para seleccionar"
+                hint="Archivo SVG de la plantilla"
               />
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => fileRef.current?.click()}
-              >
-                <Upload className="h-4 w-4" />
-                {svgFile ? svgFile.name : 'Seleccionar archivo SVG'}
-              </Button>
             </div>
 
             {/* Tipo de formación */}

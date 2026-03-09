@@ -1,10 +1,10 @@
-import { useState, useMemo, useRef } from "react";
-import { Upload, FileText, X } from "lucide-react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { useCreateFactura } from "@/hooks/useCartera";
 import { Matricula } from "@/types/matricula";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,6 @@ const formatCurrency = (v: number) =>
 export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas }: Props) {
   const { toast } = useToast();
   const createFactura = useCreateFactura();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [numeroFactura, setNumeroFactura] = useState("");
@@ -142,45 +141,14 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
           {/* Archivo de factura */}
           <div className="space-y-1.5">
             <Label>Archivo de Factura (PDF)</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
+            <FileDropZone
               accept=".pdf,.png,.jpg,.jpeg"
-              className="hidden"
-              onChange={e => {
-                const file = e.target.files?.[0];
-                if (file) setArchivo(file);
-              }}
+              onFile={setArchivo}
+              file={archivo}
+              onClear={() => setArchivo(null)}
+              label="Arrastra la factura aquí o haz clic para seleccionar"
+              hint="PDF, PNG, JPG"
             />
-            {archivo ? (
-              <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
-                <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm flex-1 truncate">{archivo.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {(archivo.size / 1024).toFixed(0)} KB
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => {
-                    setArchivo(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="h-4 w-4" />
-                Cargar archivo
-              </Button>
-            )}
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -93,7 +94,7 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
       case "fecha_hora":
         return <Input type="datetime-local" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "archivo":
-        return <Input type="file" />;
+        return <FileDropZone accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onFile={() => {}} compact label="Seleccionar archivo" />;
       default:
         return <Input placeholder={campo.nombre} value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
     }

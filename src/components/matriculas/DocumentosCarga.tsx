@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2, Info } from "lucide-react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -286,13 +287,18 @@ export function DocumentosCarga({
                   </div>
                   <div className="shrink-0 mt-0.5">
                     {doc.estado === "pendiente" ? (
-                      <label className="cursor-pointer">
-                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
-                        <div className="flex items-center gap-1 text-xs text-primary hover:underline">
-                          <Upload className="h-3.5 w-3.5" /> Cargar
-                        </div>
-                      </label>
+                      <FileDropZone
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onFile={(file) => {
+                          storePreview(doc.id, file);
+                          setUploadingDocId(doc.id);
+                          onUpload(doc.id, file);
+                          setTimeout(() => setUploadingDocId(null), 1200);
+                        }}
+                        disabled={isUploading || isUploading_}
+                        compact
+                        label="Cargar"
+                      />
                     ) : (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -362,17 +368,27 @@ export function DocumentosCarga({
           {/* Block 2: Upload zone */}
           <div className="p-3 bg-muted/30 space-y-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Carga del PDF consolidado</p>
-            <label className="cursor-pointer">
-              <input type="file" className="hidden" accept=".pdf"
-                onChange={handleConsolidadoUpload} disabled={isUploading} />
-              <Button type="button" variant="outline" size="sm" className="w-full" asChild>
-                <span>
-                  <Upload className="h-3.5 w-3.5 mr-1" />
-                  Seleccionar PDF
-                  {tiposSeleccionados.length > 0 && ` (${tiposSeleccionados.length} docs)`}
-                </span>
-              </Button>
-            </label>
+            <FileDropZone
+              accept=".pdf"
+              onFile={(file) => {
+                if (!validateFileSize(file)) return;
+                if (onUploadConsolidado) {
+                  const tipos = tiposSeleccionados.length > 0
+                    ? tiposSeleccionados
+                    : documentos.filter((d) => d.estado === "pendiente").map((d) => d.tipo);
+                  onUploadConsolidado(file, tipos);
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  setConsolidadoPreview({ url: dataUrl, name: file.name, type: file.type, size: file.size });
+                };
+                reader.readAsDataURL(file);
+              }}
+              disabled={isUploading}
+              label={`Arrastra el PDF aquí o haz clic${tiposSeleccionados.length > 0 ? ` (${tiposSeleccionados.length} docs)` : ""}`}
+              hint="Archivo PDF consolidado"
+            />
             {consolidadoPreview && renderPreviewPanel(consolidadoPreview, closeConsolidadoPreview)}
           </div>
         </div>

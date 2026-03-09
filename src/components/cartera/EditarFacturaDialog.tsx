@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateFactura } from "@/hooks/useCartera";
+import { Trash2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useUpdateFactura, useDeleteFactura } from "@/hooks/useCartera";
 import { Factura } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,11 +18,13 @@ interface Props {
 export function EditarFacturaDialog({ open, onOpenChange, factura }: Props) {
   const { toast } = useToast();
   const updateFactura = useUpdateFactura();
+  const deleteFactura = useDeleteFactura();
 
   const [numeroFactura, setNumeroFactura] = useState("");
   const [fechaEmision, setFechaEmision] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [total, setTotal] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (factura) {
@@ -51,64 +55,95 @@ export function EditarFacturaDialog({ open, onOpenChange, factura }: Props) {
     onOpenChange(false);
   };
 
+  const handleDelete = async () => {
+    if (!factura) return;
+    await deleteFactura.mutateAsync(factura.id);
+    toast({ title: "Factura eliminada exitosamente" });
+    setShowDeleteConfirm(false);
+    onOpenChange(false);
+  };
+
   if (!factura) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar Factura</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Factura</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="editNumFactura">No. Factura *</Label>
-            <Input
-              id="editNumFactura"
-              value={numeroFactura}
-              onChange={e => setNumeroFactura(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="editTotal">Total *</Label>
-            <Input
-              id="editTotal"
-              type="number"
-              value={total}
-              onChange={e => setTotal(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="editFechaEmision">Fecha Emisión</Label>
+              <Label htmlFor="editNumFactura">No. Factura *</Label>
               <Input
-                id="editFechaEmision"
-                type="date"
-                value={fechaEmision}
-                onChange={e => setFechaEmision(e.target.value)}
+                id="editNumFactura"
+                value={numeroFactura}
+                onChange={e => setNumeroFactura(e.target.value)}
               />
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="editFechaVenc">Fecha Vencimiento *</Label>
+              <Label htmlFor="editTotal">Total *</Label>
               <Input
-                id="editFechaVenc"
-                type="date"
-                value={fechaVencimiento}
-                onChange={e => setFechaVencimiento(e.target.value)}
+                id="editTotal"
+                type="number"
+                value={total}
+                onChange={e => setTotal(e.target.value)}
               />
             </div>
-          </div>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={updateFactura.isPending}>
-            {updateFactura.isPending ? "Guardando..." : "Guardar Cambios"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="editFechaEmision">Fecha Emisión</Label>
+                <Input
+                  id="editFechaEmision"
+                  type="date"
+                  value={fechaEmision}
+                  onChange={e => setFechaEmision(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="editFechaVenc">Fecha Vencimiento *</Label>
+                <Input
+                  id="editFechaVenc"
+                  type="date"
+                  value={fechaVencimiento}
+                  onChange={e => setFechaVencimiento(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex !justify-between">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="gap-1.5"
+            >
+              <Trash2 className="h-4 w-4" />
+              Eliminar
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button onClick={handleSubmit} disabled={updateFactura.isPending}>
+                {updateFactura.isPending ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Eliminar Factura"
+        description={`¿Está seguro de eliminar la factura ${factura.numeroFactura}? Se eliminarán también todos los pagos asociados y se recalcularán los saldos del grupo. Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleDelete}
+      />
+    </>
   );
 }

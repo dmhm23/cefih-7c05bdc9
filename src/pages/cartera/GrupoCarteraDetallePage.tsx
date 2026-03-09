@@ -321,7 +321,7 @@ export default function GrupoCarteraDetallePage() {
           <CardTitle className="text-base">Seguimiento</CardTitle>
         </CardHeader>
         <CardContent>
-          <ComentariosSection entityId={id!} seccion="cartera" />
+          <ComentariosSection matriculaId={id!} seccion="cartera" />
         </CardContent>
       </Card>
 

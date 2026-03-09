@@ -371,6 +371,16 @@ export default function GrupoCarteraDetallePage() {
         onOpenChange={setShowRegistrarPago}
         facturas={facturas}
       />
+      <EditarFacturaDialog
+        open={!!editingFactura}
+        onOpenChange={(open) => !open && setEditingFactura(null)}
+        factura={editingFactura}
+      />
+      <EditarPagoDialog
+        open={!!editingPago}
+        onOpenChange={(open) => !open && setEditingPago(null)}
+        pago={editingPago}
+      />
     </div>
   );
 }

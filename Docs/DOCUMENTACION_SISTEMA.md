@@ -2397,4 +2397,35 @@ Nuevo módulo completo para gestión del ciclo de certificación:
 
 ---
 
+### v1.7 — 9 de Marzo 2026
+
+#### Módulo de Cartera — Módulo nuevo
+
+Nuevo módulo completo para gestión de facturación, pagos y seguimiento de cartera:
+
+- **Modelo de datos**: Responsables de pago (empresa/independiente/ARL), grupos de cartera, facturas, pagos, y actividades de seguimiento. Tipos definidos en `src/types/cartera.ts`.
+- **Bandeja de cartera** (`CarteraPage`): Tabla con búsqueda, filtros por tipo de responsable y estado, icono de alerta para grupos vencidos.
+- **Vista de detalle** (`GrupoCarteraDetallePage`): Información de contacto, resumen financiero, matrículas asociadas, tablas de facturación y pagos con edición inline, y sección de seguimiento.
+- **Facturación**: Creación de facturas con selección de matrículas y cálculo automático de subtotal. Edición de facturas existentes vía dialog.
+- **Pagos**: Registro de pagos con selección de factura, método de pago y soporte adjunto. Edición de pagos existentes vía dialog.
+- **Recálculo automático de saldos**: Al crear/editar facturas o pagos, el sistema recalcula automáticamente los saldos de factura y grupo, y actualiza el estado (pendiente → facturado → abonado → pagado / vencido).
+- **Detección de vencimiento**: Estado `vencido` asignado automáticamente cuando hay facturas no pagadas con fecha de vencimiento pasada. Alertas visuales en bandeja y detalle.
+- **Seguimiento** (`ActividadCarteraSection`): Timeline de actividades con iconos diferenciados por tipo (llamada, promesa de pago, comentario, sistema). Formulario inline para agregar actividades manuales. Registro automático de eventos del sistema (factura creada, pago registrado, actualizaciones).
+- **Edición inline**: Clic en filas de facturas o pagos abre dialog pre-poblado para edición directa.
+
+**Archivos creados:**
+- `src/types/cartera.ts`
+- `src/data/mockCartera.ts`
+- `src/services/carteraService.ts`
+- `src/hooks/useCartera.ts`
+- `src/pages/cartera/CarteraPage.tsx`, `GrupoCarteraDetallePage.tsx`
+- `src/components/cartera/CrearFacturaDialog.tsx`, `EditarFacturaDialog.tsx`, `RegistrarPagoDialog.tsx`, `EditarPagoDialog.tsx`, `ActividadCarteraSection.tsx`
+
+**Archivos modificados:**
+- `src/App.tsx` — Rutas `/cartera` y `/cartera/:id`
+- `src/components/layout/AppSidebar.tsx` — Entrada "Cartera" en sidebar
+- `src/components/shared/StatusBadge.tsx` — Variante destructiva para estado `vencido`
+
+---
+
 *Documento generado como referencia integral del sistema SAFA. Para dudas técnicas o funcionales, consultar el código fuente en el directorio `src/`.*

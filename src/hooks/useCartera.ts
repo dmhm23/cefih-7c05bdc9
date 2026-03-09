@@ -84,3 +84,23 @@ export const useUpdatePago = () => {
     },
   });
 };
+
+export const useDeleteFactura = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => carteraService.deleteFactura(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};
+
+export const useDeletePago = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => carteraService.deletePago(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};

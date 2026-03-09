@@ -1492,7 +1492,7 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 
 ## 12. Dashboard
 
-### 11.1 Métricas Globales
+### 12.1 Métricas Globales
 
 | Métrica | Cálculo |
 |---------|---------|

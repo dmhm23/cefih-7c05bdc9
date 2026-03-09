@@ -7,6 +7,7 @@ import {
   ActividadCartera,
   MetodoPago,
   TipoActividadCartera,
+  TipoResponsable,
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
 import {
@@ -60,6 +61,94 @@ function addSystemActivity(grupoCarteraId: string, descripcion: string) {
     fecha: new Date().toISOString(),
     usuario: 'Sistema',
   });
+}
+
+// ─── auto-grouping ───────────────────────────────────────
+/**
+ * Assigns a matrícula to a cartera group automatically.
+ * - For 'empresa': finds/creates ResponsablePago by NIT, then finds/creates GrupoCartera.
+ * - For 'independiente': finds/creates ResponsablePago by persona document, then finds/creates GrupoCartera.
+ */
+export function asignarMatriculaACartera(params: {
+  matriculaId: string;
+  valorCupo: number;
+  tipoVinculacion: 'empresa' | 'independiente';
+  // Empresa fields
+  empresaNombre?: string;
+  empresaNit?: string;
+  empresaContactoNombre?: string;
+  empresaContactoTelefono?: string;
+  // Independiente fields
+  personaNombre?: string;
+  personaDocumento?: string;
+  personaTelefono?: string;
+  personaEmail?: string;
+}) {
+  const {
+    matriculaId, valorCupo, tipoVinculacion,
+    empresaNombre, empresaNit, empresaContactoNombre, empresaContactoTelefono,
+    personaNombre, personaDocumento, personaTelefono, personaEmail,
+  } = params;
+
+  let responsable: ResponsablePago | undefined;
+
+  if (tipoVinculacion === 'empresa' && empresaNit) {
+    // Find by NIT
+    responsable = mockResponsables.find(r => r.nit === empresaNit);
+    if (!responsable) {
+      responsable = {
+        id: uuid(),
+        tipo: 'empresa' as TipoResponsable,
+        nombre: empresaNombre || 'Empresa sin nombre',
+        nit: empresaNit,
+        contactoNombre: empresaContactoNombre,
+        contactoTelefono: empresaContactoTelefono,
+      };
+      mockResponsables.push(responsable);
+    }
+  } else {
+    // Independiente — find by document number
+    const nit = personaDocumento || uuid();
+    responsable = mockResponsables.find(r => r.tipo === 'independiente' && r.nit === nit);
+    if (!responsable) {
+      responsable = {
+        id: uuid(),
+        tipo: 'independiente' as TipoResponsable,
+        nombre: personaNombre || 'Independiente',
+        nit,
+        contactoTelefono: personaTelefono,
+        contactoEmail: personaEmail,
+      };
+      mockResponsables.push(responsable);
+    }
+  }
+
+  // Find or create GrupoCartera for this responsable
+  let grupo = mockGruposCartera.find(g => g.responsablePagoId === responsable!.id);
+  if (!grupo) {
+    grupo = {
+      id: uuid(),
+      responsablePagoId: responsable.id,
+      estado: 'pendiente',
+      totalValor: 0,
+      totalAbonos: 0,
+      saldo: 0,
+      matriculaIds: [],
+      createdAt: new Date().toISOString(),
+    };
+    mockGruposCartera.push(grupo);
+  }
+
+  // Add matrícula to group if not already there
+  if (!grupo.matriculaIds.includes(matriculaId)) {
+    grupo.matriculaIds.push(matriculaId);
+    grupo.totalValor += valorCupo || 0;
+    grupo.saldo = grupo.totalValor - grupo.totalAbonos;
+  }
+
+  addSystemActivity(grupo.id, `Matrícula ${matriculaId} asignada automáticamente al grupo.`);
+
+  return { responsableId: responsable.id, grupoId: grupo.id };
 }
 
 // ─── service ──────────────────────────────────────────────

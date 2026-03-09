@@ -1,9 +1,10 @@
 import { v4 as uuid } from 'uuid';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
-import { mockMatriculas, mockCursos, mockAuditLogs } from '@/data/mockData';
+import { mockMatriculas, mockCursos, mockAuditLogs, mockPersonas } from '@/data/mockData';
 import { delay, ApiError } from './api';
 import { getDocumentosRequeridos } from './documentoService';
 import { initPortalEstudiante } from './portalInitService';
+import { asignarMatriculaACartera } from './carteraService';
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {
@@ -93,6 +94,22 @@ export const matriculaService = {
       // Auto-inicializar portal del estudiante
       initPortalEstudiante(newMatricula, curso);
     }
+
+    // ── Auto-asignar a grupo de cartera ──
+    const persona = mockPersonas.find(p => p.id === data.personaId);
+    asignarMatriculaACartera({
+      matriculaId: newMatricula.id,
+      valorCupo: newMatricula.valorCupo || 0,
+      tipoVinculacion: newMatricula.tipoVinculacion || 'independiente',
+      empresaNombre: newMatricula.empresaNombre,
+      empresaNit: newMatricula.empresaNit,
+      empresaContactoNombre: newMatricula.empresaContactoNombre || newMatricula.cobroContactoNombre,
+      empresaContactoTelefono: newMatricula.empresaContactoTelefono || newMatricula.cobroContactoCelular,
+      personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+      personaDocumento: persona?.numeroDocumento,
+      personaTelefono: persona?.telefono,
+      personaEmail: persona?.email,
+    });
 
     // Log de auditoría
     mockAuditLogs.push({

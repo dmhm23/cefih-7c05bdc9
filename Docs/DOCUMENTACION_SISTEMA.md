@@ -2047,7 +2047,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 └──────────────────────────────┘
 ```
 
-### 15.2 Relaciones
+### 16.2 Relaciones
 
 | Relación | Cardinalidad | Descripción |
 |----------|-------------|-------------|

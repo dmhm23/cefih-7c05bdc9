@@ -1775,7 +1775,25 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `aprobar(id, resueltoPor)` | Aprobar excepción |
 | `rechazar(id, resueltoPor)` | Rechazar excepción |
 
-### 13.4 Datos Mock
+### 14.4 Servicio de Cartera (`carteraService.ts`)
+
+| Método | Descripción |
+|--------|-------------|
+| `getGrupos()` | Lista grupos con recálculo de estados |
+| `getGrupoById(id)` | Grupo individual con recálculo |
+| `getResponsables()` | Lista responsables de pago |
+| `getResponsableById(id)` | Responsable individual |
+| `createResponsable(data)` | Crea responsable |
+| `getFacturasByGrupo(grupoId)` | Facturas de un grupo |
+| `createFactura(data)` | Crea factura + actividad sistema |
+| `updateFactura(id, data)` | Actualiza factura + recálculo + actividad |
+| `getPagosByGrupo(grupoId)` | Pagos del grupo |
+| `registrarPago(data)` | Registra pago + recálculo + actividad |
+| `updatePago(id, data)` | Actualiza pago + recálculo + actividad |
+| `getActividadesByGrupo(grupoId)` | Historial de actividades |
+| `registrarActividad(data)` | Registra actividad manual |
+
+### 14.5 Datos Mock
 
 #### `mockData.ts` — Arrays mutables principales:
 

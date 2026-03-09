@@ -287,13 +287,18 @@ export function DocumentosCarga({
                   </div>
                   <div className="shrink-0 mt-0.5">
                     {doc.estado === "pendiente" ? (
-                      <label className="cursor-pointer">
-                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
-                        <div className="flex items-center gap-1 text-xs text-primary hover:underline">
-                          <Upload className="h-3.5 w-3.5" /> Cargar
-                        </div>
-                      </label>
+                      <FileDropZone
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onFile={(file) => {
+                          storePreview(doc.id, file);
+                          setUploadingDocId(doc.id);
+                          onUpload(doc.id, file);
+                          setTimeout(() => setUploadingDocId(null), 1200);
+                        }}
+                        disabled={isUploading || isUploading_}
+                        compact
+                        label="Cargar"
+                      />
                     ) : (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

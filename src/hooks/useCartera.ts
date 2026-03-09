@@ -62,3 +62,25 @@ export const useRegistrarActividad = () => {
     },
   });
 };
+
+export const useUpdateFactura = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof carteraService.updateFactura>[1] }) =>
+      carteraService.updateFactura(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};
+
+export const useUpdatePago = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof carteraService.updatePago>[1] }) =>
+      carteraService.updatePago(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};

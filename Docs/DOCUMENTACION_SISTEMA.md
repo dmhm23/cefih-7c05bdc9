@@ -1907,7 +1907,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useUpdateComentario()` | Mutation | Invalida `['comentarios']` | Editar comentario |
 | `useDeleteComentario()` | Mutation | Invalida `['comentarios']` | Eliminar comentario |
 
-### 14.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
+### 15.7 Hooks del Portal Admin (`usePortalAdmin.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

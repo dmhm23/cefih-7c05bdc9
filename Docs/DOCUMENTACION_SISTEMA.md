@@ -1726,7 +1726,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 |---------|-------------|
 | `initPortalEstudiante(matricula, curso)` | Inicializa `portalEstudiante` en matrícula si no existe (compatibilidad legacy) |
 
-### 13.3 Servicios de Certificación
+### 14.3 Servicios de Certificación
 
 #### `certificadoService.ts`
 

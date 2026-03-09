@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Personas", url: "/personas", icon: Users },
   { title: "Matrículas", url: "/matriculas", icon: GraduationCap },
+  { title: "Cartera", url: "/cartera", icon: Wallet },
   { title: "Cursos", url: "/cursos", icon: BookOpen },
   { title: "Gestión de Personal", url: "/gestion-personal", icon: UserCog },
   { title: "Gestión de Formatos", url: "/gestion-formatos", icon: FileText },

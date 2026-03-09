@@ -91,6 +91,10 @@ const App = () => (
           <Route path="/matriculas" element={<WithLayout><MatriculasPage /></WithLayout>} />
           <Route path="/matriculas/nueva" element={<WithLayout><MatriculaFormPage /></WithLayout>} />
           <Route path="/matriculas/:id" element={<WithLayout><MatriculaDetallePage /></WithLayout>} />
+
+          {/* Módulo I - Cartera */}
+          <Route path="/cartera" element={<WithLayout><CarteraPage /></WithLayout>} />
+          <Route path="/cartera/:id" element={<WithLayout><GrupoCarteraDetallePage /></WithLayout>} />
           
           {/* Módulo C - Cursos */}
           <Route path="/cursos" element={<WithLayout><CursosPage /></WithLayout>} />

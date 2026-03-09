@@ -2132,7 +2132,7 @@ interface AuditLog {
 | Personal | ✓ | ✓ (incluye firma y adjuntos) | ✓ |
 | Cargo | ✓ | ✓ (con diff) | ✓ |
 
-### 17.3 Cobertura de Auditoría
+### 18.3 Cobertura de Auditoría
 
 - **Cambios de estado**: Se registran como ediciones con `camposModificados: ['estado']` y los valores anterior/nuevo.
 - **Gestión de estudiantes en cursos**: Se registra como edición con `camposModificados: ['matriculasIds']` indicando qué matrículas se agregaron o removieron.

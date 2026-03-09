@@ -124,7 +124,12 @@ export default function CarteraPage() {
     {
       key: "estado",
       header: "Estado",
-      render: (row) => <StatusBadge status={row.estado} />,
+      render: (row) => (
+        <span className="flex items-center gap-1.5">
+          {row.estado === "vencido" && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+          <StatusBadge status={row.estado} />
+        </span>
+      ),
     },
   ];
 

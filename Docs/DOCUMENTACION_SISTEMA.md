@@ -1936,7 +1936,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useTogglePortalMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Toggle portal de una matrícula |
 | `useResetDocumentoMatricula()` | Mutation | Invalida `['portal-monitoreo']` | Reabrir documento completado |
 
-### 14.10 Hooks de Certificación
+### 15.10 Hooks de Certificación
 
 #### `useCertificados.ts`
 

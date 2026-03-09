@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";

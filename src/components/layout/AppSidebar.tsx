@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -22,6 +22,7 @@ const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Personas", url: "/personas", icon: Users },
   { title: "Matrículas", url: "/matriculas", icon: GraduationCap },
+  { title: "Cartera", url: "/cartera", icon: Wallet },
   { title: "Cursos", url: "/cursos", icon: BookOpen },
   { title: "Gestión de Personal", url: "/gestion-personal", icon: UserCog },
   { title: "Gestión de Formatos", url: "/gestion-formatos", icon: FileText },

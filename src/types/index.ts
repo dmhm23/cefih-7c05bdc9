@@ -14,3 +14,4 @@ export * from './nivelFormacion';
 export * from './personal';
 export * from './formatoFormacion';
 export * from './certificado';
+export * from './cartera';

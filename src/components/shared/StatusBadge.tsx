@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils";
 type StatusType = 
   | "creada" | "pendiente" | "completa" | "certificada" | "cerrada"
   | "abierto" | "en_progreso" | "cerrado"
-  | "verde" | "amarillo" | "rojo";
+  | "verde" | "amarillo" | "rojo"
+  | "facturado" | "abonado" | "pagado"
+  | "parcial" | "pagada";
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -25,6 +27,13 @@ const statusConfig: Record<StatusType, { label: string; className: string }> = {
   verde: { label: "Listo", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   amarillo: { label: "En Proceso", className: "bg-amber-100 text-amber-700 border-amber-200" },
   rojo: { label: "Bloqueado", className: "bg-red-100 text-red-700 border-red-200" },
+  // Estados de cartera
+  facturado: { label: "Facturado", className: "bg-blue-100 text-blue-700 border-blue-200" },
+  abonado: { label: "Abonado", className: "bg-amber-100 text-amber-700 border-amber-200" },
+  pagado: { label: "Pagado", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  // Estados de factura
+  parcial: { label: "Parcial", className: "bg-amber-100 text-amber-700 border-amber-200" },
+  pagada: { label: "Pagada", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

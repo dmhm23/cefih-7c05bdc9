@@ -29,11 +29,8 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = (file: File) => {
     if (!file.type.startsWith("image/")) return;
-
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;

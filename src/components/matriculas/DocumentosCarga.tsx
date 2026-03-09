@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2, Info } from "lucide-react";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";

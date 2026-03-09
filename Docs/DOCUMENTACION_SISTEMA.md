@@ -1509,9 +1509,9 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 
 ---
 
-## 12. Componentes Compartidos
+## 13. Componentes Compartidos
 
-### 12.1 DataTable
+### 13.1 DataTable
 
 Tabla genérica reutilizable con:
 - **Ordenamiento interactivo**: Por defecto ordena por `createdAt` descendente. Props `defaultSortKey` y `defaultSortDirection` permiten personalizar el criterio inicial.

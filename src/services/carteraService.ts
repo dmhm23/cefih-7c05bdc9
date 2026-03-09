@@ -354,4 +354,44 @@ export const carteraService = {
     }
     return { ...pago };
   },
+
+  // Delete factura
+  async deleteFactura(id: string): Promise<void> {
+    await delay(500);
+    const idx = mockFacturas.findIndex(f => f.id === id);
+    if (idx === -1) return;
+    const factura = mockFacturas[idx];
+    // Remove associated payments first
+    const pagoIds = mockPagos.filter(p => p.facturaId === id).map(p => p.id);
+    pagoIds.forEach(pid => {
+      const pi = mockPagos.findIndex(p => p.id === pid);
+      if (pi !== -1) mockPagos.splice(pi, 1);
+    });
+    mockFacturas.splice(idx, 1);
+    // Recalc grupo
+    const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
+    if (grupo) {
+      recalcGrupo(grupo);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`);
+    }
+  },
+
+  // Delete pago
+  async deletePago(id: string): Promise<void> {
+    await delay(500);
+    const idx = mockPagos.findIndex(p => p.id === id);
+    if (idx === -1) return;
+    const pago = mockPagos[idx];
+    mockPagos.splice(idx, 1);
+    // Recalc factura & grupo
+    const factura = mockFacturas.find(f => f.id === pago.facturaId);
+    if (factura) {
+      recalcFactura(factura);
+      const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
+      if (grupo) {
+        recalcGrupo(grupo);
+        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`);
+      }
+    }
+  },
 };

@@ -15,7 +15,7 @@ import { usePlantillas, useCreatePlantilla } from "@/hooks/usePlantillas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { TIPO_FORMACION_LABELS, type TipoFormacion } from "@/types/curso";
 import type { ReglaTipoCertificado } from "@/types/certificado";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_REGLAS: ReglaTipoCertificado = {

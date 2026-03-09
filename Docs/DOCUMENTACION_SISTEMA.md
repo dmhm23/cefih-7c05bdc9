@@ -1868,7 +1868,7 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 | `useAgregarEstudiantesCurso()` | Mutation | Invalida cursos + curso + matrículas | Agregar estudiantes |
 | `useRemoverEstudianteCurso()` | Mutation | Invalida cursos + curso + matrículas | Remover estudiante |
 
-### 14.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
+### 15.4 Hooks de Niveles de Formación (`useNivelesFormacion.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

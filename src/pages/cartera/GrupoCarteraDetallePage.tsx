@@ -232,7 +232,7 @@ export default function GrupoCarteraDetallePage() {
           <CardTitle className="text-base">Facturación</CardTitle>
           <Button size="sm" onClick={() => setShowCrearFactura(true)} className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Crear Factura
+            Registrar Factura
           </Button>
         </CardHeader>
         <CardContent>

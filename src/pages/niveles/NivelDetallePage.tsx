@@ -146,47 +146,11 @@ export default function NivelDetallePage() {
             </Card>
           )}
 
-          {/* Código de Estudiante */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Hash className="h-4 w-4" />
-                Código de Estudiante
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {configCodigo?.activo ? (
-                <div className="space-y-3">
-                  <div className="rounded-md border bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Formato</p>
-                    <p className="font-mono text-lg font-semibold tracking-wider">{previewCodigo}</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Prefijo</p>
-                      <p className="font-medium">{configCodigo.prefijoCodigo}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Tipo formación</p>
-                      <p className="font-medium">{configCodigo.codigoTipoFormacion}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Separador</p>
-                      <p className="font-medium font-mono">"{configCodigo.separadorCodigo}"</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {configCodigo.usarAnioCurso && <Badge variant="secondary" className="text-[10px]">Año</Badge>}
-                    {configCodigo.usarMesCurso && <Badge variant="secondary" className="text-[10px]">Mes</Badge>}
-                    {configCodigo.usarConsecutivoCursoMes && <Badge variant="secondary" className="text-[10px]">Consecutivo curso</Badge>}
-                    <Badge variant="secondary" className="text-[10px]">Consecutivo estudiante ({configCodigo.longitudConsecutivoEstudiante} dígitos)</Badge>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">Sin configurar</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* Código de Estudiante — editable inline */}
+          <CodigoEstudianteCard
+            nivelId={nivel.id}
+            config={nivel.configuracionCodigoEstudiante}
+          />
 
           {nivel.observaciones && (
             <Card>

@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils";
 type StatusType = 
   | "creada" | "pendiente" | "completa" | "certificada" | "cerrada"
   | "abierto" | "en_progreso" | "cerrado"
-  | "verde" | "amarillo" | "rojo";
+  | "verde" | "amarillo" | "rojo"
+  | "facturado" | "abonado" | "pagado"
+  | "parcial" | "pagada";
 
 interface StatusBadgeProps {
   status: StatusType;

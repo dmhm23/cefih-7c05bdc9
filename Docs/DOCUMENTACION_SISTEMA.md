@@ -1553,7 +1553,7 @@ Sistema de comentarios con:
 - Registro de usuario y timestamp
 - Indicador de "editado" con fecha
 
-### 12.5 Otros Componentes Compartidos
+### 13.5 Otros Componentes Compartidos
 
 | Componente | Descripción |
 |------------|-------------|

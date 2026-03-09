@@ -196,7 +196,12 @@ function DynamicField({ campo, form }: { campo: CampoAdicional; form: UseFormRet
           <FormItem>
             <FormLabel>{label}</FormLabel>
             <FormControl>
-              <Input type="file" onChange={(e) => field.onChange(e.target.files?.[0]?.name || "")} />
+              <FileDropZone
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                onFile={(file) => field.onChange(file.name)}
+                compact
+                label="Seleccionar archivo"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

@@ -93,7 +93,7 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
       case "fecha_hora":
         return <Input type="datetime-local" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "archivo":
-        return <Input type="file" />;
+        return <FileDropZone accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onFile={() => {}} compact label="Seleccionar archivo" />;
       default:
         return <Input placeholder={campo.nombre} value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
     }

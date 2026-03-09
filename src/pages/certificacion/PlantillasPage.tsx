@@ -188,21 +188,14 @@ export default function PlantillasPage() {
             {/* Archivo SVG */}
             <div className="space-y-2">
               <Label>Archivo SVG</Label>
-              <input
-                ref={fileRef}
-                type="file"
+              <FileDropZone
                 accept=".svg"
-                className="hidden"
-                onChange={e => setSvgFile(e.target.files?.[0] || null)}
+                onFile={setSvgFile}
+                file={svgFile}
+                onClear={() => setSvgFile(null)}
+                label="Arrastra el SVG aquí o haz clic para seleccionar"
+                hint="Archivo SVG de la plantilla"
               />
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => fileRef.current?.click()}
-              >
-                <Upload className="h-4 w-4" />
-                {svgFile ? svgFile.name : 'Seleccionar archivo SVG'}
-              </Button>
             </div>
 
             {/* Tipo de formación */}

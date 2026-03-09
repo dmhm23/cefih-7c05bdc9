@@ -1,25 +1,52 @@
 
 
-## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
+## Plan: Fase 5 — Seguimiento, control y gaps pendientes
 
-### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
+### Lo que falta
 
-Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
+**Fase 5 completa** y un gap de Fase 1:
 
-**Cambios concretos:**
+1. **Estado "vencido"**: Agregar al enum `EstadoGrupoCartera` y a la lógica de recálculo (si `fechaVencimiento` de alguna factura pasó y saldo > 0).
+2. **Historial de acciones automático**: Log que registre eventos del sistema (factura creada, pago registrado, cambio de estado) con timestamp y descripción.
+3. **Alertas por vencimiento**: Badge o indicador visual en la bandeja y detalle cuando hay facturas vencidas.
+4. **Tipos de actividad en seguimiento**: Extender comentarios para diferenciar entre "llamada", "promesa de pago", "comentario" con etiquetas visuales.
+5. **Agrupación automática** (gap Fase 1): Conectar la creación de matrículas con la asignación/creación automática de grupo de cartera.
 
-1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
+---
 
-2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
+### Cambios concretos
 
-3. **FilterConfig**: Definir array de configs:
-   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
-   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
+#### 1. `src/types/cartera.ts`
+- Agregar `'vencido'` a `EstadoGrupoCartera` y su label.
+- Nuevo tipo `TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema'`.
+- Nueva interface `ActividadCartera { id, grupoCarteraId, tipo, descripcion, fecha, usuario? }`.
 
-4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
+#### 2. `src/data/mockCartera.ts`
+- Agregar array `mockActividades` con datos de ejemplo (eventos de sistema y manuales).
 
-5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
+#### 3. `src/services/carteraService.ts`
+- `getActividadesByGrupo(grupoId)`: retorna historial de actividades.
+- `registrarActividad(data)`: crea entrada manual (llamada, promesa).
+- Modificar `registrarPago` y `createFactura` para auto-registrar actividad de tipo `'sistema'`.
+- Modificar `recalcGrupo` para detectar facturas vencidas y asignar estado `'vencido'`.
 
-### Resultado
-El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
+#### 4. `src/hooks/useCartera.ts`
+- `useActividadesCartera(grupoId)` — query para historial.
+- `useRegistrarActividad()` — mutation.
+
+#### 5. `src/components/cartera/ActividadCarteraSection.tsx` — Nuevo
+- Componente que muestra el historial de actividades con iconos por tipo (Phone para llamada, Handshake para promesa, MessageSquare para comentario, Bot para sistema).
+- Formulario inline para agregar actividad manual con selector de tipo.
+- Reemplaza `ComentariosSection` en la vista detalle de cartera.
+
+#### 6. `src/pages/cartera/GrupoCarteraDetallePage.tsx`
+- Reemplazar `ComentariosSection` por `ActividadCarteraSection`.
+- Agregar indicador de alerta si hay facturas vencidas (banner o badge en el header).
+
+#### 7. `src/pages/cartera/CarteraPage.tsx`
+- Agregar estado `'vencido'` a las opciones de filtro.
+- Mostrar icono de alerta en filas con facturas vencidas.
+
+#### 8. `src/components/shared/StatusBadge.tsx`
+- Agregar variante para `'vencido'` (rojo/destructivo).
 

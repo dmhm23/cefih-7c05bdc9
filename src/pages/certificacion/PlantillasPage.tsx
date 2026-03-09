@@ -51,7 +51,7 @@ export default function PlantillasPage() {
   const [reglaCodigo, setReglaCodigo] = useState("{numeroCurso}-{prefijoNivel}-{consecutivoAnual}");
   const [reglas, setReglas] = useState<ReglaTipoCertificado>({ ...DEFAULT_REGLAS });
   const [nivelesAsignados, setNivelesAsignados] = useState<string[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  
 
   const filteredPlantillas = (plantillas ?? []).filter(p =>
     !busqueda || p.nombre.toLowerCase().includes(busqueda.toLowerCase())

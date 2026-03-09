@@ -123,12 +123,7 @@ export default function CarteraPage() {
     {
       key: "estado",
       header: "Estado",
-      render: (row) => (
-        <StatusBadge
-          status={row.estado}
-          labels={ESTADO_GRUPO_CARTERA_LABELS}
-        />
-      ),
+      render: (row) => <StatusBadge status={row.estado} />,
     },
   ];
 

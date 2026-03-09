@@ -94,6 +94,7 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalInitService · formatoFormacionService             │
 │  certificadoService · plantillaService                   │
 │  tipoCertificadoService · excepcionCertificadoService    │
+│  carteraService                                          │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │

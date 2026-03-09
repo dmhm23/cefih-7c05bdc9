@@ -26,6 +26,9 @@ import {
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { generarCodigoEstudiante } from "@/utils/codigoEstudiante";
+import type { ConfiguracionCodigoEstudiante } from "@/types/nivelFormacion";
 
 interface EnrollmentsTableProps {
   curso: Curso;

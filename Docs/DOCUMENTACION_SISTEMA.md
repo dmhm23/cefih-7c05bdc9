@@ -1801,9 +1801,9 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 
 ---
 
-## 14. Hooks (React Query)
+## 15. Hooks (React Query)
 
-### 14.1 Hooks de Personas (`usePersonas.ts`)
+### 15.1 Hooks de Personas (`usePersonas.ts`)
 
 | Hook | Tipo | Query Key | Descripción |
 |------|------|-----------|-------------|

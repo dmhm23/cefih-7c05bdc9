@@ -5,7 +5,8 @@ type StatusType =
   | "abierto" | "en_progreso" | "cerrado"
   | "verde" | "amarillo" | "rojo"
   | "facturado" | "abonado" | "pagado"
-  | "parcial" | "pagada";
+  | "parcial" | "pagada"
+  | "vencido";
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -34,6 +35,8 @@ const statusConfig: Record<StatusType, { label: string; className: string }> = {
   // Estados de factura
   parcial: { label: "Parcial", className: "bg-amber-100 text-amber-700 border-amber-200" },
   pagada: { label: "Pagada", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  // Vencido
+  vencido: { label: "Vencido", className: "bg-red-100 text-red-700 border-red-200" },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

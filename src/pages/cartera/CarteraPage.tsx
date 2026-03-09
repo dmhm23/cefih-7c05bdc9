@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Filter } from "lucide-react";
+import { Wallet, Filter, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -21,6 +21,7 @@ const ESTADO_OPTIONS = [
   { value: "facturado", label: "Facturado" },
   { value: "abonado", label: "Abonado" },
   { value: "pagado", label: "Pagado" },
+  { value: "vencido", label: "Vencido" },
 ];
 
 const filterConfigs: FilterConfig[] = [
@@ -123,7 +124,12 @@ export default function CarteraPage() {
     {
       key: "estado",
       header: "Estado",
-      render: (row) => <StatusBadge status={row.estado} />,
+      render: (row) => (
+        <span className="flex items-center gap-1.5">
+          {row.estado === "vencido" && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
+          <StatusBadge status={row.estado} />
+        </span>
+      ),
     },
   ];
 

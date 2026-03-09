@@ -1,4 +1,4 @@
-import { ResponsablePago, GrupoCartera, Factura, FacturaMatricula, RegistroPago } from '@/types/cartera';
+import { ResponsablePago, GrupoCartera, Factura, FacturaMatricula, RegistroPago, ActividadCartera } from '@/types/cartera';
 
 // ============ RESPONSABLES DE PAGO ============
 export const mockResponsables: ResponsablePago[] = [
@@ -58,7 +58,7 @@ export const mockGruposCartera: GrupoCartera[] = [
   {
     id: 'gc2',
     responsablePagoId: 'rp2',
-    estado: 'abonado',
+    estado: 'vencido',
     totalValor: 280000,
     totalAbonos: 100000,
     saldo: 180000,
@@ -175,5 +175,65 @@ export const mockPagos: RegistroPago[] = [
     fechaPago: '2024-01-11',
     valorPago: 500000,
     metodoPago: 'consignacion',
+  },
+];
+
+// ============ ACTIVIDADES DE CARTERA ============
+export const mockActividades: ActividadCartera[] = [
+  {
+    id: 'act1',
+    grupoCarteraId: 'gc1',
+    tipo: 'sistema',
+    descripcion: 'Factura FAC-2024-001 creada por $350.000.',
+    fecha: '2024-02-17T10:30:00Z',
+    usuario: 'Sistema',
+  },
+  {
+    id: 'act2',
+    grupoCarteraId: 'gc1',
+    tipo: 'sistema',
+    descripcion: 'Pago registrado por $350.000 — Transferencia.',
+    fecha: '2024-02-18T14:00:00Z',
+    usuario: 'Sistema',
+  },
+  {
+    id: 'act3',
+    grupoCarteraId: 'gc2',
+    tipo: 'sistema',
+    descripcion: 'Factura FAC-2024-004 creada por $280.000.',
+    fecha: '2024-03-06T09:15:00Z',
+    usuario: 'Sistema',
+  },
+  {
+    id: 'act4',
+    grupoCarteraId: 'gc2',
+    tipo: 'sistema',
+    descripcion: 'Pago registrado por $100.000 — Consignación.',
+    fecha: '2024-03-10T11:00:00Z',
+    usuario: 'Sistema',
+  },
+  {
+    id: 'act5',
+    grupoCarteraId: 'gc2',
+    tipo: 'llamada',
+    descripcion: 'Se contactó a Camila Herrera para recordar saldo pendiente de $180.000.',
+    fecha: '2024-03-20T09:00:00Z',
+    usuario: 'Admin',
+  },
+  {
+    id: 'act6',
+    grupoCarteraId: 'gc2',
+    tipo: 'promesa_pago',
+    descripcion: 'Camila confirma pago para el 30 de marzo.',
+    fecha: '2024-03-20T09:10:00Z',
+    usuario: 'Admin',
+  },
+  {
+    id: 'act7',
+    grupoCarteraId: 'gc2',
+    tipo: 'comentario',
+    descripcion: 'La empresa solicita enviar nueva factura con datos actualizados.',
+    fecha: '2024-03-25T14:30:00Z',
+    usuario: 'Admin',
   },
 ];

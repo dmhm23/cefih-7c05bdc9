@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Upload, FileText, Trash2, Download, Loader2, Eye, X, ExternalLink } from "lucide-react";
+import { FileText, Trash2, Download, Loader2, Eye, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FileDropZone } from "@/components/shared/FileDropZone";
 import { AdjuntoPersonal } from "@/types/personal";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";

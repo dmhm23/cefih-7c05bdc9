@@ -8,9 +8,9 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useNivelFormacion, useDeleteNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { CATALOGO_DOCUMENTOS, TIPOS_CAMPO_LABELS } from "@/types/nivelFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
-import { generarPreviewCodigo } from "@/utils/codigoEstudiante";
+import { CodigoEstudianteCard } from "@/components/niveles/CodigoEstudianteCard";
 
 export default function NivelDetallePage() {
   const { id } = useParams<{ id: string }>();

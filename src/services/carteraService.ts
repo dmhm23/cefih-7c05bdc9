@@ -208,4 +208,60 @@ export const carteraService = {
     mockActividades.push(actividad);
     return actividad;
   },
+
+  // Update factura
+  async updateFactura(id: string, data: {
+    numeroFactura?: string;
+    fechaEmision?: string;
+    fechaVencimiento?: string;
+    total?: number;
+  }): Promise<Factura | null> {
+    await delay(500);
+    const idx = mockFacturas.findIndex(f => f.id === id);
+    if (idx === -1) return null;
+    const factura = mockFacturas[idx];
+    if (data.numeroFactura !== undefined) factura.numeroFactura = data.numeroFactura;
+    if (data.fechaEmision !== undefined) factura.fechaEmision = data.fechaEmision;
+    if (data.fechaVencimiento !== undefined) factura.fechaVencimiento = data.fechaVencimiento;
+    if (data.total !== undefined) {
+      factura.subtotal = data.total;
+      factura.total = data.total;
+    }
+    recalcFactura(factura);
+    const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
+    if (grupo) {
+      recalcGrupo(grupo);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`);
+    }
+    return { ...factura };
+  },
+
+  // Update pago
+  async updatePago(id: string, data: {
+    fechaPago?: string;
+    valorPago?: number;
+    metodoPago?: MetodoPago;
+    observaciones?: string;
+  }): Promise<RegistroPago | null> {
+    await delay(500);
+    const idx = mockPagos.findIndex(p => p.id === id);
+    if (idx === -1) return null;
+    const pago = mockPagos[idx];
+    if (data.fechaPago !== undefined) pago.fechaPago = data.fechaPago;
+    if (data.valorPago !== undefined) pago.valorPago = data.valorPago;
+    if (data.metodoPago !== undefined) pago.metodoPago = data.metodoPago;
+    if (data.observaciones !== undefined) pago.observaciones = data.observaciones;
+
+    // Recalc factura & grupo
+    const factura = mockFacturas.find(f => f.id === pago.facturaId);
+    if (factura) {
+      recalcFactura(factura);
+      const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
+      if (grupo) {
+        recalcGrupo(grupo);
+        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`);
+      }
+    }
+    return { ...pago };
+  },
 };

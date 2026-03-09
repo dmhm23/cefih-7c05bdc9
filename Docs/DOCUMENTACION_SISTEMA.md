@@ -1335,7 +1335,162 @@ Menú **desplegable (Collapsible)** en el sidebar con dos subentradas:
 
 ---
 
-## 11. Dashboard
+## 11. Módulo de Cartera
+
+### 11.1 Objetivo
+
+El módulo de **Cartera** gestiona los procesos de facturación, seguimiento de pagos y control de saldos derivados de las matrículas. Permite consolidar múltiples matrículas bajo un mismo responsable de pago, gestionar facturación agrupada o individual, registrar pagos y abonos con soportes, y mantener trazabilidad del estado financiero.
+
+### 11.2 Entidades
+
+#### ResponsablePago
+
+Representa la entidad o persona responsable del pago.
+
+```typescript
+interface ResponsablePago {
+  id: string;
+  tipo: 'empresa' | 'independiente' | 'arl';
+  nombre: string;
+  nit: string;
+  contactoNombre?: string;
+  contactoTelefono?: string;
+  contactoEmail?: string;
+  direccionFacturacion?: string;
+  observaciones?: string;
+}
+```
+
+#### GrupoCartera
+
+Agrupa matrículas que comparten el mismo responsable de pago.
+
+```typescript
+interface GrupoCartera {
+  id: string;
+  responsablePagoId: string;           // FK → ResponsablePago
+  estado: 'pendiente' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
+  totalValor: number;
+  totalAbonos: number;
+  saldo: number;
+  matriculaIds: string[];
+  observaciones?: string;
+  createdAt: string;
+}
+```
+
+**Recálculo automático de estado:**
+- `pagado`: saldo ≤ 0
+- `vencido`: alguna factura no pagada con `fechaVencimiento` pasada
+- `abonado`: tiene pagos pero saldo > 0
+- `facturado`: tiene facturas pero sin pagos
+- `pendiente`: sin facturas
+
+#### Factura
+
+```typescript
+interface Factura {
+  id: string;
+  grupoCarteraId: string;
+  numeroFactura: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+  subtotal: number;
+  total: number;
+  estado: 'pendiente' | 'parcial' | 'pagada';
+  archivoFactura?: string;
+  matriculaIds: string[];
+}
+```
+
+#### RegistroPago
+
+```typescript
+interface RegistroPago {
+  id: string;
+  facturaId: string;
+  fechaPago: string;
+  valorPago: number;
+  metodoPago: 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
+  soportePago?: string;
+  observaciones?: string;
+}
+```
+
+#### ActividadCartera
+
+Registro de seguimiento (llamadas, promesas de pago, eventos del sistema).
+
+```typescript
+interface ActividadCartera {
+  id: string;
+  grupoCarteraId: string;
+  tipo: 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
+  descripcion: string;
+  fecha: string;
+  usuario?: string;
+}
+```
+
+### 11.3 Operaciones del Servicio (`carteraService`)
+
+| Operación | Descripción |
+|-----------|-------------|
+| `getGrupos()` | Lista todos los grupos con recálculo de estados |
+| `getGrupoById(id)` | Grupo individual con recálculo |
+| `getResponsables()` | Lista todos los responsables de pago |
+| `getResponsableById(id)` | Responsable individual |
+| `createResponsable(data)` | Crea responsable de pago |
+| `getFacturasByGrupo(grupoId)` | Facturas de un grupo |
+| `createFactura(data)` | Crea factura, recalcula grupo, registra actividad automática |
+| `updateFactura(id, data)` | Actualiza factura, recalcula saldos, registra actividad |
+| `getPagosByGrupo(grupoId)` | Pagos asociados a facturas del grupo |
+| `registrarPago(data)` | Registra pago, recalcula factura y grupo, registra actividad automática |
+| `updatePago(id, data)` | Actualiza pago, recalcula saldos, registra actividad |
+| `getActividadesByGrupo(grupoId)` | Historial de actividades ordenado por fecha desc |
+| `registrarActividad(data)` | Registra actividad manual (llamada, promesa, comentario) |
+
+### 11.4 Componentes
+
+| Componente | Función |
+|------------|---------|
+| `CarteraPage` | Bandeja principal con tabla de grupos, búsqueda, filtros por tipo y estado, icono de alerta para vencidos |
+| `GrupoCarteraDetallePage` | Vista detalle: info de contacto, resumen financiero, matrículas asociadas, facturación, pagos, seguimiento |
+| `CrearFacturaDialog` | Dialog para crear factura con selección de matrículas y cálculo automático de subtotal |
+| `EditarFacturaDialog` | Dialog pre-poblado para editar factura existente (número, fechas, total) |
+| `RegistrarPagoDialog` | Dialog para registrar pago con selección de factura, método de pago y soporte |
+| `EditarPagoDialog` | Dialog pre-poblado para editar pago existente (valor, fecha, método, observaciones) |
+| `ActividadCarteraSection` | Timeline de actividades con iconos por tipo y formulario inline para agregar actividades manuales |
+
+### 11.5 Alertas de Vencimiento
+
+- **Bandeja**: Icono `AlertTriangle` en filas con estado `vencido`.
+- **Detalle**: Banner `Alert` destructivo cuando hay facturas vencidas, indicando cantidad y saldo pendiente.
+- **Filas de factura**: Fondo rojo sutil (`bg-red-50/50`) y fecha de vencimiento en color destructivo.
+- **StatusBadge**: Variante destructiva para el estado `vencido`.
+
+### 11.6 Edición Inline
+
+Las tablas de facturación y pagos en la vista de detalle permiten edición directa: al hacer clic en una fila se abre un dialog de edición pre-poblado. Los cambios recalculan automáticamente los saldos de factura y grupo, y registran una actividad de sistema.
+
+### 11.7 Flujo Operativo
+
+```
+1. Matrícula creada → Asignada a grupo de cartera por responsable
+2. Grupo visible en bandeja → Clic navega a detalle
+3. Crear factura → Seleccionar matrículas → Total auto-calculado
+4. Registrar pago → Seleccionar factura → Recálculo automático de saldos
+5. Seguimiento → Registrar llamadas, promesas de pago, comentarios
+6. Detección automática de vencimiento → Alertas visuales
+```
+
+### 11.8 Navegación
+
+Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/cartera/:id`.
+
+---
+
+## 12. Dashboard
 
 ### 11.1 Métricas Globales
 

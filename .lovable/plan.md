@@ -1,42 +1,25 @@
 
 
-## Plan: Edición inline de facturas y pagos en /cartera/:id
+## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
 
-### Resumen
+### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
 
-Permitir editar los registros de facturas y pagos directamente desde las tablas del detalle de cartera, siguiendo el patrón de edición inline existente en la plataforma.
+Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
 
-### Cambios
+**Cambios concretos:**
 
-#### 1. `src/services/carteraService.ts` — Agregar métodos de actualización
+1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
 
-- `updateFactura(id, data)`: actualiza campos de una factura en `mockFacturas` y recalcula grupo.
-- `updatePago(id, data)`: actualiza campos de un pago en `mockPagos`, recalcula factura y grupo.
+2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
 
-#### 2. `src/hooks/useCartera.ts` — Nuevos hooks de mutación
+3. **FilterConfig**: Definir array de configs:
+   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
+   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
 
-- `useUpdateFactura()` — mutation que invalida queries de cartera.
-- `useUpdatePago()` — mutation que invalida queries de cartera.
+4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
 
-#### 3. `src/pages/cartera/GrupoCarteraDetallePage.tsx` — Edición inline en tablas
+5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
 
-**Tabla de Facturación**: Al hacer clic en una fila, se abre un panel/dialog de edición con los campos: número de factura, fecha emisión, fecha vencimiento, total, archivo adjunto. Usar `EditableField` para los campos dentro de un dialog de edición, o convertir las celdas a editables directamente.
-
-**Tabla de Pagos**: Mismo patrón. Campos editables: fecha pago, valor, método de pago, observaciones, soporte adjunto.
-
-Enfoque: Usar un dialog de edición (similar a los de creación pero pre-poblado) que se abre al hacer clic en la fila, con botón Guardar. Se reutilizará la estructura de `CrearFacturaDialog` y `RegistrarPagoDialog` adaptada para edición.
-
-#### 4. `src/components/cartera/EditarFacturaDialog.tsx` — Nuevo
-
-Dialog pre-poblado con los datos de la factura seleccionada. Campos editables: número, fechas, total, archivo. Botón Guardar que llama a `useUpdateFactura`.
-
-#### 5. `src/components/cartera/EditarPagoDialog.tsx` — Nuevo
-
-Dialog pre-poblado con los datos del pago seleccionado. Campos editables: fecha, valor, método, observaciones, soporte. Botón Guardar que llama a `useUpdatePago`.
-
-### Detalle técnico
-
-- Los dialogs de edición reutilizan la misma estructura visual de los dialogs de registro, pero reciben el registro existente como prop y pre-llenan los campos.
-- Al guardar se llama al servicio de actualización, se recalculan saldos automáticamente y se registra actividad de sistema.
-- Las filas de las tablas tendrán `cursor-pointer` y `onClick` para abrir el dialog de edición correspondiente.
+### Resultado
+El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
 

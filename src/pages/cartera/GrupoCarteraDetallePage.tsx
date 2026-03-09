@@ -18,6 +18,8 @@ import {
 import { ActividadCarteraSection } from "@/components/cartera/ActividadCarteraSection";
 import { CrearFacturaDialog } from "@/components/cartera/CrearFacturaDialog";
 import { RegistrarPagoDialog } from "@/components/cartera/RegistrarPagoDialog";
+import { EditarFacturaDialog } from "@/components/cartera/EditarFacturaDialog";
+import { EditarPagoDialog } from "@/components/cartera/EditarPagoDialog";
 import { useGrupoCartera, useResponsablePago, useFacturasByGrupo, usePagosByGrupo } from "@/hooks/useCartera";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
@@ -25,6 +27,8 @@ import { useCursos } from "@/hooks/useCursos";
 import {
   TIPO_RESPONSABLE_LABELS,
   METODO_PAGO_LABELS,
+  Factura,
+  RegistroPago,
 } from "@/types/cartera";
 import { format } from "date-fns";
 
@@ -45,6 +49,8 @@ export default function GrupoCarteraDetallePage() {
 
   const [showCrearFactura, setShowCrearFactura] = useState(false);
   const [showRegistrarPago, setShowRegistrarPago] = useState(false);
+  const [editingFactura, setEditingFactura] = useState<Factura | null>(null);
+  const [editingPago, setEditingPago] = useState<RegistroPago | null>(null);
 
   const matriculasGrupo = useMemo(
     () => allMatriculas.filter(m => grupo?.matriculaIds.includes(m.id)),
@@ -270,7 +276,7 @@ export default function GrupoCarteraDetallePage() {
               {facturas.map(f => {
                 const isOverdue = f.estado !== 'pagada' && new Date(f.fechaVencimiento) < new Date();
                 return (
-                  <TableRow key={f.id} className={isOverdue ? "bg-red-50/50" : ""}>
+                  <TableRow key={f.id} className={`cursor-pointer ${isOverdue ? "bg-red-50/50" : ""}`} onClick={() => setEditingFactura(f)}>
                     <TableCell className="font-medium">
                       <span className="flex items-center gap-1.5">
                         {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
@@ -320,7 +326,7 @@ export default function GrupoCarteraDetallePage() {
               {pagos.map(p => {
                 const factura = facturas.find(f => f.id === p.facturaId);
                 return (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className="cursor-pointer" onClick={() => setEditingPago(p)}>
                     <TableCell>{p.fechaPago}</TableCell>
                     <TableCell className="font-medium">{factura?.numeroFactura || "—"}</TableCell>
                     <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>
@@ -364,6 +370,16 @@ export default function GrupoCarteraDetallePage() {
         open={showRegistrarPago}
         onOpenChange={setShowRegistrarPago}
         facturas={facturas}
+      />
+      <EditarFacturaDialog
+        open={!!editingFactura}
+        onOpenChange={(open) => !open && setEditingFactura(null)}
+        factura={editingFactura}
+      />
+      <EditarPagoDialog
+        open={!!editingPago}
+        onOpenChange={(open) => !open && setEditingPago(null)}
+        pago={editingPago}
       />
     </div>
   );

@@ -49,6 +49,10 @@ import HistorialCertificadosPage from "./pages/certificacion/HistorialCertificad
 import PlantillasPage from "./pages/certificacion/PlantillasPage";
 import PlantillaEditorPage from "./pages/certificacion/PlantillaEditorPage";
 
+// Cartera (Módulo I)
+import CarteraPage from "./pages/cartera/CarteraPage";
+import GrupoCarteraDetallePage from "./pages/cartera/GrupoCarteraDetallePage";
+
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";

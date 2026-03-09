@@ -8,7 +8,7 @@ import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataTable, Column } from "@/components/shared/DataTable";
 import { useGruposCartera, useResponsablesPago } from "@/hooks/useCartera";
-import { GrupoCartera, ResponsablePago, TIPO_RESPONSABLE_LABELS, ESTADO_GRUPO_CARTERA_LABELS } from "@/types/cartera";
+import { GrupoCartera, ResponsablePago, TIPO_RESPONSABLE_LABELS } from "@/types/cartera";
 
 const TIPO_OPTIONS = [
   { value: "empresa", label: "Empresa" },

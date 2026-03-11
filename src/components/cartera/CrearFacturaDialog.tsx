@@ -1,12 +1,15 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { useCreateFactura } from "@/hooks/useCartera";
 import { Matricula } from "@/types/matricula";
+import { Persona } from "@/types/persona";
+import { Curso } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
@@ -14,32 +17,52 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   grupoCarteraId: string;
   matriculas: Matricula[];
+  personas: Persona[];
+  cursos: Curso[];
 }
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(v);
 
-export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas }: Props) {
+export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas, personas, cursos }: Props) {
   const { toast } = useToast();
   const createFactura = useCreateFactura();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [numeroFactura, setNumeroFactura] = useState("");
   const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split("T")[0]);
   const [fechaVencimiento, setFechaVencimiento] = useState("");
+  const [totalManual, setTotalManual] = useState("");
+  const [totalEditedManually, setTotalEditedManually] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
+  const [vincularMatriculas, setVincularMatriculas] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const getPersona = (personaId: string) => personas.find(p => p.id === personaId);
+  const getCurso = (cursoId: string) => cursos.find(c => c.id === cursoId);
 
   const subtotal = useMemo(
     () => matriculas.filter(m => selectedIds.includes(m.id)).reduce((s, m) => s + (m.valorCupo || 0), 0),
     [matriculas, selectedIds]
   );
 
+  // Auto-fill total when selection changes (unless manually edited)
+  useEffect(() => {
+    if (vincularMatriculas && !totalEditedManually && selectedIds.length > 0) {
+      setTotalManual(String(subtotal));
+    }
+  }, [subtotal, vincularMatriculas, selectedIds, totalEditedManually]);
+
   const toggleMatricula = (id: string) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const handleTotalChange = (value: string) => {
+    setTotalManual(value);
+    setTotalEditedManually(true);
+  };
+
   const handleSubmit = async () => {
-    if (!numeroFactura || selectedIds.length === 0 || !fechaVencimiento) {
+    if (!numeroFactura || !fechaVencimiento || !totalManual) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }
@@ -49,16 +72,20 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
       numeroFactura,
       fechaEmision,
       fechaVencimiento,
-      matriculaIds: selectedIds,
-      total: subtotal,
+      matriculaIds: vincularMatriculas ? selectedIds : [],
+      total: parseFloat(totalManual),
     });
 
     toast({ title: "Factura registrada exitosamente" });
     onOpenChange(false);
+    // Reset
     setSelectedIds([]);
     setNumeroFactura("");
     setFechaVencimiento("");
+    setTotalManual("");
+    setTotalEditedManually(false);
     setArchivo(null);
+    setVincularMatriculas(false);
   };
 
   return (
@@ -69,36 +96,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Selección de matrículas */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Matrículas a facturar
-            </Label>
-            <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
-              {matriculas.map(m => (
-                <label
-                  key={m.id}
-                  className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/30"
-                >
-                  <Checkbox
-                    checked={selectedIds.includes(m.id)}
-                    onCheckedChange={() => toggleMatricula(m.id)}
-                  />
-                  <div className="flex-1">
-                    <span className="text-sm font-medium">{m.id}</span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {m.empresaNombre || "Independiente"}
-                    </span>
-                  </div>
-                  <span className="text-sm font-medium">
-                    {formatCurrency(m.valorCupo || 0)}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Campos */}
+          {/* Campos principales */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="numFactura">No. Factura *</Label>
@@ -110,10 +108,14 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Subtotal</Label>
-              <div className="h-9 flex items-center px-3 border rounded-md bg-muted/30 text-sm font-medium">
-                {formatCurrency(subtotal)}
-              </div>
+              <Label htmlFor="totalFactura">Total *</Label>
+              <Input
+                id="totalFactura"
+                type="number"
+                value={totalManual}
+                onChange={e => handleTotalChange(e.target.value)}
+                placeholder="0"
+              />
             </div>
           </div>
 
@@ -150,6 +152,73 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
               hint="PDF, PNG, JPG"
             />
           </div>
+
+          {/* Toggle vincular matrículas */}
+          <div className="flex items-center gap-3 pt-1">
+            <Switch
+              checked={vincularMatriculas}
+              onCheckedChange={(checked) => {
+                setVincularMatriculas(checked);
+                if (!checked) {
+                  setSelectedIds([]);
+                  if (!totalEditedManually) setTotalManual("");
+                }
+              }}
+            />
+            <Label className="text-sm cursor-pointer" onClick={() => setVincularMatriculas(!vincularMatriculas)}>
+              Vincular matrículas específicas a esta factura
+            </Label>
+          </div>
+
+          {/* Selección de matrículas (condicional) */}
+          {vincularMatriculas && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Matrículas a vincular
+              </Label>
+              <div className="border rounded-md divide-y max-h-48 overflow-y-auto">
+                {matriculas.map(m => {
+                  const persona = getPersona(m.personaId);
+                  const curso = getCurso(m.cursoId);
+                  const nombreCompleto = persona
+                    ? `${persona.nombres} ${persona.apellidos}`
+                    : m.personaId;
+                  return (
+                    <label
+                      key={m.id}
+                      className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/30"
+                    >
+                      <Checkbox
+                        checked={selectedIds.includes(m.id)}
+                        onCheckedChange={() => toggleMatricula(m.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium">{nombreCompleto}</span>
+                        {curso && (
+                          <span className="text-xs text-muted-foreground ml-2 truncate">
+                            {curso.nombre}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium tabular-nums">
+                        {formatCurrency(m.valorCupo || 0)}
+                      </span>
+                    </label>
+                  );
+                })}
+                {matriculas.length === 0 && (
+                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                    No hay matrículas en este grupo.
+                  </div>
+                )}
+              </div>
+              {selectedIds.length > 0 && (
+                <div className="text-xs text-muted-foreground text-right">
+                  {selectedIds.length} seleccionada(s) — Subtotal: {formatCurrency(subtotal)}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>

@@ -377,6 +377,9 @@ export default function GrupoCarteraDetallePage() {
         open={!!editingFactura}
         onOpenChange={(open) => !open && setEditingFactura(null)}
         factura={editingFactura}
+        matriculas={allMatriculas}
+        personas={personas}
+        cursos={cursos}
       />
       <EditarPagoDialog
         open={!!editingPago}

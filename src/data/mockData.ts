@@ -306,7 +306,7 @@ export const mockCursos: Curso[] = [
     entrenadorNombre: 'Carlos Entrenador',
     capacidadMaxima: 20,
     estado: 'abierto',
-    matriculasIds: [],
+    matriculasIds: ['m20', 'm21', 'm22', 'm23', 'm24'],
     minTrabajoFechasAdicionales: [],
     createdAt: '2024-03-15T08:00:00Z',
     updatedAt: '2024-03-15T08:00:00Z',

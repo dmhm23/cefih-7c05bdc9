@@ -778,11 +778,11 @@ export const mockMatriculas: Matricula[] = [
     valorCupo: 300000, abono: 0, pagado: false,
     createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
-  // --- c6: Reentrenamiento (empresa: Energía Solar x1, independientes x4) ---
+  // --- c6: Reentrenamiento (empresa: Energía Solar x1, Minera Andina x3, independiente x1) ---
   {
     id: 'm20', personaId: 'p20', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Medellín', fechaCertificacionPrevia: '2023-07-15',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [

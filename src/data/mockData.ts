@@ -749,7 +749,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm18', personaId: 'p18', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisora de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [

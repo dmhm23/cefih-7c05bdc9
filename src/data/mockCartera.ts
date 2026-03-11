@@ -250,12 +250,12 @@ export const mockPagos: RegistroPago[] = [
   { id: 'pago12', facturaId: 'f5', fechaPago: '2024-03-10', valorPago: 250000, metodoPago: 'consignacion', observaciones: 'Pago m22 completo.' },
   // Minera Andina
   { id: 'pago13', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'transferencia', observaciones: 'Pago m17 completo.' },
+  { id: 'pago16', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'efectivo', observaciones: 'Pago m18 completo.' },
+  { id: 'pago17', facturaId: 'f6', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia', observaciones: 'Pago m20 completo.' },
+  { id: 'pago18', facturaId: 'f6', fechaPago: '2024-03-10', valorPago: 125000, metodoPago: 'consignacion', observaciones: 'Abono parcial m23.' },
   // Independientes
   { id: 'pago14', facturaId: 'f7', fechaPago: '2024-03-04', valorPago: 350000, metodoPago: 'efectivo' },
   { id: 'pago15', facturaId: 'f8', fechaPago: '2024-03-07', valorPago: 280000, metodoPago: 'transferencia' },
-  { id: 'pago16', facturaId: 'f9', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'efectivo' },
-  { id: 'pago17', facturaId: 'f10', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia' },
-  { id: 'pago18', facturaId: 'f11', fechaPago: '2024-03-10', valorPago: 125000, metodoPago: 'consignacion', observaciones: 'Abono parcial m23.' },
 ];
 
 // ============ ACTIVIDADES DE CARTERA ============

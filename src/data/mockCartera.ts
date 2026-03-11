@@ -278,6 +278,10 @@ export const mockActividades: ActividadCartera[] = [
   { id: 'act13', grupoCarteraId: 'gc5', tipo: 'sistema', descripcion: 'Pago registrado por $400.000 — Transferencia (m9).', fecha: '2024-03-04T10:00:00Z', usuario: 'Sistema' },
   { id: 'act14', grupoCarteraId: 'gc5', tipo: 'llamada', descripcion: 'Se contactó a Ricardo Mendoza para coordinar pago de m8 ($400.000).', fecha: '2024-03-15T10:00:00Z', usuario: 'Admin' },
   // Minera Andina
-  { id: 'act15', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $600.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
+  { id: 'act15', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $1.950.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
   { id: 'act16', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Transferencia (m17).', fecha: '2024-03-08T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act17', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Efectivo (m18).', fecha: '2024-03-08T11:00:00Z', usuario: 'Sistema' },
+  { id: 'act18', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $250.000 — Transferencia (m20).', fecha: '2024-03-09T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act19', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Abono de $125.000 — Consignación (m23). Saldo pendiente $125.000.', fecha: '2024-03-10T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act20', grupoCarteraId: 'gc6', tipo: 'llamada', descripcion: 'Se contactó a Luis Arango para coordinar pagos pendientes ($675.000).', fecha: '2024-03-12T09:00:00Z', usuario: 'Admin' },
 ];

@@ -227,7 +227,6 @@ export const mockFacturaMatriculas: FacturaMatricula[] = [
   { facturaId: 'f7', matriculaId: 'm10', valorAsignado: 350000 },
   { facturaId: 'f8', matriculaId: 'm15', valorAsignado: 280000 },
 ];
-];
 
 // ============ REGISTROS DE PAGO ============
 export const mockPagos: RegistroPago[] = [

@@ -1,21 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2 } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useUpdateFactura, useDeleteFactura } from "@/hooks/useCartera";
 import { Factura } from "@/types/cartera";
+import { Matricula } from "@/types/matricula";
+import { Persona } from "@/types/persona";
+import { Curso } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   factura: Factura | null;
+  matriculas?: Matricula[];
+  personas?: Persona[];
+  cursos?: Curso[];
 }
 
-export function EditarFacturaDialog({ open, onOpenChange, factura }: Props) {
+export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = [], personas = [], cursos = [] }: Props) {
   const { toast } = useToast();
   const updateFactura = useUpdateFactura();
   const deleteFactura = useDeleteFactura();
@@ -34,6 +40,14 @@ export function EditarFacturaDialog({ open, onOpenChange, factura }: Props) {
       setTotal(String(factura.total));
     }
   }, [factura]);
+
+  const linkedMatriculas = useMemo(() => {
+    if (!factura?.matriculaIds?.length) return [];
+    return matriculas.filter(m => factura.matriculaIds.includes(m.id));
+  }, [factura, matriculas]);
+
+  const getPersona = (personaId: string) => personas.find(p => p.id === personaId);
+  const getCurso = (cursoId: string) => cursos.find(c => c.id === cursoId);
 
   const handleSubmit = async () => {
     if (!factura || !numeroFactura || !fechaVencimiento || !total) {
@@ -113,6 +127,33 @@ export function EditarFacturaDialog({ open, onOpenChange, factura }: Props) {
                 />
               </div>
             </div>
+
+            {/* Matrículas vinculadas (read-only) */}
+            {linkedMatriculas.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5" />
+                  Matrículas vinculadas
+                </Label>
+                <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
+                  {linkedMatriculas.map(m => {
+                    const persona = getPersona(m.personaId);
+                    const curso = getCurso(m.cursoId);
+                    const nombre = persona ? `${persona.nombres} ${persona.apellidos}` : m.personaId;
+                    return (
+                      <div key={m.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium">{nombre}</span>
+                          {curso && (
+                            <span className="text-xs text-muted-foreground ml-2">{curso.nombre}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="flex !justify-between">

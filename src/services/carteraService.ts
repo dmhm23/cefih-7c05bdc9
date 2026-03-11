@@ -10,6 +10,7 @@ import {
   TipoResponsable,
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
+import { mockMatriculas } from '@/data/mockData';
 import {
   mockResponsables,
   mockGruposCartera,
@@ -214,6 +215,17 @@ export const carteraService = {
     };
     mockFacturas.push(factura);
 
+    // Sync linked matrículas
+    if (data.matriculaIds.length > 0) {
+      data.matriculaIds.forEach(mId => {
+        const mat = mockMatriculas.find(m => m.id === mId);
+        if (mat) {
+          mat.facturaNumero = data.numeroFactura;
+          mat.fechaFacturacion = data.fechaEmision;
+        }
+      });
+    }
+
     // Update grupo state
     const grupo = mockGruposCartera.find(g => g.id === data.grupoCarteraId);
     if (grupo) recalcGrupo(grupo);
@@ -221,7 +233,7 @@ export const carteraService = {
     // Auto-log activity
     addSystemActivity(
       data.grupoCarteraId,
-      `Factura ${data.numeroFactura} creada por $${data.total.toLocaleString('es-CO')}.`
+      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`
     );
 
     return factura;
@@ -318,6 +330,18 @@ export const carteraService = {
       factura.total = data.total;
     }
     recalcFactura(factura);
+
+    // Sync linked matrículas
+    if (factura.matriculaIds?.length) {
+      factura.matriculaIds.forEach(mId => {
+        const mat = mockMatriculas.find(m => m.id === mId);
+        if (mat) {
+          mat.facturaNumero = factura.numeroFactura;
+          mat.fechaFacturacion = factura.fechaEmision;
+        }
+      });
+    }
+
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);

@@ -194,14 +194,11 @@ export const mockFacturas: Factura[] = [
   // Minera Andina
   {
     id: 'f6', grupoCarteraId: 'gc6', numeroFactura: 'FAC-2024-006', fechaEmision: '2024-03-07', fechaVencimiento: '2024-04-07',
-    subtotal: 600000, total: 600000, estado: 'parcial', matriculaIds: ['m16', 'm17'],
+    subtotal: 1950000, total: 1950000, estado: 'parcial', matriculaIds: ['m16', 'm17', 'm18', 'm19', 'm20', 'm21', 'm23'],
   },
   // Independientes con factura
   { id: 'f7', grupoCarteraId: 'gc7', numeroFactura: 'FAC-2024-007', fechaEmision: '2024-03-04', fechaVencimiento: '2024-04-04', subtotal: 350000, total: 350000, estado: 'pagada', matriculaIds: ['m10'] },
   { id: 'f8', grupoCarteraId: 'gc8', numeroFactura: 'FAC-2024-008', fechaEmision: '2024-03-07', fechaVencimiento: '2024-04-07', subtotal: 280000, total: 280000, estado: 'pagada', matriculaIds: ['m15'] },
-  { id: 'f9', grupoCarteraId: 'gc9', numeroFactura: 'FAC-2024-009', fechaEmision: '2024-03-08', fechaVencimiento: '2024-04-08', subtotal: 300000, total: 300000, estado: 'pagada', matriculaIds: ['m18'] },
-  { id: 'f10', grupoCarteraId: 'gc11', numeroFactura: 'FAC-2024-010', fechaEmision: '2024-03-09', fechaVencimiento: '2024-04-09', subtotal: 250000, total: 250000, estado: 'pagada', matriculaIds: ['m20'] },
-  { id: 'f11', grupoCarteraId: 'gc13', numeroFactura: 'FAC-2024-011', fechaEmision: '2024-03-10', fechaVencimiento: '2024-04-10', subtotal: 250000, total: 250000, estado: 'parcial', matriculaIds: ['m23'] },
 ];
 
 // ============ RELACION FACTURA-MATRICULA ============

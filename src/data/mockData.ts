@@ -832,7 +832,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm23', personaId: 'p23', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-05-25',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de voladura', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [

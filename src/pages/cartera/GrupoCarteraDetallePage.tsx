@@ -365,6 +365,8 @@ export default function GrupoCarteraDetallePage() {
         onOpenChange={setShowCrearFactura}
         grupoCarteraId={id!}
         matriculas={matriculasGrupo}
+        personas={personas}
+        cursos={cursos}
       />
       <RegistrarPagoDialog
         open={showRegistrarPago}

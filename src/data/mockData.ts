@@ -749,7 +749,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm18', personaId: 'p18', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisora de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
@@ -765,7 +765,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm19', personaId: 'p19', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
@@ -778,11 +778,11 @@ export const mockMatriculas: Matricula[] = [
     valorCupo: 300000, abono: 0, pagado: false,
     createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
-  // --- c6: Reentrenamiento (empresa: Energía Solar x1, independientes x4) ---
+  // --- c6: Reentrenamiento (empresa: Energía Solar x1, Minera Andina x3, independiente x1) ---
   {
     id: 'm20', personaId: 'p20', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Medellín', fechaCertificacionPrevia: '2023-07-15',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
@@ -799,7 +799,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm21', personaId: 'p21', cursoId: 'c6', estado: 'creada', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Alturas Barranquilla', fechaCertificacionPrevia: '2023-03-20',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
@@ -832,7 +832,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm23', personaId: 'p23', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-05-25',
-    tipoVinculacion: 'independiente',
+    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de voladura', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [

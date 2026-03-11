@@ -82,46 +82,6 @@ export const mockResponsables: ResponsablePago[] = [
   {
     id: 'rp9',
     tipo: 'independiente',
-    nombre: 'Alejandra Rincón Vega',
-    nit: '1054321098',
-    contactoTelefono: '3145678901',
-    contactoEmail: 'alejandra.rincon@email.com',
-  },
-  {
-    id: 'rp10',
-    tipo: 'independiente',
-    nombre: 'Fabián Duarte Acosta',
-    nit: '1065432109',
-    contactoTelefono: '3006789012',
-    contactoEmail: 'fabian.duarte@email.com',
-  },
-  {
-    id: 'rp11',
-    tipo: 'independiente',
-    nombre: 'Viviana Molina Zapata',
-    nit: '1076543210',
-    contactoTelefono: '3187890123',
-    contactoEmail: 'viviana.molina@email.com',
-  },
-  {
-    id: 'rp12',
-    tipo: 'independiente',
-    nombre: 'Hernán Aguilar Romero',
-    nit: '1087654321',
-    contactoTelefono: '3228901234',
-    contactoEmail: 'hernan.aguilar@email.com',
-  },
-  {
-    id: 'rp13',
-    tipo: 'independiente',
-    nombre: 'Edwin Cortés Beltrán',
-    nit: '1019876543',
-    contactoTelefono: '3001234568',
-    contactoEmail: 'edwin.cortes@email.com',
-  },
-  {
-    id: 'rp14',
-    tipo: 'independiente',
     nombre: 'Yesenia Contreras Medina',
     nit: '4455667788',
     contactoTelefono: '3152345678',
@@ -187,26 +147,21 @@ export const mockGruposCartera: GrupoCartera[] = [
     matriculaIds: ['m8', 'm9', 'm22'],
     createdAt: '2024-03-03T08:00:00Z',
   },
-  // Minera Andina — m16, m17
+  // Minera Andina — m16, m17, m18, m19, m20, m21, m23
   {
     id: 'gc6',
     responsablePagoId: 'rp6',
     estado: 'abonado',
-    totalValor: 600000, // 300k x2
-    totalAbonos: 300000, // m16:0 + m17:300k
-    saldo: 300000,
-    matriculaIds: ['m16', 'm17'],
+    totalValor: 1950000, // 300k*4 + 250k*3
+    totalAbonos: 1275000, // m16:0 + m17:300k + m18:300k + m19:0 + m20:250k + m21:0 + m23:125k
+    saldo: 675000,
+    matriculaIds: ['m16', 'm17', 'm18', 'm19', 'm20', 'm21', 'm23'],
     createdAt: '2024-03-06T08:00:00Z',
   },
   // Independientes
   { id: 'gc7', responsablePagoId: 'rp7', estado: 'pagado', totalValor: 350000, totalAbonos: 350000, saldo: 0, matriculaIds: ['m10'], createdAt: '2024-03-03T10:00:00Z' },
   { id: 'gc8', responsablePagoId: 'rp8', estado: 'pagado', totalValor: 280000, totalAbonos: 280000, saldo: 0, matriculaIds: ['m15'], createdAt: '2024-03-06T08:00:00Z' },
-  { id: 'gc9', responsablePagoId: 'rp9', estado: 'pagado', totalValor: 300000, totalAbonos: 300000, saldo: 0, matriculaIds: ['m18'], createdAt: '2024-03-07T09:00:00Z' },
-  { id: 'gc10', responsablePagoId: 'rp10', estado: 'pendiente', totalValor: 300000, totalAbonos: 0, saldo: 300000, matriculaIds: ['m19'], createdAt: '2024-03-08T08:00:00Z' },
-  { id: 'gc11', responsablePagoId: 'rp11', estado: 'pagado', totalValor: 250000, totalAbonos: 250000, saldo: 0, matriculaIds: ['m20'], createdAt: '2024-03-08T08:00:00Z' },
-  { id: 'gc12', responsablePagoId: 'rp12', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m21'], createdAt: '2024-03-09T08:00:00Z' },
-  { id: 'gc13', responsablePagoId: 'rp13', estado: 'abonado', totalValor: 250000, totalAbonos: 125000, saldo: 125000, matriculaIds: ['m23'], createdAt: '2024-03-10T08:00:00Z' },
-  { id: 'gc14', responsablePagoId: 'rp14', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
+  { id: 'gc14', responsablePagoId: 'rp9', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
 ];
 
 // ============ FACTURAS ============
@@ -239,14 +194,11 @@ export const mockFacturas: Factura[] = [
   // Minera Andina
   {
     id: 'f6', grupoCarteraId: 'gc6', numeroFactura: 'FAC-2024-006', fechaEmision: '2024-03-07', fechaVencimiento: '2024-04-07',
-    subtotal: 600000, total: 600000, estado: 'parcial', matriculaIds: ['m16', 'm17'],
+    subtotal: 1950000, total: 1950000, estado: 'parcial', matriculaIds: ['m16', 'm17', 'm18', 'm19', 'm20', 'm21', 'm23'],
   },
   // Independientes con factura
   { id: 'f7', grupoCarteraId: 'gc7', numeroFactura: 'FAC-2024-007', fechaEmision: '2024-03-04', fechaVencimiento: '2024-04-04', subtotal: 350000, total: 350000, estado: 'pagada', matriculaIds: ['m10'] },
   { id: 'f8', grupoCarteraId: 'gc8', numeroFactura: 'FAC-2024-008', fechaEmision: '2024-03-07', fechaVencimiento: '2024-04-07', subtotal: 280000, total: 280000, estado: 'pagada', matriculaIds: ['m15'] },
-  { id: 'f9', grupoCarteraId: 'gc9', numeroFactura: 'FAC-2024-009', fechaEmision: '2024-03-08', fechaVencimiento: '2024-04-08', subtotal: 300000, total: 300000, estado: 'pagada', matriculaIds: ['m18'] },
-  { id: 'f10', grupoCarteraId: 'gc11', numeroFactura: 'FAC-2024-010', fechaEmision: '2024-03-09', fechaVencimiento: '2024-04-09', subtotal: 250000, total: 250000, estado: 'pagada', matriculaIds: ['m20'] },
-  { id: 'f11', grupoCarteraId: 'gc13', numeroFactura: 'FAC-2024-011', fechaEmision: '2024-03-10', fechaVencimiento: '2024-04-10', subtotal: 250000, total: 250000, estado: 'parcial', matriculaIds: ['m23'] },
 ];
 
 // ============ RELACION FACTURA-MATRICULA ============
@@ -267,11 +219,13 @@ export const mockFacturaMatriculas: FacturaMatricula[] = [
   { facturaId: 'f5', matriculaId: 'm22', valorAsignado: 250000 },
   { facturaId: 'f6', matriculaId: 'm16', valorAsignado: 300000 },
   { facturaId: 'f6', matriculaId: 'm17', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm18', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm19', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm20', valorAsignado: 250000 },
+  { facturaId: 'f6', matriculaId: 'm21', valorAsignado: 250000 },
+  { facturaId: 'f6', matriculaId: 'm23', valorAsignado: 250000 },
   { facturaId: 'f7', matriculaId: 'm10', valorAsignado: 350000 },
   { facturaId: 'f8', matriculaId: 'm15', valorAsignado: 280000 },
-  { facturaId: 'f9', matriculaId: 'm18', valorAsignado: 300000 },
-  { facturaId: 'f10', matriculaId: 'm20', valorAsignado: 250000 },
-  { facturaId: 'f11', matriculaId: 'm23', valorAsignado: 250000 },
 ];
 
 // ============ REGISTROS DE PAGO ============
@@ -295,12 +249,12 @@ export const mockPagos: RegistroPago[] = [
   { id: 'pago12', facturaId: 'f5', fechaPago: '2024-03-10', valorPago: 250000, metodoPago: 'consignacion', observaciones: 'Pago m22 completo.' },
   // Minera Andina
   { id: 'pago13', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'transferencia', observaciones: 'Pago m17 completo.' },
+  { id: 'pago16', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'efectivo', observaciones: 'Pago m18 completo.' },
+  { id: 'pago17', facturaId: 'f6', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia', observaciones: 'Pago m20 completo.' },
+  { id: 'pago18', facturaId: 'f6', fechaPago: '2024-03-10', valorPago: 125000, metodoPago: 'consignacion', observaciones: 'Abono parcial m23.' },
   // Independientes
   { id: 'pago14', facturaId: 'f7', fechaPago: '2024-03-04', valorPago: 350000, metodoPago: 'efectivo' },
   { id: 'pago15', facturaId: 'f8', fechaPago: '2024-03-07', valorPago: 280000, metodoPago: 'transferencia' },
-  { id: 'pago16', facturaId: 'f9', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'efectivo' },
-  { id: 'pago17', facturaId: 'f10', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia' },
-  { id: 'pago18', facturaId: 'f11', fechaPago: '2024-03-10', valorPago: 125000, metodoPago: 'consignacion', observaciones: 'Abono parcial m23.' },
 ];
 
 // ============ ACTIVIDADES DE CARTERA ============
@@ -323,6 +277,10 @@ export const mockActividades: ActividadCartera[] = [
   { id: 'act13', grupoCarteraId: 'gc5', tipo: 'sistema', descripcion: 'Pago registrado por $400.000 — Transferencia (m9).', fecha: '2024-03-04T10:00:00Z', usuario: 'Sistema' },
   { id: 'act14', grupoCarteraId: 'gc5', tipo: 'llamada', descripcion: 'Se contactó a Ricardo Mendoza para coordinar pago de m8 ($400.000).', fecha: '2024-03-15T10:00:00Z', usuario: 'Admin' },
   // Minera Andina
-  { id: 'act15', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $600.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
+  { id: 'act15', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $1.950.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
   { id: 'act16', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Transferencia (m17).', fecha: '2024-03-08T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act17', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Efectivo (m18).', fecha: '2024-03-08T11:00:00Z', usuario: 'Sistema' },
+  { id: 'act18', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $250.000 — Transferencia (m20).', fecha: '2024-03-09T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act19', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Abono de $125.000 — Consignación (m23). Saldo pendiente $125.000.', fecha: '2024-03-10T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act20', grupoCarteraId: 'gc6', tipo: 'llamada', descripcion: 'Se contactó a Luis Arango para coordinar pagos pendientes ($675.000).', fecha: '2024-03-12T09:00:00Z', usuario: 'Admin' },
 ];

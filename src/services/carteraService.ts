@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { mockMatriculas } from '@/data/mockData';
+import {
   ResponsablePago,
   GrupoCartera,
   Factura,
@@ -10,6 +10,7 @@ import { mockMatriculas } from '@/data/mockData';
   TipoResponsable,
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
+import { mockMatriculas } from '@/data/mockData';
 import {
   mockResponsables,
   mockGruposCartera,

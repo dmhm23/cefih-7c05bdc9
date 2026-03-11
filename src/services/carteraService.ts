@@ -330,6 +330,18 @@ export const carteraService = {
       factura.total = data.total;
     }
     recalcFactura(factura);
+
+    // Sync linked matrículas
+    if (factura.matriculaIds?.length) {
+      factura.matriculaIds.forEach(mId => {
+        const mat = mockMatriculas.find(m => m.id === mId);
+        if (mat) {
+          mat.facturaNumero = factura.numeroFactura;
+          mat.fechaFacturacion = factura.fechaEmision;
+        }
+      });
+    }
+
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);

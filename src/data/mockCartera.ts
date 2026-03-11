@@ -219,11 +219,14 @@ export const mockFacturaMatriculas: FacturaMatricula[] = [
   { facturaId: 'f5', matriculaId: 'm22', valorAsignado: 250000 },
   { facturaId: 'f6', matriculaId: 'm16', valorAsignado: 300000 },
   { facturaId: 'f6', matriculaId: 'm17', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm18', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm19', valorAsignado: 300000 },
+  { facturaId: 'f6', matriculaId: 'm20', valorAsignado: 250000 },
+  { facturaId: 'f6', matriculaId: 'm21', valorAsignado: 250000 },
+  { facturaId: 'f6', matriculaId: 'm23', valorAsignado: 250000 },
   { facturaId: 'f7', matriculaId: 'm10', valorAsignado: 350000 },
   { facturaId: 'f8', matriculaId: 'm15', valorAsignado: 280000 },
-  { facturaId: 'f9', matriculaId: 'm18', valorAsignado: 300000 },
-  { facturaId: 'f10', matriculaId: 'm20', valorAsignado: 250000 },
-  { facturaId: 'f11', matriculaId: 'm23', valorAsignado: 250000 },
+];
 ];
 
 // ============ REGISTROS DE PAGO ============

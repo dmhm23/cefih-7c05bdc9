@@ -147,26 +147,21 @@ export const mockGruposCartera: GrupoCartera[] = [
     matriculaIds: ['m8', 'm9', 'm22'],
     createdAt: '2024-03-03T08:00:00Z',
   },
-  // Minera Andina — m16, m17
+  // Minera Andina — m16, m17, m18, m19, m20, m21, m23
   {
     id: 'gc6',
     responsablePagoId: 'rp6',
     estado: 'abonado',
-    totalValor: 600000, // 300k x2
-    totalAbonos: 300000, // m16:0 + m17:300k
-    saldo: 300000,
-    matriculaIds: ['m16', 'm17'],
+    totalValor: 1950000, // 300k*4 + 250k*3
+    totalAbonos: 1275000, // m16:0 + m17:300k + m18:300k + m19:0 + m20:250k + m21:0 + m23:125k
+    saldo: 675000,
+    matriculaIds: ['m16', 'm17', 'm18', 'm19', 'm20', 'm21', 'm23'],
     createdAt: '2024-03-06T08:00:00Z',
   },
   // Independientes
   { id: 'gc7', responsablePagoId: 'rp7', estado: 'pagado', totalValor: 350000, totalAbonos: 350000, saldo: 0, matriculaIds: ['m10'], createdAt: '2024-03-03T10:00:00Z' },
   { id: 'gc8', responsablePagoId: 'rp8', estado: 'pagado', totalValor: 280000, totalAbonos: 280000, saldo: 0, matriculaIds: ['m15'], createdAt: '2024-03-06T08:00:00Z' },
-  { id: 'gc9', responsablePagoId: 'rp9', estado: 'pagado', totalValor: 300000, totalAbonos: 300000, saldo: 0, matriculaIds: ['m18'], createdAt: '2024-03-07T09:00:00Z' },
-  { id: 'gc10', responsablePagoId: 'rp10', estado: 'pendiente', totalValor: 300000, totalAbonos: 0, saldo: 300000, matriculaIds: ['m19'], createdAt: '2024-03-08T08:00:00Z' },
-  { id: 'gc11', responsablePagoId: 'rp11', estado: 'pagado', totalValor: 250000, totalAbonos: 250000, saldo: 0, matriculaIds: ['m20'], createdAt: '2024-03-08T08:00:00Z' },
-  { id: 'gc12', responsablePagoId: 'rp12', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m21'], createdAt: '2024-03-09T08:00:00Z' },
-  { id: 'gc13', responsablePagoId: 'rp13', estado: 'abonado', totalValor: 250000, totalAbonos: 125000, saldo: 125000, matriculaIds: ['m23'], createdAt: '2024-03-10T08:00:00Z' },
-  { id: 'gc14', responsablePagoId: 'rp14', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
+  { id: 'gc14', responsablePagoId: 'rp9', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
 ];
 
 // ============ FACTURAS ============

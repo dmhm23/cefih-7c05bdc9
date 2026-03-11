@@ -201,7 +201,7 @@ export const mockCursos: Curso[] = [
     supervisorNombre: 'Roberto Supervisor',
     capacidadMaxima: 20,
     estado: 'en_progreso',
-    matriculasIds: ['m1', 'm2'],
+    matriculasIds: ['m1', 'm2', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10'],
     minTrabajoFechasAdicionales: [],
     createdAt: '2024-02-15T08:00:00Z',
     updatedAt: '2024-02-15T08:00:00Z',

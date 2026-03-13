@@ -27,7 +27,7 @@ function recalcGrupo(grupo: GrupoCartera) {
   grupo.totalAbonos = pagos.reduce((s, p) => s + p.valorPago, 0);
   grupo.saldo = grupo.totalValor - grupo.totalAbonos;
 
-  if (grupo.saldo <= 0) {
+  if (grupo.saldo <= 0 && grupo.totalValor > 0) {
     grupo.estado = 'pagado';
   } else {
     // Check for overdue invoices

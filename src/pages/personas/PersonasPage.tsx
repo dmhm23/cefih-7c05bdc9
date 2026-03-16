@@ -343,7 +343,7 @@ export default function PersonasPage() {
         />
       </div>
 
-      {/* Table */}
+
       <DataTable
         data={filteredPersonas}
         columns={columns}

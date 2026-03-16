@@ -393,7 +393,7 @@ export default function MatriculasPage() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col h-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Matrículas</h1>

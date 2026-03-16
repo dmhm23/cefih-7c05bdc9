@@ -16,7 +16,7 @@ export type FormaPago =
 
 export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
 
-export type TipoVinculacion = 'empresa' | 'independiente';
+export type TipoVinculacion = 'empresa' | 'independiente' | 'arl';
 
 export type NivelFormacionEmpresa = 
   | 'jefe_area' 

@@ -1,25 +1,19 @@
+## Plan: Agregar opción "ARL" al tipo de vinculación
 
+### Cambios
 
-## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
+#### 1. `src/types/matricula.ts`
 
-### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
+- Agregar `'arl'` al tipo `TipoVinculacion`
+- Agregar entrada `arl: 'ARL'` en `TIPO_VINCULACION_LABELS`
 
-Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
+#### 2. `src/data/formOptions.ts`
 
-**Cambios concretos:**
+- Agregar `{ value: 'arl', label: 'ARL' }` al array `TIPOS_VINCULACION`
 
-1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
+#### 3. `src/pages/matriculas/MatriculaFormPage.tsx`
 
-2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
+- En la condición que muestra "Datos de la Empresa" (línea 889), agregar `|| tipoVinculacion === "arl"`
+- En la condición que muestra "Persona de Contacto" (línea 933), agregar `|| tipoVinculacion === "arl"` para que ARL tenga los mismos campos que Empresa
 
-3. **FilterConfig**: Definir array de configs:
-   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
-   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
-
-4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
-
-5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
-
-### Resultado
-El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
-
+**Nota**: El label "Tipo" ya dice "Tipo de Vinculación" en el código actual (línea 715), así que ese punto ya está resuelto. Verificar que se vea en el UI de la plataforma, de no estarse mostrando, hacer ajuste.

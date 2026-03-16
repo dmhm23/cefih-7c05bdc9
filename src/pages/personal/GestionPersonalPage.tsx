@@ -184,8 +184,8 @@ export default function GestionPersonalPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold">Gestión de Personal</h1>
           <p className="text-sm text-muted-foreground">Perfiles del equipo de trabajo</p>

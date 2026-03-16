@@ -98,7 +98,7 @@ export function EditableField({
   };
 
   const renderValue = () => {
-    const display = displayValue || value || placeholder;
+    const display = displayValue || value || effectivePlaceholder;
     const isEmpty = !value;
 
     if (badge && !isEmpty) {

@@ -114,8 +114,8 @@ export default function NivelesPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold">Niveles de Formación</h1>
           <p className="text-sm text-muted-foreground">Gestión de niveles y requisitos documentales</p>

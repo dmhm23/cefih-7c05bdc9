@@ -151,7 +151,7 @@ export function EditableField({
             options={[...options]}
             value={value}
             onValueChange={(val) => handleSelectChange(val)}
-            placeholder={placeholder}
+            placeholder={effectivePlaceholder}
             className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors"
           />
         );

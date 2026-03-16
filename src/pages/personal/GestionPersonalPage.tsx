@@ -202,7 +202,7 @@ export default function GestionPersonalPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 shrink-0 mt-4">
         <div className="flex items-center gap-2">
           <FilterPopover
             open={filterOpen}

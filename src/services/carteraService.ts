@@ -73,7 +73,7 @@ function addSystemActivity(grupoCarteraId: string, descripcion: string) {
 export function asignarMatriculaACartera(params: {
   matriculaId: string;
   valorCupo: number;
-  tipoVinculacion: 'empresa' | 'independiente';
+  tipoVinculacion: 'empresa' | 'independiente' | 'arl';
   // Empresa fields
   empresaNombre?: string;
   empresaNit?: string;

@@ -186,9 +186,9 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="space-y-2 min-w-0 w-full" data-table-container>
-      <div className="rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
+    <div className={cn("flex flex-col min-h-0 w-full", containerClassName)} data-table-container>
+      <div className="flex-1 min-h-0 rounded-lg border overflow-hidden">
+        <div className="overflow-auto h-full">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">

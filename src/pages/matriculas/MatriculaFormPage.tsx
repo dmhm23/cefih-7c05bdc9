@@ -886,7 +886,7 @@ export default function MatriculaFormPage() {
                 )}
               </div>
 
-              {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente") && (
+              {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente" || tipoVinculacion === "arl") && (
                 <div className="space-y-3 pt-2 border-t">
                   <p className="text-sm font-medium text-muted-foreground pt-1">Datos de la Empresa</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -930,7 +930,7 @@ export default function MatriculaFormPage() {
                       )}
                     />
                   </div>
-                  {tipoVinculacion === "empresa" && (
+                  {(tipoVinculacion === "empresa" || tipoVinculacion === "arl") && (
                     <>
                       <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

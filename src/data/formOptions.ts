@@ -137,6 +137,7 @@ export const NIVELES_PREVIOS = [
 export const TIPOS_VINCULACION = [
   { value: 'empresa', label: 'Empresa' },
   { value: 'independiente', label: 'Independiente' },
+  { value: 'arl', label: 'ARL' },
 ] as const;
 
 export const NIVELES_FORMACION_EMPRESA = [

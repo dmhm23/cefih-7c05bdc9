@@ -529,7 +529,7 @@ export function MatriculaDetailSheet({
                 />
               </>
             )}
-            {getValue("tipoVinculacion") === 'empresa' && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (
               <>
                 <EditableField
                   label="Contacto Empresa"

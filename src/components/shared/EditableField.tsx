@@ -159,7 +159,7 @@ export function EditableField({
       return (
         <Select value={value} onValueChange={handleSelectChange}>
           <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors">
-            <SelectValue placeholder={placeholder}>
+            <SelectValue placeholder={effectivePlaceholder}>
               {badge && value ? (
                 <Badge variant={badgeVariant} className="font-normal">
                   {displayValue || options.find(o => o.value === value)?.label || value}

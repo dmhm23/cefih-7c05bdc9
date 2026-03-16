@@ -77,7 +77,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 p-6 min-w-0 flex flex-col overflow-hidden">
+        <main className="flex-1 min-h-0 p-6 min-w-0 flex flex-col overflow-auto">
           {children}
         </main>
       </SidebarInset>

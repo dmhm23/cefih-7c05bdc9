@@ -433,7 +433,7 @@ export function MatriculaDetailSheet({
         <DetailSection title="Vinculación Laboral">
           <div className="grid grid-cols-2 gap-4">
             <EditableField
-              label="Tipo"
+              label="Tipo de Vinculación"
               value={getValue("tipoVinculacion") || ""}
               displayValue={getValue("tipoVinculacion") ? TIPO_VINCULACION_LABELS[getValue("tipoVinculacion")!] : undefined}
               onChange={(v) => handleFieldChange("tipoVinculacion", v)}

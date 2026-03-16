@@ -171,6 +171,7 @@ export const NIVEL_PREVIO_LABELS: Record<NivelPrevio, string> = {
 export const TIPO_VINCULACION_LABELS: Record<TipoVinculacion, string> = {
   empresa: 'Empresa',
   independiente: 'Independiente',
+  arl: 'ARL',
 };
 
 export const NIVEL_FORMACION_EMPRESA_LABELS: Record<NivelFormacionEmpresa, string> = {

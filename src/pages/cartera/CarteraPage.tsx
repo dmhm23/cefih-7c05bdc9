@@ -149,8 +149,8 @@ export default function CarteraPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3">
+
+      <div className="flex items-center gap-3 shrink-0 mt-4">
         <SearchInput
           placeholder="Buscar por nombre o NIT..."
           value={search}

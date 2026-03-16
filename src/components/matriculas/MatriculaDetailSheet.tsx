@@ -595,7 +595,7 @@ export function MatriculaDetailSheet({
         {/* Cobros / Cartera */}
         <DetailSection title="Cobros / Cartera">
           <div className="space-y-3">
-            {getValue("tipoVinculacion") === 'empresa' && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (
               <div className="grid grid-cols-2 gap-3">
                 <EditableField
                   label="Contacto cobro"

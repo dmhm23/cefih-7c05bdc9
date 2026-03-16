@@ -46,8 +46,13 @@ export function EditableField({
   editable = true,
   badge = false,
   badgeVariant = "secondary",
-  placeholder = "Sin valor",
+  placeholder,
 }: EditableFieldProps) {
+  const effectivePlaceholder = placeholder !== undefined
+    ? placeholder
+    : type === "select" ? "Seleccionar"
+    : type === "date" ? "Sin fecha"
+    : "—";
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);

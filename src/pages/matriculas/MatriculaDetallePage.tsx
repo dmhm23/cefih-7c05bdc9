@@ -593,7 +593,7 @@ export default function MatriculaDetallePage() {
               Cobros / Cartera
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {(getValue("tipoVinculacion") === 'empresa') && (
+              {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (
                 <>
                   <EditableField
                     label="Contacto cobro"

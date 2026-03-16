@@ -509,7 +509,7 @@ export function MatriculaDetailSheet({
                 placeholder="Escriba el nombre de la ARL..."
               />
             )}
-            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'independiente') && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'independiente' || getValue("tipoVinculacion") === 'arl') && (
               <>
                 <EditableField
                   label="Empresa"

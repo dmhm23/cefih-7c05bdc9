@@ -134,9 +134,8 @@ export default function CarteraPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Wallet className="h-5 w-5 text-primary" />
@@ -150,8 +149,8 @@ export default function CarteraPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3">
+
+      <div className="flex items-center gap-3 shrink-0 mt-4">
         <SearchInput
           placeholder="Buscar por nombre o NIT..."
           value={search}
@@ -179,13 +178,14 @@ export default function CarteraPage() {
         />
       </div>
 
-      {/* Table */}
+
       <DataTable
         data={filtered}
         columns={columns}
         isLoading={loadingGrupos || loadingResp}
         onRowClick={(row) => navigate(`/cartera/${row.id}`)}
         emptyMessage="No se encontraron grupos de cartera."
+        containerClassName="flex-1 min-h-0 mt-4"
       />
     </div>
   );

@@ -114,8 +114,8 @@ export default function NivelesPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold">Niveles de Formación</h1>
           <p className="text-sm text-muted-foreground">Gestión de niveles y requisitos documentales</p>
@@ -126,7 +126,7 @@ export default function NivelesPage() {
         </Button>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 shrink-0 mt-4">
         <div className="flex items-center gap-2">
           <ColumnSelector columns={columnConfig} onChange={setColumnConfig} defaultColumns={DEFAULT_COLUMNS} />
         </div>
@@ -148,6 +148,7 @@ export default function NivelesPage() {
         countLabel="niveles"
         defaultSortKey="updatedAt"
         defaultSortDirection="desc"
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       <ConfirmDialog

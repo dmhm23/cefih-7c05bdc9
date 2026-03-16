@@ -393,8 +393,8 @@ export default function MatriculasPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold">Matrículas</h1>
           <p className="text-sm text-muted-foreground">Gestión de inscripciones y seguimiento</p>
@@ -405,8 +405,8 @@ export default function MatriculasPage() {
         </Button>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4">
+
+      <div className="flex items-center justify-between gap-4 shrink-0 mt-4">
         <div className="flex items-center gap-2">
           <FilterPopover
             open={filterOpen}
@@ -437,7 +437,7 @@ export default function MatriculasPage() {
         />
       </div>
 
-      {/* Table */}
+
       <DataTable
         data={filteredMatriculas}
         columns={columns}
@@ -453,6 +453,7 @@ export default function MatriculasPage() {
         isPanelOpen={selectedIndex !== null}
         activeRowId={selectedMatricula?.id}
         onViewRow={handleViewRow}
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       {/* Detail Sheet */}

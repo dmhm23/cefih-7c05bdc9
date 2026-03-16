@@ -184,8 +184,8 @@ export default function GestionPersonalPage() {
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h1 className="text-2xl font-semibold">Gestión de Personal</h1>
           <p className="text-sm text-muted-foreground">Perfiles del equipo de trabajo</p>
@@ -202,7 +202,7 @@ export default function GestionPersonalPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 shrink-0 mt-4">
         <div className="flex items-center gap-2">
           <FilterPopover
             open={filterOpen}
@@ -248,6 +248,7 @@ export default function GestionPersonalPage() {
         isPanelOpen={selectedIndex !== null}
         activeRowId={selectedPersonal?.id}
         onViewRow={handleViewRow}
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       <PersonalDetailSheet

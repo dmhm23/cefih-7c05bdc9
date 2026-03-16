@@ -433,7 +433,7 @@ export function MatriculaDetailSheet({
         <DetailSection title="Vinculación Laboral">
           <div className="grid grid-cols-2 gap-4">
             <EditableField
-              label="Tipo"
+              label="Tipo de Vinculación"
               value={getValue("tipoVinculacion") || ""}
               displayValue={getValue("tipoVinculacion") ? TIPO_VINCULACION_LABELS[getValue("tipoVinculacion")!] : undefined}
               onChange={(v) => handleFieldChange("tipoVinculacion", v)}
@@ -509,7 +509,7 @@ export function MatriculaDetailSheet({
                 placeholder="Escriba el nombre de la ARL..."
               />
             )}
-            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'independiente') && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'independiente' || getValue("tipoVinculacion") === 'arl') && (
               <>
                 <EditableField
                   label="Empresa"
@@ -529,7 +529,7 @@ export function MatriculaDetailSheet({
                 />
               </>
             )}
-            {getValue("tipoVinculacion") === 'empresa' && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (
               <>
                 <EditableField
                   label="Contacto Empresa"
@@ -595,7 +595,7 @@ export function MatriculaDetailSheet({
         {/* Cobros / Cartera */}
         <DetailSection title="Cobros / Cartera">
           <div className="space-y-3">
-            {getValue("tipoVinculacion") === 'empresa' && (
+            {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (
               <div className="grid grid-cols-2 gap-3">
                 <EditableField
                   label="Contacto cobro"

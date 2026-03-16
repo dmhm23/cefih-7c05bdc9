@@ -48,6 +48,8 @@ interface DataTableProps<T> {
   // Sort
   defaultSortKey?: string;
   defaultSortDirection?: SortDirection;
+  // Layout
+  containerClassName?: string;
 }
 
 function getSortValue<T>(item: T, column: Column<T> | undefined, sortKey: string): string | number {
@@ -84,6 +86,7 @@ export function DataTable<T extends { id: string }>({
   onViewRow,
   defaultSortKey = "createdAt",
   defaultSortDirection = "desc",
+  containerClassName,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
@@ -183,12 +186,12 @@ export function DataTable<T extends { id: string }>({
   }
 
   return (
-    <div className="space-y-2 min-w-0 w-full" data-table-container>
-      <div className="rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
+    <div className={cn("flex flex-col min-h-0 w-full", containerClassName)} data-table-container>
+      <div className="flex-1 min-h-0 rounded-lg border overflow-hidden">
+        <div className="overflow-auto h-full">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40">
+              <TableRow className="bg-muted/80">
                 {selectable && (
                   <TableHead className="w-[40px] px-3">
                     <Checkbox

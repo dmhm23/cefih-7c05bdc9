@@ -46,8 +46,13 @@ export function EditableField({
   editable = true,
   badge = false,
   badgeVariant = "secondary",
-  placeholder = "Sin valor",
+  placeholder,
 }: EditableFieldProps) {
+  const effectivePlaceholder = placeholder !== undefined
+    ? placeholder
+    : type === "select" ? "Seleccionar"
+    : type === "date" ? "Sin fecha"
+    : "—";
   const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,7 +98,7 @@ export function EditableField({
   };
 
   const renderValue = () => {
-    const display = displayValue || value || placeholder;
+    const display = displayValue || value || effectivePlaceholder;
     const isEmpty = !value;
 
     if (badge && !isEmpty) {
@@ -146,7 +151,7 @@ export function EditableField({
             options={[...options]}
             value={value}
             onValueChange={(val) => handleSelectChange(val)}
-            placeholder={placeholder}
+            placeholder={effectivePlaceholder}
             className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors"
           />
         );
@@ -154,13 +159,13 @@ export function EditableField({
       return (
         <Select value={value} onValueChange={handleSelectChange}>
           <SelectTrigger className="h-8 text-sm border-none shadow-none hover:bg-accent hover:text-accent-foreground hover:ring-1 hover:ring-border px-2 -mx-2 transition-colors">
-            <SelectValue placeholder={placeholder}>
+            <SelectValue placeholder={effectivePlaceholder}>
               {badge && value ? (
                 <Badge variant={badgeVariant} className="font-normal">
                   {displayValue || options.find(o => o.value === value)?.label || value}
                 </Badge>
               ) : (
-                displayValue || options.find(o => o.value === value)?.label || value || placeholder
+                displayValue || options.find(o => o.value === value)?.label || value || effectivePlaceholder
               )}
             </SelectValue>
           </SelectTrigger>
@@ -179,7 +184,7 @@ export function EditableField({
       const dateValue = value ? new Date(value) : undefined;
       const displayDate = dateValue
         ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
-        : placeholder;
+        : effectivePlaceholder;
 
       return (
         <Popover>

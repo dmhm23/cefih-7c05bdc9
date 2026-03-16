@@ -48,6 +48,8 @@ interface DataTableProps<T> {
   // Sort
   defaultSortKey?: string;
   defaultSortDirection?: SortDirection;
+  // Layout
+  containerClassName?: string;
 }
 
 function getSortValue<T>(item: T, column: Column<T> | undefined, sortKey: string): string | number {

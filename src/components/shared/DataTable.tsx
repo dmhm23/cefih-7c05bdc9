@@ -84,6 +84,7 @@ export function DataTable<T extends { id: string }>({
   onViewRow,
   defaultSortKey = "createdAt",
   defaultSortDirection = "desc",
+  containerClassName,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);

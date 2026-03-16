@@ -516,7 +516,7 @@ export default function MatriculaDetallePage() {
                   />
                 </>
               )}
-              {getValue("tipoVinculacion") === "empresa" && (
+              {(getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "arl") && (
                 <>
                   <EditableField
                     label="Contacto Empresa"

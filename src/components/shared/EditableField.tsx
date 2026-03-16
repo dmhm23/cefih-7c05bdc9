@@ -165,7 +165,7 @@ export function EditableField({
                   {displayValue || options.find(o => o.value === value)?.label || value}
                 </Badge>
               ) : (
-                displayValue || options.find(o => o.value === value)?.label || value || placeholder
+                displayValue || options.find(o => o.value === value)?.label || value || effectivePlaceholder
               )}
             </SelectValue>
           </SelectTrigger>

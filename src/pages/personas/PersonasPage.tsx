@@ -359,6 +359,7 @@ export default function PersonasPage() {
         isPanelOpen={selectedIndex !== null}
         activeRowId={selectedPersona?.id}
         onViewRow={handleViewRow}
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       {/* Detail Sheet */}

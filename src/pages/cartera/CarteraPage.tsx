@@ -178,13 +178,14 @@ export default function CarteraPage() {
         />
       </div>
 
-      {/* Table */}
+
       <DataTable
         data={filtered}
         columns={columns}
         isLoading={loadingGrupos || loadingResp}
         onRowClick={(row) => navigate(`/cartera/${row.id}`)}
         emptyMessage="No se encontraron grupos de cartera."
+        containerClassName="flex-1 min-h-0 mt-4"
       />
     </div>
   );

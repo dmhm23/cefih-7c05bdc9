@@ -260,6 +260,7 @@ export default function FormatosPage() {
         countLabel="formatos"
         defaultSortKey="nombre"
         defaultSortDirection="asc"
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       <ConfirmDialog

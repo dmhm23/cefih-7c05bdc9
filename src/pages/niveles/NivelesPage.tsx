@@ -148,6 +148,7 @@ export default function NivelesPage() {
         countLabel="niveles"
         defaultSortKey="updatedAt"
         defaultSortDirection="desc"
+        containerClassName="flex-1 min-h-0 mt-4"
       />
 
       <ConfirmDialog

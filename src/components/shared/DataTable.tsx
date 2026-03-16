@@ -191,7 +191,7 @@ export function DataTable<T extends { id: string }>({
         <div className="overflow-auto h-full">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/40">
+              <TableRow className="bg-muted/80">
                 {selectable && (
                   <TableHead className="w-[40px] px-3">
                     <Checkbox

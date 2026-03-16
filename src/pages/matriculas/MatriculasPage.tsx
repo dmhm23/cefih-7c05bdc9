@@ -437,7 +437,7 @@ export default function MatriculasPage() {
         />
       </div>
 
-      {/* Table */}
+
       <DataTable
         data={filteredMatriculas}
         columns={columns}

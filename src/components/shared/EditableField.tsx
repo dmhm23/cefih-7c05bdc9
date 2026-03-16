@@ -184,7 +184,7 @@ export function EditableField({
       const dateValue = value ? new Date(value) : undefined;
       const displayDate = dateValue
         ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
-        : placeholder;
+        : effectivePlaceholder;
 
       return (
         <Popover>

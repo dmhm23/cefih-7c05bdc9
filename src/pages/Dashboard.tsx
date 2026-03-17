@@ -1,7 +1,7 @@
 import { DollarSign, FileWarning, BookOpenCheck, Clock, FileCheck2 } from "lucide-react";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
-import { useCartera } from "@/hooks/useCartera";
+import { useGruposCartera } from "@/hooks/useCartera";
 import StatCard from "@/components/dashboard/StatCard";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import TodoWidget from "@/components/dashboard/TodoWidget";

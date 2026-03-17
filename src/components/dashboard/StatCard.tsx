@@ -12,7 +12,7 @@ interface StatCardProps {
   value: string;
   fullValue?: string;
   description?: string;
-  icon: LucideIcon;
+  
   href: string;
   colorScheme?: ColorScheme;
   loading?: boolean;

@@ -96,11 +96,9 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Charts */}
-      <DashboardCharts matriculas={matriculas} loading={loading} />
-
-      {/* Todo Widget */}
-      <div className="max-w-lg">
+      {/* Charts + Todo Widget in 2x2 grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <DashboardCharts matriculas={matriculas} loading={loading} />
         <TodoWidget />
       </div>
     </div>

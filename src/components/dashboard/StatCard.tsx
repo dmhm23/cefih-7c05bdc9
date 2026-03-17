@@ -54,13 +54,10 @@ const StatCard = ({ title, value, fullValue, description, icon: Icon, href, colo
       onClick={() => navigate(href)}
     >
       <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="mb-3">
           <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider leading-none whitespace-nowrap">
             {title}
           </span>
-          <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
-            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
         </div>
         {fullValue ? (
           <TooltipProvider delayDuration={200}>

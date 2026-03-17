@@ -25,7 +25,7 @@ const dotColors: Record<ColorScheme, string> = {
   neutral: "bg-[hsl(var(--primary))]",
 };
 
-const StatCard = ({ title, value, fullValue, description, icon: Icon, href, colorScheme = "neutral", loading }: StatCardProps) => {
+const StatCard = ({ title, value, fullValue, description, href, colorScheme = "neutral", loading }: StatCardProps) => {
   const navigate = useNavigate();
 
   if (loading) {

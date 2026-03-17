@@ -19,7 +19,7 @@ const formatCOP = (v: number) =>
 const Dashboard = () => {
   const { data: matriculas = [], isLoading: loadingM } = useMatriculas();
   const { data: cursos = [], isLoading: loadingC } = useCursos();
-  const { grupos = [], isLoading: loadingG } = useCartera();
+  const { data: grupos = [], isLoading: loadingG } = useGruposCartera();
 
   const loading = loadingM || loadingC || loadingG;
 

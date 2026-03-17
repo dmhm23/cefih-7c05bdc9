@@ -16,18 +16,11 @@ interface StatCardProps {
   loading?: boolean;
 }
 
-const borderColors: Record<ColorScheme, string> = {
-  green: "border-l-[hsl(var(--success))]",
-  red: "border-l-[hsl(var(--destructive))]",
-  orange: "border-l-[hsl(var(--warning))]",
-  neutral: "border-l-[hsl(var(--primary))]",
-};
-
-const iconColors: Record<ColorScheme, string> = {
-  green: "text-[hsl(var(--success))]",
-  red: "text-[hsl(var(--destructive))]",
-  orange: "text-[hsl(var(--warning))]",
-  neutral: "text-[hsl(var(--primary))]",
+const dotColors: Record<ColorScheme, string> = {
+  green: "bg-[hsl(var(--success))]",
+  red: "bg-[hsl(var(--destructive))]",
+  orange: "bg-[hsl(var(--warning))]",
+  neutral: "bg-[hsl(var(--primary))]",
 };
 
 const StatCard = ({ title, value, description, icon: Icon, href, colorScheme = "neutral", loading }: StatCardProps) => {
@@ -35,10 +28,11 @@ const StatCard = ({ title, value, description, icon: Icon, href, colorScheme = "
 
   if (loading) {
     return (
-      <Card className="border-l-4 border-l-muted">
-        <CardContent className="p-4 space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-20" />
+      <Card>
+        <CardContent className="p-5 space-y-3">
+          <Skeleton className="h-9 w-9 rounded-full" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-20" />
           <Skeleton className="h-3 w-32" />
         </CardContent>
       </Card>
@@ -47,20 +41,20 @@ const StatCard = ({ title, value, description, icon: Icon, href, colorScheme = "
 
   return (
     <Card
-      className={cn(
-        "border-l-4 cursor-pointer hover:shadow-lg transition-shadow",
-        borderColors[colorScheme]
-      )}
+      className="cursor-pointer hover:bg-muted/30 transition-colors"
       onClick={() => navigate(href)}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            {title}
-          </span>
-          <Icon className={cn("h-4 w-4", iconColors[colorScheme])} />
+      <CardContent className="p-5">
+        <div className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+          <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
-        <div className="text-2xl font-bold text-foreground">{value}</div>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {title}
+        </span>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-3xl font-semibold text-foreground">{value}</span>
+          <span className={cn("h-1.5 w-1.5 rounded-full", dotColors[colorScheme])} />
+        </div>
         {description && (
           <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}

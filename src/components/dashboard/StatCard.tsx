@@ -2,6 +2,7 @@ import { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type ColorScheme = "green" | "red" | "orange" | "neutral";
@@ -9,6 +10,7 @@ type ColorScheme = "green" | "red" | "orange" | "neutral";
 interface StatCardProps {
   title: string;
   value: string;
+  fullValue?: string;
   description?: string;
   icon: LucideIcon;
   href: string;
@@ -23,40 +25,58 @@ const dotColors: Record<ColorScheme, string> = {
   neutral: "bg-[hsl(var(--primary))]",
 };
 
-const StatCard = ({ title, value, description, icon: Icon, href, colorScheme = "neutral", loading }: StatCardProps) => {
+const StatCard = ({ title, value, fullValue, description, icon: Icon, href, colorScheme = "neutral", loading }: StatCardProps) => {
   const navigate = useNavigate();
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="p-5 space-y-3">
-          <Skeleton className="h-9 w-9 rounded-full" />
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-7 w-20" />
-          <Skeleton className="h-3 w-32" />
+        <CardContent className="p-4 space-y-2.5">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-3 w-28" />
         </CardContent>
       </Card>
     );
   }
+
+  const valueContent = (
+    <div className="flex items-center gap-1.5 mt-0.5">
+      <span className="text-xl font-semibold text-foreground leading-none">{value}</span>
+      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", dotColors[colorScheme])} />
+    </div>
+  );
 
   return (
     <Card
       className="cursor-pointer hover:bg-muted/30 transition-colors"
       onClick={() => navigate(href)}
     >
-      <CardContent className="p-5">
-        <div className="h-9 w-9 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+      <CardContent className="p-4">
+        <div className="h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+          <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider leading-none">
           {title}
         </span>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-3xl font-semibold text-foreground">{value}</span>
-          <span className={cn("h-1.5 w-1.5 rounded-full", dotColors[colorScheme])} />
-        </div>
+        {fullValue ? (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>{valueContent}</TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="bg-foreground text-background text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg"
+              >
+                {fullValue}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : (
+          valueContent
+        )}
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-[11px] text-muted-foreground mt-1 leading-none">{description}</p>
         )}
       </CardContent>
     </Card>

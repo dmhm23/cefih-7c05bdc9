@@ -1,4 +1,4 @@
-import { DollarSign, FileWarning, BookOpenCheck, Clock, FileCheck2 } from "lucide-react";
+
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
 import { useGruposCartera } from "@/hooks/useCartera";

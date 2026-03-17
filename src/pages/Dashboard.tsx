@@ -13,8 +13,14 @@ import {
   calcPendientesMinTrabajo,
 } from "@/data/mockDashboard";
 
-const formatCOP = (v: number) =>
+const formatCOPFull = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
+
+const abbreviate = (v: number): string => {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`;
+  return `$${v}`;
+};
 
 const Dashboard = () => {
   const { data: matriculas = [], isLoading: loadingM } = useMatriculas();
@@ -43,7 +49,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Facturado y Pagado"
-          value={formatCOP(facturadoPagado)}
+          value={abbreviate(facturadoPagado)}
+          fullValue={formatCOPFull(facturadoPagado)}
           description="Acumulado total recaudado"
           icon={DollarSign}
           href="/cartera?estado=pagado"
@@ -52,7 +59,8 @@ const Dashboard = () => {
         />
         <StatCard
           title="Cartera por Cobrar"
-          value={formatCOP(carteraPorCobrar)}
+          value={abbreviate(carteraPorCobrar)}
+          fullValue={formatCOPFull(carteraPorCobrar)}
           description="Saldo pendiente de recaudo"
           icon={FileWarning}
           href="/cartera?estado=pendiente"

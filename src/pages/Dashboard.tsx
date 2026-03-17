@@ -52,7 +52,6 @@ const Dashboard = () => {
           value={abbreviate(facturadoPagado)}
           fullValue={formatCOPFull(facturadoPagado)}
           description="Acumulado total recaudado"
-          icon={DollarSign}
           href="/cartera?estado=pagado"
           colorScheme="green"
           loading={loading}
@@ -62,7 +61,6 @@ const Dashboard = () => {
           value={abbreviate(carteraPorCobrar)}
           fullValue={formatCOPFull(carteraPorCobrar)}
           description="Saldo pendiente de recaudo"
-          icon={FileWarning}
           href="/cartera?estado=pendiente"
           colorScheme={carteraPorCobrar > 0 ? "red" : "green"}
           loading={loading}
@@ -71,7 +69,6 @@ const Dashboard = () => {
           title="Matrículas Incompletas"
           value={matriculasIncompletas.toString()}
           description="Documentación pendiente"
-          icon={FileCheck2}
           href="/matriculas?estado_documentacion=incompleto"
           colorScheme={matriculasIncompletas > 0 ? "orange" : "green"}
           loading={loading}
@@ -80,7 +77,6 @@ const Dashboard = () => {
           title="Cursos sin Cerrar"
           value={cursosSinCerrar.toString()}
           description="Fecha fin vencida"
-          icon={Clock}
           href="/cursos?estado=en_ejecucion&cierre=pendiente"
           colorScheme={cursosSinCerrar > 0 ? "red" : "green"}
           loading={loading}
@@ -89,7 +85,6 @@ const Dashboard = () => {
           title="Pendientes MinTrabajo"
           value={pendientesMinTrabajo.toString()}
           description="Sin reporte a MinTrabajo"
-          icon={BookOpenCheck}
           href="/cursos?estado=finalizado&reportado_mintrabajo=false"
           colorScheme={pendientesMinTrabajo > 0 ? "orange" : "green"}
           loading={loading}

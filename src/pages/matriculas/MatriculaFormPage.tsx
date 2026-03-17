@@ -632,7 +632,7 @@ export default function MatriculaFormPage() {
           </Card>
 
 
-          {/* Sección 4: Vinculación Laboral */}
+          {/* Sección 3: Vinculación Laboral */}
           <Card>
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-base flex items-center gap-2">

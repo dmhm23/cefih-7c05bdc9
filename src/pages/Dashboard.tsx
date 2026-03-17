@@ -13,8 +13,14 @@ import {
   calcPendientesMinTrabajo,
 } from "@/data/mockDashboard";
 
-const formatCOP = (v: number) =>
+const formatCOPFull = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
+
+const abbreviate = (v: number): string => {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`;
+  return `$${v}`;
+};
 
 const Dashboard = () => {
   const { data: matriculas = [], isLoading: loadingM } = useMatriculas();

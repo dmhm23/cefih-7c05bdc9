@@ -1,25 +1,28 @@
 
 
-## Plan: Reemplazar Select por FilterPopover en EnrollmentsTable
+## Plan: Generar documento de reglas de negocio (REGLAS_NEGOCIO.md)
 
-### Cambio en `src/components/cursos/EnrollmentsTable.tsx`
+Tarea de generación de artefacto (no requiere cambios en el código). Se creará un archivo `.md` exhaustivo en `/mnt/documents/` basado en el análisis completo del código fuente.
 
-Reemplazar los dos `<Select>` independientes (líneas 268-288) por un único `<FilterPopover>` con el mismo patrón visual usado en CursosListView, MatriculasPage y PersonasPage.
+### Contenido del documento
 
-**Cambios concretos:**
+El archivo se organizará por módulo con reglas numeradas:
 
-1. **Imports**: Agregar `FilterPopover`, `FilterConfig` de `@/components/shared/FilterPopover` y `Filter` de lucide-react. Eliminar imports de `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue`.
+1. **Personas** — unicidad de documento, auditoría
+2. **Niveles de Formación** — documentos requeridos dinámicos, campos adicionales, código estudiante
+3. **Cursos** — ciclo de vida (abierto→en_progreso→cerrado), validaciones de cierre, capacidad máxima, MinTrabajo, eliminación
+4. **Matrículas** — creación, duplicados, estados, documentos dinámicos, firma, pago, portal auto-init, cartera auto-asignación
+5. **Formatos de Formación** — asignación por tipo/nivel, bloques, evaluación (umbral 70%), firmas, estado legacy
+6. **Cartera** — agrupación automática por responsable, recálculo de estados, facturas, pagos, sincronización bidireccional con matrículas
+7. **Certificación** — elegibilidad (pago + documentos), excepciones, plantillas SVG con tokens, versionado, revocación, reemisión
+8. **Portal Estudiante** — acceso por cédula, dependencias entre documentos, evaluación con reintentos, monitoreo admin
+9. **Personal y Cargos** — unicidad nombre cargo, eliminación protegida, firma centralizada
+10. **Auditoría** — registro transversal de acciones
 
-2. **Estado**: Agregar `filterOpen` (boolean). Reemplazar `filterDocumental` y `filterFinanciero` por un objeto `filters: Record<string, string | string[]>` con keys `documental` y `financiero`, ambos inicializados en `"todos"`.
+**Sección final: Inconsistencias** — reglas faltantes, conflictos entre modelos, casos no cubiertos.
 
-3. **FilterConfig**: Definir array de configs:
-   - `{ key: "documental", label: "Estado Documental", type: "select", options: [Pendiente, Completo] }`
-   - `{ key: "financiero", label: "Estado Financiero", type: "select", options: [Pagado, Abonado, Sin pagar] }`
+### Ejecución
 
-4. **Header**: Reemplazar los dos `<Select>` por un `<FilterPopover>` con trigger tipo `<Button variant="outline" size="sm">` con icono `Filter` y badge de conteo activo, idéntico al de CursosListView.
-
-5. **Lógica de filtrado**: Adaptar `filtered` para leer de `filters.documental` y `filters.financiero` en lugar de los estados individuales.
-
-### Resultado
-El filtro en la tabla de inscritos tendrá exactamente la misma UI que el botón "Filtro" de las demás tablas del sistema.
+- Script que escribe el archivo markdown a `/mnt/documents/REGLAS_NEGOCIO.md`
+- Se presentará como artifact descargable
 

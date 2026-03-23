@@ -426,7 +426,7 @@ export const carteraService = {
       const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
       if (grupo) {
         recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`);
+        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`, pago.facturaId);
       }
     }
   },

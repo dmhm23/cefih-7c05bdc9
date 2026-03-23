@@ -155,6 +155,20 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                             <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>
                             <TableCell><Badge variant="outline">{METODO_PAGO_LABELS[p.metodoPago]}</Badge></TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{p.observaciones || "—"}</TableCell>
+                            <TableCell>
+                              {p.soportePago ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={(e) => { e.stopPropagation(); setPreviewUrl(p.soportePago!); setPreviewNombre(`Comprobante - ${formatCurrency(p.valorPago)}`); }}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

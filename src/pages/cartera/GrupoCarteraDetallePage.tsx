@@ -282,7 +282,7 @@ export default function GrupoCarteraDetallePage() {
         open={showCrearFactura}
         onOpenChange={setShowCrearFactura}
         grupoCarteraId={id!}
-        matriculas={matriculasGrupo}
+        matriculas={matriculasDisponibles}
         personas={personas}
         cursos={cursos}
       />

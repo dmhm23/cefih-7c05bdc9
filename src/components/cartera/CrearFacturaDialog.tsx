@@ -6,11 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { DateField } from "@/components/shared/DateField";
 import { useCreateFactura } from "@/hooks/useCartera";
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import { Curso } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
+import { todayLocalString } from "@/utils/dateUtils";
 
 interface Props {
   open: boolean;

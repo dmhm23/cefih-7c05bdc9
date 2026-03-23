@@ -138,6 +138,32 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
               </div>
             </div>
 
+            {/* Archivo de factura */}
+            <div className="space-y-1.5">
+              <Label>Archivo de Factura</Label>
+              {!archivo && archivoUrl ? (
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
+                  <span className="text-sm flex-1 truncate">Archivo adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => { setArchivoUrl(undefined); }}>
+                    Quitar
+                  </Button>
+                </div>
+              ) : (
+                <FileDropZone
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onFile={(f) => { setArchivo(f); setArchivoUrl(URL.createObjectURL(f)); }}
+                  file={archivo}
+                  onClear={() => { setArchivo(null); setArchivoUrl(undefined); }}
+                  label="Arrastra la factura aquí o haz clic para seleccionar"
+                  hint="PDF, PNG, JPG"
+                />
+              )}
+            </div>
+
             {/* Matrículas vinculadas (read-only) */}
             {linkedMatriculas.length > 0 && (
               <div className="space-y-2">

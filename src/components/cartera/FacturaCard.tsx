@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, Plus, CreditCard, FileText, AlertTriangle, Pencil } from "lucide-react";
+import { ChevronDown, Plus, CreditCard, FileText, AlertTriangle, Pencil, Paperclip, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +21,7 @@ import { RegistrarPagoDialog } from "./RegistrarPagoDialog";
 import { EditarPagoDialog } from "./EditarPagoDialog";
 import { EditarFacturaDialog } from "./EditarFacturaDialog";
 import { ActividadCarteraSection } from "./ActividadCarteraSection";
+import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
 import { usePagosByFactura } from "@/hooks/useCartera";
 import { Factura, RegistroPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { format } from "date-fns";
@@ -45,6 +46,8 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
   const [showRegistrarPago, setShowRegistrarPago] = useState(false);
   const [editingPago, setEditingPago] = useState<RegistroPago | null>(null);
   const [showEditFactura, setShowEditFactura] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewNombre, setPreviewNombre] = useState("");
 
   const { data: pagos = [] } = usePagosByFactura(factura.id);
 
@@ -64,6 +67,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="font-semibold text-sm">{factura.numeroFactura}</span>
+                {factura.archivoFactura && <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                 {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                 <StatusBadge status={factura.estado === "pagada" ? "pagada" : factura.estado === "parcial" ? "parcial" : "pendiente"} />
               </div>
@@ -102,6 +106,17 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                   <Pencil className="h-3.5 w-3.5" />
                   Editar Factura
                 </Button>
+                {factura.archivoFactura && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => { setPreviewUrl(factura.archivoFactura!); setPreviewNombre(`Factura ${factura.numeroFactura}`); }}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver Factura
+                  </Button>
+                )}
               </div>
 
               {/* Pagos section */}
@@ -128,6 +143,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                           <TableHead>Valor</TableHead>
                           <TableHead>Método</TableHead>
                           <TableHead>Observaciones</TableHead>
+                          <TableHead className="w-[60px]">Soporte</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -139,6 +155,20 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                             <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>
                             <TableCell><Badge variant="outline">{METODO_PAGO_LABELS[p.metodoPago]}</Badge></TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{p.observaciones || "—"}</TableCell>
+                            <TableCell>
+                              {p.soportePago ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={(e) => { e.stopPropagation(); setPreviewUrl(p.soportePago!); setPreviewNombre(`Comprobante - ${formatCurrency(p.valorPago)}`); }}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -186,6 +216,12 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
         matriculas={matriculas}
         personas={personas}
         cursos={cursos}
+      />
+      <ArchivoPreviewDialog
+        open={!!previewUrl}
+        onOpenChange={(open) => !open && setPreviewUrl(null)}
+        url={previewUrl}
+        nombre={previewNombre}
       />
     </>
   );

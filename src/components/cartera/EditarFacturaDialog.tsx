@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Users } from "lucide-react";
+import { Trash2, Users, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { FileDropZone } from "@/components/shared/FileDropZone";
+import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
 import { useUpdateFactura, useDeleteFactura } from "@/hooks/useCartera";
 import { Factura } from "@/types/cartera";
 import { Matricula } from "@/types/matricula";
@@ -31,6 +33,9 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [total, setTotal] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [archivoUrl, setArchivoUrl] = useState<string | undefined>(undefined);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (factura) {
@@ -38,6 +43,8 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
       setFechaEmision(factura.fechaEmision);
       setFechaVencimiento(factura.fechaVencimiento);
       setTotal(String(factura.total));
+      setArchivoUrl(factura.archivoFactura);
+      setArchivo(null);
     }
   }, [factura]);
 
@@ -55,6 +62,8 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
       return;
     }
 
+    const newArchivoUrl = archivo ? URL.createObjectURL(archivo) : archivoUrl;
+
     await updateFactura.mutateAsync({
       id: factura.id,
       data: {
@@ -62,6 +71,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
         fechaEmision,
         fechaVencimiento,
         total: parseFloat(total),
+        archivoFactura: newArchivoUrl,
       },
     });
 
@@ -128,6 +138,32 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
               </div>
             </div>
 
+            {/* Archivo de factura */}
+            <div className="space-y-1.5">
+              <Label>Archivo de Factura</Label>
+              {!archivo && archivoUrl ? (
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
+                  <span className="text-sm flex-1 truncate">Archivo adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => { setArchivoUrl(undefined); }}>
+                    Quitar
+                  </Button>
+                </div>
+              ) : (
+                <FileDropZone
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onFile={(f) => { setArchivo(f); setArchivoUrl(URL.createObjectURL(f)); }}
+                  file={archivo}
+                  onClear={() => { setArchivo(null); setArchivoUrl(undefined); }}
+                  label="Arrastra la factura aquí o haz clic para seleccionar"
+                  hint="PDF, PNG, JPG"
+                />
+              )}
+            </div>
+
             {/* Matrículas vinculadas (read-only) */}
             {linkedMatriculas.length > 0 && (
               <div className="space-y-2">
@@ -184,6 +220,12 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
         confirmText="Eliminar"
         variant="destructive"
         onConfirm={handleDelete}
+      />
+      <ArchivoPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        url={archivoUrl || null}
+        nombre={`Factura ${factura.numeroFactura}`}
       />
     </>
   );

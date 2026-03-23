@@ -201,6 +201,7 @@ export const carteraService = {
     fechaVencimiento: string;
     matriculaIds: string[];
     total: number;
+    archivoFactura?: string;
   }): Promise<Factura> {
     await delay(600);
     const factura: Factura = {
@@ -212,6 +213,7 @@ export const carteraService = {
       subtotal: data.total,
       total: data.total,
       estado: 'pendiente',
+      archivoFactura: data.archivoFactura,
       matriculaIds: data.matriculaIds,
     };
     mockFacturas.push(factura);
@@ -261,6 +263,7 @@ export const carteraService = {
     valorPago: number;
     metodoPago: MetodoPago;
     observaciones?: string;
+    soportePago?: string;
   }): Promise<RegistroPago> {
     await delay(600);
     const pago: RegistroPago = { id: uuid(), ...data };
@@ -329,6 +332,7 @@ export const carteraService = {
     fechaEmision?: string;
     fechaVencimiento?: string;
     total?: number;
+    archivoFactura?: string;
   }): Promise<Factura | null> {
     await delay(500);
     const idx = mockFacturas.findIndex(f => f.id === id);
@@ -341,6 +345,7 @@ export const carteraService = {
       factura.subtotal = data.total;
       factura.total = data.total;
     }
+    if (data.archivoFactura !== undefined) factura.archivoFactura = data.archivoFactura;
     recalcFactura(factura);
 
     // Sync linked matrículas
@@ -368,6 +373,7 @@ export const carteraService = {
     valorPago?: number;
     metodoPago?: MetodoPago;
     observaciones?: string;
+    soportePago?: string;
   }): Promise<RegistroPago | null> {
     await delay(500);
     const idx = mockPagos.findIndex(p => p.id === id);
@@ -377,6 +383,7 @@ export const carteraService = {
     if (data.valorPago !== undefined) pago.valorPago = data.valorPago;
     if (data.metodoPago !== undefined) pago.metodoPago = data.metodoPago;
     if (data.observaciones !== undefined) pago.observaciones = data.observaciones;
+    if (data.soportePago !== undefined) pago.soportePago = data.soportePago;
 
     // Recalc factura & grupo
     const factura = mockFacturas.find(f => f.id === pago.facturaId);

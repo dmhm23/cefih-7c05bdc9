@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2 } from "lucide-react";
+import { Trash2, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { FileDropZone } from "@/components/shared/FileDropZone";
+import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
 import { useUpdatePago, useDeletePago } from "@/hooks/useCartera";
 import { RegistroPago, MetodoPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
@@ -30,6 +32,9 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
   const [observaciones, setObservaciones] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [soporteUrl, setSoporteUrl] = useState<string | undefined>(undefined);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (pago) {
@@ -37,6 +42,8 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       setValorPago(String(pago.valorPago));
       setMetodoPago(pago.metodoPago);
       setObservaciones(pago.observaciones || "");
+      setSoporteUrl(pago.soportePago);
+      setArchivo(null);
     }
   }, [pago]);
 
@@ -46,6 +53,8 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       return;
     }
 
+    const newSoporteUrl = archivo ? URL.createObjectURL(archivo) : soporteUrl;
+
     await updatePago.mutateAsync({
       id: pago.id,
       data: {
@@ -53,6 +62,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
         valorPago: parseFloat(valorPago),
         metodoPago,
         observaciones: observaciones || undefined,
+        soportePago: newSoporteUrl,
       },
     });
 
@@ -114,6 +124,32 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
               </Select>
             </div>
 
+            {/* Soporte de pago */}
+            <div className="space-y-1.5">
+              <Label>Soporte de Pago</Label>
+              {!archivo && soporteUrl ? (
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
+                  <span className="text-sm flex-1 truncate">Comprobante adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => setSoporteUrl(undefined)}>
+                    Quitar
+                  </Button>
+                </div>
+              ) : (
+                <FileDropZone
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onFile={(f) => { setArchivo(f); setSoporteUrl(URL.createObjectURL(f)); }}
+                  file={archivo}
+                  onClear={() => { setArchivo(null); setSoporteUrl(undefined); }}
+                  label="Arrastra el comprobante aquí o haz clic para seleccionar"
+                  hint="PDF, PNG, JPG"
+                />
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="editObsv">Observaciones</Label>
               <Textarea
@@ -153,6 +189,12 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
         confirmText="Eliminar"
         variant="destructive"
         onConfirm={handleDelete}
+      />
+      <ArchivoPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        url={soporteUrl || null}
+        nombre="Comprobante de pago"
       />
     </>
   );

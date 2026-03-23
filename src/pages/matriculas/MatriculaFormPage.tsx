@@ -959,7 +959,7 @@ export default function MatriculaFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Certificación</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DateField value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

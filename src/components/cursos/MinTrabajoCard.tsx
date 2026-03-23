@@ -97,10 +97,9 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Fecha Cierre Principal *</label>
-              <Input
-                type="date"
+              <DateField
                 value={fechaPrincipal}
-                onChange={(e) => { setFechaPrincipal(e.target.value); setDirty(true); }}
+                onChange={(v) => { setFechaPrincipal(v); setDirty(true); }}
                 disabled={readOnly}
               />
             </div>

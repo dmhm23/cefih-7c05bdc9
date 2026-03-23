@@ -1,42 +1,25 @@
 
 
-## Plan: Archivos adjuntos y vista previa en Cartera
+## Plan: Corregir desbordamiento de nombres de archivo en modales
 
-### Estado actual
-- **CrearFacturaDialog**: Ya tiene FileDropZone para archivo de factura ✓
-- **EditarFacturaDialog**: NO tiene FileDropZone — no se puede cambiar/ver el archivo ✗
-- **RegistrarPagoDialog**: Ya tiene FileDropZone para comprobante ✓
-- **EditarPagoDialog**: NO tiene FileDropZone — no se puede cambiar/ver el comprobante ✗
-- **FacturaCard**: No muestra indicadores de archivos adjuntos ni permite vista previa ✗
-- Los tipos ya tienen `archivoFactura` (Factura) y `soportePago` (RegistroPago) pero no se persisten al guardar
+### Problema
+Cuando un archivo tiene un nombre largo, el contenedor de vista previa del archivo dentro de los modales se expande y los elementos se desbordan fuera de los márgenes.
+
+### Causa raíz
+En `FileDropZone.tsx`, el contenedor de archivo seleccionado (línea 99) no tiene `min-w-0` ni `overflow-hidden`, y el span del tamaño del archivo no tiene `shrink-0`, permitiendo que el nombre empuje todo fuera del contenedor.
 
 ### Cambios
 
-**1. Nuevo: `src/components/cartera/ArchivoPreviewDialog.tsx`**
-- Dialog de vista previa que muestra PDFs (iframe), imágenes (img tag), o indica formato no soportado
-- Recibe `url: string` y `nombre: string`
-- Botón para descargar/abrir en nueva pestaña
+**1. `src/components/shared/FileDropZone.tsx`**
+- Agregar `min-w-0` al contenedor principal del archivo seleccionado para que `truncate` funcione correctamente dentro de flex
+- Agregar `shrink-0` al span del tamaño del archivo para que no se comprima
+- Agregar `overflow-hidden` como respaldo
 
 **2. `src/components/cartera/EditarFacturaDialog.tsx`**
-- Agregar FileDropZone para archivo de factura (igual que en CrearFacturaDialog)
-- Inicializar con el archivo existente si `factura.archivoFactura` tiene valor
-- Incluir el archivo en el submit
+- Agregar `min-w-0` al contenedor inline de "Archivo adjunto" y `shrink-0` a los botones
 
 **3. `src/components/cartera/EditarPagoDialog.tsx`**
-- Agregar FileDropZone para comprobante de pago
-- Inicializar con el archivo existente si `pago.soportePago` tiene valor
-- Incluir el archivo en el submit
+- Mismo ajuste: `min-w-0` al contenedor inline de "Comprobante adjunto" y `shrink-0` a los botones
 
-**4. `src/components/cartera/FacturaCard.tsx`**
-- En la tabla de pagos: agregar columna "Soporte" con icono clicable que abre ArchivoPreviewDialog
-- En la sección de acciones de factura: botón "Ver Factura" si tiene archivo adjunto, abre ArchivoPreviewDialog
-- Indicador visual (icono de clip) en el header colapsado si la factura tiene archivo
-
-**5. `src/services/carteraService.ts`**
-- Actualizar `registrarPago` para guardar `soportePago` (URL simulada del archivo)
-- Actualizar `createFactura` / `updateFactura` para guardar `archivoFactura`
-- Generar URLs ficticias con `URL.createObjectURL()` para la simulación mock
-
-**6. `src/data/mockCartera.ts`**
-- Agregar `archivoFactura` a algunas facturas mock y `soportePago` a algunos pagos mock para demostración visual
+Estos son cambios mínimos de CSS (clases de Tailwind) que resuelven el problema en todos los puntos donde se muestra un archivo adjunto.
 

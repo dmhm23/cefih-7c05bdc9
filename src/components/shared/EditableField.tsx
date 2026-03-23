@@ -182,11 +182,7 @@ export function EditableField({
     }
 
     if (type === "date") {
-      // Parse YYYY-MM-DD as local date (not UTC) to avoid timezone shift
-      const dateValue = value ? (() => {
-        const [y, m, d] = value.split("-").map(Number);
-        return new Date(y, m - 1, d);
-      })() : undefined;
+      const dateValue = parseLocalDate(value);
       const displayDate = dateValue && !isNaN(dateValue.getTime())
         ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
         : effectivePlaceholder;

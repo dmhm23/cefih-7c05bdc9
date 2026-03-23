@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Users } from "lucide-react";
+import { Trash2, Users, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { FileDropZone } from "@/components/shared/FileDropZone";
+import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
 import { useUpdateFactura, useDeleteFactura } from "@/hooks/useCartera";
 import { Factura } from "@/types/cartera";
 import { Matricula } from "@/types/matricula";

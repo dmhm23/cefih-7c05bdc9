@@ -8,6 +8,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import {
   Form,
   FormControl,
@@ -308,12 +309,11 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Inicio *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
+                        <DateField
                           value={field.value}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            recalcularDuracion(e.target.value, form.getValues("fechaFin"));
+                          onChange={(v) => {
+                            field.onChange(v);
+                            recalcularDuracion(v, form.getValues("fechaFin"));
                           }}
                         />
                       </FormControl>
@@ -329,12 +329,11 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Fin</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
+                        <DateField
                           value={field.value}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            recalcularDuracion(form.getValues("fechaInicio"), e.target.value);
+                          onChange={(v) => {
+                            field.onChange(v);
+                            recalcularDuracion(form.getValues("fechaInicio"), v);
                           }}
                         />
                       </FormControl>

@@ -6,11 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { DateField } from "@/components/shared/DateField";
 import { useCreateFactura } from "@/hooks/useCartera";
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import { Curso } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
+import { todayLocalString } from "@/utils/dateUtils";
 
 interface Props {
   open: boolean;
@@ -29,13 +31,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
   const createFactura = useCreateFactura();
 
   const [numeroFactura, setNumeroFactura] = useState("");
-  const [fechaEmision, setFechaEmision] = useState(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  });
+  const [fechaEmision, setFechaEmision] = useState(() => todayLocalString());
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [totalManual, setTotalManual] = useState("");
   const [totalEditedManually, setTotalEditedManually] = useState(false);
@@ -128,21 +124,18 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="fechaEmision">Fecha Emisión</Label>
-              <Input
-                id="fechaEmision"
-                type="date"
+              <Label>Fecha Emisión</Label>
+              <DateField
                 value={fechaEmision}
-                onChange={e => setFechaEmision(e.target.value)}
+                onChange={setFechaEmision}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="fechaVenc">Fecha Vencimiento *</Label>
-              <Input
-                id="fechaVenc"
-                type="date"
+              <Label>Fecha Vencimiento *</Label>
+              <DateField
                 value={fechaVencimiento}
-                onChange={e => setFechaVencimiento(e.target.value)}
+                onChange={setFechaVencimiento}
+                placeholder="Seleccionar vencimiento"
               />
             </div>
           </div>

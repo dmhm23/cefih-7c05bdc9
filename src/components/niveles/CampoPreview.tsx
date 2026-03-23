@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -90,7 +91,7 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
           </div>
         );
       case "fecha":
-        return <Input type="date" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
+        return <DateField value={textValue} onChange={setTextValue} />;
       case "fecha_hora":
         return <Input type="datetime-local" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "archivo":

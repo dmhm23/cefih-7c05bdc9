@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/shared/DateField";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -243,7 +244,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Fecha de Nacimiento *</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DateField value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

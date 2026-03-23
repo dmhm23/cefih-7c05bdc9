@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import {
   Form,
   FormControl,
@@ -959,7 +960,7 @@ export default function MatriculaFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Certificación</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DateField value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

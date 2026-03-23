@@ -20,6 +20,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { parseLocalDate, dateToLocalString } from "@/utils/dateUtils";
 
 interface EditableFieldProps {
   label: string;
@@ -92,11 +93,7 @@ export function EditableField({
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      // Use local date formatting to avoid UTC timezone shift (Colombia is UTC-5)
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      onChange(`${y}-${m}-${d}`);
+      onChange(dateToLocalString(date));
     }
     setIsEditing(false);
   };
@@ -185,11 +182,7 @@ export function EditableField({
     }
 
     if (type === "date") {
-      // Parse YYYY-MM-DD as local date (not UTC) to avoid timezone shift
-      const dateValue = value ? (() => {
-        const [y, m, d] = value.split("-").map(Number);
-        return new Date(y, m - 1, d);
-      })() : undefined;
+      const dateValue = parseLocalDate(value);
       const displayDate = dateValue && !isNaN(dateValue.getTime())
         ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
         : effectivePlaceholder;

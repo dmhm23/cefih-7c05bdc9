@@ -5,11 +5,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { DateField } from "@/components/shared/DateField";
 import { DocumentoRequerido } from "@/types/matricula";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -142,9 +142,7 @@ export function DocumentosCarga({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Fecha del examen médico ocupacional</TooltipContent>
               </Tooltip>
-              <Input type="date" className="h-6 text-xs w-[8.5rem] px-1"
-                value={doc.fechaDocumento || ""}
-                onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
+              <DateField compact value={doc.fechaDocumento || ""} onChange={(v) => onFechaChange(doc.id, "fechaDocumento", v)} />
             </div>
           )}
           {doc.tipo === "arl" && (
@@ -158,9 +156,7 @@ export function DocumentosCarga({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Inicio de cobertura ARL</TooltipContent>
               </Tooltip>
-              <Input type="date" className="h-6 text-xs w-[8.5rem] px-1"
-                value={doc.fechaInicioCobertura || ""}
-                onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
+              <DateField compact value={doc.fechaInicioCobertura || ""} onChange={(v) => onFechaChange(doc.id, "fechaInicioCobertura", v)} />
             </div>
           )}
         </div>

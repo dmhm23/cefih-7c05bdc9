@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { DateField } from "@/components/shared/DateField";
 import { useRegistrarPagoCartera, usePagosByFactura } from "@/hooks/useCartera";
 import { Factura, MetodoPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
+import { todayLocalString } from "@/utils/dateUtils";
 
 interface Props {
   open: boolean;
@@ -26,13 +28,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
 
   const [valorPago, setValorPago] = useState("");
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
-  const [fechaPago, setFechaPago] = useState(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  });
+  const [fechaPago, setFechaPago] = useState(() => todayLocalString());
   const [observaciones, setObservaciones] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
 
@@ -104,11 +100,10 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="fechaPago">Fecha</Label>
-              <Input
+              <DateField
                 id="fechaPago"
-                type="date"
                 value={fechaPago}
-                onChange={e => setFechaPago(e.target.value)}
+                onChange={setFechaPago}
               />
             </div>
           </div>

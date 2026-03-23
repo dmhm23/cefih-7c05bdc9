@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Trash2, CalendarDays } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -96,10 +97,9 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Fecha Cierre Principal *</label>
-              <Input
-                type="date"
+              <DateField
                 value={fechaPrincipal}
-                onChange={(e) => { setFechaPrincipal(e.target.value); setDirty(true); }}
+                onChange={(v) => { setFechaPrincipal(v); setDirty(true); }}
                 disabled={readOnly}
               />
             </div>

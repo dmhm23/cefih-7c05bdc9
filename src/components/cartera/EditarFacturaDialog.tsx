@@ -33,6 +33,9 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
   const [fechaVencimiento, setFechaVencimiento] = useState("");
   const [total, setTotal] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [archivoUrl, setArchivoUrl] = useState<string | undefined>(undefined);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (factura) {

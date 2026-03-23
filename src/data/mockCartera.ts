@@ -259,28 +259,28 @@ export const mockPagos: RegistroPago[] = [
 
 // ============ ACTIVIDADES DE CARTERA ============
 export const mockActividades: ActividadCartera[] = [
-  // Constructora ABC
-  { id: 'act1', grupoCarteraId: 'gc1', tipo: 'sistema', descripcion: 'Factura FAC-2024-001 creada por $1.400.000.', fecha: '2024-02-17T10:30:00Z', usuario: 'Sistema' },
-  { id: 'act2', grupoCarteraId: 'gc1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Transferencia (m1).', fecha: '2024-02-18T14:00:00Z', usuario: 'Sistema' },
-  { id: 'act8', grupoCarteraId: 'gc1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Transferencia (m5).', fecha: '2024-03-02T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act9', grupoCarteraId: 'gc1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Consignación (m6).', fecha: '2024-03-03T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act10', grupoCarteraId: 'gc1', tipo: 'sistema', descripcion: 'Abono de $200.000 — Transferencia (m7). Saldo pendiente $150.000.', fecha: '2024-03-05T10:00:00Z', usuario: 'Sistema' },
-  // Infra del Norte
-  { id: 'act3', grupoCarteraId: 'gc2', tipo: 'sistema', descripcion: 'Factura FAC-2024-004 creada por $840.000.', fecha: '2024-03-06T09:15:00Z', usuario: 'Sistema' },
-  { id: 'act4', grupoCarteraId: 'gc2', tipo: 'sistema', descripcion: 'Pago registrado por $100.000 — Consignación (m3).', fecha: '2024-03-10T11:00:00Z', usuario: 'Sistema' },
-  { id: 'act11', grupoCarteraId: 'gc2', tipo: 'sistema', descripcion: 'Pago registrado por $280.000 — Transferencia (m11).', fecha: '2024-03-06T14:00:00Z', usuario: 'Sistema' },
-  { id: 'act5', grupoCarteraId: 'gc2', tipo: 'llamada', descripcion: 'Se contactó a Camila Herrera para recordar saldo pendiente de $460.000.', fecha: '2024-03-20T09:00:00Z', usuario: 'Admin' },
-  { id: 'act6', grupoCarteraId: 'gc2', tipo: 'promesa_pago', descripcion: 'Camila confirma pago para el 30 de marzo.', fecha: '2024-03-20T09:10:00Z', usuario: 'Admin' },
-  { id: 'act7', grupoCarteraId: 'gc2', tipo: 'comentario', descripcion: 'La empresa solicita enviar nueva factura con datos actualizados.', fecha: '2024-03-25T14:30:00Z', usuario: 'Admin' },
-  // Energía Solar
-  { id: 'act12', grupoCarteraId: 'gc5', tipo: 'sistema', descripcion: 'Factura FAC-2024-005 creada por $1.050.000.', fecha: '2024-03-05T09:00:00Z', usuario: 'Sistema' },
-  { id: 'act13', grupoCarteraId: 'gc5', tipo: 'sistema', descripcion: 'Pago registrado por $400.000 — Transferencia (m9).', fecha: '2024-03-04T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act14', grupoCarteraId: 'gc5', tipo: 'llamada', descripcion: 'Se contactó a Ricardo Mendoza para coordinar pago de m8 ($400.000).', fecha: '2024-03-15T10:00:00Z', usuario: 'Admin' },
-  // Minera Andina
-  { id: 'act15', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $1.950.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
-  { id: 'act16', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Transferencia (m17).', fecha: '2024-03-08T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act17', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Efectivo (m18).', fecha: '2024-03-08T11:00:00Z', usuario: 'Sistema' },
-  { id: 'act18', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Pago registrado por $250.000 — Transferencia (m20).', fecha: '2024-03-09T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act19', grupoCarteraId: 'gc6', tipo: 'sistema', descripcion: 'Abono de $125.000 — Consignación (m23). Saldo pendiente $125.000.', fecha: '2024-03-10T10:00:00Z', usuario: 'Sistema' },
-  { id: 'act20', grupoCarteraId: 'gc6', tipo: 'llamada', descripcion: 'Se contactó a Luis Arango para coordinar pagos pendientes ($675.000).', fecha: '2024-03-12T09:00:00Z', usuario: 'Admin' },
+  // Constructora ABC — f1
+  { id: 'act1', grupoCarteraId: 'gc1', facturaId: 'f1', tipo: 'sistema', descripcion: 'Factura FAC-2024-001 creada por $1.400.000.', fecha: '2024-02-17T10:30:00Z', usuario: 'Sistema' },
+  { id: 'act2', grupoCarteraId: 'gc1', facturaId: 'f1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Transferencia (m1).', fecha: '2024-02-18T14:00:00Z', usuario: 'Sistema' },
+  { id: 'act8', grupoCarteraId: 'gc1', facturaId: 'f1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Transferencia (m5).', fecha: '2024-03-02T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act9', grupoCarteraId: 'gc1', facturaId: 'f1', tipo: 'sistema', descripcion: 'Pago registrado por $350.000 — Consignación (m6).', fecha: '2024-03-03T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act10', grupoCarteraId: 'gc1', facturaId: 'f1', tipo: 'sistema', descripcion: 'Abono de $200.000 — Transferencia (m7). Saldo pendiente $150.000.', fecha: '2024-03-05T10:00:00Z', usuario: 'Sistema' },
+  // Infra del Norte — f2
+  { id: 'act3', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'sistema', descripcion: 'Factura FAC-2024-004 creada por $840.000.', fecha: '2024-03-06T09:15:00Z', usuario: 'Sistema' },
+  { id: 'act4', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'sistema', descripcion: 'Pago registrado por $100.000 — Consignación (m3).', fecha: '2024-03-10T11:00:00Z', usuario: 'Sistema' },
+  { id: 'act11', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'sistema', descripcion: 'Pago registrado por $280.000 — Transferencia (m11).', fecha: '2024-03-06T14:00:00Z', usuario: 'Sistema' },
+  { id: 'act5', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'llamada', descripcion: 'Se contactó a Camila Herrera para recordar saldo pendiente de $460.000.', fecha: '2024-03-20T09:00:00Z', usuario: 'Admin' },
+  { id: 'act6', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'promesa_pago', descripcion: 'Camila confirma pago para el 30 de marzo.', fecha: '2024-03-20T09:10:00Z', usuario: 'Admin' },
+  { id: 'act7', grupoCarteraId: 'gc2', facturaId: 'f2', tipo: 'comentario', descripcion: 'La empresa solicita enviar nueva factura con datos actualizados.', fecha: '2024-03-25T14:30:00Z', usuario: 'Admin' },
+  // Energía Solar — f5
+  { id: 'act12', grupoCarteraId: 'gc5', facturaId: 'f5', tipo: 'sistema', descripcion: 'Factura FAC-2024-005 creada por $1.050.000.', fecha: '2024-03-05T09:00:00Z', usuario: 'Sistema' },
+  { id: 'act13', grupoCarteraId: 'gc5', facturaId: 'f5', tipo: 'sistema', descripcion: 'Pago registrado por $400.000 — Transferencia (m9).', fecha: '2024-03-04T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act14', grupoCarteraId: 'gc5', facturaId: 'f5', tipo: 'llamada', descripcion: 'Se contactó a Ricardo Mendoza para coordinar pago de m8 ($400.000).', fecha: '2024-03-15T10:00:00Z', usuario: 'Admin' },
+  // Minera Andina — f6
+  { id: 'act15', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'sistema', descripcion: 'Factura FAC-2024-006 creada por $1.950.000.', fecha: '2024-03-07T09:00:00Z', usuario: 'Sistema' },
+  { id: 'act16', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Transferencia (m17).', fecha: '2024-03-08T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act17', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'sistema', descripcion: 'Pago registrado por $300.000 — Efectivo (m18).', fecha: '2024-03-08T11:00:00Z', usuario: 'Sistema' },
+  { id: 'act18', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'sistema', descripcion: 'Pago registrado por $250.000 — Transferencia (m20).', fecha: '2024-03-09T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act19', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'sistema', descripcion: 'Abono de $125.000 — Consignación (m23). Saldo pendiente $125.000.', fecha: '2024-03-10T10:00:00Z', usuario: 'Sistema' },
+  { id: 'act20', grupoCarteraId: 'gc6', facturaId: 'f6', tipo: 'llamada', descripcion: 'Se contactó a Luis Arango para coordinar pagos pendientes ($675.000).', fecha: '2024-03-12T09:00:00Z', usuario: 'Admin' },
 ];

@@ -380,6 +380,7 @@ export const carteraService = {
     if (data.valorPago !== undefined) pago.valorPago = data.valorPago;
     if (data.metodoPago !== undefined) pago.metodoPago = data.metodoPago;
     if (data.observaciones !== undefined) pago.observaciones = data.observaciones;
+    if (data.soportePago !== undefined) pago.soportePago = data.soportePago;
 
     // Recalc factura & grupo
     const factura = mockFacturas.find(f => f.id === pago.facturaId);

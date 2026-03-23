@@ -221,6 +221,12 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
         variant="destructive"
         onConfirm={handleDelete}
       />
+      <ArchivoPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        url={archivoUrl || null}
+        nombre={`Factura ${factura.numeroFactura}`}
+      />
     </>
   );
 }

@@ -217,6 +217,12 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
         personas={personas}
         cursos={cursos}
       />
+      <ArchivoPreviewDialog
+        open={!!previewUrl}
+        onOpenChange={(open) => !open && setPreviewUrl(null)}
+        url={previewUrl}
+        nombre={previewNombre}
+      />
     </>
   );
 }

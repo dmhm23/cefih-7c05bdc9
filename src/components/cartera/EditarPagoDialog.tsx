@@ -190,6 +190,12 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
         variant="destructive"
         onConfirm={handleDelete}
       />
+      <ArchivoPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        url={soporteUrl || null}
+        nombre="Comprobante de pago"
+      />
     </>
   );
 }

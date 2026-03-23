@@ -108,7 +108,7 @@ export function FileDropZone({
     return (
       <div className={cn("flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden", className)}>
         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm flex-1 truncate min-w-0">{file.name}</span>
+        <span className="text-sm flex-1 truncate min-w-0" title={file.name}>{truncateFileName(file.name)}</span>
         <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
         {onClear && (
           <Button

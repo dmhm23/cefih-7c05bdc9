@@ -1,25 +1,38 @@
 
+Objetivo: corregir el desbordamiento de nombres de archivos en los modales de Cartera sin agrandar inputs, haciendo que el nombre visible se limite a 28–30 caracteres con puntos suspensivos y reforzando la regla general de que ningún contenido puede salirse de los márgenes del modal.
 
-## Plan: Corregir desbordamiento de nombres de archivo en modales
+Plan de implementación
 
-### Problema
-Cuando un archivo tiene un nombre largo, el contenedor de vista previa del archivo dentro de los modales se expande y los elementos se desbordan fuera de los márgenes.
+1. Ajustar el componente compartido `FileDropZone`
+- Centralizar aquí la solución porque ya se reutiliza en Registro de factura, Registro de pago y otros flujos.
+- Agregar una función de presentación para truncar el nombre visible del archivo a 30 caracteres aprox.
+- Mostrar solo la versión resumida en UI, pero conservar el nombre completo como `title`/tooltip para consulta.
+- Mantener `truncate`, `min-w-0`, `overflow-hidden`, `flex-1` y `shrink-0` para que el layout nunca empuje botones o tamaños fuera del contenedor.
+- Asegurar que el contenedor del archivo seleccionado use `w-full max-w-full` para no crecer más que el modal.
 
-### Causa raíz
-En `FileDropZone.tsx`, el contenedor de archivo seleccionado (línea 99) no tiene `min-w-0` ni `overflow-hidden`, y el span del tamaño del archivo no tiene `shrink-0`, permitiendo que el nombre empuje todo fuera del contenedor.
+2. Reforzar los modales de Cartera donde ocurre el problema
+- Revisar `RegistrarPagoDialog` y `CrearFacturaDialog`, que dependen directamente de `FileDropZone`, para confirmar que el contenedor padre no introduce expansión horizontal.
+- Mantener el mismo criterio en `EditarPagoDialog` y `EditarFacturaDialog`, aunque hoy muestran texto genérico, para que cualquier variante futura de nombre real quede protegida.
+- Si hace falta, añadir `min-w-0`/`overflow-hidden` a wrappers intermedios dentro del modal.
 
-### Cambios
+3. Aplicar la regla general de no desbordamiento en UI compartida
+- Como `FileDropZone` se usa en más módulos, este ajuste servirá como regla global para adjuntos cargados desde inputs/modales en toda la app.
+- Revisar los usos más sensibles del componente para confirmar que heredan correctamente el truncado sin romper otros layouts.
 
-**1. `src/components/shared/FileDropZone.tsx`**
-- Agregar `min-w-0` al contenedor principal del archivo seleccionado para que `truncate` funcione correctamente dentro de flex
-- Agregar `shrink-0` al span del tamaño del archivo para que no se comprima
-- Agregar `overflow-hidden` como respaldo
+4. Criterio visual esperado
+- Nombre visible del archivo: máximo 28–30 caracteres.
+- Si excede el límite: mostrar primeros caracteres + `…`.
+- El tamaño del archivo y el botón de eliminar deben permanecer siempre visibles dentro del borde del input.
+- Ningún texto, botón o icono debe salirse del ancho del modal.
 
-**2. `src/components/cartera/EditarFacturaDialog.tsx`**
-- Agregar `min-w-0` al contenedor inline de "Archivo adjunto" y `shrink-0` a los botones
-
-**3. `src/components/cartera/EditarPagoDialog.tsx`**
-- Mismo ajuste: `min-w-0` al contenedor inline de "Comprobante adjunto" y `shrink-0` a los botones
-
-Estos son cambios mínimos de CSS (clases de Tailwind) que resuelven el problema en todos los puntos donde se muestra un archivo adjunto.
-
+Detalle técnico
+- Archivos clave:
+  - `src/components/shared/FileDropZone.tsx`
+  - `src/components/cartera/RegistrarPagoDialog.tsx`
+  - `src/components/cartera/CrearFacturaDialog.tsx`
+  - `src/components/cartera/EditarPagoDialog.tsx`
+  - `src/components/cartera/EditarFacturaDialog.tsx`
+- Enfoque recomendado:
+  - Resolver primero a nivel compartido en `FileDropZone`.
+  - Complementar con restricciones de layout (`min-w-0`, `max-w-full`, `overflow-hidden`) en contenedores de modal donde corresponda.
+- Resultado: solución consistente en `/cartera/:id` y reusable en cualquier otra parte donde se carguen adjuntos.

@@ -329,6 +329,7 @@ export const carteraService = {
     fechaEmision?: string;
     fechaVencimiento?: string;
     total?: number;
+    archivoFactura?: string;
   }): Promise<Factura | null> {
     await delay(500);
     const idx = mockFacturas.findIndex(f => f.id === id);

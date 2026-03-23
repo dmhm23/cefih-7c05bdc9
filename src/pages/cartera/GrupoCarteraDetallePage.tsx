@@ -45,6 +45,16 @@ export default function GrupoCarteraDetallePage() {
     [allMatriculas, grupo]
   );
 
+  const matriculasYaFacturadas = useMemo(
+    () => new Set(facturas.flatMap(f => f.matriculaIds)),
+    [facturas]
+  );
+
+  const matriculasDisponibles = useMemo(
+    () => matriculasGrupo.filter(m => !matriculasYaFacturadas.has(m.id)),
+    [matriculasGrupo, matriculasYaFacturadas]
+  );
+
   const facturasVencidas = useMemo(() => {
     const now = new Date();
     return facturas.filter(f => f.estado !== 'pagada' && new Date(f.fechaVencimiento) < now);
@@ -272,7 +282,7 @@ export default function GrupoCarteraDetallePage() {
         open={showCrearFactura}
         onOpenChange={setShowCrearFactura}
         grupoCarteraId={id!}
-        matriculas={matriculasGrupo}
+        matriculas={matriculasDisponibles}
         personas={personas}
         cursos={cursos}
       />

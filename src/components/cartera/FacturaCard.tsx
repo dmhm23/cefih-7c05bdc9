@@ -67,6 +67,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="font-semibold text-sm">{factura.numeroFactura}</span>
+                {factura.archivoFactura && <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                 {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />}
                 <StatusBadge status={factura.estado === "pagada" ? "pagada" : factura.estado === "parcial" ? "parcial" : "pendiente"} />
               </div>

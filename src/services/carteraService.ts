@@ -261,6 +261,7 @@ export const carteraService = {
     valorPago: number;
     metodoPago: MetodoPago;
     observaciones?: string;
+    soportePago?: string;
   }): Promise<RegistroPago> {
     await delay(600);
     const pago: RegistroPago = { id: uuid(), ...data };

@@ -185,8 +185,12 @@ export function EditableField({
     }
 
     if (type === "date") {
-      const dateValue = value ? new Date(value) : undefined;
-      const displayDate = dateValue
+      // Parse YYYY-MM-DD as local date (not UTC) to avoid timezone shift
+      const dateValue = value ? (() => {
+        const [y, m, d] = value.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      })() : undefined;
+      const displayDate = dateValue && !isNaN(dateValue.getTime())
         ? format(dateValue, "d 'de' MMMM, yyyy", { locale: es })
         : effectivePlaceholder;
 
@@ -205,7 +209,12 @@ export function EditableField({
               mode="single"
               selected={dateValue}
               onSelect={handleDateChange}
+              defaultMonth={dateValue}
               initialFocus
+              className="pointer-events-auto"
+              captionLayout="dropdown-buttons"
+              fromYear={1950}
+              toYear={2040}
             />
           </PopoverContent>
         </Popover>

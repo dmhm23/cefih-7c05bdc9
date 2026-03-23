@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Calendar as CalendarIcon, CircleDot } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -39,6 +39,7 @@ export function DateField({
   compact,
 }: DateFieldProps) {
   const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState<Date | undefined>(undefined);
 
   const dateValue = parseLocalDate(value);
   const displayDate = dateValue
@@ -53,6 +54,13 @@ export function DateField({
     }
     setOpen(false);
   };
+
+  const handleGoToToday = useCallback(() => {
+    const today = new Date();
+    setMonth(today);
+    onChange(dateToLocalString(today));
+    setOpen(false);
+  }, [onChange]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,12 +85,24 @@ export function DateField({
           mode="single"
           selected={dateValue}
           onSelect={handleSelect}
-          defaultMonth={dateValue}
+          month={month ?? dateValue ?? new Date()}
+          onMonthChange={setMonth}
           initialFocus
           captionLayout="dropdown-buttons"
           fromYear={1950}
           toYear={2040}
         />
+        <div className="border-t border-border px-3 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-muted-foreground hover:text-foreground"
+            onClick={handleGoToToday}
+          >
+            <CircleDot className="mr-1.5 h-3 w-3" />
+            Hoy
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

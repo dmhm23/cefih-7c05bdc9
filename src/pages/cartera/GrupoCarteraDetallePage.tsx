@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Receipt, CreditCard, Building2, User, Phone, Mail, MapPin, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Building2, User, Phone, Mail, MapPin, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,22 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ActividadCarteraSection } from "@/components/cartera/ActividadCarteraSection";
+import { FacturaCard } from "@/components/cartera/FacturaCard";
 import { CrearFacturaDialog } from "@/components/cartera/CrearFacturaDialog";
-import { RegistrarPagoDialog } from "@/components/cartera/RegistrarPagoDialog";
-import { EditarFacturaDialog } from "@/components/cartera/EditarFacturaDialog";
-import { EditarPagoDialog } from "@/components/cartera/EditarPagoDialog";
 import { useGrupoCartera, useResponsablePago, useFacturasByGrupo, usePagosByGrupo } from "@/hooks/useCartera";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
-import {
-  TIPO_RESPONSABLE_LABELS,
-  METODO_PAGO_LABELS,
-  Factura,
-  RegistroPago,
-} from "@/types/cartera";
-import { format } from "date-fns";
+import { TIPO_RESPONSABLE_LABELS } from "@/types/cartera";
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(v);
@@ -48,9 +39,6 @@ export default function GrupoCarteraDetallePage() {
   const { data: cursos = [] } = useCursos();
 
   const [showCrearFactura, setShowCrearFactura] = useState(false);
-  const [showRegistrarPago, setShowRegistrarPago] = useState(false);
-  const [editingFactura, setEditingFactura] = useState<Factura | null>(null);
-  const [editingPago, setEditingPago] = useState<RegistroPago | null>(null);
 
   const matriculasGrupo = useMemo(
     () => allMatriculas.filter(m => grupo?.matriculaIds.includes(m.id)),
@@ -252,7 +240,7 @@ export default function GrupoCarteraDetallePage() {
         </CardContent>
       </Card>
 
-      {/* Facturación */}
+      {/* Facturación — cada factura es una unidad con pagos y seguimiento */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Facturación</CardTitle>
@@ -261,101 +249,21 @@ export default function GrupoCarteraDetallePage() {
             Registrar Factura
           </Button>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No. Factura</TableHead>
-                <TableHead>Emisión</TableHead>
-                <TableHead>Vencimiento</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Estado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {facturas.map(f => {
-                const isOverdue = f.estado !== 'pagada' && new Date(f.fechaVencimiento) < new Date();
-                return (
-                  <TableRow key={f.id} className={`cursor-pointer ${isOverdue ? "bg-red-50/50" : ""}`} onClick={() => setEditingFactura(f)}>
-                    <TableCell className="font-medium">
-                      <span className="flex items-center gap-1.5">
-                        {isOverdue && <AlertTriangle className="h-3.5 w-3.5 text-destructive" />}
-                        {f.numeroFactura}
-                      </span>
-                    </TableCell>
-                    <TableCell>{f.fechaEmision}</TableCell>
-                    <TableCell className={isOverdue ? "text-destructive font-medium" : ""}>{f.fechaVencimiento}</TableCell>
-                    <TableCell className="font-medium">{formatCurrency(f.total)}</TableCell>
-                    <TableCell><StatusBadge status={f.estado === "pagada" ? "pagada" : f.estado === "parcial" ? "parcial" : "pendiente"} /></TableCell>
-                  </TableRow>
-                );
-              })}
-              {facturas.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No hay facturas registradas.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Pagos */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Historial de Pagos</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => setShowRegistrarPago(true)} className="gap-1.5">
-            <CreditCard className="h-4 w-4" />
-            Registrar Pago
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Factura</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Método</TableHead>
-                <TableHead>Observaciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagos.map(p => {
-                const factura = facturas.find(f => f.id === p.facturaId);
-                return (
-                  <TableRow key={p.id} className="cursor-pointer" onClick={() => setEditingPago(p)}>
-                    <TableCell>{p.fechaPago}</TableCell>
-                    <TableCell className="font-medium">{factura?.numeroFactura || "—"}</TableCell>
-                    <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>
-                    <TableCell><Badge variant="outline">{METODO_PAGO_LABELS[p.metodoPago]}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                      {p.observaciones || "—"}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {pagos.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No hay pagos registrados.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Seguimiento */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Seguimiento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActividadCarteraSection grupoCarteraId={id!} />
+        <CardContent className="space-y-3">
+          {facturas.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">No hay facturas registradas.</p>
+          ) : (
+            facturas.map(f => (
+              <FacturaCard
+                key={f.id}
+                factura={f}
+                grupoCarteraId={id!}
+                matriculas={allMatriculas}
+                personas={personas}
+                cursos={cursos}
+              />
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -367,24 +275,6 @@ export default function GrupoCarteraDetallePage() {
         matriculas={matriculasGrupo}
         personas={personas}
         cursos={cursos}
-      />
-      <RegistrarPagoDialog
-        open={showRegistrarPago}
-        onOpenChange={setShowRegistrarPago}
-        facturas={facturas}
-      />
-      <EditarFacturaDialog
-        open={!!editingFactura}
-        onOpenChange={(open) => !open && setEditingFactura(null)}
-        factura={editingFactura}
-        matriculas={allMatriculas}
-        personas={personas}
-        cursos={cursos}
-      />
-      <EditarPagoDialog
-        open={!!editingPago}
-        onOpenChange={(open) => !open && setEditingPago(null)}
-        pago={editingPago}
       />
     </div>
   );

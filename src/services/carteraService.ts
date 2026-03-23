@@ -53,10 +53,11 @@ function recalcFactura(factura: Factura) {
   else factura.estado = 'pendiente';
 }
 
-function addSystemActivity(grupoCarteraId: string, descripcion: string) {
+function addSystemActivity(grupoCarteraId: string, descripcion: string, facturaId?: string) {
   mockActividades.push({
     id: uuid(),
     grupoCarteraId,
+    facturaId,
     tipo: 'sistema',
     descripcion,
     fecha: new Date().toISOString(),
@@ -233,7 +234,8 @@ export const carteraService = {
     // Auto-log activity
     addSystemActivity(
       data.grupoCarteraId,
-      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`
+      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`,
+      factura.id
     );
 
     return factura;
@@ -276,7 +278,8 @@ export const carteraService = {
         const metodoLabel = { transferencia: 'Transferencia', efectivo: 'Efectivo', consignacion: 'Consignación', tarjeta: 'Tarjeta' };
         addSystemActivity(
           grupo.id,
-          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`
+          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`,
+          data.facturaId
         );
       }
     }
@@ -292,8 +295,16 @@ export const carteraService = {
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   },
 
+  async getActividadesByFactura(facturaId: string): Promise<ActividadCartera[]> {
+    await delay(300);
+    return mockActividades
+      .filter(a => a.facturaId === facturaId)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  },
+
   async registrarActividad(data: {
     grupoCarteraId: string;
+    facturaId?: string;
     tipo: TipoActividadCartera;
     descripcion: string;
     usuario?: string;
@@ -302,6 +313,7 @@ export const carteraService = {
     const actividad: ActividadCartera = {
       id: uuid(),
       grupoCarteraId: data.grupoCarteraId,
+      facturaId: data.facturaId,
       tipo: data.tipo,
       descripcion: data.descripcion,
       fecha: new Date().toISOString(),
@@ -345,7 +357,7 @@ export const carteraService = {
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`, factura.id);
     }
     return { ...factura };
   },
@@ -373,7 +385,7 @@ export const carteraService = {
       const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
       if (grupo) {
         recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`);
+        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`, pago.facturaId);
       }
     }
     return { ...pago };
@@ -396,7 +408,7 @@ export const carteraService = {
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`, id);
     }
   },
 
@@ -414,7 +426,7 @@ export const carteraService = {
       const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
       if (grupo) {
         recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`);
+        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`, pago.facturaId);
       }
     }
   },

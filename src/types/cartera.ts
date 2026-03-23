@@ -62,6 +62,7 @@ export interface RegistroPago {
 export interface ActividadCartera {
   id: string;
   grupoCarteraId: string;
+  facturaId?: string;
   tipo: TipoActividadCartera;
   descripcion: string;
   fecha: string;

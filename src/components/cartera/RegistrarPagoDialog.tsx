@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,49 +6,54 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FileDropZone } from "@/components/shared/FileDropZone";
-import { useRegistrarPagoCartera } from "@/hooks/useCartera";
-import { Factura, MetodoPago, METODO_PAGO_LABELS, ESTADO_FACTURA_LABELS } from "@/types/cartera";
+import { useRegistrarPagoCartera, usePagosByFactura } from "@/hooks/useCartera";
+import { Factura, MetodoPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  facturas: Factura[];
+  factura: Factura;
 }
 
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(v);
 
-export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
+export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
   const { toast } = useToast();
   const registrarPago = useRegistrarPagoCartera();
+  const { data: pagosExistentes = [] } = usePagosByFactura(factura.id);
 
-  const [facturaId, setFacturaId] = useState("");
   const [valorPago, setValorPago] = useState("");
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
   const [fechaPago, setFechaPago] = useState(new Date().toISOString().split("T")[0]);
   const [observaciones, setObservaciones] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
 
-  const facturasPendientes = facturas.filter(f => f.estado !== "pagada");
+  const totalPagado = useMemo(() => pagosExistentes.reduce((s, p) => s + p.valorPago, 0), [pagosExistentes]);
+  const saldoPendiente = factura.total - totalPagado;
 
   const handleSubmit = async () => {
-    if (!facturaId || !valorPago || parseFloat(valorPago) <= 0) {
-      toast({ title: "Complete los campos requeridos", variant: "destructive" });
+    const valor = parseFloat(valorPago);
+    if (!valorPago || valor <= 0) {
+      toast({ title: "Ingrese un valor válido", variant: "destructive" });
+      return;
+    }
+    if (valor > saldoPendiente) {
+      toast({ title: `El valor excede el saldo pendiente (${formatCurrency(saldoPendiente)})`, variant: "destructive" });
       return;
     }
 
     await registrarPago.mutateAsync({
-      facturaId,
+      facturaId: factura.id,
       fechaPago,
-      valorPago: parseFloat(valorPago),
+      valorPago: valor,
       metodoPago,
       observaciones: observaciones || undefined,
     });
 
     toast({ title: "Pago registrado exitosamente" });
     onOpenChange(false);
-    setFacturaId("");
     setValorPago("");
     setObservaciones("");
     setArchivo(null);
@@ -58,24 +63,24 @@ export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Registrar Pago</DialogTitle>
+          <DialogTitle>Registrar Pago — {factura.numeroFactura}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Factura *</Label>
-            <Select value={facturaId} onValueChange={setFacturaId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar factura" />
-              </SelectTrigger>
-              <SelectContent>
-                {facturasPendientes.map(f => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.numeroFactura} — {formatCurrency(f.total)} ({ESTADO_FACTURA_LABELS[f.estado]})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Resumen factura */}
+          <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total factura</span>
+              <span className="font-medium">{formatCurrency(factura.total)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Pagado</span>
+              <span className="font-medium text-emerald-600">{formatCurrency(totalPagado)}</span>
+            </div>
+            <div className="flex justify-between border-t pt-1">
+              <span className="font-medium">Saldo pendiente</span>
+              <span className="font-semibold text-destructive">{formatCurrency(saldoPendiente)}</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -87,6 +92,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
                 value={valorPago}
                 onChange={e => setValorPago(e.target.value)}
                 placeholder="0"
+                max={saldoPendiente}
               />
             </div>
             <div className="space-y-1.5">
@@ -114,7 +120,6 @@ export function RegistrarPagoDialog({ open, onOpenChange, facturas }: Props) {
             </Select>
           </div>
 
-          {/* Soporte de pago */}
           <div className="space-y-1.5">
             <Label>Soporte de Pago (comprobante)</Label>
             <FileDropZone

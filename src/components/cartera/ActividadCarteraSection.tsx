@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useActividadesCartera, useRegistrarActividad } from "@/hooks/useCartera";
+import { useActividadesCartera, useActividadesByFactura, useRegistrarActividad } from "@/hooks/useCartera";
 import { TipoActividadCartera, TIPO_ACTIVIDAD_LABELS } from "@/types/cartera";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -34,10 +34,16 @@ const MANUAL_TIPOS: TipoActividadCartera[] = ["llamada", "promesa_pago", "coment
 
 interface ActividadCarteraSectionProps {
   grupoCarteraId: string;
+  facturaId?: string;
 }
 
-export function ActividadCarteraSection({ grupoCarteraId }: ActividadCarteraSectionProps) {
-  const { data: actividades = [], isLoading } = useActividadesCartera(grupoCarteraId);
+export function ActividadCarteraSection({ grupoCarteraId, facturaId }: ActividadCarteraSectionProps) {
+  const grupoQuery = useActividadesCartera(facturaId ? "" : grupoCarteraId);
+  const facturaQuery = useActividadesByFactura(facturaId || "");
+
+  const actividades = facturaId ? (facturaQuery.data || []) : (grupoQuery.data || []);
+  const isLoading = facturaId ? facturaQuery.isLoading : grupoQuery.isLoading;
+
   const registrar = useRegistrarActividad();
 
   const [showForm, setShowForm] = useState(false);
@@ -47,7 +53,7 @@ export function ActividadCarteraSection({ grupoCarteraId }: ActividadCarteraSect
   const handleSubmit = () => {
     if (!descripcion.trim()) return;
     registrar.mutate(
-      { grupoCarteraId, tipo, descripcion: descripcion.trim() },
+      { grupoCarteraId, facturaId, tipo, descripcion: descripcion.trim() },
       {
         onSuccess: () => {
           setDescripcion("");
@@ -60,7 +66,6 @@ export function ActividadCarteraSection({ grupoCarteraId }: ActividadCarteraSect
 
   return (
     <div className="space-y-4">
-      {/* Add button */}
       {!showForm && (
         <Button variant="outline" size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
           <Plus className="h-4 w-4" />
@@ -68,7 +73,6 @@ export function ActividadCarteraSection({ grupoCarteraId }: ActividadCarteraSect
         </Button>
       )}
 
-      {/* Inline form */}
       {showForm && (
         <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
           <div className="flex items-center gap-3">
@@ -109,27 +113,22 @@ export function ActividadCarteraSection({ grupoCarteraId }: ActividadCarteraSect
         </div>
       )}
 
-      {/* Timeline */}
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+        <div className="flex justify-center py-6">
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
         </div>
       ) : actividades.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">No hay actividades registradas.</p>
+        <p className="text-sm text-muted-foreground text-center py-4">No hay actividades registradas.</p>
       ) : (
         <div className="relative space-y-0">
-          {/* Vertical line */}
           <div className="absolute left-[15px] top-2 bottom-2 w-px bg-border" />
-
           {actividades.map((act) => {
             const Icon = TIPO_ICONS[act.tipo];
             return (
               <div key={act.id} className="relative flex gap-3 py-3 pl-0">
-                {/* Icon circle */}
                 <div className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${TIPO_COLORS[act.tipo]}`}>
                   <Icon className="h-3.5 w-3.5" />
                 </div>
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${TIPO_COLORS[act.tipo]}`}>

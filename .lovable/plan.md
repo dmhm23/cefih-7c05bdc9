@@ -1,75 +1,42 @@
 
 
-## Plan: Reestructurar Facturación como unidad central de gestión
+## Plan: Archivos adjuntos y vista previa en Cartera
 
-### Resumen
+### Estado actual
+- **CrearFacturaDialog**: Ya tiene FileDropZone para archivo de factura ✓
+- **EditarFacturaDialog**: NO tiene FileDropZone — no se puede cambiar/ver el archivo ✗
+- **RegistrarPagoDialog**: Ya tiene FileDropZone para comprobante ✓
+- **EditarPagoDialog**: NO tiene FileDropZone — no se puede cambiar/ver el comprobante ✗
+- **FacturaCard**: No muestra indicadores de archivos adjuntos ni permite vista previa ✗
+- Los tipos ya tienen `archivoFactura` (Factura) y `soportePago` (RegistroPago) pero no se persisten al guardar
 
-Convertir cada factura en la unidad principal, anidando pagos y seguimiento dentro de ella. Se elimina la sección global de pagos y seguimiento del grupo.
+### Cambios
 
-### Estructura visual resultante
+**1. Nuevo: `src/components/cartera/ArchivoPreviewDialog.tsx`**
+- Dialog de vista previa que muestra PDFs (iframe), imágenes (img tag), o indica formato no soportado
+- Recibe `url: string` y `nombre: string`
+- Botón para descargar/abrir en nueva pestaña
 
-```text
-Grupo de Cartera
-├── Info contacto + Resumen financiero + Stats
-├── Matrículas Asociadas (sin cambios)
-└── Facturación
-    ├── [+ Registrar Factura]
-    ├── Factura FAC-001 (collapsible)
-    │   ├── Detalles (total, fechas, estado, archivo)
-    │   ├── Pagos ──── [+ Registrar Pago]
-    │   │   └── Tabla de pagos de esta factura
-    │   └── Seguimiento ── [+ Agregar actividad]
-    │       └── Timeline de actividades de esta factura
-    ├── Factura FAC-002 (collapsible)
-    │   ├── Pagos...
-    │   └── Seguimiento...
-    └── ...
-```
+**2. `src/components/cartera/EditarFacturaDialog.tsx`**
+- Agregar FileDropZone para archivo de factura (igual que en CrearFacturaDialog)
+- Inicializar con el archivo existente si `factura.archivoFactura` tiene valor
+- Incluir el archivo en el submit
 
-### Cambios por archivo
+**3. `src/components/cartera/EditarPagoDialog.tsx`**
+- Agregar FileDropZone para comprobante de pago
+- Inicializar con el archivo existente si `pago.soportePago` tiene valor
+- Incluir el archivo en el submit
 
-**1. `src/types/cartera.ts`**
-- Agregar `facturaId?: string` a `ActividadCartera` (opcional para retrocompatibilidad con actividades de grupo existentes)
+**4. `src/components/cartera/FacturaCard.tsx`**
+- En la tabla de pagos: agregar columna "Soporte" con icono clicable que abre ArchivoPreviewDialog
+- En la sección de acciones de factura: botón "Ver Factura" si tiene archivo adjunto, abre ArchivoPreviewDialog
+- Indicador visual (icono de clip) en el header colapsado si la factura tiene archivo
 
-**2. `src/services/carteraService.ts`**
-- `getActividadesByFactura(facturaId)` — filtra actividades por facturaId
-- `getPagosByFactura(facturaId)` — filtra pagos por facturaId (ya existe la data, solo agregar método)
-- Actualizar `registrarActividad` para aceptar `facturaId` opcional
-- Actualizar `addSystemActivity` para aceptar `facturaId` opcional
+**5. `src/services/carteraService.ts`**
+- Actualizar `registrarPago` para guardar `soportePago` (URL simulada del archivo)
+- Actualizar `createFactura` / `updateFactura` para guardar `archivoFactura`
+- Generar URLs ficticias con `URL.createObjectURL()` para la simulación mock
 
-**3. `src/hooks/useCartera.ts`**
-- Agregar `usePagosByFactura(facturaId)` y `useActividadesByFactura(facturaId)`
-
-**4. Nuevo: `src/components/cartera/FacturaCard.tsx`**
-- Componente collapsible que representa una factura individual
-- Muestra header con número, estado, total, fechas
-- Al expandir muestra:
-  - Sección de pagos (tabla + botón registrar pago)
-  - Sección de seguimiento (timeline + formulario inline)
-  - Botón editar factura
-- Calcula saldo pendiente de la factura (total - sum pagos)
-
-**5. `src/components/cartera/RegistrarPagoDialog.tsx`**
-- Simplificar: recibir `factura: Factura` directamente en vez de `facturas: Factura[]`
-- Eliminar el select de factura (ya está implícito)
-- Mostrar saldo pendiente de la factura
-
-**6. `src/components/cartera/ActividadCarteraSection.tsx`**
-- Agregar prop opcional `facturaId` para filtrar/registrar actividades por factura
-- Usar `useActividadesByFactura` cuando se pasa facturaId
-
-**7. `src/pages/cartera/GrupoCarteraDetallePage.tsx`**
-- Eliminar las 3 cards separadas (Facturación tabla, Historial de Pagos, Seguimiento)
-- Reemplazar con una sola sección "Facturación" que renderiza un `FacturaCard` por cada factura
-- Mantener botón "Registrar Factura" en el header de la sección
-- Eliminar estado `showRegistrarPago` global (ahora vive dentro de cada FacturaCard)
-
-**8. `src/data/mockCartera.ts`**
-- Agregar `facturaId` a las actividades mock existentes para que se asocien correctamente
-
-### Notas técnicas
-
-- Se usa `Collapsible` de Radix (ya existe en el proyecto) para expandir/colapsar cada factura
-- Los pagos y actividades ya están vinculados a facturas vía `facturaId` en la data; solo falta exponerlo en la UI
-- No se modifica la lógica de agrupación automática ni el modelo de datos de `GrupoCartera`
+**6. `src/data/mockCartera.ts`**
+- Agregar `archivoFactura` a algunas facturas mock y `soportePago` a algunos pagos mock para demostración visual
 

@@ -27,6 +27,16 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const truncateFileName = (name: string, maxLen = 30): string => {
+  if (name.length <= maxLen) return name;
+  const dotIdx = name.lastIndexOf(".");
+  const ext = dotIdx > 0 ? name.slice(dotIdx) : "";
+  const base = dotIdx > 0 ? name.slice(0, dotIdx) : name;
+  const available = maxLen - ext.length - 1; // 1 for "…"
+  if (available < 4) return name.slice(0, maxLen - 1) + "…";
+  return base.slice(0, available) + "…" + ext;
+};
+
 export function FileDropZone({
   onFile,
   accept,
@@ -98,7 +108,7 @@ export function FileDropZone({
     return (
       <div className={cn("flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden", className)}>
         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm flex-1 truncate min-w-0">{file.name}</span>
+        <span className="text-sm flex-1 truncate min-w-0" title={file.name}>{truncateFileName(file.name)}</span>
         <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
         {onClear && (
           <Button

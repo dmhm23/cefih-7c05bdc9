@@ -85,12 +85,24 @@ export function DateField({
           mode="single"
           selected={dateValue}
           onSelect={handleSelect}
-          defaultMonth={dateValue}
+          month={month ?? dateValue ?? new Date()}
+          onMonthChange={setMonth}
           initialFocus
           captionLayout="dropdown-buttons"
           fromYear={1950}
           toYear={2040}
         />
+        <div className="border-t border-border px-3 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs text-muted-foreground hover:text-foreground"
+            onClick={handleGoToToday}
+          >
+            <CircleDot className="mr-1.5 h-3 w-3" />
+            Hoy
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -53,10 +53,11 @@ function recalcFactura(factura: Factura) {
   else factura.estado = 'pendiente';
 }
 
-function addSystemActivity(grupoCarteraId: string, descripcion: string) {
+function addSystemActivity(grupoCarteraId: string, descripcion: string, facturaId?: string) {
   mockActividades.push({
     id: uuid(),
     grupoCarteraId,
+    facturaId,
     tipo: 'sistema',
     descripcion,
     fecha: new Date().toISOString(),

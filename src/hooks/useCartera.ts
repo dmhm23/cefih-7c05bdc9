@@ -23,6 +23,12 @@ export const usePagosByGrupo = (grupoId: string) =>
 export const useActividadesCartera = (grupoId: string) =>
   useQuery({ queryKey: ['cartera', 'actividades', grupoId], queryFn: () => carteraService.getActividadesByGrupo(grupoId), enabled: !!grupoId });
 
+export const usePagosByFactura = (facturaId: string) =>
+  useQuery({ queryKey: ['cartera', 'pagos', 'factura', facturaId], queryFn: () => carteraService.getPagosByFactura(facturaId), enabled: !!facturaId });
+
+export const useActividadesByFactura = (facturaId: string) =>
+  useQuery({ queryKey: ['cartera', 'actividades', 'factura', facturaId], queryFn: () => carteraService.getActividadesByFactura(facturaId), enabled: !!facturaId });
+
 export const useCreateFactura = () => {
   const qc = useQueryClient();
   return useMutation({

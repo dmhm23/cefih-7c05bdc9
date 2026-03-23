@@ -385,7 +385,7 @@ export const carteraService = {
       const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
       if (grupo) {
         recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`);
+        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`, pago.facturaId);
       }
     }
     return { ...pago };

@@ -124,21 +124,18 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="fechaEmision">Fecha Emisión</Label>
-              <Input
-                id="fechaEmision"
-                type="date"
+              <Label>Fecha Emisión</Label>
+              <DateField
                 value={fechaEmision}
-                onChange={e => setFechaEmision(e.target.value)}
+                onChange={setFechaEmision}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="fechaVenc">Fecha Vencimiento *</Label>
-              <Input
-                id="fechaVenc"
-                type="date"
+              <Label>Fecha Vencimiento *</Label>
+              <DateField
                 value={fechaVencimiento}
-                onChange={e => setFechaVencimiento(e.target.value)}
+                onChange={setFechaVencimiento}
+                placeholder="Seleccionar vencimiento"
               />
             </div>
           </div>

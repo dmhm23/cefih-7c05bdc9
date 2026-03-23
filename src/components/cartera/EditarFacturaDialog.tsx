@@ -120,21 +120,17 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="editFechaEmision">Fecha Emisión</Label>
-                <Input
-                  id="editFechaEmision"
-                  type="date"
+                <Label>Fecha Emisión</Label>
+                <DateField
                   value={fechaEmision}
-                  onChange={e => setFechaEmision(e.target.value)}
+                  onChange={setFechaEmision}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="editFechaVenc">Fecha Vencimiento *</Label>
-                <Input
-                  id="editFechaVenc"
-                  type="date"
+                <Label>Fecha Vencimiento *</Label>
+                <DateField
                   value={fechaVencimiento}
-                  onChange={e => setFechaVencimiento(e.target.value)}
+                  onChange={setFechaVencimiento}
                 />
               </div>
             </div>

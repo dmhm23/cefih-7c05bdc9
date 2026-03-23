@@ -100,11 +100,10 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="fechaPago">Fecha</Label>
-              <Input
+              <DateField
                 id="fechaPago"
-                type="date"
                 value={fechaPago}
-                onChange={e => setFechaPago(e.target.value)}
+                onChange={setFechaPago}
               />
             </div>
           </div>

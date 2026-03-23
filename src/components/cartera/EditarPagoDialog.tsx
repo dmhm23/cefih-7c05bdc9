@@ -101,12 +101,10 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="editFechaPago">Fecha</Label>
-                <Input
-                  id="editFechaPago"
-                  type="date"
+                <Label>Fecha</Label>
+                <DateField
                   value={fechaPago}
-                  onChange={e => setFechaPago(e.target.value)}
+                  onChange={setFechaPago}
                 />
               </div>
             </div>

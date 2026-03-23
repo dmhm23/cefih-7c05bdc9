@@ -408,7 +408,7 @@ export const carteraService = {
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`, id);
     }
   },
 

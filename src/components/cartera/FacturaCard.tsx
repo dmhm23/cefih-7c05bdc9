@@ -46,6 +46,8 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
   const [showRegistrarPago, setShowRegistrarPago] = useState(false);
   const [editingPago, setEditingPago] = useState<RegistroPago | null>(null);
   const [showEditFactura, setShowEditFactura] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewNombre, setPreviewNombre] = useState("");
 
   const { data: pagos = [] } = usePagosByFactura(factura.id);
 

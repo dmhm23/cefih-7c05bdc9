@@ -295,8 +295,16 @@ export const carteraService = {
       .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
   },
 
+  async getActividadesByFactura(facturaId: string): Promise<ActividadCartera[]> {
+    await delay(300);
+    return mockActividades
+      .filter(a => a.facturaId === facturaId)
+      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+  },
+
   async registrarActividad(data: {
     grupoCarteraId: string;
+    facturaId?: string;
     tipo: TipoActividadCartera;
     descripcion: string;
     usuario?: string;
@@ -305,6 +313,7 @@ export const carteraService = {
     const actividad: ActividadCartera = {
       id: uuid(),
       grupoCarteraId: data.grupoCarteraId,
+      facturaId: data.facturaId,
       tipo: data.tipo,
       descripcion: data.descripcion,
       fecha: new Date().toISOString(),

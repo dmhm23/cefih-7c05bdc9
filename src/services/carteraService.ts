@@ -234,7 +234,8 @@ export const carteraService = {
     // Auto-log activity
     addSystemActivity(
       data.grupoCarteraId,
-      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`
+      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`,
+      factura.id
     );
 
     return factura;

@@ -91,7 +91,7 @@ export function CampoPreview({ campo }: CampoPreviewProps) {
           </div>
         );
       case "fecha":
-        return <Input type="date" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
+        return <DateField value={textValue} onChange={setTextValue} />;
       case "fecha_hora":
         return <Input type="datetime-local" value={textValue} onChange={(e) => setTextValue(e.target.value)} />;
       case "archivo":

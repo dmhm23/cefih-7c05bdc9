@@ -39,6 +39,7 @@ export function DateField({
   compact,
 }: DateFieldProps) {
   const [open, setOpen] = useState(false);
+  const [month, setMonth] = useState<Date | undefined>(undefined);
 
   const dateValue = parseLocalDate(value);
   const displayDate = dateValue
@@ -53,6 +54,13 @@ export function DateField({
     }
     setOpen(false);
   };
+
+  const handleGoToToday = useCallback(() => {
+    const today = new Date();
+    setMonth(today);
+    onChange(dateToLocalString(today));
+    setOpen(false);
+  }, [onChange]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

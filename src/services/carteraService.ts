@@ -342,6 +342,7 @@ export const carteraService = {
       factura.subtotal = data.total;
       factura.total = data.total;
     }
+    if (data.archivoFactura !== undefined) factura.archivoFactura = data.archivoFactura;
     recalcFactura(factura);
 
     // Sync linked matrículas

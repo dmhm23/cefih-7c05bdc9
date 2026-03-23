@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { FileDropZone } from "@/components/shared/FileDropZone";
+import { DateField } from "@/components/shared/DateField";
 import { useRegistrarPagoCartera, usePagosByFactura } from "@/hooks/useCartera";
 import { Factura, MetodoPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";
+import { todayLocalString } from "@/utils/dateUtils";
 
 interface Props {
   open: boolean;

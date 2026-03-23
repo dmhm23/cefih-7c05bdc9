@@ -103,24 +103,49 @@ export function FileDropZone({
     e.target.value = "";
   };
 
-  // Show selected file preview
-  if (file) {
+  // Generate blob URL for preview
+  const blobUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
+
+  const isImage = file?.type.startsWith("image/");
+  const isPdf = file?.type === "application/pdf";
+
+  // Show selected file with inline preview
+  if (file && blobUrl) {
     return (
-      <div className={cn("flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden", className)}>
-        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm flex-1 truncate min-w-0" title={file.name}>{truncateFileName(file.name)}</span>
-        <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
-        {onClear && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={onClear}
-            type="button"
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        )}
+      <div className={cn("border rounded-lg overflow-hidden min-w-0", className)}>
+        {/* Compact header bar */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 min-w-0">
+          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-sm flex-1 truncate min-w-0" title={file.name}>
+            {truncateFileName(file.name)}
+          </span>
+          <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
+          {onClear && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={onClear} type="button">
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+        {/* Inline preview */}
+        <div className="bg-muted/10">
+          {isImage ? (
+            <div className="flex items-center justify-center p-2">
+              <img src={blobUrl} alt={file.name} className="max-w-full max-h-40 object-contain rounded" />
+            </div>
+          ) : isPdf ? (
+            <iframe src={blobUrl} className="w-full h-40 border-0" title={file.name} />
+          ) : (
+            <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+              Vista previa no disponible para este formato
+            </div>
+          )}
+        </div>
       </div>
     );
   }

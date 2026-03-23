@@ -32,6 +32,9 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
   const [observaciones, setObservaciones] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [soporteUrl, setSoporteUrl] = useState<string | undefined>(undefined);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (pago) {
@@ -39,6 +42,8 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       setValorPago(String(pago.valorPago));
       setMetodoPago(pago.metodoPago);
       setObservaciones(pago.observaciones || "");
+      setSoporteUrl(pago.soportePago);
+      setArchivo(null);
     }
   }, [pago]);
 

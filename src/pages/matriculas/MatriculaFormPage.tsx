@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import {
   Form,
   FormControl,

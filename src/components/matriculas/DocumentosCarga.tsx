@@ -142,9 +142,7 @@ export function DocumentosCarga({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Fecha del examen médico ocupacional</TooltipContent>
               </Tooltip>
-              <Input type="date" className="h-6 text-xs w-[8.5rem] px-1"
-                value={doc.fechaDocumento || ""}
-                onChange={(e) => onFechaChange(doc.id, "fechaDocumento", e.target.value)} />
+              <DateField compact value={doc.fechaDocumento || ""} onChange={(v) => onFechaChange(doc.id, "fechaDocumento", v)} />
             </div>
           )}
           {doc.tipo === "arl" && (

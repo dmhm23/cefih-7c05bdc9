@@ -158,7 +158,7 @@ export function DocumentosCarga({
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">Inicio de cobertura ARL</TooltipContent>
               </Tooltip>
-              <Input type="date" className="h-6 text-xs w-[7.5rem] px-1"
+              <Input type="date" className="h-6 text-xs w-[8.5rem] px-1"
                 value={doc.fechaInicioCobertura || ""}
                 onChange={(e) => onFechaChange(doc.id, "fechaInicioCobertura", e.target.value)} />
             </div>

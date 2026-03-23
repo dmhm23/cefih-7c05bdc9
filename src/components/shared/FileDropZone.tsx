@@ -27,6 +27,16 @@ const formatFileSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const truncateFileName = (name: string, maxLen = 30): string => {
+  if (name.length <= maxLen) return name;
+  const dotIdx = name.lastIndexOf(".");
+  const ext = dotIdx > 0 ? name.slice(dotIdx) : "";
+  const base = dotIdx > 0 ? name.slice(0, dotIdx) : name;
+  const available = maxLen - ext.length - 1; // 1 for "…"
+  if (available < 4) return name.slice(0, maxLen - 1) + "…";
+  return base.slice(0, available) + "…" + ext;
+};
+
 export function FileDropZone({
   onFile,
   accept,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/components/shared/DateField";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";

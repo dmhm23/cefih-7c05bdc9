@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, Plus, CreditCard, FileText, AlertTriangle, Pencil } from "lucide-react";
+import { ChevronDown, Plus, CreditCard, FileText, AlertTriangle, Pencil, Paperclip, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

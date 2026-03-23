@@ -9,6 +9,7 @@ import { Trash2, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
+import { DateField } from "@/components/shared/DateField";
 import { useUpdatePago, useDeletePago } from "@/hooks/useCartera";
 import { RegistroPago, MetodoPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { useToast } from "@/hooks/use-toast";

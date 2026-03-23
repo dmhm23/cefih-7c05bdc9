@@ -62,6 +62,8 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
       return;
     }
 
+    const newArchivoUrl = archivo ? URL.createObjectURL(archivo) : archivoUrl;
+
     await updateFactura.mutateAsync({
       id: factura.id,
       data: {
@@ -69,6 +71,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
         fechaEmision,
         fechaVencimiento,
         total: parseFloat(total),
+        archivoFactura: newArchivoUrl,
       },
     });
 

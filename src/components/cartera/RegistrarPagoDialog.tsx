@@ -50,6 +50,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
       valorPago: valor,
       metodoPago,
       observaciones: observaciones || undefined,
+      soportePago: archivo ? URL.createObjectURL(archivo) : undefined,
     });
 
     toast({ title: "Pago registrado exitosamente" });

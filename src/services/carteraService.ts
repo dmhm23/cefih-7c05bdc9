@@ -213,6 +213,7 @@ export const carteraService = {
       subtotal: data.total,
       total: data.total,
       estado: 'pendiente',
+      archivoFactura: data.archivoFactura,
       matriculaIds: data.matriculaIds,
     };
     mockFacturas.push(factura);

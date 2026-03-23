@@ -74,6 +74,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
       fechaVencimiento,
       matriculaIds: vincularMatriculas ? selectedIds : [],
       total: parseFloat(totalManual),
+      archivoFactura: archivo ? URL.createObjectURL(archivo) : undefined,
     });
 
     toast({ title: "Factura registrada exitosamente" });

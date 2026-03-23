@@ -370,6 +370,7 @@ export const carteraService = {
     valorPago?: number;
     metodoPago?: MetodoPago;
     observaciones?: string;
+    soportePago?: string;
   }): Promise<RegistroPago | null> {
     await delay(500);
     const idx = mockPagos.findIndex(p => p.id === id);

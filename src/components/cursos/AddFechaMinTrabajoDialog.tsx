@@ -46,7 +46,7 @@ export function AddFechaMinTrabajoDialog({ open, onOpenChange, cursoId }: AddFec
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Fecha *</label>
-            <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <DateField value={fecha} onChange={setFecha} />
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Motivo / Observación *</label>

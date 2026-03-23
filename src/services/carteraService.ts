@@ -357,7 +357,7 @@ export const carteraService = {
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
     if (grupo) {
       recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`);
+      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`, factura.id);
     }
     return { ...factura };
   },

@@ -7,6 +7,7 @@ import { Trash2, Users, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
+import { DateField } from "@/components/shared/DateField";
 import { useUpdateFactura, useDeleteFactura } from "@/hooks/useCartera";
 import { Factura } from "@/types/cartera";
 import { Matricula } from "@/types/matricula";

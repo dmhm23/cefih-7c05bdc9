@@ -122,15 +122,4 @@
     }
   }
 
-  /* Hide duplicate caption label when react-day-picker uses dropdown layout */
-  .rdp-caption_dropdowns + .rdp-caption_label,
-  .rdp-caption_dropdowns .rdp-vhidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
 }

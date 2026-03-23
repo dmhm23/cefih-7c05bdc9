@@ -201,6 +201,7 @@ export const carteraService = {
     fechaVencimiento: string;
     matriculaIds: string[];
     total: number;
+    archivoFactura?: string;
   }): Promise<Factura> {
     await delay(600);
     const factura: Factura = {

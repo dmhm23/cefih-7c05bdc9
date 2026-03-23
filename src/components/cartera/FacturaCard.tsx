@@ -143,6 +143,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                           <TableHead>Valor</TableHead>
                           <TableHead>Método</TableHead>
                           <TableHead>Observaciones</TableHead>
+                          <TableHead className="w-[60px]">Soporte</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

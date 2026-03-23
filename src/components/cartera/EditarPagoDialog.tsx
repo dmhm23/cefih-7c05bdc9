@@ -124,6 +124,32 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
               </Select>
             </div>
 
+            {/* Soporte de pago */}
+            <div className="space-y-1.5">
+              <Label>Soporte de Pago</Label>
+              {!archivo && soporteUrl ? (
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
+                  <span className="text-sm flex-1 truncate">Comprobante adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                    <Eye className="h-3.5 w-3.5" />
+                    Ver
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => setSoporteUrl(undefined)}>
+                    Quitar
+                  </Button>
+                </div>
+              ) : (
+                <FileDropZone
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onFile={(f) => { setArchivo(f); setSoporteUrl(URL.createObjectURL(f)); }}
+                  file={archivo}
+                  onClear={() => { setArchivo(null); setSoporteUrl(undefined); }}
+                  label="Arrastra el comprobante aquí o haz clic para seleccionar"
+                  hint="PDF, PNG, JPG"
+                />
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="editObsv">Observaciones</Label>
               <Textarea

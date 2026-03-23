@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,6 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { DateField } from "@/components/shared/DateField";
 import { useAgregarFechaAdicional } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
 

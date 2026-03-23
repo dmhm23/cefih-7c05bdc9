@@ -278,7 +278,8 @@ export const carteraService = {
         const metodoLabel = { transferencia: 'Transferencia', efectivo: 'Efectivo', consignacion: 'Consignación', tarjeta: 'Tarjeta' };
         addSystemActivity(
           grupo.id,
-          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`
+          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`,
+          data.facturaId
         );
       }
     }

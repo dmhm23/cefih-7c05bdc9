@@ -21,6 +21,7 @@ import { RegistrarPagoDialog } from "./RegistrarPagoDialog";
 import { EditarPagoDialog } from "./EditarPagoDialog";
 import { EditarFacturaDialog } from "./EditarFacturaDialog";
 import { ActividadCarteraSection } from "./ActividadCarteraSection";
+import { ArchivoPreviewDialog } from "./ArchivoPreviewDialog";
 import { usePagosByFactura } from "@/hooks/useCartera";
 import { Factura, RegistroPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { format } from "date-fns";

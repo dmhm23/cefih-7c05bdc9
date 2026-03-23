@@ -92,7 +92,11 @@ export function EditableField({
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      onChange(date.toISOString().split("T")[0]);
+      // Use local date formatting to avoid UTC timezone shift (Colombia is UTC-5)
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      onChange(`${y}-${m}-${d}`);
     }
     setIsEditing(false);
   };

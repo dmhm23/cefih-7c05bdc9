@@ -53,6 +53,8 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       return;
     }
 
+    const newSoporteUrl = archivo ? URL.createObjectURL(archivo) : soporteUrl;
+
     await updatePago.mutateAsync({
       id: pago.id,
       data: {
@@ -60,6 +62,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
         valorPago: parseFloat(valorPago),
         metodoPago,
         observaciones: observaciones || undefined,
+        soportePago: newSoporteUrl,
       },
     });
 

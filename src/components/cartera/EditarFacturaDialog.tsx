@@ -43,6 +43,8 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
       setFechaEmision(factura.fechaEmision);
       setFechaVencimiento(factura.fechaVencimiento);
       setTotal(String(factura.total));
+      setArchivoUrl(factura.archivoFactura);
+      setArchivo(null);
     }
   }, [factura]);
 

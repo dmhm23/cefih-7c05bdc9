@@ -329,12 +329,11 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Fecha de Fin</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
+                        <DateField
                           value={field.value}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            recalcularDuracion(form.getValues("fechaInicio"), e.target.value);
+                          onChange={(v) => {
+                            field.onChange(v);
+                            recalcularDuracion(form.getValues("fechaInicio"), v);
                           }}
                         />
                       </FormControl>

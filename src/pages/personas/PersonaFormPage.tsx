@@ -318,7 +318,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Fecha de Nacimiento *</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DateField value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

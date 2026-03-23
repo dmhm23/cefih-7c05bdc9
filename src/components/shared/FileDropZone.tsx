@@ -96,10 +96,10 @@ export function FileDropZone({
   // Show selected file preview
   if (file) {
     return (
-      <div className={cn("flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20", className)}>
+      <div className={cn("flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden", className)}>
         <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="text-sm flex-1 truncate">{file.name}</span>
-        <span className="text-xs text-muted-foreground">{formatFileSize(file.size)}</span>
+        <span className="text-sm flex-1 truncate min-w-0">{file.name}</span>
+        <span className="text-xs text-muted-foreground shrink-0">{formatFileSize(file.size)}</span>
         {onClear && (
           <Button
             variant="ghost"

@@ -142,13 +142,13 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
             <div className="space-y-1.5">
               <Label>Archivo de Factura</Label>
               {!archivo && archivoUrl ? (
-                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
-                  <span className="text-sm flex-1 truncate">Archivo adjunto</span>
-                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden">
+                  <span className="text-sm flex-1 truncate min-w-0">Archivo adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7 shrink-0" onClick={() => setShowPreview(true)}>
                     <Eye className="h-3.5 w-3.5" />
                     Ver
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => { setArchivoUrl(undefined); }}>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive shrink-0" onClick={() => { setArchivoUrl(undefined); }}>
                     Quitar
                   </Button>
                 </div>

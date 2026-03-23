@@ -128,13 +128,13 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
             <div className="space-y-1.5">
               <Label>Soporte de Pago</Label>
               {!archivo && soporteUrl ? (
-                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20">
-                  <span className="text-sm flex-1 truncate">Comprobante adjunto</span>
-                  <Button variant="ghost" size="sm" className="gap-1.5 h-7" onClick={() => setShowPreview(true)}>
+                <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden">
+                  <span className="text-sm flex-1 truncate min-w-0">Comprobante adjunto</span>
+                  <Button variant="ghost" size="sm" className="gap-1.5 h-7 shrink-0" onClick={() => setShowPreview(true)}>
                     <Eye className="h-3.5 w-3.5" />
                     Ver
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => setSoporteUrl(undefined)}>
+                  <Button variant="ghost" size="sm" className="h-7 text-destructive shrink-0" onClick={() => setSoporteUrl(undefined)}>
                     Quitar
                   </Button>
                 </div>

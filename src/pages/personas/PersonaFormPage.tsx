@@ -49,8 +49,6 @@ const personaSchema = z.object({
   
   // Datos laborales/educativos
   nivelEducativo: z.string().min(1, "Seleccione el nivel"),
-  areaTrabajo: z.enum(['administrativo', 'operativa'], { required_error: "Seleccione el área" }),
-  sectorEconomico: z.string().min(1, "Seleccione el sector"),
   
   // Contacto
   email: z.string().email("Email inválido").optional().or(z.literal("")),

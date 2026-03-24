@@ -1,6 +1,7 @@
 import { mockMatriculas, mockPersonas, mockCursos } from '@/data/mockData';
 import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
-import { TIPO_FORMACION_LABELS, TipoFormacion } from '@/types/curso';
+import { TipoFormacion } from '@/types/curso';
+import { resolveNivelCursoLabel, getNivelesAsOptions } from '@/utils/resolveNivelLabel';
 import { EstadoDocPortal } from '@/types/portalEstudiante';
 
 export interface MonitoreoDocEstado {

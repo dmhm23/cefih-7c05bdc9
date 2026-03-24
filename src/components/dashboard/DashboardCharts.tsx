@@ -136,7 +136,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                     <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
+                <RechartsTooltip contentStyle={tooltipStyle} />
                 <Legend
                   formatter={(value: string) => (
                     <span className="text-xs text-muted-foreground">{value}</span>

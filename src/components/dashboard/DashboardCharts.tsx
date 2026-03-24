@@ -50,7 +50,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
   }
 
   return (
-    <>
+    <TooltipProvider>
       {/* Volumen Matrículas */}
       <Card>
         <CardHeader className="pb-2">

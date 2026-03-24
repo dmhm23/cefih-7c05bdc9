@@ -56,7 +56,7 @@ const matriculaSchema = z.object({
   // Historial
   nivelPrevio: z.string().optional(),
   centroFormacionPrevio: z.string().optional(),
-  fechaCertificacionPrevia: z.string().optional(),
+  
   // Vinculación laboral
   tipoVinculacion: z.string().optional(),
   empresaNombre: z.string().optional(),
@@ -117,7 +117,7 @@ export default function MatriculaFormPage() {
       cursoId: "",
       nivelPrevio: "",
       centroFormacionPrevio: "",
-      fechaCertificacionPrevia: "",
+      
       tipoVinculacion: "",
       empresaNombre: "",
       empresaNit: "",
@@ -175,9 +175,6 @@ export default function MatriculaFormPage() {
       }
       if (historial.centroFormacionPrevio && !form.getValues("centroFormacionPrevio")) {
         form.setValue("centroFormacionPrevio", historial.centroFormacionPrevio);
-      }
-      if (historial.fechaCertificacionPrevia && !form.getValues("fechaCertificacionPrevia")) {
-        form.setValue("fechaCertificacionPrevia", historial.fechaCertificacionPrevia);
       }
     }
   }, [historial, form]);
@@ -260,7 +257,7 @@ export default function MatriculaFormPage() {
         cursoId: data.cursoId || '',
         nivelPrevio: (data.nivelPrevio as any) || undefined,
         centroFormacionPrevio: data.centroFormacionPrevio || undefined,
-        fechaCertificacionPrevia: data.fechaCertificacionPrevia || undefined,
+        
         tipoVinculacion: (data.tipoVinculacion as any) || undefined,
         empresaNombre: data.empresaNombre || undefined,
         empresaNit: data.empresaNit || undefined,
@@ -952,19 +949,6 @@ export default function MatriculaFormPage() {
                       <FormLabel>Centro de Formación</FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Nombre del centro o código" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="fechaCertificacionPrevia"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fecha de Certificación</FormLabel>
-                      <FormControl>
-                        <DateField value={field.value || ""} onChange={field.onChange} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -102,9 +102,16 @@ export function ConsentimientoSalud({ data, onChange, genero, readOnly }: Consen
           readOnly={readOnly}
         />
 
-        {showEmbarazo && (
+        {genero === 'M' && (
+          <div className="flex items-center justify-between gap-4">
+            <Label className="text-sm flex-1">A la fecha, ¿usted considera que se encuentra en estado de embarazo?</Label>
+            <span className="text-sm text-muted-foreground font-medium">No aplica</span>
+          </div>
+        )}
+
+        {genero === 'F' && (
           <ConsentRow
-            label="¿Se encuentra en estado de embarazo?"
+            label="A la fecha, ¿usted considera que se encuentra en estado de embarazo?"
             checked={data.embarazo || false}
             onCheckedChange={(v) => onChange("embarazo", v)}
             readOnly={readOnly}

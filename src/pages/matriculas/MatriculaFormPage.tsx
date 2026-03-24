@@ -983,7 +983,7 @@ export default function MatriculaFormPage() {
                   nivelLectoescritura: form.watch("nivelLectoescritura"),
                 }}
                 onChange={(field, value) => form.setValue(field as any, value, { shouldDirty: true })}
-                showEmbarazo={selectedPersona?.genero === 'F'}
+                genero={selectedPersona?.genero}
               />
             </CardContent>
           </Card>

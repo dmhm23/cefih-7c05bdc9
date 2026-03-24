@@ -50,7 +50,7 @@ function recalcFactura(factura: Factura) {
   const totalPagado = pagos.reduce((s, p) => s + p.valorPago, 0);
   if (totalPagado >= factura.total) factura.estado = 'pagada';
   else if (totalPagado > 0) factura.estado = 'parcial';
-  else factura.estado = 'pendiente';
+  else factura.estado = 'por_pagar';
 }
 
 function addSystemActivity(grupoCarteraId: string, descripcion: string, facturaId?: string) {

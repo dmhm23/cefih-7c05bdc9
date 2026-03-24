@@ -56,7 +56,7 @@ const matriculaSchema = z.object({
   // Historial
   nivelPrevio: z.string().optional(),
   centroFormacionPrevio: z.string().optional(),
-  fechaCertificacionPrevia: z.string().optional(),
+  
   // Vinculación laboral
   tipoVinculacion: z.string().optional(),
   empresaNombre: z.string().optional(),

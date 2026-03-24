@@ -1,8 +1,8 @@
 // ============ CARTERA ============
 
 export type TipoResponsable = 'empresa' | 'independiente' | 'arl';
-export type EstadoGrupoCartera = 'pendiente' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
-export type EstadoFactura = 'pendiente' | 'parcial' | 'pagada';
+export type EstadoGrupoCartera = 'sin_facturar' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
+export type EstadoFactura = 'por_pagar' | 'parcial' | 'pagada';
 export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
 export type TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
 
@@ -77,7 +77,7 @@ export const TIPO_RESPONSABLE_LABELS: Record<TipoResponsable, string> = {
 };
 
 export const ESTADO_GRUPO_CARTERA_LABELS: Record<EstadoGrupoCartera, string> = {
-  pendiente: 'Pendiente',
+  sin_facturar: 'Sin facturar',
   facturado: 'Facturado',
   abonado: 'Abonado',
   pagado: 'Pagado',
@@ -85,7 +85,7 @@ export const ESTADO_GRUPO_CARTERA_LABELS: Record<EstadoGrupoCartera, string> = {
 };
 
 export const ESTADO_FACTURA_LABELS: Record<EstadoFactura, string> = {
-  pendiente: 'Pendiente',
+  por_pagar: 'Por pagar',
   parcial: 'Parcial',
   pagada: 'Pagada',
 };

@@ -656,9 +656,7 @@ export default function MatriculaDetallePage() {
               />
               <div>
                 <p className="text-xs text-muted-foreground">Estado</p>
-                <Badge variant={matricula.pagado ? "default" : "secondary"} className={matricula.pagado ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}>
-                  {matricula.pagado ? "Pagado" : "Pendiente"}
-                </Badge>
+                <StatusBadge status={matricula.pagado ? "pagado" : "sin_facturar"} />
               </div>
             </div>
             {!matricula.pagado && (

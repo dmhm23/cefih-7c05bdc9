@@ -40,7 +40,7 @@ function recalcGrupo(grupo: GrupoCartera) {
     } else if (facturas.length > 0) {
       grupo.estado = 'facturado';
     } else {
-      grupo.estado = 'pendiente';
+      grupo.estado = 'sin_facturar';
     }
   }
 }
@@ -50,7 +50,7 @@ function recalcFactura(factura: Factura) {
   const totalPagado = pagos.reduce((s, p) => s + p.valorPago, 0);
   if (totalPagado >= factura.total) factura.estado = 'pagada';
   else if (totalPagado > 0) factura.estado = 'parcial';
-  else factura.estado = 'pendiente';
+  else factura.estado = 'por_pagar';
 }
 
 function addSystemActivity(grupoCarteraId: string, descripcion: string, facturaId?: string) {
@@ -131,7 +131,7 @@ export function asignarMatriculaACartera(params: {
     grupo = {
       id: uuid(),
       responsablePagoId: responsable.id,
-      estado: 'pendiente',
+      estado: 'sin_facturar',
       totalValor: 0,
       totalAbonos: 0,
       saldo: 0,
@@ -212,7 +212,7 @@ export const carteraService = {
       fechaVencimiento: data.fechaVencimiento,
       subtotal: data.total,
       total: data.total,
-      estado: 'pendiente',
+      estado: 'por_pagar',
       archivoFactura: data.archivoFactura,
       matriculaIds: data.matriculaIds,
     };

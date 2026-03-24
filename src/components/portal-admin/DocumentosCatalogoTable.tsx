@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, Pencil, Trash2, Plus } from 'lucide-react';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion, TIPO_FORMACION_LABELS } from '@/types/curso';
+import { TipoFormacion } from '@/types/curso';
+import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { DocumentoConfigDialog } from './DocumentoConfigDialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {

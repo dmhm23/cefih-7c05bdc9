@@ -211,18 +211,6 @@ export default function PersonasPage() {
         <span className="font-medium">{p.nombres} {p.apellidos}</span>
       ),
     },
-    {
-      key: "sector",
-      header: "Sector",
-      className: "min-w-[140px]",
-      sortable: true,
-      sortKey: "sectorEconomico",
-      render: (p: Persona) => (
-        <Badge variant="secondary" className="font-normal">
-          {getSectorLabel(p.sectorEconomico)}
-        </Badge>
-      ),
-    },
     { key: "telefono", header: "Teléfono" },
     { key: "email", header: "Email", className: "min-w-[200px]", sortable: true },
     {

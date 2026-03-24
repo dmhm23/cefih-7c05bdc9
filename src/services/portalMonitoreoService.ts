@@ -65,7 +65,7 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
       cursoNombre: curso.nombre,
       cursoNumeroCurso: curso.numeroCurso,
       tipoFormacion: curso.tipoFormacion,
-      tipoFormacionLabel: TIPO_FORMACION_LABELS[curso.tipoFormacion],
+      tipoFormacionLabel: resolveNivelCursoLabel(curso.tipoFormacion),
       fechaInicio: curso.fechaInicio,
       fechaFin: curso.fechaFin,
       portalHabilitado: mat.portalEstudiante?.habilitado ?? false,

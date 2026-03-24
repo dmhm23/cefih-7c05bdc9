@@ -102,6 +102,13 @@ export default function MatriculasPage() {
       : "Pendiente";
   };
 
+  const getEstadoCartera = (matricula: Matricula): EstadoGrupoCartera => {
+    const grupo = mockGruposCartera.find((g) =>
+      g.matriculaIds.includes(matricula.id)
+    );
+    return grupo?.estado ?? "sin_facturar";
+  };
+
   const filterConfigs: FilterConfig[] = [
     {
       key: "estadoDocumental",
@@ -110,10 +117,10 @@ export default function MatriculasPage() {
       options: ESTADO_DOCUMENTAL_OPTIONS,
     },
     {
-      key: "pago",
-      label: "Estado de Pago",
+      key: "estadoCartera",
+      label: "Estado de Cartera",
       type: "select",
-      options: PAGO_OPTIONS,
+      options: ESTADO_CARTERA_OPTIONS,
     },
   ];
 

@@ -23,8 +23,7 @@ import {
   GENEROS,
   NIVELES_EDUCATIVOS,
   GRUPOS_SANGUINEOS,
-  AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
+  GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
 import { Separator } from "@/components/ui/separator";

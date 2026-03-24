@@ -1,46 +1,46 @@
-## Plan: Actualizar datos mock para usar IDs de niveles de formación
+## Plan: Mejorar modal "Agregar Estudiantes" con filtros por nivel y estado documental
 
-### Problema
+### Cambios en `src/components/cursos/AgregarEstudiantesModal.tsx`
 
-Los datos mock en `mockCursos` y `mockMatriculas` usan claves legacy (`'trabajador_autorizado'`, `'reentrenamiento'`, etc.) en lugar de los IDs reales de niveles (`'nf1'`, `'nf2'`, `'nf3'`, `'nf5'`). Aunque el resolver dinámico los traduce correctamente, los datos deben estar alineados con la fuente de verdad.
+**1. Recibir `tipoFormacion` del curso como prop nueva**
 
-### Mapeo de claves legacy → IDs
+Agregar prop `nivelFormacion: string` a la interfaz del componente. Usar `useCurso(cursoId)` o pasar directamente desde el padre.
 
-```text
-'reentrenamiento'        → 'nf1'
-'jefe_area'              → 'nf2'
-'trabajador_autorizado'  → 'nf3'
-'coordinador_ta'         → 'nf5'
+**2. Filtrar matrículas disponibles correctamente (3 condiciones)**
+
+Actualizar el `useMemo` de `disponibles` para:
+
+- Excluir matrículas ya asignadas a cualquier curso (`m.cursoId` no vacío)
+- Solo mostrar matrículas cuyo `empresaNivelFormacion` coincida con el `tipoFormacion` del curso
+- Excluir las del curso actual (ya cubierto por la condición anterior)
+
+```ts
+const disponibles = useMemo(() => {
+  return matriculas.filter(
+    (m) =>
+      (!m.cursoId || m.cursoId === '') &&
+      m.empresaNivelFormacion === nivelFormacion
+  );
+}, [matriculas, nivelFormacion]);
 ```
 
-### Cambios en `src/data/mockData.ts`
+**3. Mostrar indicador de documentos pendientes**
 
-**Cursos** — campo `tipoFormacion`:
+En cada fila de matrícula, verificar `m.documentos` para detectar documentos con `estado === 'pendiente'`. Mostrar un badge de advertencia "Pendiente documentos" junto al nombre, sin bloquear la selección.
 
-- c1: `'trabajador_autorizado'` → `'nf3'`
-- c2: `'reentrenamiento'` → `'nf1'`
-- c3: `'coordinador_ta'` → `'nf5'`
-- c4: `'trabajador_autorizado'` → `'nf3'`
-- c5: `'jefe_area'` → `'nf2'`
-- c6: `'reentrenamiento'` → `'nf1'`
-- c7: `'coordinador_ta'` → `'nf5'`
+```text
+┌─────────────────────────────────────────────────┐
+│ ☐  Juan Pérez López                    Creada   │
+│    CC: 1234567890                                │
+│    Pendiente de documentos (2)                 │
+└─────────────────────────────────────────────────┘
+```
 
-**Matrículas** — campo `empresaNivelFormacion`:
+### Cambios en `src/components/cursos/EnrollmentsTable.tsx`
 
-- m1: `'trabajador_autorizado'` → `'nf3'`
-- m3: `'reentrenamiento'` → `'nf1'`
-- m4: `'coordinador_ta'` → `'nf5'`
-- m5–m9: `'trabajador_autorizado'` → `'nf3'`
-- m11–m14: `'reentrenamiento'` → `'nf1'`
-- m16–m19: `'jefe_area'` → `'nf2'`
-- m20–m23: `'reentrenamiento'` → `'nf1'`
+Pasar la nueva prop `nivelFormacion={curso.tipoFormacion}` al componente `AgregarEstudiantesModal`.
 
-**Nota**: m2, m10, m15, m24 son independientes sin `empresaNivelFormacion` — no requieren cambio.
+### Archivos modificados
 
-### Cambios en `src/data/mockCertificados.ts`
-
-- Línea 70: `tipoFormacion: 'jefe_area'` → `'nf2'`
-
-### Sin otros archivos afectados
-
-El resolver `resolveNivelLabel.ts` ya maneja tanto IDs como claves legacy, así que seguirá funcionando. Los datos simplemente quedarán alineados con la fuente de verdad.
+- `src/components/cursos/AgregarEstudiantesModal.tsx` — filtro por nivel, indicador documental
+- `src/components/cursos/EnrollmentsTable.tsx` — pasar prop `nivelFormacion`

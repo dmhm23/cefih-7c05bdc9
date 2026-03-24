@@ -13,7 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePlantillas, useCreatePlantilla } from "@/hooks/usePlantillas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
-import { TIPO_FORMACION_LABELS, type TipoFormacion } from "@/types/curso";
+import { type TipoFormacion } from "@/types/curso";
+import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import type { ReglaTipoCertificado } from "@/types/certificado";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -143,7 +144,7 @@ export default function PlantillasPage() {
             {filteredPlantillas.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nombre}</TableCell>
-                <TableCell>{TIPO_FORMACION_LABELS[p.tipoFormacion] || p.tipoFormacion}</TableCell>
+                <TableCell>{resolveNivelCursoLabel(p.tipoFormacion)}</TableCell>
                 <TableCell>
                   <Badge variant={p.activa ? "default" : "secondary"}>{p.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>
@@ -206,8 +207,8 @@ export default function PlantillasPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="bottom">
-                  {Object.entries(TIPO_FORMACION_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  {getNivelesAsOptions().map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

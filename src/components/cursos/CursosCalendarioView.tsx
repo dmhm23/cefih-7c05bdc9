@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useCursos } from "@/hooks/useCursos";
-import { Curso, TIPO_FORMACION_LABELS } from "@/types/curso";
+import { Curso } from "@/types/curso";
 
 // Trainer colors
 const TRAINER_COLORS = [

@@ -10,7 +10,7 @@ import { RowActions } from "@/components/shared/RowActions";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useFormatos, useToggleFormatoActivo, useDuplicateFormato } from "@/hooks/useFormatosFormacion";
 import { FormatoFormacion } from "@/types/formatoFormacion";
-import { TIPO_FORMACION_LABELS } from "@/types/curso";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { FileText, PenLine, CheckCircle2, XCircle } from "lucide-react";
@@ -33,7 +33,7 @@ function ScopeBadges({ formato }: { formato: FormatoFormacion }) {
       <div className="flex flex-wrap gap-1">
         {formato.tipoCursoKeys.map((k) => (
           <Badge key={k} variant="outline" className="text-[10px] font-normal">
-            {TIPO_FORMACION_LABELS[k] || k}
+            {resolveNivelCursoLabel(k)}
           </Badge>
         ))}
       </div>

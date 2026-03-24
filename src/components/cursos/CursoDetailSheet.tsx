@@ -15,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso, TIPO_FORMACION_LABELS, TipoFormacion } from "@/types/curso";
+import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso } from "@/types/curso";
+import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -36,9 +37,7 @@ const ESTADO_OPTIONS = [
   { value: "cerrado", label: "Cerrado" },
 ];
 
-const TIPO_FORMACION_OPTIONS = (Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][]).map(
-  ([value, label]) => ({ value, label })
-);
+const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
 
 export function CursoDetailSheet({
   open,
@@ -65,7 +64,7 @@ export function CursoDetailSheet({
 
   if (!curso) return null;
 
-  const title = `${TIPO_FORMACION_LABELS[curso.tipoFormacion]} — #${curso.numeroCurso}`;
+  const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
   const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
@@ -191,7 +190,7 @@ export function CursoDetailSheet({
             <EditableField
               label="Tipo de Formación"
               value={getValue("tipoFormacion")}
-              displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion") as TipoFormacion]}
+              displayValue={resolveNivelCursoLabel(getValue("tipoFormacion"))}
               onChange={(v) => handleFieldChange("tipoFormacion", v)}
               type="select"
               options={TIPO_FORMACION_OPTIONS}

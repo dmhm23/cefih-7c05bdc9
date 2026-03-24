@@ -1,6 +1,7 @@
 import { mockMatriculas, mockPersonas, mockCursos } from '@/data/mockData';
 import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
-import { TIPO_FORMACION_LABELS, TipoFormacion } from '@/types/curso';
+import { TipoFormacion } from '@/types/curso';
+import { resolveNivelCursoLabel, getNivelesAsOptions } from '@/utils/resolveNivelLabel';
 import { EstadoDocPortal } from '@/types/portalEstudiante';
 
 export interface MonitoreoDocEstado {
@@ -64,7 +65,7 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
       cursoNombre: curso.nombre,
       cursoNumeroCurso: curso.numeroCurso,
       tipoFormacion: curso.tipoFormacion,
-      tipoFormacionLabel: TIPO_FORMACION_LABELS[curso.tipoFormacion],
+      tipoFormacionLabel: resolveNivelCursoLabel(curso.tipoFormacion),
       fechaInicio: curso.fechaInicio,
       fechaFin: curso.fechaFin,
       portalHabilitado: mat.portalEstudiante?.habilitado ?? false,
@@ -104,7 +105,7 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
 
 export function getFilterOptions() {
   const cursos = mockCursos.map((c) => ({ value: c.id, label: `${c.numeroCurso} — ${c.nombre}` }));
-  const niveles = Object.entries(TIPO_FORMACION_LABELS).map(([value, label]) => ({ value, label }));
+  const niveles = getNivelesAsOptions();
   const documentos = portalDocumentosCatalogo.map((d) => ({ value: d.key, label: d.nombre }));
   return { cursos, niveles, documentos };
 }

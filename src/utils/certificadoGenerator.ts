@@ -2,7 +2,7 @@ import type { Matricula } from '@/types/matricula';
 import type { Persona } from '@/types/persona';
 import type { Curso } from '@/types/curso';
 import type { FormatoFormacion } from '@/types/formatoFormacion';
-import { TIPO_FORMACION_LABELS } from '@/types/curso';
+import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -58,7 +58,7 @@ export function construirDiccionarioTokens(
     tipoDocumento: persona.tipoDocumento,
     numeroDocumento: persona.numeroDocumento,
     numeroCurso: curso.numeroCurso,
-    tipoFormacion: TIPO_FORMACION_LABELS[curso.tipoFormacion] || curso.tipoFormacion,
+    tipoFormacion: resolveNivelCursoLabel(curso.tipoFormacion),
     fechaInicio: fmt(curso.fechaInicio),
     fechaFin: fmt(curso.fechaFin),
     duracionDias: String(curso.duracionDias),

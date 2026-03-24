@@ -13,7 +13,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { Curso } from "@/types";
-import { TIPO_FORMACION_LABELS } from "@/types/curso";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -83,7 +83,7 @@ export default function CursosListView() {
   }).length;
 
   const getCursoLabel = (c: Curso) =>
-    `${TIPO_FORMACION_LABELS[c.tipoFormacion]} — #${c.numeroCurso}`;
+    `${resolveNivelCursoLabel(c.tipoFormacion)} — #${c.numeroCurso}`;
 
   const filteredCursos = cursos.filter((c) => {
     const label = getCursoLabel(c).toLowerCase();
@@ -237,7 +237,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       header: "Tipo Formación",
-      render: (c: Curso) => TIPO_FORMACION_LABELS[c.tipoFormacion],
+      render: (c: Curso) => resolveNivelCursoLabel(c.tipoFormacion),
     },
     {
       key: "minTrabajoRegistro",

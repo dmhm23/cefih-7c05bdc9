@@ -1,12 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
-import { Curso, CursoFormData, TIPO_FORMACION_LABELS, TipoFormacion } from "@/types/curso";
+import { Curso, CursoFormData } from "@/types/curso";
+import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 
-const TIPO_FORMACION_OPTIONS = (Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][]).map(
-  ([value, label]) => ({ value, label })
-);
+const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
 
 interface CourseInfoCardProps {
   curso: Curso;
@@ -43,7 +42,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
           <EditableField
             label="Tipo de Formación"
             value={getValue("tipoFormacion")}
-            displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion") as TipoFormacion]}
+            displayValue={resolveNivelCursoLabel(getValue("tipoFormacion"))}
             onChange={(v) => onFieldChange("tipoFormacion", v)}
             type="select"
             options={TIPO_FORMACION_OPTIONS}

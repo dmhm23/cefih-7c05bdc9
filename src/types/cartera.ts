@@ -2,7 +2,7 @@
 
 export type TipoResponsable = 'empresa' | 'independiente' | 'arl';
 export type EstadoGrupoCartera = 'sin_facturar' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
-export type EstadoFactura = 'pendiente' | 'parcial' | 'pagada';
+export type EstadoFactura = 'por_pagar' | 'parcial' | 'pagada';
 export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
 export type TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
 

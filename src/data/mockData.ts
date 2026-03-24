@@ -102,83 +102,83 @@ export const mockPersonas: Persona[] = [
   },
   // ============ PERSONAS NUEVAS (p5-p24) ============
   {
-    id: 'p5', tipoDocumento: 'CC', numeroDocumento: '1045678901', nombres: 'Diego Alejandro', apellidos: 'Castillo Vargas', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1991-04-12', rh: 'O+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'diego.castillo@email.com', telefono: '3001112233',
+    id: 'p5', tipoDocumento: 'CC', numeroDocumento: '1045678901', nombres: 'Diego Alejandro', apellidos: 'Castillo Vargas', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1991-04-12', rh: 'O+', nivelEducativo: 'tecnico', email: 'diego.castillo@email.com', telefono: '3001112233',
     contactoEmergencia: { nombre: 'Martha Vargas', telefono: '3109998877', parentesco: 'Madre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'energia_electrica', email: 'camila.rios@email.com', telefono: '3156667788',
+    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'universitario', email: 'camila.rios@email.com', telefono: '3156667788',
     contactoEmergencia: { nombre: 'Jorge Rios', telefono: '3204445566', parentesco: 'Padre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'oscar.bernal@email.com', telefono: '3212345678',
+    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'bachiller', email: 'oscar.bernal@email.com', telefono: '3212345678',
     contactoEmergencia: { nombre: 'Gloria Quintero', telefono: '3101234567', parentesco: 'Madre' }, createdAt: '2024-03-02T08:00:00Z', updatedAt: '2024-03-02T08:00:00Z',
   },
   {
-    id: 'p8', tipoDocumento: 'CC', numeroDocumento: '1056789012', nombres: 'Natalia', apellidos: 'Herrera Muñoz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1995-12-03', rh: 'O-', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'natalia.herrera@email.com', telefono: '3178889900',
+    id: 'p8', tipoDocumento: 'CC', numeroDocumento: '1056789012', nombres: 'Natalia', apellidos: 'Herrera Muñoz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1995-12-03', rh: 'O-', nivelEducativo: 'tecnologo', email: 'natalia.herrera@email.com', telefono: '3178889900',
     contactoEmergencia: { nombre: 'Carlos Herrera', telefono: '3057776655', parentesco: 'Hermano' }, createdAt: '2024-03-02T08:00:00Z', updatedAt: '2024-03-02T08:00:00Z',
   },
   {
-    id: 'p9', tipoDocumento: 'CC', numeroDocumento: '1034567890', nombres: 'Andrés Felipe', apellidos: 'Moreno Díaz', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1989-06-20', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'andres.moreno@email.com', telefono: '3009876543',
+    id: 'p9', tipoDocumento: 'CC', numeroDocumento: '1034567890', nombres: 'Andrés Felipe', apellidos: 'Moreno Díaz', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1989-06-20', rh: 'A+', nivelEducativo: 'tecnico', email: 'andres.moreno@email.com', telefono: '3009876543',
     contactoEmergencia: { nombre: 'Luz Díaz', telefono: '3115554433', parentesco: 'Esposa' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'maria.ospina@email.com', telefono: '3143216789',
+    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'universitario', email: 'maria.ospina@email.com', telefono: '3143216789',
     contactoEmergencia: { nombre: 'Eduardo Ospina', telefono: '3208765432', parentesco: 'Padre' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'santiago.guzman@email.com', telefono: '3225556677',
+    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'bachiller', email: 'santiago.guzman@email.com', telefono: '3225556677',
     contactoEmergencia: { nombre: 'Rosa Peña', telefono: '3117778899', parentesco: 'Madre' }, createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-04T08:00:00Z',
   },
   {
-    id: 'p12', tipoDocumento: 'CC', numeroDocumento: '1078901234', nombres: 'Laura Sofía', apellidos: 'Cárdenas Rojas', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1996-11-27', rh: 'B-', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'laura.cardenas@email.com', telefono: '3186543210',
+    id: 'p12', tipoDocumento: 'CC', numeroDocumento: '1078901234', nombres: 'Laura Sofía', apellidos: 'Cárdenas Rojas', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1996-11-27', rh: 'B-', nivelEducativo: 'tecnologo', email: 'laura.cardenas@email.com', telefono: '3186543210',
     contactoEmergencia: { nombre: 'Miguel Cárdenas', telefono: '3009871234', parentesco: 'Padre' }, createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-04T08:00:00Z',
   },
   {
-    id: 'p13', tipoDocumento: 'CC', numeroDocumento: '1089012345', nombres: 'Julián', apellidos: 'Parra Soto', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1986-03-15', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'julian.parra@email.com', telefono: '3007654321',
+    id: 'p13', tipoDocumento: 'CC', numeroDocumento: '1089012345', nombres: 'Julián', apellidos: 'Parra Soto', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1986-03-15', rh: 'A+', nivelEducativo: 'tecnico', email: 'julian.parra@email.com', telefono: '3007654321',
     contactoEmergencia: { nombre: 'Carmen Soto', telefono: '3128765432', parentesco: 'Esposa' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
-    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'daniela.mejia@email.com', telefono: '3191234567',
+    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'universitario', email: 'daniela.mejia@email.com', telefono: '3191234567',
     contactoEmergencia: { nombre: 'Patricia Ortiz', telefono: '3202345678', parentesco: 'Madre' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
-    id: 'p15', tipoDocumento: 'CC', numeroDocumento: '1012345678', nombres: 'Carlos Alberto', apellidos: 'Valencia Restrepo', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1984-10-01', rh: 'B+', nivelEducativo: 'especializacion', areaTrabajo: 'administrativo', sectorEconomico: 'construccion', email: 'carlos.valencia@email.com', telefono: '3008765432',
+    id: 'p15', tipoDocumento: 'CC', numeroDocumento: '1012345678', nombres: 'Carlos Alberto', apellidos: 'Valencia Restrepo', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1984-10-01', rh: 'B+', nivelEducativo: 'especializacion', email: 'carlos.valencia@email.com', telefono: '3008765432',
     contactoEmergencia: { nombre: 'Elena Restrepo', telefono: '3119876543', parentesco: 'Esposa' }, createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-06T08:00:00Z',
   },
   {
-    id: 'p16', tipoDocumento: 'CC', numeroDocumento: '1043210987', nombres: 'Paola', apellidos: 'Suárez Castaño', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1992-07-17', rh: 'A-', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'paola.suarez@email.com', telefono: '3163456789',
+    id: 'p16', tipoDocumento: 'CC', numeroDocumento: '1043210987', nombres: 'Paola', apellidos: 'Suárez Castaño', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1992-07-17', rh: 'A-', nivelEducativo: 'tecnico', email: 'paola.suarez@email.com', telefono: '3163456789',
     contactoEmergencia: { nombre: 'Fernando Suárez', telefono: '3054567890', parentesco: 'Hermano' }, createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-06T08:00:00Z',
   },
   {
-    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'roberto.jimenez@email.com', telefono: '3237654321',
+    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'bachiller', email: 'roberto.jimenez@email.com', telefono: '3237654321',
     contactoEmergencia: { nombre: 'Ana Luna', telefono: '3108765432', parentesco: 'Madre' }, createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-07T08:00:00Z',
   },
   {
-    id: 'p18', tipoDocumento: 'CC', numeroDocumento: '1054321098', nombres: 'Alejandra', apellidos: 'Rincón Vega', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-01-30', rh: 'AB+', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'alejandra.rincon@email.com', telefono: '3145678901',
+    id: 'p18', tipoDocumento: 'CC', numeroDocumento: '1054321098', nombres: 'Alejandra', apellidos: 'Rincón Vega', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-01-30', rh: 'AB+', nivelEducativo: 'tecnologo', email: 'alejandra.rincon@email.com', telefono: '3145678901',
     contactoEmergencia: { nombre: 'Luis Rincón', telefono: '3206789012', parentesco: 'Padre' }, createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-07T08:00:00Z',
   },
   {
-    id: 'p19', tipoDocumento: 'CC', numeroDocumento: '1065432109', nombres: 'Fabián', apellidos: 'Duarte Acosta', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1985-12-11', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'fabian.duarte@email.com', telefono: '3006789012',
+    id: 'p19', tipoDocumento: 'CC', numeroDocumento: '1065432109', nombres: 'Fabián', apellidos: 'Duarte Acosta', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1985-12-11', rh: 'A+', nivelEducativo: 'tecnico', email: 'fabian.duarte@email.com', telefono: '3006789012',
     contactoEmergencia: { nombre: 'Sandra Acosta', telefono: '3117890123', parentesco: 'Esposa' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'viviana.molina@email.com', telefono: '3187890123',
+    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'universitario', email: 'viviana.molina@email.com', telefono: '3187890123',
     contactoEmergencia: { nombre: 'Ricardo Molina', telefono: '3058901234', parentesco: 'Hermano' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'hernan.aguilar@email.com', telefono: '3228901234',
+    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'bachiller', email: 'hernan.aguilar@email.com', telefono: '3228901234',
     contactoEmergencia: { nombre: 'Marta Romero', telefono: '3109012345', parentesco: 'Madre' }, createdAt: '2024-03-09T08:00:00Z', updatedAt: '2024-03-09T08:00:00Z',
   },
   {
-    id: 'p22', tipoDocumento: 'CC', numeroDocumento: '1098765410', nombres: 'Carolina', apellidos: 'Pineda Álvarez', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1994-04-19', rh: 'A+', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'carolina.pineda@email.com', telefono: '3170123456',
+    id: 'p22', tipoDocumento: 'CC', numeroDocumento: '1098765410', nombres: 'Carolina', apellidos: 'Pineda Álvarez', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1994-04-19', rh: 'A+', nivelEducativo: 'tecnologo', email: 'carolina.pineda@email.com', telefono: '3170123456',
     contactoEmergencia: { nombre: 'Alberto Pineda', telefono: '3200123456', parentesco: 'Padre' }, createdAt: '2024-03-09T08:00:00Z', updatedAt: '2024-03-09T08:00:00Z',
   },
   {
-    id: 'p23', tipoDocumento: 'CC', numeroDocumento: '1019876543', nombres: 'Edwin', apellidos: 'Cortés Beltrán', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-02-07', rh: 'O+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'edwin.cortes@email.com', telefono: '3001234568',
+    id: 'p23', tipoDocumento: 'CC', numeroDocumento: '1019876543', nombres: 'Edwin', apellidos: 'Cortés Beltrán', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-02-07', rh: 'O+', nivelEducativo: 'tecnico', email: 'edwin.cortes@email.com', telefono: '3001234568',
     contactoEmergencia: { nombre: 'Diana Beltrán', telefono: '3111234567', parentesco: 'Esposa' }, createdAt: '2024-03-10T08:00:00Z', updatedAt: '2024-03-10T08:00:00Z',
   },
   {
-    id: 'p24', tipoDocumento: 'CE', numeroDocumento: '4455667788', nombres: 'Yesenia', apellidos: 'Contreras Medina', genero: 'F', paisNacimiento: 'VE', fechaNacimiento: '1996-06-14', rh: 'AB+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'yesenia.contreras@email.com', telefono: '3152345678',
+    id: 'p24', tipoDocumento: 'CE', numeroDocumento: '4455667788', nombres: 'Yesenia', apellidos: 'Contreras Medina', genero: 'F', paisNacimiento: 'VE', fechaNacimiento: '1996-06-14', rh: 'AB+', nivelEducativo: 'tecnico', email: 'yesenia.contreras@email.com', telefono: '3152345678',
     contactoEmergencia: { nombre: 'Jorge Contreras', telefono: '3203456789', parentesco: 'Hermano' }, createdAt: '2024-03-10T08:00:00Z', updatedAt: '2024-03-10T08:00:00Z',
   },
 ];

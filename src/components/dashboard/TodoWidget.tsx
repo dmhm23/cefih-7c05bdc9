@@ -70,7 +70,7 @@ const TodoWidget = () => {
   );
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-[370px] flex flex-col overflow-hidden">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium">Tareas Rápidas</CardTitle>
       </CardHeader>

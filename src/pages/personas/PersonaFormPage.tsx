@@ -125,8 +125,6 @@ export default function PersonaFormPage() {
         fechaNacimiento: data.fechaNacimiento,
         rh: data.rh,
         nivelEducativo: data.nivelEducativo as any,
-        areaTrabajo: data.areaTrabajo,
-        sectorEconomico: data.sectorEconomico,
         email: data.email,
         telefono: data.telefono,
         contactoEmergencia: {

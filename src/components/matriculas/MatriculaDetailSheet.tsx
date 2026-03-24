@@ -401,7 +401,7 @@ export function MatriculaDetailSheet({
         <Separator />
 
         {/* Historial de Formación Previa */}
-        {(matricula.nivelPrevio || matricula.centroFormacionPrevio || matricula.fechaCertificacionPrevia) && (
+        {(matricula.nivelPrevio || matricula.centroFormacionPrevio) && (
           <>
             <DetailSection title="Historial de Formación Previa">
               <div className="grid grid-cols-2 gap-4">

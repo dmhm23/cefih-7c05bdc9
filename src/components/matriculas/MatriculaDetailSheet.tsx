@@ -270,8 +270,8 @@ export function MatriculaDetailSheet({
         (isDirty || isPersonaDirty) ? (
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={updateMatricula.isPending || cambiarEstado.isPending || updatePersona.isPending}>
-              {updateMatricula.isPending || cambiarEstado.isPending || updatePersona.isPending ? "Guardando..." : "Guardar Cambios"}
+            <Button onClick={handleSave} disabled={updateMatricula.isPending || updatePersona.isPending}>
+              {updateMatricula.isPending || updatePersona.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
         ) : undefined

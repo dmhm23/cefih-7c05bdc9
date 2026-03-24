@@ -25,7 +25,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "numeroDocumento", header: "Documento", visible: true },
   { key: "nombre", header: "Nombre Completo", visible: true },
   { key: "telefono", header: "Teléfono", visible: true },
-  { key: "telefono", header: "Teléfono", visible: true },
+  { key: "email", header: "Email", visible: false },
   { key: "email", header: "Email", visible: false },
   { key: "genero", header: "Género", visible: false },
   { key: "nivelEducativo", header: "Nivel Educativo", visible: false },

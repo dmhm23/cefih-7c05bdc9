@@ -16,7 +16,8 @@ import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula } from "@/types";
-import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
+import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { mockGruposCartera } from "@/data/mockCartera";
@@ -321,7 +322,7 @@ export default function MatriculasPage() {
       header: "Nivel Formación",
       render: (m: Matricula) =>
         m.empresaNivelFormacion
-          ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion]
+          ? resolveNivelFormacionLabel(m.empresaNivelFormacion)
           : "-",
     },
     {

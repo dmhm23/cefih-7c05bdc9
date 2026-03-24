@@ -159,12 +159,6 @@ export function MatriculaDetailSheet({
       if (isPersonaDirty && persona) {
         await updatePersona.mutateAsync({ id: persona.id, data: personaFormData });
       }
-      if (formData.estado && formData.estado !== matricula.estado) {
-        await cambiarEstado.mutateAsync({
-          id: matricula.id,
-          estado: formData.estado as EstadoMatricula,
-        });
-      }
       const otherChanges = { ...formData };
       delete otherChanges.estado;
       if (Object.keys(otherChanges).length > 0) {

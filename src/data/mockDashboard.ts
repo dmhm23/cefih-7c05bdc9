@@ -95,6 +95,7 @@ export interface TodoItem {
   text: string;
   completed: boolean;
   createdAt: string;
+  completedAt?: string;
 }
 
 export function loadTodos(): TodoItem[] {
@@ -108,4 +109,17 @@ export function loadTodos(): TodoItem[] {
 
 export function saveTodos(todos: TodoItem[]) {
   localStorage.setItem('dashboard_todos', JSON.stringify(todos));
+}
+
+export function loadHistory(): TodoItem[] {
+  try {
+    const raw = localStorage.getItem('dashboard_todo_history');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHistory(history: TodoItem[]) {
+  localStorage.setItem('dashboard_todo_history', JSON.stringify(history));
 }

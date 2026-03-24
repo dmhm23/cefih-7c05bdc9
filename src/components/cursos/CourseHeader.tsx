@@ -7,7 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Curso, TIPO_FORMACION_LABELS } from "@/types/curso";
+import { Curso } from "@/types/curso";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 
 interface CourseHeaderProps {

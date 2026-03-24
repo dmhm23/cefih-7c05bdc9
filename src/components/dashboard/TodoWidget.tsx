@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { TodoItem, loadTodos, saveTodos, loadHistory, saveHistory } from "@/data/mockDashboard";
 
@@ -15,6 +15,7 @@ const TodoWidget = () => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [history, setHistory] = useState<TodoItem[]>([]);
   const [input, setInput] = useState("");
+  const [activeTab, setActiveTab] = useState<'tareas' | 'historial'>('tareas');
 
   useEffect(() => {
     setTodos(loadTodos());
@@ -74,13 +75,34 @@ const TodoWidget = () => {
         <CardTitle className="text-sm font-medium">Tareas Rápidas</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col min-h-0 pt-0">
-        <Tabs defaultValue="tareas" className="flex-1 flex flex-col min-h-0">
-          <TabsList className="w-full mb-3">
-            <TabsTrigger value="tareas" className="flex-1">Tareas</TabsTrigger>
-            <TabsTrigger value="historial" className="flex-1">Historial</TabsTrigger>
-          </TabsList>
+        <div className="flex gap-4 mb-0">
+          <button
+            onClick={() => setActiveTab('tareas')}
+            className={cn(
+              "pb-2 text-sm transition-colors",
+              activeTab === 'tareas'
+                ? "font-medium text-foreground border-b-2 border-primary"
+                : "text-muted-foreground/60"
+            )}
+          >
+            Tareas
+          </button>
+          <button
+            onClick={() => setActiveTab('historial')}
+            className={cn(
+              "pb-2 text-sm transition-colors",
+              activeTab === 'historial'
+                ? "font-medium text-foreground border-b-2 border-primary"
+                : "text-muted-foreground/60"
+            )}
+          >
+            Historial
+          </button>
+        </div>
+        <Separator className="mb-3" />
 
-          <TabsContent value="tareas" className="flex-1 flex flex-col min-h-0 mt-0">
+        {activeTab === 'tareas' ? (
+          <div className="flex-1 flex flex-col min-h-0">
             <div className="flex gap-2 mb-3">
               <Input
                 placeholder="Nueva tarea..."
@@ -116,9 +138,9 @@ const TodoWidget = () => {
                 </div>
               )}
             </ScrollArea>
-          </TabsContent>
-
-          <TabsContent value="historial" className="flex-1 flex flex-col min-h-0 mt-0">
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col min-h-0">
             <ScrollArea className="flex-1 min-h-0">
               {history.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-4">Sin tareas finalizadas</p>
@@ -140,8 +162,8 @@ const TodoWidget = () => {
                 </div>
               )}
             </ScrollArea>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

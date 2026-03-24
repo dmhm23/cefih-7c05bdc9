@@ -132,7 +132,15 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       {/* Distribución por Nivel */}
       <Card className="h-[370px] flex flex-col overflow-hidden">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={14} className="text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Cantidad de estudiantes agrupados por nivel de formación empresarial.</TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0 flex flex-col items-center justify-center">
           <div className="h-full w-full">

@@ -117,7 +117,7 @@ export default function MatriculaFormPage() {
       cursoId: "",
       nivelPrevio: "",
       centroFormacionPrevio: "",
-      fechaCertificacionPrevia: "",
+      
       tipoVinculacion: "",
       empresaNombre: "",
       empresaNit: "",

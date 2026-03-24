@@ -212,7 +212,7 @@ export const carteraService = {
       fechaVencimiento: data.fechaVencimiento,
       subtotal: data.total,
       total: data.total,
-      estado: 'pendiente',
+      estado: 'por_pagar',
       archivoFactura: data.archivoFactura,
       matriculaIds: data.matriculaIds,
     };

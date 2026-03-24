@@ -17,7 +17,7 @@ const TIPO_OPTIONS = [
 ];
 
 const ESTADO_OPTIONS = [
-  { value: "pendiente", label: "Pendiente" },
+  { value: "sin_facturar", label: "Sin facturar" },
   { value: "facturado", label: "Facturado" },
   { value: "abonado", label: "Abonado" },
   { value: "pagado", label: "Pagado" },

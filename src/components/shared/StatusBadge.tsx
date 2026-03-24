@@ -28,11 +28,13 @@ const statusConfig: Record<StatusType, { label: string; className: string }> = {
   verde: { label: "Listo", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   amarillo: { label: "En Proceso", className: "bg-amber-100 text-amber-700 border-amber-200" },
   rojo: { label: "Bloqueado", className: "bg-red-100 text-red-700 border-red-200" },
-  // Estados de cartera
+  // Estados de grupo cartera
+  sin_facturar: { label: "Sin facturar", className: "bg-slate-100 text-slate-700 border-slate-200" },
   facturado: { label: "Facturado", className: "bg-blue-100 text-blue-700 border-blue-200" },
   abonado: { label: "Abonado", className: "bg-amber-100 text-amber-700 border-amber-200" },
   pagado: { label: "Pagado", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   // Estados de factura
+  por_pagar: { label: "Por pagar", className: "bg-amber-100 text-amber-700 border-amber-200" },
   parcial: { label: "Parcial", className: "bg-amber-100 text-amber-700 border-amber-200" },
   pagada: { label: "Pagada", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   // Vencido

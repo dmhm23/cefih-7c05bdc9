@@ -85,7 +85,7 @@ export const ESTADO_GRUPO_CARTERA_LABELS: Record<EstadoGrupoCartera, string> = {
 };
 
 export const ESTADO_FACTURA_LABELS: Record<EstadoFactura, string> = {
-  pendiente: 'Pendiente',
+  por_pagar: 'Por pagar',
   parcial: 'Parcial',
   pagada: 'Pagada',
 };

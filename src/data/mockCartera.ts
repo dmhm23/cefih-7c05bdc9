@@ -161,7 +161,7 @@ export const mockGruposCartera: GrupoCartera[] = [
   // Independientes
   { id: 'gc7', responsablePagoId: 'rp7', estado: 'pagado', totalValor: 350000, totalAbonos: 350000, saldo: 0, matriculaIds: ['m10'], createdAt: '2024-03-03T10:00:00Z' },
   { id: 'gc8', responsablePagoId: 'rp8', estado: 'pagado', totalValor: 280000, totalAbonos: 280000, saldo: 0, matriculaIds: ['m15'], createdAt: '2024-03-06T08:00:00Z' },
-  { id: 'gc14', responsablePagoId: 'rp9', estado: 'pendiente', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
+  { id: 'gc14', responsablePagoId: 'rp9', estado: 'sin_facturar', totalValor: 250000, totalAbonos: 0, saldo: 250000, matriculaIds: ['m24'], createdAt: '2024-03-10T09:00:00Z' },
 ];
 
 // ============ FACTURAS ============

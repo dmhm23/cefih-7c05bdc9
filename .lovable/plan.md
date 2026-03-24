@@ -1,25 +1,19 @@
 
 
-## Plan: Cambiar "Cambiar" → "Quitar" con icono X en rojo
+## Plan: Reducir espacio y alinear botones a la derecha
 
-### Cambio único en `src/pages/matriculas/MatriculaFormPage.tsx` (líneas 406-411)
+### Cambio en `src/pages/matriculas/MatriculaFormPage.tsx` (líneas 394-413)
 
-Reemplazar el botón actual:
-```tsx
-<Button variant="ghost" size="sm" ...>
-  Cambiar
-</Button>
+Envolver los dos botones ("Ver datos" y "Quitar") en un contenedor `div` con `flex items-center gap-1 shrink-0 ml-auto` para:
+- Reducir el espacio entre ambos botones de `gap-3` (heredado del padre) a `gap-1`
+- Asegurar alineación a la derecha con `ml-auto`
+
+```text
+Antes:  [Avatar] [Texto (flex-1)] ···gap-3··· [Ver datos] ···gap-3··· [Quitar]
+Después: [Avatar] [Texto (flex-1)] ···gap-3··· [Ver datos|Quitar]  (gap-1 interno)
 ```
 
-Por:
-```tsx
-<Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" ...>
-  <X className="h-4 w-4 mr-1" />
-  Quitar
-</Button>
-```
+### Detalle técnico
 
-- Importar `X` de `lucide-react` (probablemente ya importado).
-- Texto en rojo, icono X a la izquierda.
-- Un solo archivo, una sola línea de cambio.
+Después de línea 394 (`</div>` del texto), insertar un `<div className="flex items-center gap-1 shrink-0">` que envuelva ambos botones (líneas 395-413) y cerrar el `</div>` después del botón "Quitar".
 

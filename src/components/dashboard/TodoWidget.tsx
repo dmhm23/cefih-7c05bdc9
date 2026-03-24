@@ -15,6 +15,7 @@ const TodoWidget = () => {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [history, setHistory] = useState<TodoItem[]>([]);
   const [input, setInput] = useState("");
+  const [activeTab, setActiveTab] = useState<'tareas' | 'historial'>('tareas');
 
   useEffect(() => {
     setTodos(loadTodos());

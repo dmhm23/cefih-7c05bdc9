@@ -16,7 +16,7 @@ import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { GENEROS, SECTORES_ECONOMICOS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
+import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
 import { format } from "date-fns";
 
 const STORAGE_KEY = "personas_visible_columns";
@@ -24,8 +24,8 @@ const STORAGE_KEY = "personas_visible_columns";
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "numeroDocumento", header: "Documento", visible: true },
   { key: "nombre", header: "Nombre Completo", visible: true },
-  { key: "sector", header: "Sector", visible: true },
   { key: "telefono", header: "Teléfono", visible: true },
+  { key: "email", header: "Email", visible: false },
   { key: "email", header: "Email", visible: false },
   { key: "genero", header: "Género", visible: false },
   { key: "nivelEducativo", header: "Nivel Educativo", visible: false },
@@ -33,7 +33,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaNacimiento", header: "Fecha Nac.", visible: false },
   { key: "paisNacimiento", header: "País Nacimiento", visible: false },
   { key: "rh", header: "RH", visible: false },
-  { key: "areaTrabajo", header: "Área de Trabajo", visible: false },
+  { key: "contactoEmergencia", header: "Contacto Emergencia", visible: false },
   { key: "contactoEmergencia", header: "Contacto Emergencia", visible: false },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
@@ -49,7 +49,6 @@ export default function PersonasPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     genero: "todos",
-    sectorEconomico: [],
     nivelEducativo: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
@@ -78,12 +77,6 @@ export default function PersonasPage() {
       options: GENEROS.map((g) => ({ value: g.value, label: g.label })),
     },
     {
-      key: "sectorEconomico",
-      label: "Sector Económico",
-      type: "multiselect",
-      options: SECTORES_ECONOMICOS.map((s) => ({ value: s.value, label: s.label })),
-    },
-    {
       key: "nivelEducativo",
       label: "Nivel Educativo",
       type: "select",
@@ -106,11 +99,9 @@ export default function PersonasPage() {
       (p.email?.toLowerCase().includes(query) ?? false);
 
     const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;
-    const sectorFilters = filters.sectorEconomico as string[];
-    const matchesSector = sectorFilters.length === 0 || sectorFilters.includes(p.sectorEconomico);
     const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
 
-    return matchesSearch && matchesGenero && matchesSector && matchesNivel;
+    return matchesSearch && matchesGenero && matchesNivel;
   });
 
   const handleDelete = async () => {
@@ -144,7 +135,6 @@ export default function PersonasPage() {
   const handleClearFilters = () => {
     setFilters({
       genero: "todos",
-      sectorEconomico: [],
       nivelEducativo: "todos",
     });
   };
@@ -173,11 +163,6 @@ export default function PersonasPage() {
     setSelectedIds([persona.id]);
     // Actualizar panel
     setSelectedIndex(index);
-  };
-
-  const getSectorLabel = (value: string) => {
-    const sector = SECTORES_ECONOMICOS.find((s) => s.value === value);
-    return sector?.label || value;
   };
 
   const getGeneroLabel = (value: string) => {
@@ -224,18 +209,6 @@ export default function PersonasPage() {
         <span className="font-medium">{p.nombres} {p.apellidos}</span>
       ),
     },
-    {
-      key: "sector",
-      header: "Sector",
-      className: "min-w-[140px]",
-      sortable: true,
-      sortKey: "sectorEconomico",
-      render: (p: Persona) => (
-        <Badge variant="secondary" className="font-normal">
-          {getSectorLabel(p.sectorEconomico)}
-        </Badge>
-      ),
-    },
     { key: "telefono", header: "Teléfono" },
     { key: "email", header: "Email", className: "min-w-[200px]", sortable: true },
     {
@@ -266,12 +239,6 @@ export default function PersonasPage() {
     },
     { key: "paisNacimiento", header: "País Nacimiento" },
     { key: "rh", header: "RH" },
-    {
-      key: "areaTrabajo",
-      header: "Área de Trabajo",
-      render: (p: Persona) =>
-        p.areaTrabajo === "administrativo" ? "Administrativo" : "Operativa",
-    },
     {
       key: "contactoEmergencia",
       header: "Contacto Emergencia",

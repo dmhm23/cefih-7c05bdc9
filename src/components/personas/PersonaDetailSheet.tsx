@@ -8,8 +8,6 @@ import {
   Calendar,
   Droplet,
   GraduationCap,
-  Building2,
-  Briefcase,
   Globe,
   UserCircle,
   AlertCircle,
@@ -25,8 +23,6 @@ import {
   GENEROS,
   NIVELES_EDUCATIVOS,
   GRUPOS_SANGUINEOS,
-  AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
   PAISES,
 } from "@/data/formOptions";
 import { Separator } from "@/components/ui/separator";
@@ -238,28 +234,6 @@ export function PersonaDetailSheet({
               options={[...NIVELES_EDUCATIVOS]}
               icon={GraduationCap}
             />
-            <EditableField
-              label="Área de Trabajo"
-              value={getValue("areaTrabajo")}
-              displayValue={getDisplayLabel(getValue("areaTrabajo"), AREAS_TRABAJO)}
-              onChange={(v) => handleFieldChange("areaTrabajo", v)}
-              type="select"
-              options={[...AREAS_TRABAJO]}
-              icon={Briefcase}
-              badge
-            />
-            <div className="col-span-2">
-              <EditableField
-                label="Sector Económico"
-                value={getValue("sectorEconomico")}
-                displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
-                onChange={(v) => handleFieldChange("sectorEconomico", v)}
-                type="select"
-                options={[...SECTORES_ECONOMICOS]}
-                icon={Building2}
-              />
-              <p className="text-xs text-muted-foreground mt-1 italic">Estos campos se gestionan desde la matrícula</p>
-            </div>
           </div>
         </DetailSection>
 

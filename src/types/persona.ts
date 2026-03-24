@@ -17,9 +17,6 @@ export type NivelEducativo =
   | 'maestria' 
   | 'doctorado';
 
-// Áreas de trabajo
-export type AreaTrabajo = 'administrativo' | 'operativa';
-
 export interface ContactoEmergencia {
   nombre: string;
   telefono: string;
@@ -43,8 +40,6 @@ export interface Persona {
   
   // Datos laborales/educativos
   nivelEducativo: NivelEducativo;
-  areaTrabajo: AreaTrabajo;
-  sectorEconomico: string;
   
   // Datos de contacto
   email: string;

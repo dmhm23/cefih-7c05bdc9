@@ -19,8 +19,6 @@ export const mockPersonas: Persona[] = [
     fechaNacimiento: '1985-06-15',
     rh: 'O+',
     nivelEducativo: 'universitario',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'construccion',
     email: 'juan.rodriguez@email.com',
     telefono: '3001234567',
     contactoEmergencia: {
@@ -42,8 +40,6 @@ export const mockPersonas: Persona[] = [
     fechaNacimiento: '1990-03-22',
     rh: 'A+',
     nivelEducativo: 'tecnologo',
-    areaTrabajo: 'administrativo',
-    sectorEconomico: 'energia_electrica',
     email: 'ana.garcia@email.com',
     telefono: '3112223344',
     contactoEmergencia: {
@@ -65,8 +61,6 @@ export const mockPersonas: Persona[] = [
     fechaNacimiento: '1988-11-08',
     rh: 'B-',
     nivelEducativo: 'bachiller',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'infraestructura_vial',
     email: 'pedro.martinez@email.com',
     telefono: '3203334455',
     contactoEmergencia: {
@@ -88,8 +82,6 @@ export const mockPersonas: Persona[] = [
     fechaNacimiento: '1992-07-30',
     rh: 'AB+',
     nivelEducativo: 'tecnico',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'telecomunicaciones',
     email: 'luisa.torres@email.com',
     telefono: '3014445566',
     contactoEmergencia: {
@@ -102,83 +94,83 @@ export const mockPersonas: Persona[] = [
   },
   // ============ PERSONAS NUEVAS (p5-p24) ============
   {
-    id: 'p5', tipoDocumento: 'CC', numeroDocumento: '1045678901', nombres: 'Diego Alejandro', apellidos: 'Castillo Vargas', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1991-04-12', rh: 'O+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'diego.castillo@email.com', telefono: '3001112233',
+    id: 'p5', tipoDocumento: 'CC', numeroDocumento: '1045678901', nombres: 'Diego Alejandro', apellidos: 'Castillo Vargas', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1991-04-12', rh: 'O+', nivelEducativo: 'tecnico', email: 'diego.castillo@email.com', telefono: '3001112233',
     contactoEmergencia: { nombre: 'Martha Vargas', telefono: '3109998877', parentesco: 'Madre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'energia_electrica', email: 'camila.rios@email.com', telefono: '3156667788',
+    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'universitario', email: 'camila.rios@email.com', telefono: '3156667788',
     contactoEmergencia: { nombre: 'Jorge Rios', telefono: '3204445566', parentesco: 'Padre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'oscar.bernal@email.com', telefono: '3212345678',
+    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'bachiller', email: 'oscar.bernal@email.com', telefono: '3212345678',
     contactoEmergencia: { nombre: 'Gloria Quintero', telefono: '3101234567', parentesco: 'Madre' }, createdAt: '2024-03-02T08:00:00Z', updatedAt: '2024-03-02T08:00:00Z',
   },
   {
-    id: 'p8', tipoDocumento: 'CC', numeroDocumento: '1056789012', nombres: 'Natalia', apellidos: 'Herrera Muñoz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1995-12-03', rh: 'O-', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'natalia.herrera@email.com', telefono: '3178889900',
+    id: 'p8', tipoDocumento: 'CC', numeroDocumento: '1056789012', nombres: 'Natalia', apellidos: 'Herrera Muñoz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1995-12-03', rh: 'O-', nivelEducativo: 'tecnologo', email: 'natalia.herrera@email.com', telefono: '3178889900',
     contactoEmergencia: { nombre: 'Carlos Herrera', telefono: '3057776655', parentesco: 'Hermano' }, createdAt: '2024-03-02T08:00:00Z', updatedAt: '2024-03-02T08:00:00Z',
   },
   {
-    id: 'p9', tipoDocumento: 'CC', numeroDocumento: '1034567890', nombres: 'Andrés Felipe', apellidos: 'Moreno Díaz', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1989-06-20', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'andres.moreno@email.com', telefono: '3009876543',
+    id: 'p9', tipoDocumento: 'CC', numeroDocumento: '1034567890', nombres: 'Andrés Felipe', apellidos: 'Moreno Díaz', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1989-06-20', rh: 'A+', nivelEducativo: 'tecnico', email: 'andres.moreno@email.com', telefono: '3009876543',
     contactoEmergencia: { nombre: 'Luz Díaz', telefono: '3115554433', parentesco: 'Esposa' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'maria.ospina@email.com', telefono: '3143216789',
+    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'universitario', email: 'maria.ospina@email.com', telefono: '3143216789',
     contactoEmergencia: { nombre: 'Eduardo Ospina', telefono: '3208765432', parentesco: 'Padre' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'santiago.guzman@email.com', telefono: '3225556677',
+    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'bachiller', email: 'santiago.guzman@email.com', telefono: '3225556677',
     contactoEmergencia: { nombre: 'Rosa Peña', telefono: '3117778899', parentesco: 'Madre' }, createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-04T08:00:00Z',
   },
   {
-    id: 'p12', tipoDocumento: 'CC', numeroDocumento: '1078901234', nombres: 'Laura Sofía', apellidos: 'Cárdenas Rojas', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1996-11-27', rh: 'B-', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'laura.cardenas@email.com', telefono: '3186543210',
+    id: 'p12', tipoDocumento: 'CC', numeroDocumento: '1078901234', nombres: 'Laura Sofía', apellidos: 'Cárdenas Rojas', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1996-11-27', rh: 'B-', nivelEducativo: 'tecnologo', email: 'laura.cardenas@email.com', telefono: '3186543210',
     contactoEmergencia: { nombre: 'Miguel Cárdenas', telefono: '3009871234', parentesco: 'Padre' }, createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-04T08:00:00Z',
   },
   {
-    id: 'p13', tipoDocumento: 'CC', numeroDocumento: '1089012345', nombres: 'Julián', apellidos: 'Parra Soto', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1986-03-15', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'julian.parra@email.com', telefono: '3007654321',
+    id: 'p13', tipoDocumento: 'CC', numeroDocumento: '1089012345', nombres: 'Julián', apellidos: 'Parra Soto', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1986-03-15', rh: 'A+', nivelEducativo: 'tecnico', email: 'julian.parra@email.com', telefono: '3007654321',
     contactoEmergencia: { nombre: 'Carmen Soto', telefono: '3128765432', parentesco: 'Esposa' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
-    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'daniela.mejia@email.com', telefono: '3191234567',
+    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'universitario', email: 'daniela.mejia@email.com', telefono: '3191234567',
     contactoEmergencia: { nombre: 'Patricia Ortiz', telefono: '3202345678', parentesco: 'Madre' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
-    id: 'p15', tipoDocumento: 'CC', numeroDocumento: '1012345678', nombres: 'Carlos Alberto', apellidos: 'Valencia Restrepo', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1984-10-01', rh: 'B+', nivelEducativo: 'especializacion', areaTrabajo: 'administrativo', sectorEconomico: 'construccion', email: 'carlos.valencia@email.com', telefono: '3008765432',
+    id: 'p15', tipoDocumento: 'CC', numeroDocumento: '1012345678', nombres: 'Carlos Alberto', apellidos: 'Valencia Restrepo', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1984-10-01', rh: 'B+', nivelEducativo: 'especializacion', email: 'carlos.valencia@email.com', telefono: '3008765432',
     contactoEmergencia: { nombre: 'Elena Restrepo', telefono: '3119876543', parentesco: 'Esposa' }, createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-06T08:00:00Z',
   },
   {
-    id: 'p16', tipoDocumento: 'CC', numeroDocumento: '1043210987', nombres: 'Paola', apellidos: 'Suárez Castaño', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1992-07-17', rh: 'A-', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'paola.suarez@email.com', telefono: '3163456789',
+    id: 'p16', tipoDocumento: 'CC', numeroDocumento: '1043210987', nombres: 'Paola', apellidos: 'Suárez Castaño', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1992-07-17', rh: 'A-', nivelEducativo: 'tecnico', email: 'paola.suarez@email.com', telefono: '3163456789',
     contactoEmergencia: { nombre: 'Fernando Suárez', telefono: '3054567890', parentesco: 'Hermano' }, createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-06T08:00:00Z',
   },
   {
-    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'roberto.jimenez@email.com', telefono: '3237654321',
+    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'bachiller', email: 'roberto.jimenez@email.com', telefono: '3237654321',
     contactoEmergencia: { nombre: 'Ana Luna', telefono: '3108765432', parentesco: 'Madre' }, createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-07T08:00:00Z',
   },
   {
-    id: 'p18', tipoDocumento: 'CC', numeroDocumento: '1054321098', nombres: 'Alejandra', apellidos: 'Rincón Vega', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-01-30', rh: 'AB+', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'alejandra.rincon@email.com', telefono: '3145678901',
+    id: 'p18', tipoDocumento: 'CC', numeroDocumento: '1054321098', nombres: 'Alejandra', apellidos: 'Rincón Vega', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-01-30', rh: 'AB+', nivelEducativo: 'tecnologo', email: 'alejandra.rincon@email.com', telefono: '3145678901',
     contactoEmergencia: { nombre: 'Luis Rincón', telefono: '3206789012', parentesco: 'Padre' }, createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-07T08:00:00Z',
   },
   {
-    id: 'p19', tipoDocumento: 'CC', numeroDocumento: '1065432109', nombres: 'Fabián', apellidos: 'Duarte Acosta', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1985-12-11', rh: 'A+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'fabian.duarte@email.com', telefono: '3006789012',
+    id: 'p19', tipoDocumento: 'CC', numeroDocumento: '1065432109', nombres: 'Fabián', apellidos: 'Duarte Acosta', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1985-12-11', rh: 'A+', nivelEducativo: 'tecnico', email: 'fabian.duarte@email.com', telefono: '3006789012',
     contactoEmergencia: { nombre: 'Sandra Acosta', telefono: '3117890123', parentesco: 'Esposa' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'universitario', areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones', email: 'viviana.molina@email.com', telefono: '3187890123',
+    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'universitario', email: 'viviana.molina@email.com', telefono: '3187890123',
     contactoEmergencia: { nombre: 'Ricardo Molina', telefono: '3058901234', parentesco: 'Hermano' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'bachiller', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'hernan.aguilar@email.com', telefono: '3228901234',
+    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'bachiller', email: 'hernan.aguilar@email.com', telefono: '3228901234',
     contactoEmergencia: { nombre: 'Marta Romero', telefono: '3109012345', parentesco: 'Madre' }, createdAt: '2024-03-09T08:00:00Z', updatedAt: '2024-03-09T08:00:00Z',
   },
   {
-    id: 'p22', tipoDocumento: 'CC', numeroDocumento: '1098765410', nombres: 'Carolina', apellidos: 'Pineda Álvarez', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1994-04-19', rh: 'A+', nivelEducativo: 'tecnologo', areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica', email: 'carolina.pineda@email.com', telefono: '3170123456',
+    id: 'p22', tipoDocumento: 'CC', numeroDocumento: '1098765410', nombres: 'Carolina', apellidos: 'Pineda Álvarez', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1994-04-19', rh: 'A+', nivelEducativo: 'tecnologo', email: 'carolina.pineda@email.com', telefono: '3170123456',
     contactoEmergencia: { nombre: 'Alberto Pineda', telefono: '3200123456', parentesco: 'Padre' }, createdAt: '2024-03-09T08:00:00Z', updatedAt: '2024-03-09T08:00:00Z',
   },
   {
-    id: 'p23', tipoDocumento: 'CC', numeroDocumento: '1019876543', nombres: 'Edwin', apellidos: 'Cortés Beltrán', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-02-07', rh: 'O+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial', email: 'edwin.cortes@email.com', telefono: '3001234568',
+    id: 'p23', tipoDocumento: 'CC', numeroDocumento: '1019876543', nombres: 'Edwin', apellidos: 'Cortés Beltrán', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-02-07', rh: 'O+', nivelEducativo: 'tecnico', email: 'edwin.cortes@email.com', telefono: '3001234568',
     contactoEmergencia: { nombre: 'Diana Beltrán', telefono: '3111234567', parentesco: 'Esposa' }, createdAt: '2024-03-10T08:00:00Z', updatedAt: '2024-03-10T08:00:00Z',
   },
   {
-    id: 'p24', tipoDocumento: 'CE', numeroDocumento: '4455667788', nombres: 'Yesenia', apellidos: 'Contreras Medina', genero: 'F', paisNacimiento: 'VE', fechaNacimiento: '1996-06-14', rh: 'AB+', nivelEducativo: 'tecnico', areaTrabajo: 'operativa', sectorEconomico: 'construccion', email: 'yesenia.contreras@email.com', telefono: '3152345678',
+    id: 'p24', tipoDocumento: 'CE', numeroDocumento: '4455667788', nombres: 'Yesenia', apellidos: 'Contreras Medina', genero: 'F', paisNacimiento: 'VE', fechaNacimiento: '1996-06-14', rh: 'AB+', nivelEducativo: 'tecnico', email: 'yesenia.contreras@email.com', telefono: '3152345678',
     contactoEmergencia: { nombre: 'Jorge Contreras', telefono: '3203456789', parentesco: 'Hermano' }, createdAt: '2024-03-10T08:00:00Z', updatedAt: '2024-03-10T08:00:00Z',
   },
 ];
@@ -352,8 +344,6 @@ export const mockMatriculas: Matricula[] = [
     empresaNivelFormacion: 'trabajador_autorizado',
     empresaContactoNombre: 'Sandra Milena López',
     empresaContactoTelefono: '3201234567',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'construccion',
     consentimientoSalud: true,
     restriccionMedica: false,
     alergias: false,
@@ -394,8 +384,6 @@ export const mockMatriculas: Matricula[] = [
     fechaInicio: '2024-03-01',
     fechaFin: '2024-03-03',
     tipoVinculacion: 'independiente',
-    areaTrabajo: 'administrativo',
-    sectorEconomico: 'energia_electrica',
     consentimientoSalud: true,
     restriccionMedica: true,
     restriccionMedicaDetalle: 'Vértigo leve diagnosticado',
@@ -450,8 +438,6 @@ export const mockMatriculas: Matricula[] = [
     empresaNivelFormacion: 'reentrenamiento',
     empresaContactoNombre: 'Camila Herrera',
     empresaContactoTelefono: '3109876543',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: false,
     restriccionMedica: false,
     alergias: false,
@@ -492,8 +478,6 @@ export const mockMatriculas: Matricula[] = [
     empresaNivelFormacion: 'coordinador_ta',
     empresaContactoNombre: 'Andrés Patiño',
     empresaContactoTelefono: '3154567890',
-    areaTrabajo: 'operativa',
-    sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true,
     restriccionMedica: false,
     alergias: false,
@@ -536,7 +520,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm5', personaId: 'p5', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd50', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-01' },
@@ -553,7 +536,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm6', personaId: 'p6', cursoId: 'c1', estado: 'completa', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Oficial de alturas', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: true, restriccionMedica: false, alergias: true, alergiasDetalle: 'Polen', consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd54', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-01' },
@@ -569,7 +551,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm7', personaId: 'p7', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Operario de fachada', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd58', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-02' },
@@ -584,7 +565,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm8', personaId: 'p8', cursoId: 'c1', estado: 'creada', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de instalación', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
-    areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd62', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -599,7 +579,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm9', personaId: 'p9', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Operario de montaje', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
-    areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd66', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-03' },
@@ -615,7 +594,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm10', personaId: 'p10', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
     tipoVinculacion: 'independiente',
-    areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd70', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-03' },
@@ -633,7 +611,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm11', personaId: 'p11', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Santander', fechaCertificacionPrevia: '2023-05-10',
     tipoVinculacion: 'empresa', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Operario de alturas', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
-    areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd74', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-04' },
@@ -651,7 +628,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm12', personaId: 'p12', cursoId: 'c2', estado: 'creada', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Formación Alturas Bogotá', fechaCertificacionPrevia: '2023-08-20',
     tipoVinculacion: 'empresa', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
-    areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd79', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -667,7 +643,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm13', personaId: 'p13', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-04-15',
     tipoVinculacion: 'empresa', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnico de redes', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
-    areaTrabajo: 'operativa', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd83', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-05' },
@@ -684,7 +659,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm14', personaId: 'p14', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro de Capacitación Medellín', fechaCertificacionPrevia: '2023-09-10',
     tipoVinculacion: 'empresa', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnica de antenas', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
-    areaTrabajo: 'operativa', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: true, restriccionMedicaDetalle: 'Asma leve controlada', alergias: false, consumoMedicamentos: true, consumoMedicamentosDetalle: 'Salbutamol inhalador', nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd87', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-05' },
@@ -701,7 +675,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm15', personaId: 'p15', cursoId: 'c2', estado: 'completa', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'avanzado', centroFormacionPrevio: 'Escuela Colombiana de Ingeniería', fechaCertificacionPrevia: '2023-06-01',
     tipoVinculacion: 'independiente',
-    areaTrabajo: 'administrativo', sectorEconomico: 'construccion',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd91', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-06' },
@@ -719,7 +692,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm16', personaId: 'p16', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Jefa de seguridad', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd96', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -734,7 +706,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm17', personaId: 'p17', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisor de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd100', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-07' },
@@ -750,7 +721,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm18', personaId: 'p18', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisora de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd104', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-07' },
@@ -766,7 +736,6 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm19', personaId: 'p19', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd108', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -783,7 +752,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm20', personaId: 'p20', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Medellín', fechaCertificacionPrevia: '2023-07-15',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'administrativo', sectorEconomico: 'telecomunicaciones',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd112', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-08' },
@@ -800,7 +768,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm21', personaId: 'p21', cursoId: 'c6', estado: 'creada', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Alturas Barranquilla', fechaCertificacionPrevia: '2023-03-20',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd116', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -816,7 +783,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm22', personaId: 'p22', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Cali', fechaCertificacionPrevia: '2023-10-05',
     tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de paneles', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
-    areaTrabajo: 'operativa', sectorEconomico: 'energia_electrica',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd120', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-09' },
@@ -833,7 +799,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm23', personaId: 'p23', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-05-25',
     tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de voladura', empresaNivelFormacion: 'reentrenamiento', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
-    areaTrabajo: 'operativa', sectorEconomico: 'infraestructura_vial',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd124', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-10' },
@@ -850,7 +815,6 @@ export const mockMatriculas: Matricula[] = [
     id: 'm24', personaId: 'p24', cursoId: 'c6', estado: 'creada', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro de Formación Cartagena', fechaCertificacionPrevia: '2023-08-12',
     tipoVinculacion: 'independiente',
-    areaTrabajo: 'operativa', sectorEconomico: 'construccion',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd128', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },

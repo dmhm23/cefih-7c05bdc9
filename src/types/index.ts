@@ -5,7 +5,6 @@ export type {
   TipoDocumento,
   Genero,
   NivelEducativo,
-  AreaTrabajo 
 } from './persona';
 export * from './matricula';
 export * from './curso';

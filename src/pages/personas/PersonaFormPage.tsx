@@ -31,8 +31,6 @@ import {
   GENEROS,
   PAISES,
   NIVELES_EDUCATIVOS,
-  AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
   GRUPOS_SANGUINEOS,
 } from "@/data/formOptions";
 
@@ -51,8 +49,6 @@ const personaSchema = z.object({
   
   // Datos laborales/educativos
   nivelEducativo: z.string().min(1, "Seleccione el nivel"),
-  areaTrabajo: z.enum(['administrativo', 'operativa'], { required_error: "Seleccione el área" }),
-  sectorEconomico: z.string().min(1, "Seleccione el sector"),
   
   // Contacto
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -88,8 +84,6 @@ export default function PersonaFormPage() {
       fechaNacimiento: "",
       rh: "",
       nivelEducativo: "",
-      areaTrabajo: 'operativa',
-      sectorEconomico: "",
       email: "",
       telefono: "",
       contactoEmergenciaNombre: "",
@@ -110,8 +104,6 @@ export default function PersonaFormPage() {
         fechaNacimiento: persona.fechaNacimiento,
         rh: persona.rh,
         nivelEducativo: persona.nivelEducativo,
-        areaTrabajo: persona.areaTrabajo,
-        sectorEconomico: persona.sectorEconomico,
         email: persona.email,
         telefono: persona.telefono,
         contactoEmergenciaNombre: persona.contactoEmergencia.nombre,
@@ -133,8 +125,6 @@ export default function PersonaFormPage() {
         fechaNacimiento: data.fechaNacimiento,
         rh: data.rh,
         nivelEducativo: data.nivelEducativo as any,
-        areaTrabajo: data.areaTrabajo,
-        sectorEconomico: data.sectorEconomico,
         email: data.email,
         telefono: data.telefono,
         contactoEmergencia: {
@@ -373,53 +363,6 @@ export default function PersonaFormPage() {
                 )}
               />
 
-              {/* Área de Trabajo */}
-              <FormField
-                control={form.control}
-                name="areaTrabajo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Área de Trabajo *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {AREAS_TRABAJO.map((area) => (
-                          <SelectItem key={area.value} value={area.value}>
-                            {area.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Sector Económico */}
-              <FormField
-                control={form.control}
-                name="sectorEconomico"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector Económico *</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        options={SECTORES_ECONOMICOS}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Seleccionar sector..."
-                        searchPlaceholder="Buscar sector..."
-                        emptyMessage="Sector no encontrado"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

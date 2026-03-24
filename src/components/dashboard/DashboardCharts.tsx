@@ -1,11 +1,13 @@
 import { useState, useMemo } from "react";
 import {
   BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend,
+  XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import {
   generateVolumenMatriculas,
   generateIngresosTiempo,
@@ -48,12 +50,20 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
   }
 
   return (
-    <>
+    <TooltipProvider>
       {/* Volumen Matrículas */}
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Volumen de Matrículas</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium">Volumen de Matrículas</CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={14} className="text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>Cantidad de estudiantes matriculados por mes en el período seleccionado.</TooltipContent>
+              </Tooltip>
+            </div>
             <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
               <SelectTrigger className="w-32 h-8 text-xs">
                 <SelectValue />
@@ -73,7 +83,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="mes" className="text-xs fill-muted-foreground" />
                 <YAxis className="text-xs fill-muted-foreground" />
-                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'hsl(var(--foreground))' }} />
+                <RechartsTooltip contentStyle={tooltipStyle} labelStyle={{ color: 'hsl(var(--foreground))' }} />
                 <Bar dataKey="valor" name="Estudiantes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -84,7 +94,15 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       {/* Ingresos */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Ingresos en el Tiempo</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Ingresos en el Tiempo</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={14} className="text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Ingresos totales recaudados por mes, expresados en pesos colombianos (COP).</TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-52">
@@ -93,7 +111,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="mes" className="text-xs fill-muted-foreground" />
                 <YAxis tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} className="text-xs fill-muted-foreground" />
-                <Tooltip
+                <RechartsTooltip
                   formatter={(value: number) => [formatCurrency(value), "Ingreso"]}
                   contentStyle={tooltipStyle}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
@@ -114,7 +132,15 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       {/* Distribución por Nivel */}
       <Card className="h-[370px] flex flex-col overflow-hidden">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={14} className="text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Cantidad de estudiantes agrupados por nivel de formación empresarial.</TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent className="flex-1 min-h-0 flex flex-col items-center justify-center">
           <div className="h-full w-full">
@@ -134,7 +160,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                     <Cell key={i} fill={entry.fill} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
+                <RechartsTooltip contentStyle={tooltipStyle} />
                 <Legend
                   formatter={(value: string) => (
                     <span className="text-xs text-muted-foreground">{value}</span>
@@ -145,7 +171,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
           </div>
         </CardContent>
       </Card>
-    </>
+    </TooltipProvider>
   );
 };
 

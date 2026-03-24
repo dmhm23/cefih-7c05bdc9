@@ -1,22 +1,29 @@
 
 
-## Plan: Scrollbar horizontal fija en tablas
+## Plan: Ajustar TodoWidget — altura fija con scroll y fecha de creación
 
-### Problema
-Hay dos contenedores `overflow-auto` anidados:
-1. **DataTable** (línea 191): `overflow-auto h-full` — maneja scroll vertical
-2. **Table component** (línea 7): `overflow-auto` — maneja scroll horizontal
+### Cambios en `src/components/dashboard/TodoWidget.tsx`
 
-La scrollbar horizontal vive en el contenedor interior, así que se desplaza hacia abajo con el contenido y desaparece de la vista.
+**1. Altura fija con scroll vertical**
+- Hacer que la Card use `h-full flex flex-col` para igualarse a la gráfica vecina.
+- Cambiar el `ScrollArea` de `max-h-64` a `flex-1 min-h-0` para que ocupe el espacio restante y haga scroll interno sin expandir la tarjeta.
 
-### Solución
-Eliminar el `overflow-auto` del wrapper interno del componente `Table` y dejar que el único contenedor de DataTable maneje ambos ejes de scroll. Así la scrollbar horizontal queda fija al fondo del contenedor visible.
+**2. Mostrar fecha de creación**
+- Junto al botón de eliminar (al final de cada fila), agregar un `<span>` con la fecha formateada en `text-xs text-muted-foreground/60`.
+- Formato corto: `dd/mm/yyyy` usando `toLocaleDateString('es-CO')`.
+- La fecha será siempre visible (no solo en hover como el botón eliminar).
 
-### Cambios
+### Detalle técnico
 
-1. **`src/components/ui/table.tsx`** — Cambiar `overflow-auto` a `overflow-visible` en el div wrapper del `Table` para que no cree su propia zona de scroll.
+```
+Card (h-full flex flex-col)
+  CardHeader
+  CardContent (flex-1 flex flex-col min-h-0)
+    Input row
+    ScrollArea (flex-1 min-h-0 overflow-y-auto)
+      cada tarea:
+        [✓] Texto de la tarea          12/03/2026  🗑
+```
 
-2. **`src/components/shared/DataTable.tsx`** — En el contenedor de scroll (línea 191), asegurar `overflow-auto` para ambos ejes. Como el contenedor tiene `h-full` y `min-h-0`, la scrollbar horizontal permanecerá anclada al borde inferior visible.
-
-Resultado: una sola zona de scroll que mantiene la barra horizontal siempre visible al fondo de la tabla, sin importar cuántos registros haya.
+Un solo archivo modificado: `src/components/dashboard/TodoWidget.tsx`.
 

@@ -84,13 +84,6 @@ interface MatriculaDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
-const ESTADO_OPTIONS = [
-  { value: "creada", label: "Creada" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "completa", label: "Completa" },
-  { value: "certificada", label: "Certificada" },
-  { value: "cerrada", label: "Cerrada" },
-];
 
 
 export function MatriculaDetailSheet({

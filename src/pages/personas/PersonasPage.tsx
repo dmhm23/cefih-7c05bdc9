@@ -137,7 +137,6 @@ export default function PersonasPage() {
   const handleClearFilters = () => {
     setFilters({
       genero: "todos",
-      sectorEconomico: [],
       nivelEducativo: "todos",
     });
   };

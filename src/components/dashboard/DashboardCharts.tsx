@@ -55,7 +55,15 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       <Card>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Volumen de Matrículas</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium">Volumen de Matrículas</CardTitle>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={14} className="text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>Cantidad de estudiantes matriculados por mes en el período seleccionado.</TooltipContent>
+              </Tooltip>
+            </div>
             <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
               <SelectTrigger className="w-32 h-8 text-xs">
                 <SelectValue />

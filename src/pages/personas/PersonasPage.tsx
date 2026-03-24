@@ -242,12 +242,6 @@ export default function PersonasPage() {
     { key: "paisNacimiento", header: "País Nacimiento" },
     { key: "rh", header: "RH" },
     {
-      key: "areaTrabajo",
-      header: "Área de Trabajo",
-      render: (p: Persona) =>
-        p.areaTrabajo === "administrativo" ? "Administrativo" : "Operativa",
-    },
-    {
       key: "contactoEmergencia",
       header: "Contacto Emergencia",
       className: "min-w-[200px]",

@@ -64,7 +64,7 @@ export function CursoDetailSheet({
 
   if (!curso) return null;
 
-  const title = `${TIPO_FORMACION_LABELS[curso.tipoFormacion]} — #${curso.numeroCurso}`;
+  const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
   const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {

@@ -19,6 +19,8 @@ import { Matricula } from "@/types";
 import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { mockGruposCartera } from "@/data/mockCartera";
+import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 
@@ -27,10 +29,9 @@ const ESTADO_DOCUMENTAL_OPTIONS = [
   { value: "pendiente", label: "Pendiente" },
 ];
 
-const PAGO_OPTIONS = [
-  { value: "pagado", label: "Pagado" },
-  { value: "pendiente", label: "Pendiente" },
-];
+const ESTADO_CARTERA_OPTIONS = Object.entries(ESTADO_GRUPO_CARTERA_LABELS).map(
+  ([value, label]) => ({ value, label })
+);
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaCreacion", header: "Fecha Creación", visible: true },
@@ -39,7 +40,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaArl", header: "Fecha Cobertura ARL", visible: true },
   { key: "fechaExamen", header: "Fecha Examen", visible: true },
   { key: "estadoDocumental", header: "Estado Documental", visible: true },
-  { key: "estadoFinanciero", header: "Estado Financiero", visible: true },
+  { key: "estadoCartera", header: "Estado de Cartera", visible: true },
   { key: "tipoVinculacion", header: "Vinculación", visible: false },
   { key: "nit", header: "NIT Empresa", visible: false },
   { key: "cargo", header: "Cargo", visible: false },
@@ -65,7 +66,7 @@ export default function MatriculasPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
-    pago: "todos",
+    estadoCartera: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -101,6 +102,13 @@ export default function MatriculasPage() {
       : "Pendiente";
   };
 
+  const getEstadoCartera = (matricula: Matricula): EstadoGrupoCartera => {
+    const grupo = mockGruposCartera.find((g) =>
+      g.matriculaIds.includes(matricula.id)
+    );
+    return grupo?.estado ?? "sin_facturar";
+  };
+
   const filterConfigs: FilterConfig[] = [
     {
       key: "estadoDocumental",
@@ -109,10 +117,10 @@ export default function MatriculasPage() {
       options: ESTADO_DOCUMENTAL_OPTIONS,
     },
     {
-      key: "pago",
-      label: "Estado de Pago",
+      key: "estadoCartera",
+      label: "Estado de Cartera",
       type: "select",
-      options: PAGO_OPTIONS,
+      options: ESTADO_CARTERA_OPTIONS,
     },
   ];
 
@@ -147,12 +155,10 @@ export default function MatriculasPage() {
 
     const estadoDoc = getEstadoDocumental(m).toLowerCase();
     const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;
-    const matchesPago =
-      filters.pago === "todos" ||
-      (filters.pago === "pagado" && m.pagado) ||
-      (filters.pago === "pendiente" && !m.pagado);
+    const estadoCartera = getEstadoCartera(m);
+    const matchesCartera = filters.estadoCartera === "todos" || estadoCartera === filters.estadoCartera;
 
-    return matchesSearch && matchesEstadoDoc && matchesPago;
+    return matchesSearch && matchesEstadoDoc && matchesCartera;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -162,7 +168,7 @@ export default function MatriculasPage() {
   const handleClearFilters = () => {
     setFilters({
       estadoDocumental: "todos",
-      pago: "todos",
+      estadoCartera: "todos",
     });
   };
 
@@ -282,18 +288,14 @@ export default function MatriculasPage() {
       },
     },
     {
-      key: "estadoFinanciero",
-      header: "Estado Financiero",
+      key: "estadoCartera",
+      header: "Estado de Cartera",
       sortable: true,
-      sortValue: (m: Matricula) => m.pagado ? "Pagado" : "Pendiente",
-      render: (m: Matricula) => (
-        <Badge
-          variant={m.pagado ? "default" : "secondary"}
-          className={m.pagado ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-600"}
-        >
-          {m.pagado ? "Pagado" : "Pendiente"}
-        </Badge>
-      ),
+      sortValue: (m: Matricula) => getEstadoCartera(m),
+      render: (m: Matricula) => {
+        const estado = getEstadoCartera(m);
+        return <StatusBadge status={estado} />;
+      },
     },
     {
       key: "tipoVinculacion",

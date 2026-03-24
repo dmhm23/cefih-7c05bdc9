@@ -40,7 +40,7 @@ function recalcGrupo(grupo: GrupoCartera) {
     } else if (facturas.length > 0) {
       grupo.estado = 'facturado';
     } else {
-      grupo.estado = 'pendiente';
+      grupo.estado = 'sin_facturar';
     }
   }
 }

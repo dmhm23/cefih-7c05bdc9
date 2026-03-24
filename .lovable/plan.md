@@ -1,25 +1,23 @@
 
 
-## Plan: Agregar Historial de Matrículas al panel lateral de Personas
+## Plan: Renombrar "Tipo de Vinculación" → "Responsable del pago"
 
-### Resumen
-Replicar la sección "Matrículas" que ya existe en `/personas/:id` (PersonaDetallePage, líneas 270-308) dentro del panel lateral `PersonaDetailSheet.tsx`.
+Cambio exclusivamente de label/texto visible. No se modifica ninguna variable, tipo, ni lógica.
 
-### Cambios en `src/components/personas/PersonaDetailSheet.tsx`
+### Archivos a modificar (4 archivos, 1 línea cada uno)
 
-1. **Imports nuevos**:
-   - `useMatriculasByPersona` de `@/hooks/useMatriculas`
-   - `StatusBadge` de `@/components/shared/StatusBadge`
-   - `NIVEL_FORMACION_EMPRESA_LABELS` de `@/types/matricula`
-   - `format` de `date-fns`
+1. **`src/pages/matriculas/MatriculaFormPage.tsx`** (línea 651)
+   - `"Tipo de Vinculación"` → `"Responsable del pago"`
 
-2. **Hook**: Llamar `useMatriculasByPersona(persona.id)` dentro del componente para obtener las matrículas.
+2. **`src/pages/matriculas/MatriculaDetallePage.tsx`** (línea 470)
+   - `"Tipo de Vinculación"` → `"Responsable del pago"`
 
-3. **Sección nueva** después de "Contacto de Emergencia": agregar un `Separator` y una `DetailSection` con título "Matrículas" que muestre:
-   - Lista de matrículas con nivel de formación, `StatusBadge` del estado y fecha.
-   - Cada ítem clickeable, navegando a `/matriculas/{id}`.
-   - Mensaje "Sin matrículas registradas" si la lista está vacía.
-   - Botón "Nueva Matrícula" al final, navegando a `/matriculas/nueva?personaId={id}`.
+3. **`src/components/matriculas/MatriculaDetailSheet.tsx`** (línea 436)
+   - `"Tipo de Vinculación"` → `"Responsable del pago"`
 
-La estructura visual será idéntica a la que ya existe en PersonaDetallePage (líneas 280-307).
+4. **`src/data/autoFieldCatalog.ts`** (línea 34)
+   - `label: 'Tipo de vinculación'` → `label: 'Responsable del pago'`
+
+### Sin cambios
+- Variables (`tipoVinculacion`), tipos (`TipoVinculacion`), constantes (`TIPOS_VINCULACION`, `TIPO_VINCULACION_LABELS`) — se mantienen intactos, solo cambia el texto visible al usuario.
 

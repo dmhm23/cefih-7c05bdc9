@@ -467,7 +467,7 @@ export default function MatriculaDetallePage() {
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <EditableField
-                label="Tipo de Vinculación"
+                label="Responsable del pago"
                 value={getValue("tipoVinculacion")}
                 displayValue={getDisplayLabel(getValue("tipoVinculacion"), TIPOS_VINCULACION)}
                 onChange={(v) => handleFieldChange("tipoVinculacion", v)}

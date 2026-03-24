@@ -648,7 +648,7 @@ export default function MatriculaFormPage() {
                   name="tipoVinculacion"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Vinculación</FormLabel>
+                      <FormLabel>Responsable del pago</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>

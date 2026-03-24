@@ -31,7 +31,7 @@ export const AUTO_FIELD_CATALOG: AutoFieldOption[] = [
   { key: 'empresa_representante_legal', label: 'Representante legal', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'area_trabajo', label: 'Área de trabajo', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'sector_economico', label: 'Sector económico', category: 'Datos Laborales', source: 'Matrícula' },
-  { key: 'tipo_vinculacion', label: 'Tipo de vinculación', category: 'Datos Laborales', source: 'Matrícula' },
+  { key: 'tipo_vinculacion', label: 'Responsable del pago', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'eps_aprendiz', label: 'EPS', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'arl_aprendiz', label: 'ARL', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'nivel_previo', label: 'Nivel previo de formación', category: 'Datos Laborales', source: 'Matrícula' },

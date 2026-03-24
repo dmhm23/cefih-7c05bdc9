@@ -405,9 +405,11 @@ export default function MatriculaFormPage() {
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => { setSelectedPersona(null); form.setValue("personaId", ""); setShowPersonaDetails(false); setPersonaFormData({}); setPersonaIsDirty(false); }}
                     >
-                      Cambiar
+                      <X className="h-4 w-4 mr-1" />
+                      Quitar
                     </Button>
                   </div>
 

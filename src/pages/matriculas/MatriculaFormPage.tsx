@@ -954,19 +954,6 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="fechaCertificacionPrevia"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fecha de Certificación</FormLabel>
-                      <FormControl>
-                        <DateField value={field.value || ""} onChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </Card>

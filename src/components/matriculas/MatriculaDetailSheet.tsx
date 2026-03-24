@@ -417,12 +417,6 @@ export function MatriculaDetailSheet({
                     <p className="text-sm font-medium">{matricula.centroFormacionPrevio}</p>
                   </div>
                 )}
-                {matricula.fechaCertificacionPrevia && (
-                  <div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Fecha Certificación</p>
-                    <p className="text-sm font-medium">{matricula.fechaCertificacionPrevia}</p>
-                  </div>
-                )}
               </div>
             </DetailSection>
             <Separator />

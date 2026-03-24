@@ -450,12 +450,6 @@ export default function MatriculaDetallePage() {
                   value={getValue("centroFormacionPrevio")}
                   onChange={(v) => handleFieldChange("centroFormacionPrevio", v)}
                 />
-                <EditableField
-                  label="Fecha Certificación"
-                  value={getValue("fechaCertificacionPrevia")}
-                  onChange={(v) => handleFieldChange("fechaCertificacionPrevia", v)}
-                  type="date"
-                />
               </div>
             </div>
           )}

@@ -168,7 +168,7 @@ export default function MatriculasPage() {
   const handleClearFilters = () => {
     setFilters({
       estadoDocumental: "todos",
-      pago: "todos",
+      estadoCartera: "todos",
     });
   };
 

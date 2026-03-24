@@ -39,7 +39,7 @@ import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { PersonaFormData } from "@/types/persona";
 import {
-  Matricula, ESTADO_MATRICULA_LABELS, EstadoMatricula,
+  Matricula,
   NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";

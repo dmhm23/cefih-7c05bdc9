@@ -99,8 +99,6 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
         fechaNacimiento: data.fechaNacimiento,
         rh: data.rh,
         nivelEducativo: data.nivelEducativo as any,
-        areaTrabajo: 'operativa',
-        sectorEconomico: '',
         email: data.email || '',
         telefono: data.telefono,
         contactoEmergencia: {

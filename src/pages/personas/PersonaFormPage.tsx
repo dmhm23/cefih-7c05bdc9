@@ -363,53 +363,6 @@ export default function PersonaFormPage() {
                 )}
               />
 
-              {/* Área de Trabajo */}
-              <FormField
-                control={form.control}
-                name="areaTrabajo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Área de Trabajo *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {AREAS_TRABAJO.map((area) => (
-                          <SelectItem key={area.value} value={area.value}>
-                            {area.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Sector Económico */}
-              <FormField
-                control={form.control}
-                name="sectorEconomico"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sector Económico *</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        options={SECTORES_ECONOMICOS}
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="Seleccionar sector..."
-                        searchPlaceholder="Buscar sector..."
-                        emptyMessage="Sector no encontrado"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
           </Card>
 

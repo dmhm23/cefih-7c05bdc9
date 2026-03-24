@@ -163,7 +163,7 @@ const TodoWidget = () => {
               )}
             </ScrollArea>
           </div>
-        )
+        )}
       </CardContent>
     </Card>
   );

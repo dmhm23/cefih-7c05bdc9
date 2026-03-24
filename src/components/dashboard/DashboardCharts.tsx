@@ -112,12 +112,12 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       </Card>
 
       {/* Distribución por Nivel */}
-      <Card>
+      <Card className="h-[370px] flex flex-col overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center">
-          <div className="h-52 w-full">
+        <CardContent className="flex-1 min-h-0 flex flex-col items-center justify-center">
+          <div className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

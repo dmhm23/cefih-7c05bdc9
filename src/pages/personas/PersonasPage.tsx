@@ -167,11 +167,6 @@ export default function PersonasPage() {
     setSelectedIndex(index);
   };
 
-  const getSectorLabel = (value: string) => {
-    const sector = SECTORES_ECONOMICOS.find((s) => s.value === value);
-    return sector?.label || value;
-  };
-
   const getGeneroLabel = (value: string) => {
     const genero = GENEROS.find((g) => g.value === value);
     return genero?.label || value;

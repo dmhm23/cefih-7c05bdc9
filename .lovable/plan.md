@@ -1,19 +1,18 @@
 
 
-## Plan: Reducir espacio y alinear botones a la derecha
+## Plan: Eliminar campo "Fecha de certificación" de Historial de formación previa
 
-### Cambio en `src/pages/matriculas/MatriculaFormPage.tsx` (líneas 394-413)
+Eliminar el campo `fechaCertificacionPrevia` de las tres vistas donde aparece:
 
-Envolver los dos botones ("Ver datos" y "Quitar") en un contenedor `div` con `flex items-center gap-1 shrink-0 ml-auto` para:
-- Reducir el espacio entre ambos botones de `gap-3` (heredado del padre) a `gap-1`
-- Asegurar alineación a la derecha con `ml-auto`
+### 1. `src/pages/matriculas/MatriculaFormPage.tsx`
+- Quitar `fechaCertificacionPrevia` del schema zod, valores por defecto, pre-llenado desde historial, envío de datos, y el `<FormField>` del formulario.
 
-```text
-Antes:  [Avatar] [Texto (flex-1)] ···gap-3··· [Ver datos] ···gap-3··· [Quitar]
-Después: [Avatar] [Texto (flex-1)] ···gap-3··· [Ver datos|Quitar]  (gap-1 interno)
-```
+### 2. `src/pages/matriculas/MatriculaDetallePage.tsx`
+- Quitar el `<EditableField>` de "Fecha Certificación" (~líneas 453-458).
 
-### Detalle técnico
+### 3. `src/components/matriculas/MatriculaDetailSheet.tsx`
+- Quitar el bloque condicional `{matricula.fechaCertificacionPrevia && ...}` (~líneas 420-425).
+- Actualizar la condición del `if` en línea 404 para no incluir `fechaCertificacionPrevia`.
 
-Después de línea 394 (`</div>` del texto), insertar un `<div className="flex items-center gap-1 shrink-0">` que envuelva ambos botones (líneas 395-413) y cerrar el `</div>` después del botón "Quitar".
+No se elimina el campo del tipo `Matricula` para mantener compatibilidad con datos existentes.
 

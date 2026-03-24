@@ -296,7 +296,51 @@ export function PersonaDetailSheet({
             />
           </div>
         </DetailSection>
-      </div>
+
+        <Separator />
+
+        {/* Historial de Matrículas */}
+        <DetailSection title="Matrículas">
+          {matriculas.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-4">
+              Sin matrículas registradas
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {matriculas.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-2 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/matriculas/${m.id}`);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize">
+                      {m.empresaNivelFormacion ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion] : 'Sin nivel'}
+                    </span>
+                    <StatusBadge status={m.estado} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(m.createdAt), "dd/MM/yyyy")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => {
+              onOpenChange(false);
+              navigate(`/matriculas/nueva?personaId=${persona.id}`);
+            }}
+          >
+            Nueva Matrícula
+          </Button>
+        </DetailSection>
     </DetailSheet>
   );
 }

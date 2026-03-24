@@ -1,48 +1,22 @@
 
 
-## Plan: Añadir scrollbar horizontal visible en todas las tablas
+## Plan: Scrollbar horizontal fija en tablas
 
 ### Problema
-Las tablas tienen `overflow-auto` pero la scrollbar horizontal nativa es muy delgada o invisible en la mayoría de navegadores modernos (especialmente macOS/Chrome). Cuando las columnas exceden el ancho visible, no hay indicación visual de que se puede desplazar horizontalmente.
+Hay dos contenedores `overflow-auto` anidados:
+1. **DataTable** (línea 191): `overflow-auto h-full` — maneja scroll vertical
+2. **Table component** (línea 7): `overflow-auto` — maneja scroll horizontal
+
+La scrollbar horizontal vive en el contenedor interior, así que se desplaza hacia abajo con el contenido y desaparece de la vista.
 
 ### Solución
+Eliminar el `overflow-auto` del wrapper interno del componente `Table` y dejar que el único contenedor de DataTable maneje ambos ejes de scroll. Así la scrollbar horizontal queda fija al fondo del contenedor visible.
 
-Aplicar estilos CSS personalizados para hacer la scrollbar horizontal visible y estilizada en el contenedor de scroll de las tablas. Esto se hace en un solo punto centralizado.
+### Cambios
 
-### Archivo a modificar
+1. **`src/components/ui/table.tsx`** — Cambiar `overflow-auto` a `overflow-visible` en el div wrapper del `Table` para que no cree su propia zona de scroll.
 
-**`src/index.css`** — Agregar reglas CSS para scrollbar horizontal en el contenedor de tabla:
+2. **`src/components/shared/DataTable.tsx`** — En el contenedor de scroll (línea 191), asegurar `overflow-auto` para ambos ejes. Como el contenedor tiene `h-full` y `min-h-0`, la scrollbar horizontal permanecerá anclada al borde inferior visible.
 
-```css
-/* Scrollbar horizontal visible en tablas */
-[data-table-container] .overflow-auto {
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: hsl(var(--border)) transparent;
-}
-
-[data-table-container] .overflow-auto::-webkit-scrollbar {
-  height: 8px;
-}
-
-[data-table-container] .overflow-auto::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 4px;
-}
-
-[data-table-container] .overflow-auto::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
-}
-
-[data-table-container] .overflow-auto::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--muted-foreground) / 0.5);
-}
-```
-
-El selector `[data-table-container]` ya existe como atributo en el `DataTable` (línea 189), así que aplica automáticamente a Personas, Matrículas, Cursos y Cartera sin tocar ninguna página individual.
-
-### Impacto
-- Un solo cambio en `index.css`
-- Scrollbar de 8px de alto, color coherente con el tema, aparece solo cuando hay contenido desbordado
-- Aplica a todas las tablas de la aplicación
+Resultado: una sola zona de scroll que mantiene la barra horizontal siempre visible al fondo de la tabla, sin importar cuántos registros haya.
 

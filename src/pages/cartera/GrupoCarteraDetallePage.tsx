@@ -214,6 +214,9 @@ export default function GrupoCarteraDetallePage() {
                 const persona = getPersona(m.personaId);
                 const curso = getCurso(m.cursoId);
                 const saldo = (m.valorCupo || 0) - (m.abono || 0);
+                // Derive payment status from factura
+                const facturaVinculada = facturas.find(f => f.matriculaIds.includes(m.id));
+                const estadoPago = facturaVinculada ? facturaVinculada.estado : 'sin_facturar';
                 return (
                   <TableRow
                     key={m.id}
@@ -233,7 +236,7 @@ export default function GrupoCarteraDetallePage() {
                       {formatCurrency(saldo)}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={m.pagado ? "pagado" : "pendiente"} />
+                      <StatusBadge status={estadoPago} />
                     </TableCell>
                   </TableRow>
                 );

@@ -171,7 +171,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
           </div>
         </CardContent>
       </Card>
-    </>
+    </TooltipProvider>
   );
 };
 

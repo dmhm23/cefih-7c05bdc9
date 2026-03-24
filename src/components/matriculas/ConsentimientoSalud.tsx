@@ -61,7 +61,7 @@ function ConsentRow({
   );
 }
 
-export function ConsentimientoSalud({ data, onChange, showEmbarazo = false, readOnly }: ConsentimientoSaludProps) {
+export function ConsentimientoSalud({ data, onChange, genero, readOnly }: ConsentimientoSaludProps) {
   return (
     <div className="space-y-4">
       {!readOnly && (

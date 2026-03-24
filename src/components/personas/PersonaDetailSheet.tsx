@@ -236,7 +236,6 @@ export function PersonaDetailSheet({
               options={[...NIVELES_EDUCATIVOS]}
               icon={GraduationCap}
             />
-            </div>
           </div>
         </DetailSection>
 

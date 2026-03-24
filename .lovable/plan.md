@@ -1,29 +1,35 @@
 
 
-## Plan: Ajustar TodoWidget — altura fija con scroll y fecha de creación
+## Plan: Tabs "Tareas" e "Historial" en TodoWidget
 
-### Cambios en `src/components/dashboard/TodoWidget.tsx`
+### Cambios
 
-**1. Altura fija con scroll vertical**
-- Hacer que la Card use `h-full flex flex-col` para igualarse a la gráfica vecina.
-- Cambiar el `ScrollArea` de `max-h-64` a `flex-1 min-h-0` para que ocupe el espacio restante y haga scroll interno sin expandir la tarjeta.
+**`src/data/mockDashboard.ts`** — Agregar funciones `loadHistory` y `saveHistory` para persistir tareas completadas en `localStorage` con key `dashboard_todo_history`.
 
-**2. Mostrar fecha de creación**
-- Junto al botón de eliminar (al final de cada fila), agregar un `<span>` con la fecha formateada en `text-xs text-muted-foreground/60`.
-- Formato corto: `dd/mm/yyyy` usando `toLocaleDateString('es-CO')`.
-- La fecha será siempre visible (no solo en hover como el botón eliminar).
+**`src/components/dashboard/TodoWidget.tsx`** — Modificar para incluir dos pestañas:
 
-### Detalle técnico
+1. **Agregar `Tabs` de Radix** debajo del `CardHeader` con dos opciones: "Tareas" (activa por defecto) e "Historial".
 
+2. **Tab "Tareas"**: Contiene el input de nueva tarea y la lista actual. Cuando una tarea se marca como completada (toggle → completed=true), se mueve automáticamente al historial y se elimina de la lista activa.
+
+3. **Tab "Historial"**: Muestra las tareas finalizadas en una `ScrollArea` con scroll vertical. Cada entrada muestra el texto (tachado), la fecha de creación y un botón para eliminar del historial. Sin input de nueva tarea.
+
+### Estructura visual
+
+```text
+┌─ Tareas Rápidas ─────────────────────┐
+│  [Tareas]  [Historial]               │
+│                                       │
+│  [Nueva tarea...            ] [+]     │
+│                                       │
+│  □ Tarea pendiente 1    12/03/2026 🗑 │
+│  □ Tarea pendiente 2    11/03/2026 🗑 │
+│                                       │
+└───────────────────────────────────────┘
 ```
-Card (h-full flex flex-col)
-  CardHeader
-  CardContent (flex-1 flex flex-col min-h-0)
-    Input row
-    ScrollArea (flex-1 min-h-0 overflow-y-auto)
-      cada tarea:
-        [✓] Texto de la tarea          12/03/2026  🗑
-```
 
-Un solo archivo modificado: `src/components/dashboard/TodoWidget.tsx`.
+### Flujo
+- Al completar una tarea (clic en checkbox) → se remueve de `todos` y se agrega a `history` con la fecha actual como `completedAt`.
+- El historial persiste en localStorage independiente.
+- El tipo `TodoItem` se extiende con campo opcional `completedAt?: string`.
 

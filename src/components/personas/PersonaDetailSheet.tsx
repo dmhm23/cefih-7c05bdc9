@@ -18,6 +18,9 @@ import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdatePersona } from "@/hooks/usePersonas";
+import { useMatriculasByPersona } from "@/hooks/useMatriculas";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types/matricula";
 import { Persona, PersonaFormData } from "@/types/persona";
 import {
   TIPOS_DOCUMENTO,

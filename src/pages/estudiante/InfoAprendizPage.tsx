@@ -248,7 +248,7 @@ export default function InfoAprendizPage() {
               <ConsentimientoSalud
                 data={consentimiento as any}
                 onChange={handleConsentimientoChange}
-                showEmbarazo={persona.genero === 'F'}
+                genero={persona.genero}
                 readOnly={yaCompletado}
               />
             </AccordionContent>

@@ -95,7 +95,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="mes" className="text-xs fill-muted-foreground" />
                 <YAxis tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} className="text-xs fill-muted-foreground" />
-                <Tooltip
+                <RechartsTooltip
                   formatter={(value: number) => [formatCurrency(value), "Ingreso"]}
                   contentStyle={tooltipStyle}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}

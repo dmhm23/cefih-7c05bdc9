@@ -190,7 +190,7 @@ export function CursoDetailSheet({
             <EditableField
               label="Tipo de Formación"
               value={getValue("tipoFormacion")}
-              displayValue={TIPO_FORMACION_LABELS[getValue("tipoFormacion") as TipoFormacion]}
+              displayValue={resolveNivelCursoLabel(getValue("tipoFormacion"))}
               onChange={(v) => handleFieldChange("tipoFormacion", v)}
               type="select"
               options={TIPO_FORMACION_OPTIONS}

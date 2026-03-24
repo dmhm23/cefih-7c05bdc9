@@ -237,7 +237,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       header: "Tipo Formación",
-      render: (c: Curso) => TIPO_FORMACION_LABELS[c.tipoFormacion],
+      render: (c: Curso) => resolveNivelCursoLabel(c.tipoFormacion),
     },
     {
       key: "minTrabajoRegistro",

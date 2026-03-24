@@ -33,7 +33,7 @@ function ScopeBadges({ formato }: { formato: FormatoFormacion }) {
       <div className="flex flex-wrap gap-1">
         {formato.tipoCursoKeys.map((k) => (
           <Badge key={k} variant="outline" className="text-[10px] font-normal">
-            {TIPO_FORMACION_LABELS[k] || k}
+            {resolveNivelCursoLabel(k)}
           </Badge>
         ))}
       </div>

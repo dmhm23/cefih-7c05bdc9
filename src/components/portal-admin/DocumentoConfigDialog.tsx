@@ -151,7 +151,7 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
                     checked={habilitadoPorNivel[nivel]}
                     onCheckedChange={() => toggleNivel(nivel)}
                   />
-                  {TIPO_FORMACION_LABELS[nivel]}
+                  {resolveNivelCursoLabel(nivel)}
                 </label>
               ))}
             </div>

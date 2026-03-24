@@ -58,7 +58,7 @@ export function construirDiccionarioTokens(
     tipoDocumento: persona.tipoDocumento,
     numeroDocumento: persona.numeroDocumento,
     numeroCurso: curso.numeroCurso,
-    tipoFormacion: TIPO_FORMACION_LABELS[curso.tipoFormacion] || curso.tipoFormacion,
+    tipoFormacion: resolveNivelCursoLabel(curso.tipoFormacion),
     fechaInicio: fmt(curso.fechaInicio),
     fechaFin: fmt(curso.fechaFin),
     duracionDias: String(curso.duracionDias),

@@ -105,7 +105,7 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
 
 export function getFilterOptions() {
   const cursos = mockCursos.map((c) => ({ value: c.id, label: `${c.numeroCurso} — ${c.nombre}` }));
-  const niveles = Object.entries(TIPO_FORMACION_LABELS).map(([value, label]) => ({ value, label }));
+  const niveles = getNivelesAsOptions();
   const documentos = portalDocumentosCatalogo.map((d) => ({ value: d.key, label: d.nombre }));
   return { cursos, niveles, documentos };
 }

@@ -21,7 +21,7 @@ interface CourseHeaderProps {
 export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo }: CourseHeaderProps) {
   const { toast } = useToast();
 
-  const title = `${TIPO_FORMACION_LABELS[curso.tipoFormacion]} — #${curso.numeroCurso}`;
+  const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
   const meta = `${curso.fechaInicio} → ${curso.fechaFin} | ${curso.duracionDias}d | ${curso.horasTotales}h`;
 
   return (

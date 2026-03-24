@@ -207,8 +207,8 @@ export default function PlantillasPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent side="bottom">
-                  {Object.entries(TIPO_FORMACION_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  {getNivelesAsOptions().map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

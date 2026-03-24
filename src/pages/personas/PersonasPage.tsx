@@ -24,7 +24,7 @@ const STORAGE_KEY = "personas_visible_columns";
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "numeroDocumento", header: "Documento", visible: true },
   { key: "nombre", header: "Nombre Completo", visible: true },
-  { key: "sector", header: "Sector", visible: true },
+  { key: "telefono", header: "Teléfono", visible: true },
   { key: "telefono", header: "Teléfono", visible: true },
   { key: "email", header: "Email", visible: false },
   { key: "genero", header: "Género", visible: false },

@@ -103,7 +103,7 @@ export default function PersonasPage() {
 
     return matchesSearch && matchesGenero && matchesNivel;
 
-    return matchesSearch && matchesGenero && matchesSector && matchesNivel;
+    return matchesSearch && matchesGenero && matchesNivel;
   });
 
   const handleDelete = async () => {

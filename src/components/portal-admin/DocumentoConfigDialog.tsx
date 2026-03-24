@@ -19,7 +19,7 @@ const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'solo_lectura', label: 'Solo lectura' },
 ];
 
-const NIVELES: TipoFormacion[] = ['reentrenamiento', 'jefe_area', 'trabajador_autorizado', 'coordinador_ta'];
+const NIVELES = mockNivelesFormacion.map((n) => n.id) as unknown as TipoFormacion[];
 
 interface Props {
   open: boolean;

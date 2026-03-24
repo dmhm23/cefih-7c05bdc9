@@ -97,7 +97,7 @@ export function MatriculaDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateMatricula = useUpdateMatricula();
-  const cambiarEstado = useCambiarEstadoMatricula();
+  
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
   const updateDocumento = useUpdateDocumento();

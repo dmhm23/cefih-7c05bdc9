@@ -66,7 +66,7 @@ export default function MatriculasPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
-    pago: "todos",
+    estadoCartera: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);

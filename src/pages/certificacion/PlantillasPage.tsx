@@ -144,7 +144,7 @@ export default function PlantillasPage() {
             {filteredPlantillas.map(p => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.nombre}</TableCell>
-                <TableCell>{TIPO_FORMACION_LABELS[p.tipoFormacion] || p.tipoFormacion}</TableCell>
+                <TableCell>{resolveNivelCursoLabel(p.tipoFormacion)}</TableCell>
                 <TableCell>
                   <Badge variant={p.activa ? "default" : "secondary"}>{p.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>

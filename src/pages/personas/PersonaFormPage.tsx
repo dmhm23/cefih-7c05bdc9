@@ -31,8 +31,6 @@ import {
   GENEROS,
   PAISES,
   NIVELES_EDUCATIVOS,
-  AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
   GRUPOS_SANGUINEOS,
 } from "@/data/formOptions";
 

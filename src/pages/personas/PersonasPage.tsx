@@ -49,7 +49,6 @@ export default function PersonasPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     genero: "todos",
-    sectorEconomico: [],
     nivelEducativo: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {

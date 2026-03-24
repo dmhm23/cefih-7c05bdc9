@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion, TIPO_FORMACION_LABELS } from '@/types/curso';
+import { TipoFormacion } from '@/types/curso';
+import { mockNivelesFormacion } from '@/data/mockData';
+import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { TipoDocPortal } from '@/types/portalEstudiante';
 
 const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [

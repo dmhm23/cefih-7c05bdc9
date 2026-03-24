@@ -29,10 +29,9 @@ const ESTADO_DOCUMENTAL_OPTIONS = [
   { value: "pendiente", label: "Pendiente" },
 ];
 
-const PAGO_OPTIONS = [
-  { value: "pagado", label: "Pagado" },
-  { value: "pendiente", label: "Pendiente" },
-];
+const ESTADO_CARTERA_OPTIONS = Object.entries(ESTADO_GRUPO_CARTERA_LABELS).map(
+  ([value, label]) => ({ value, label })
+);
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaCreacion", header: "Fecha Creación", visible: true },

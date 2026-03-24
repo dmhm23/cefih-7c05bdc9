@@ -83,7 +83,7 @@ export default function CursosListView() {
   }).length;
 
   const getCursoLabel = (c: Curso) =>
-    `${TIPO_FORMACION_LABELS[c.tipoFormacion]} — #${c.numeroCurso}`;
+    `${resolveNivelCursoLabel(c.tipoFormacion)} — #${c.numeroCurso}`;
 
   const filteredCursos = cursos.filter((c) => {
     const label = getCursoLabel(c).toLowerCase();

@@ -19,6 +19,8 @@ import { Matricula } from "@/types";
 import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_FORMACION_EMPRESA_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { mockGruposCartera } from "@/data/mockCartera";
+import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 

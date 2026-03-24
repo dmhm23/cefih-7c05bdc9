@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   User,
   BookOpen,
-  FileCheck,
+  
   CreditCard,
   Calendar,
   CheckCircle2,
@@ -30,16 +30,16 @@ import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useCambiarEstadoMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { PersonaFormData } from "@/types/persona";
 import {
-  Matricula, ESTADO_MATRICULA_LABELS, EstadoMatricula,
+  Matricula,
   NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
@@ -84,13 +84,6 @@ interface MatriculaDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
-const ESTADO_OPTIONS = [
-  { value: "creada", label: "Creada" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "completa", label: "Completa" },
-  { value: "certificada", label: "Certificada" },
-  { value: "cerrada", label: "Cerrada" },
-];
 
 
 export function MatriculaDetailSheet({
@@ -104,7 +97,7 @@ export function MatriculaDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateMatricula = useUpdateMatricula();
-  const cambiarEstado = useCambiarEstadoMatricula();
+  
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
   const updateDocumento = useUpdateDocumento();
@@ -165,12 +158,6 @@ export function MatriculaDetailSheet({
     try {
       if (isPersonaDirty && persona) {
         await updatePersona.mutateAsync({ id: persona.id, data: personaFormData });
-      }
-      if (formData.estado && formData.estado !== matricula.estado) {
-        await cambiarEstado.mutateAsync({
-          id: matricula.id,
-          estado: formData.estado as EstadoMatricula,
-        });
       }
       const otherChanges = { ...formData };
       delete otherChanges.estado;
@@ -255,13 +242,6 @@ export function MatriculaDetailSheet({
     return options.find((o) => o.value === value)?.label || value;
   };
 
-  const completedSteps = [
-    matricula.documentos.every((d) => d.estado === "cargado"),
-    matricula.evaluacionCompletada,
-    matricula.encuestaCompletada,
-    matricula.pagado,
-  ].filter(Boolean).length;
-  const progressPercent = (completedSteps / 4) * 100;
 
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
@@ -290,41 +270,14 @@ export function MatriculaDetailSheet({
         (isDirty || isPersonaDirty) ? (
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={handleCancel}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={updateMatricula.isPending || cambiarEstado.isPending || updatePersona.isPending}>
-              {updateMatricula.isPending || cambiarEstado.isPending || updatePersona.isPending ? "Guardando..." : "Guardar Cambios"}
+            <Button onClick={handleSave} disabled={updateMatricula.isPending || updatePersona.isPending}>
+              {updateMatricula.isPending || updatePersona.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
         ) : undefined
       }
     >
       <div className="space-y-6">
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso de matrícula</span>
-            <span className="font-medium">{completedSteps}/4 completados</span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </div>
-
-        <Separator />
-
-        {/* Estado */}
-        <DetailSection title="Estado de la Matrícula">
-          <EditableField
-            label="Estado"
-            value={getValue("estado")}
-            displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
-            onChange={(v) => handleFieldChange("estado", v)}
-            type="select"
-            options={ESTADO_OPTIONS}
-            icon={FileCheck}
-            badge
-            badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
-          />
-        </DetailSection>
-
-        <Separator />
 
         {/* Estudiante */}
         <DetailSection title="Estudiante">

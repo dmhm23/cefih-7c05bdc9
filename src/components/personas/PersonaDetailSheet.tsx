@@ -341,6 +341,7 @@ export function PersonaDetailSheet({
             Nueva Matrícula
           </Button>
         </DetailSection>
+      </div>
     </DetailSheet>
   );
 }

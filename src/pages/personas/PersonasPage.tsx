@@ -102,8 +102,6 @@ export default function PersonasPage() {
     const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
 
     return matchesSearch && matchesGenero && matchesNivel;
-
-    return matchesSearch && matchesGenero && matchesNivel;
   });
 
   const handleDelete = async () => {

@@ -284,33 +284,6 @@ export function MatriculaDetailSheet({
       }
     >
       <div className="space-y-6">
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso de matrícula</span>
-            <span className="font-medium">{completedSteps}/4 completados</span>
-          </div>
-          <Progress value={progressPercent} className="h-2" />
-        </div>
-
-        <Separator />
-
-        {/* Estado */}
-        <DetailSection title="Estado de la Matrícula">
-          <EditableField
-            label="Estado"
-            value={getValue("estado")}
-            displayValue={ESTADO_MATRICULA_LABELS[getValue("estado")]}
-            onChange={(v) => handleFieldChange("estado", v)}
-            type="select"
-            options={ESTADO_OPTIONS}
-            icon={FileCheck}
-            badge
-            badgeVariant={getValue("estado") === "certificada" ? "default" : getValue("estado") === "cerrada" ? "destructive" : "secondary"}
-          />
-        </DetailSection>
-
-        <Separator />
 
         {/* Estudiante */}
         <DetailSection title="Estudiante">

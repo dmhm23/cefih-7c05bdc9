@@ -1,9 +1,9 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion, TIPO_FORMACION_LABELS } from '@/types/curso';
-
-const NIVELES: TipoFormacion[] = ['reentrenamiento', 'jefe_area', 'trabajador_autorizado', 'coordinador_ta'];
+import { TipoFormacion } from '@/types/curso';
+import { mockNivelesFormacion } from '@/data/mockData';
+import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 
 interface Props {
   documentos: PortalDocumentoConfigAdmin[];

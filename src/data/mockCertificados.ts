@@ -67,7 +67,7 @@ export const mockPlantillas: PlantillaCertificado[] = [
     activa: true,
     version: 1,
     historial: [{ version: 1, svgRaw: MOCK_SVG, fecha: now, modificadoPor: 'admin' }],
-    tipoFormacion: 'jefe_area',
+    tipoFormacion: 'nf2',
     reglaCodigo: '{numeroCurso}-{prefijoNivel}-{consecutivoAnual}',
     reglas: {
       requierePago: true,

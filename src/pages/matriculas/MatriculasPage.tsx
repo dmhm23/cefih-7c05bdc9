@@ -40,7 +40,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaArl", header: "Fecha Cobertura ARL", visible: true },
   { key: "fechaExamen", header: "Fecha Examen", visible: true },
   { key: "estadoDocumental", header: "Estado Documental", visible: true },
-  { key: "estadoFinanciero", header: "Estado Financiero", visible: true },
+  { key: "estadoCartera", header: "Estado de Cartera", visible: true },
   { key: "tipoVinculacion", header: "Vinculación", visible: false },
   { key: "nit", header: "NIT Empresa", visible: false },
   { key: "cargo", header: "Cargo", visible: false },

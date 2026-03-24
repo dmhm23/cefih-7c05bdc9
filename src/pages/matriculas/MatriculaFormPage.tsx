@@ -257,7 +257,7 @@ export default function MatriculaFormPage() {
         cursoId: data.cursoId || '',
         nivelPrevio: (data.nivelPrevio as any) || undefined,
         centroFormacionPrevio: data.centroFormacionPrevio || undefined,
-        fechaCertificacionPrevia: data.fechaCertificacionPrevia || undefined,
+        
         tipoVinculacion: (data.tipoVinculacion as any) || undefined,
         empresaNombre: data.empresaNombre || undefined,
         empresaNit: data.empresaNit || undefined,

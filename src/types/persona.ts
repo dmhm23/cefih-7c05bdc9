@@ -40,8 +40,6 @@ export interface Persona {
   
   // Datos laborales/educativos
   nivelEducativo: NivelEducativo;
-  areaTrabajo: AreaTrabajo;
-  sectorEconomico: string;
   
   // Datos de contacto
   email: string;

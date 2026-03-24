@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import {
   User,
   FileText,
@@ -17,6 +18,9 @@ import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdatePersona } from "@/hooks/usePersonas";
+import { useMatriculasByPersona } from "@/hooks/useMatriculas";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types/matricula";
 import { Persona, PersonaFormData } from "@/types/persona";
 import {
   TIPOS_DOCUMENTO,
@@ -47,6 +51,7 @@ export function PersonaDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updatePersona = useUpdatePersona();
+  const { data: matriculas = [] } = useMatriculasByPersona(persona?.id || "");
   const [formData, setFormData] = useState<Partial<PersonaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -290,6 +295,51 @@ export function PersonaDetailSheet({
               icon={User}
             />
           </div>
+        </DetailSection>
+
+        <Separator />
+
+        {/* Historial de Matrículas */}
+        <DetailSection title="Matrículas">
+          {matriculas.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-4">
+              Sin matrículas registradas
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {matriculas.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-2 border rounded hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate(`/matriculas/${m.id}`);
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize">
+                      {m.empresaNivelFormacion ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion] : 'Sin nivel'}
+                    </span>
+                    <StatusBadge status={m.estado} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(m.createdAt), "dd/MM/yyyy")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => {
+              onOpenChange(false);
+              navigate(`/matriculas/nueva?personaId=${persona.id}`);
+            }}
+          >
+            Nueva Matrícula
+          </Button>
         </DetailSection>
       </div>
     </DetailSheet>

@@ -281,22 +281,17 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
             />
           )}
 
-          {persona?.genero === 'M' && (
-            <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
-              <span>A la fecha, ¿usted considera que se encuentra en estado de embarazo?</span>
+          <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
+            <span>A la fecha, ¿usted considera que se encuentra en estado de embarazo?</span>
+            {persona?.genero === 'M' ? (
               <span className="text-xs text-muted-foreground font-medium">No aplica</span>
-            </div>
-          )}
-
-          {persona?.genero === 'F' && (
-            <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
-              <span>A la fecha, ¿usted considera que se encuentra en estado de embarazo?</span>
+            ) : (
               <Select value={embarazo ? "si" : "no"} onValueChange={(v) => setEmbarazo(v === "si")}>
                 <SelectTrigger className="health-select w-20 h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent side="bottom"><SelectItem value="si">Sí</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
               </Select>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="health-row grid grid-cols-[1fr_auto] gap-2 items-center">
             <span>¿Sabe leer y escribir?</span>

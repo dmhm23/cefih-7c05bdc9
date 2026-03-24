@@ -147,11 +147,14 @@ export default function MatriculasPage() {
   const filteredMatriculas = matriculas.filter((m) => {
     const persona = personas.find((p) => p.id === m.personaId);
     
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
       !searchQuery ||
       persona?.numeroDocumento.includes(searchQuery) ||
-      persona?.nombres.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      persona?.apellidos.toLowerCase().includes(searchQuery.toLowerCase());
+      persona?.nombres.toLowerCase().includes(query) ||
+      persona?.apellidos.toLowerCase().includes(query) ||
+      `${persona?.nombres ?? ''} ${persona?.apellidos ?? ''}`.toLowerCase().includes(query) ||
+      (persona?.telefono?.includes(searchQuery) ?? false);
 
     const estadoDoc = getEstadoDocumental(m).toLowerCase();
     const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;

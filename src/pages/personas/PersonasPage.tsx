@@ -96,6 +96,8 @@ export default function PersonasPage() {
       p.numeroDocumento.includes(searchQuery) ||
       p.nombres.toLowerCase().includes(query) ||
       p.apellidos.toLowerCase().includes(query) ||
+      `${p.nombres} ${p.apellidos}`.toLowerCase().includes(query) ||
+      (p.telefono?.includes(searchQuery) ?? false) ||
       (p.email?.toLowerCase().includes(query) ?? false);
 
     const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;

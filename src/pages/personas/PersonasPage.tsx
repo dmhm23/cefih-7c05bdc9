@@ -99,9 +99,9 @@ export default function PersonasPage() {
       (p.email?.toLowerCase().includes(query) ?? false);
 
     const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;
-    const sectorFilters = filters.sectorEconomico as string[];
-    const matchesSector = sectorFilters.length === 0 || sectorFilters.includes(p.sectorEconomico);
     const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
+
+    return matchesSearch && matchesGenero && matchesNivel;
 
     return matchesSearch && matchesGenero && matchesSector && matchesNivel;
   });

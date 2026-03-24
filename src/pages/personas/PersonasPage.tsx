@@ -33,7 +33,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "fechaNacimiento", header: "Fecha Nac.", visible: false },
   { key: "paisNacimiento", header: "País Nacimiento", visible: false },
   { key: "rh", header: "RH", visible: false },
-  { key: "areaTrabajo", header: "Área de Trabajo", visible: false },
+  { key: "contactoEmergencia", header: "Contacto Emergencia", visible: false },
   { key: "contactoEmergencia", header: "Contacto Emergencia", visible: false },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];

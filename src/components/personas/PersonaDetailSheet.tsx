@@ -6,8 +6,8 @@ import {
   Phone,
   Mail,
   Calendar,
-  Briefcase,
-  Briefcase,
+  Droplet,
+  GraduationCap,
   Globe,
   UserCircle,
   AlertCircle,
@@ -22,7 +22,6 @@ import {
   TIPOS_DOCUMENTO,
   GENEROS,
   NIVELES_EDUCATIVOS,
-  GRUPOS_SANGUINEOS,
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";

@@ -16,7 +16,7 @@ import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { GENEROS, SECTORES_ECONOMICOS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
+import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
 import { format } from "date-fns";
 
 const STORAGE_KEY = "personas_visible_columns";

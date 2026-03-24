@@ -94,7 +94,15 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
       {/* Ingresos */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Ingresos en el Tiempo</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Ingresos en el Tiempo</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={14} className="text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>Ingresos totales recaudados por mes, expresados en pesos colombianos (COP).</TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-52">

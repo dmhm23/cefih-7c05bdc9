@@ -131,7 +131,7 @@ export function asignarMatriculaACartera(params: {
     grupo = {
       id: uuid(),
       responsablePagoId: responsable.id,
-      estado: 'pendiente',
+      estado: 'sin_facturar',
       totalValor: 0,
       totalAbonos: 0,
       saldo: 0,

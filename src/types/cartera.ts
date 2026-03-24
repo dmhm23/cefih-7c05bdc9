@@ -77,7 +77,7 @@ export const TIPO_RESPONSABLE_LABELS: Record<TipoResponsable, string> = {
 };
 
 export const ESTADO_GRUPO_CARTERA_LABELS: Record<EstadoGrupoCartera, string> = {
-  pendiente: 'Pendiente',
+  sin_facturar: 'Sin facturar',
   facturado: 'Facturado',
   abonado: 'Abonado',
   pagado: 'Pagado',

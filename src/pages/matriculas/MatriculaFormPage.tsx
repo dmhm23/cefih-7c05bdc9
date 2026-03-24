@@ -392,25 +392,27 @@ export default function MatriculaFormPage() {
                       <p className="font-semibold text-sm">{getPersonaValue("nombres")} {getPersonaValue("apellidos")}</p>
                       <p className="text-xs text-muted-foreground">{getPersonaValue("tipoDocumento")}: {getPersonaValue("numeroDocumento")}</p>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPersonaDetails(!showPersonaDetails)}
-                    >
-                      {showPersonaDetails ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
-                      {showPersonaDetails ? "Ocultar" : "Ver datos"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => { setSelectedPersona(null); form.setValue("personaId", ""); setShowPersonaDetails(false); setPersonaFormData({}); setPersonaIsDirty(false); }}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Quitar
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0 ml-auto">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPersonaDetails(!showPersonaDetails)}
+                      >
+                        {showPersonaDetails ? <ChevronUp className="h-4 w-4 mr-1" /> : <ChevronDown className="h-4 w-4 mr-1" />}
+                        {showPersonaDetails ? "Ocultar" : "Ver datos"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => { setSelectedPersona(null); form.setValue("personaId", ""); setShowPersonaDetails(false); setPersonaFormData({}); setPersonaIsDirty(false); }}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Quitar
+                      </Button>
+                    </div>
                   </div>
 
                   {showPersonaDetails && (

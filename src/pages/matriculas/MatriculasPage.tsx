@@ -288,18 +288,14 @@ export default function MatriculasPage() {
       },
     },
     {
-      key: "estadoFinanciero",
-      header: "Estado Financiero",
+      key: "estadoCartera",
+      header: "Estado de Cartera",
       sortable: true,
-      sortValue: (m: Matricula) => m.pagado ? "Pagado" : "Pendiente",
-      render: (m: Matricula) => (
-        <Badge
-          variant={m.pagado ? "default" : "secondary"}
-          className={m.pagado ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "bg-amber-500/10 text-amber-600"}
-        >
-          {m.pagado ? "Pagado" : "Pendiente"}
-        </Badge>
-      ),
+      sortValue: (m: Matricula) => getEstadoCartera(m),
+      render: (m: Matricula) => {
+        const estado = getEstadoCartera(m);
+        return <StatusBadge status={estado} />;
+      },
     },
     {
       key: "tipoVinculacion",

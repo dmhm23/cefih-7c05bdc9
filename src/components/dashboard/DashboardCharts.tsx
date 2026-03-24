@@ -75,7 +75,7 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis dataKey="mes" className="text-xs fill-muted-foreground" />
                 <YAxis className="text-xs fill-muted-foreground" />
-                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: 'hsl(var(--foreground))' }} />
+                <RechartsTooltip contentStyle={tooltipStyle} labelStyle={{ color: 'hsl(var(--foreground))' }} />
                 <Bar dataKey="valor" name="Estudiantes" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

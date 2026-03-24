@@ -155,12 +155,10 @@ export default function MatriculasPage() {
 
     const estadoDoc = getEstadoDocumental(m).toLowerCase();
     const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;
-    const matchesPago =
-      filters.pago === "todos" ||
-      (filters.pago === "pagado" && m.pagado) ||
-      (filters.pago === "pendiente" && !m.pagado);
+    const estadoCartera = getEstadoCartera(m);
+    const matchesCartera = filters.estadoCartera === "todos" || estadoCartera === filters.estadoCartera;
 
-    return matchesSearch && matchesEstadoDoc && matchesPago;
+    return matchesSearch && matchesEstadoDoc && matchesCartera;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {

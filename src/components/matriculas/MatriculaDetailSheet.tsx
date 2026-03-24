@@ -248,13 +248,6 @@ export function MatriculaDetailSheet({
     return options.find((o) => o.value === value)?.label || value;
   };
 
-  const completedSteps = [
-    matricula.documentos.every((d) => d.estado === "cargado"),
-    matricula.evaluacionCompletada,
-    matricula.encuestaCompletada,
-    matricula.pagado,
-  ].filter(Boolean).length;
-  const progressPercent = (completedSteps / 4) * 100;
 
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";

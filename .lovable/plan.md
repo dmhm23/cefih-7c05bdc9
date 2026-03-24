@@ -1,23 +1,25 @@
 
 
-## Plan: Renombrar "Tipo de Vinculación" → "Responsable del pago"
+## Plan: Cambiar "Cambiar" → "Quitar" con icono X en rojo
 
-Cambio exclusivamente de label/texto visible. No se modifica ninguna variable, tipo, ni lógica.
+### Cambio único en `src/pages/matriculas/MatriculaFormPage.tsx` (líneas 406-411)
 
-### Archivos a modificar (4 archivos, 1 línea cada uno)
+Reemplazar el botón actual:
+```tsx
+<Button variant="ghost" size="sm" ...>
+  Cambiar
+</Button>
+```
 
-1. **`src/pages/matriculas/MatriculaFormPage.tsx`** (línea 651)
-   - `"Tipo de Vinculación"` → `"Responsable del pago"`
+Por:
+```tsx
+<Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50" ...>
+  <X className="h-4 w-4 mr-1" />
+  Quitar
+</Button>
+```
 
-2. **`src/pages/matriculas/MatriculaDetallePage.tsx`** (línea 470)
-   - `"Tipo de Vinculación"` → `"Responsable del pago"`
-
-3. **`src/components/matriculas/MatriculaDetailSheet.tsx`** (línea 436)
-   - `"Tipo de Vinculación"` → `"Responsable del pago"`
-
-4. **`src/data/autoFieldCatalog.ts`** (línea 34)
-   - `label: 'Tipo de vinculación'` → `label: 'Responsable del pago'`
-
-### Sin cambios
-- Variables (`tipoVinculacion`), tipos (`TipoVinculacion`), constantes (`TIPOS_VINCULACION`, `TIPO_VINCULACION_LABELS`) — se mantienen intactos, solo cambia el texto visible al usuario.
+- Importar `X` de `lucide-react` (probablemente ya importado).
+- Texto en rojo, icono X a la izquierda.
+- Un solo archivo, una sola línea de cambio.
 

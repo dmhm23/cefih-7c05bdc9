@@ -77,12 +77,6 @@ export default function PersonasPage() {
       options: GENEROS.map((g) => ({ value: g.value, label: g.label })),
     },
     {
-      key: "sectorEconomico",
-      label: "Sector Económico",
-      type: "multiselect",
-      options: SECTORES_ECONOMICOS.map((s) => ({ value: s.value, label: s.label })),
-    },
-    {
       key: "nivelEducativo",
       label: "Nivel Educativo",
       type: "select",

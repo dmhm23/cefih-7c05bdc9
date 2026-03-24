@@ -37,9 +37,7 @@ const ESTADO_OPTIONS = [
   { value: "cerrado", label: "Cerrado" },
 ];
 
-const TIPO_FORMACION_OPTIONS = (Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][]).map(
-  ([value, label]) => ({ value, label })
-);
+const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
 
 export function CursoDetailSheet({
   open,

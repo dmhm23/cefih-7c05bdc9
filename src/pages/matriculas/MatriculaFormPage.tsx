@@ -176,9 +176,6 @@ export default function MatriculaFormPage() {
       if (historial.centroFormacionPrevio && !form.getValues("centroFormacionPrevio")) {
         form.setValue("centroFormacionPrevio", historial.centroFormacionPrevio);
       }
-      if (historial.fechaCertificacionPrevia && !form.getValues("fechaCertificacionPrevia")) {
-        form.setValue("fechaCertificacionPrevia", historial.fechaCertificacionPrevia);
-      }
     }
   }, [historial, form]);
 

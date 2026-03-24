@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, Search, UserPlus } from "lucide-react";
+import { X, Search, UserPlus, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,6 @@ import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useAgregarEstudiantesCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
-import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 
 interface AgregarEstudiantesModalProps {
@@ -26,6 +25,7 @@ interface AgregarEstudiantesModalProps {
   onOpenChange: (open: boolean) => void;
   cursoId: string;
   matriculasActuales: string[];
+  nivelFormacion: string;
 }
 
 export function AgregarEstudiantesModal({
@@ -33,6 +33,7 @@ export function AgregarEstudiantesModal({
   onOpenChange,
   cursoId,
   matriculasActuales,
+  nivelFormacion,
 }: AgregarEstudiantesModalProps) {
   const [busqueda, setBusqueda] = useState("");
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
@@ -45,20 +46,26 @@ export function AgregarEstudiantesModal({
   const getPersona = (personaId: string): Persona | undefined =>
     personas.find((p) => p.id === personaId);
 
-  // Matrículas disponibles: no asignadas a este curso
+  // Matrículas disponibles: sin curso asignado Y mismo nivel de formación
   const disponibles = useMemo(() => {
     return matriculas.filter(
-      (m) => !matriculasActuales.includes(m.id)
+      (m) =>
+        (!m.cursoId || m.cursoId === "") &&
+        m.empresaNivelFormacion === nivelFormacion
     );
-  }, [matriculas, matriculasActuales]);
+  }, [matriculas, nivelFormacion]);
 
-  // Filtrado por cédula
+  // Filtrado por cédula o nombre
   const filtradas = useMemo(() => {
     if (!busqueda.trim()) return disponibles;
     const q = busqueda.toLowerCase();
     return disponibles.filter((m) => {
       const persona = getPersona(m.personaId);
-      return persona?.numeroDocumento.toLowerCase().includes(q);
+      if (!persona) return false;
+      return (
+        persona.numeroDocumento.toLowerCase().includes(q) ||
+        `${persona.nombres} ${persona.apellidos}`.toLowerCase().includes(q)
+      );
     });
   }, [disponibles, busqueda, personas]);
 
@@ -101,6 +108,9 @@ export function AgregarEstudiantesModal({
     seleccionados.includes(m.id)
   );
 
+  const getDocsPendientes = (documentos: { estado: string }[] = []) =>
+    documentos.filter((d) => d.estado === "pendiente").length;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
@@ -110,7 +120,7 @@ export function AgregarEstudiantesModal({
             Agregar Estudiantes al Curso
           </DialogTitle>
           <DialogDescription>
-            Selecciona las matrículas que deseas asignar a este curso.
+            Mostrando matrículas disponibles con el mismo nivel de formación del curso.
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +128,7 @@ export function AgregarEstudiantesModal({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por número de cédula..."
+            placeholder="Buscar por cédula o nombre..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="pl-9"
@@ -138,13 +148,14 @@ export function AgregarEstudiantesModal({
         <ScrollArea className="flex-1 min-h-0 max-h-[300px] border rounded-md">
           {filtradas.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              No hay matrículas disponibles
+              No hay matrículas disponibles para este nivel de formación
             </div>
           ) : (
             <div className="divide-y">
               {filtradas.map((m) => {
                 const persona = getPersona(m.personaId);
                 const isSelected = seleccionados.includes(m.id);
+                const docsPendientes = getDocsPendientes(m.documentos);
                 return (
                   <label
                     key={m.id}
@@ -161,6 +172,12 @@ export function AgregarEstudiantesModal({
                       <p className="text-xs text-muted-foreground">
                         {persona?.tipoDocumento}: {persona?.numeroDocumento}
                       </p>
+                      {docsPendientes > 0 && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                          <AlertTriangle className="h-3 w-3" />
+                          Pendiente de documentos ({docsPendientes})
+                        </p>
+                      )}
                     </div>
                     <StatusBadge status={m.estado} />
                   </label>

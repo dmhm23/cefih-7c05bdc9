@@ -50,12 +50,15 @@ const TodoWidget = () => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">Tareas Rápidas</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 flex flex-col min-h-0 space-y-3">
         {/* Input */}
         <div className="flex gap-2">
           <Input
@@ -71,7 +74,7 @@ const TodoWidget = () => {
         </div>
 
         {/* List */}
-        <ScrollArea className="max-h-64">
+        <ScrollArea className="flex-1 min-h-0">
           {sorted.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-4">Sin tareas pendientes</p>
           ) : (
@@ -92,6 +95,9 @@ const TodoWidget = () => {
                     todo.completed && "line-through text-muted-foreground"
                   )}>
                     {todo.text}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground/60">
+                    {formatDate(todo.createdAt)}
                   </span>
                   <button
                     onClick={() => remove(todo.id)}

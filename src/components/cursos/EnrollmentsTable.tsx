@@ -8,10 +8,13 @@ import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { AgregarEstudiantesModal } from "@/components/cursos/AgregarEstudiantesModal";
 import { GeneracionMasivaDialog } from "@/components/cursos/GeneracionMasivaDialog";
 import { Curso } from "@/types/curso";
 import { Matricula } from "@/types/matricula";
+import { useGruposCartera } from "@/hooks/useCartera";
+import { EstadoGrupoCartera } from "@/types/cartera";
 import { Persona } from "@/types/persona";
 import { useRemoverEstudianteCurso } from "@/hooks/useCursos";
 import { useCertificadosByCurso, useGenerarCertificado } from "@/hooks/useCertificados";
@@ -39,6 +42,7 @@ interface EnrollmentsTableProps {
 
 export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: EnrollmentsTableProps) {
   const navigate = useNavigate();
+  const { data: grupos = [] } = useGruposCartera();
   const { toast } = useToast();
   const removerEstudiante = useRemoverEstudianteCurso();
   const generarCertificado = useGenerarCertificado();
@@ -61,7 +65,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     documental: "todos",
-    financiero: "todos",
+    cartera: "todos",
   });
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
@@ -102,10 +106,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     return "pendiente";
   };
 
-  const getFinancialStatus = (m: Matricula) => {
-    if (m.pagado) return "pagado";
-    if (m.abono && m.abono > 0) return "abonado";
-    return "pendiente";
+  const getCarteraStatus = (m: Matricula): EstadoGrupoCartera => {
+    const grupo = grupos.find(g => g.matriculaIds.includes(m.id));
+    return grupo?.estado ?? 'sin_facturar';
   };
 
   const filterConfigs: FilterConfig[] = [
@@ -113,10 +116,12 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       { value: "pendiente", label: "Pendiente" },
       { value: "completo", label: "Completo" },
     ]},
-    { key: "financiero", label: "Estado Financiero", type: "select", options: [
-      { value: "pagado", label: "Pagado" },
+    { key: "cartera", label: "Estado de Cartera", type: "select", options: [
+      { value: "sin_facturar", label: "Sin facturar" },
+      { value: "facturado", label: "Facturado" },
       { value: "abonado", label: "Abonado" },
-      { value: "pendiente", label: "Sin pagar" },
+      { value: "pagado", label: "Pagado" },
+      { value: "vencido", label: "Vencido" },
     ]},
   ];
 
@@ -130,9 +135,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       const ds = getDocStatus(m);
       if (ds !== filters.documental) return false;
     }
-    if (filters.financiero !== "todos") {
-      const fs = getFinancialStatus(m);
-      if (fs !== filters.financiero) return false;
+    if (filters.cartera !== "todos") {
+      const cs = getCarteraStatus(m);
+      if (cs !== filters.cartera) return false;
     }
     return true;
   });
@@ -306,7 +311,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                 filters={filterConfigs}
                 values={filters}
                 onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
-                onClear={() => setFilters({ documental: "todos", financiero: "todos" })}
+                onClear={() => setFilters({ documental: "todos", cartera: "todos" })}
                 trigger={
                   <Button variant="outline" size="sm" className="h-9 gap-2">
                     <Filter className="h-4 w-4" />
@@ -343,7 +348,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {(filters.documental !== "todos" || filters.financiero !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
+              {(filters.documental !== "todos" || filters.cartera !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -364,7 +369,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                     <th className="text-left py-2 pr-3 font-medium">Cobertura ARL</th>
                     <th className="text-left py-2 pr-3 font-medium">Examen</th>
                     <th className="text-left py-2 pr-3 font-medium">Documental</th>
-                    <th className="text-left py-2 pr-3 font-medium">Financiero</th>
+                    <th className="text-left py-2 pr-3 font-medium">Cartera</th>
                     <th className="text-left py-2 pr-3 font-medium">Certificado</th>
                     <th className="text-right py-2 font-medium">Acciones</th>
                   </tr>
@@ -373,7 +378,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   {filtered.map((m, idx) => {
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
-                    const finStatus = getFinancialStatus(m);
+                    const carteraStatus = getCarteraStatus(m);
                     const certInfo = getCertStatus(m);
                     const codigoEstudiante = codigoConfig?.activo
                       ? generarCodigoEstudiante({ config: codigoConfig, curso, indexEstudiante: idx })
@@ -420,18 +425,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           </Badge>
                         </td>
                         <td className="py-2 pr-3">
-                          <Badge
-                            variant={finStatus === "pagado" ? "default" : "secondary"}
-                            className={
-                              finStatus === "pagado"
-                                ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs"
-                                : finStatus === "abonado"
-                                ? "bg-blue-500/10 text-blue-600 text-xs"
-                                : "bg-amber-500/10 text-amber-600 text-xs"
-                            }
-                          >
-                            {finStatus === "pagado" ? "Pagado" : finStatus === "abonado" ? "Abonado" : "Sin pagar"}
-                          </Badge>
+                          <StatusBadge status={carteraStatus} />
                         </td>
                         <td className="py-2 pr-3">
                           <div className="flex items-center gap-1.5">

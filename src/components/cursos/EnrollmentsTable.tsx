@@ -41,7 +41,7 @@ interface EnrollmentsTableProps {
 
 export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: EnrollmentsTableProps) {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { data: grupos = [] } = useGruposCartera();
   const removerEstudiante = useRemoverEstudianteCurso();
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);

@@ -193,7 +193,7 @@ export default function GestionPersonalPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setCargosModalOpen(true)}>
             <Settings2 className="h-4 w-4 mr-2" />
-            Gestionar Cargos
+            Gestionar Roles
           </Button>
           <Button onClick={() => navigate("/gestion-personal/nuevo")}>
             <Plus className="h-4 w-4 mr-2" />

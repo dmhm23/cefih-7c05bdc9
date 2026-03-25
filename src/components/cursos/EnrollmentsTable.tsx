@@ -328,17 +328,6 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                 }
               />
               {!readOnly && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGeneracionMasiva}
-                  disabled={selectedIds.size === 0 || masivaGenerating}
-                >
-                  <Award className="h-4 w-4 mr-1" />
-                  {selectedIds.size > 0 ? `Generar (${selectedIds.size})` : "Generar certificados"}
-                </Button>
-              )}
-              {!readOnly && (
                 <Button variant="outline" size="sm" onClick={() => setModalAgregarOpen(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   Agregar

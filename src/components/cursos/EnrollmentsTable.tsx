@@ -134,9 +134,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       const ds = getDocStatus(m);
       if (ds !== filters.documental) return false;
     }
-    if (filters.financiero !== "todos") {
-      const fs = getFinancialStatus(m);
-      if (fs !== filters.financiero) return false;
+    if (filters.cartera !== "todos") {
+      const cs = getCarteraStatus(m);
+      if (cs !== filters.cartera) return false;
     }
     return true;
   });

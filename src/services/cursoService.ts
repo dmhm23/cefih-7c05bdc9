@@ -58,7 +58,7 @@ export const cursoService = {
     return newCurso;
   },
 
-  async update(id: string, data: Partial<CursoFormData>): Promise<Curso> {
+  async update(id: string, data: Partial<CursoFormData>, justificacion?: string): Promise<Curso> {
     await delay(800);
 
     const index = mockCursos.findIndex(c => c.id === id);
@@ -87,6 +87,7 @@ export const cursoService = {
       usuarioId: 'current_user',
       usuarioNombre: 'Usuario Actual',
       timestamp: now,
+      ...(justificacion ? { justificacion } : {}),
     });
 
     return mockCursos[index];

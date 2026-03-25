@@ -169,7 +169,7 @@ export default function NivelDetallePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Documentos Requeridos
+                Requisitos
               </CardTitle>
             </CardHeader>
             <CardContent>

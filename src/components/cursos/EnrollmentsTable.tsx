@@ -368,7 +368,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                     <th className="text-left py-2 pr-3 font-medium">Cobertura ARL</th>
                     <th className="text-left py-2 pr-3 font-medium">Examen</th>
                     <th className="text-left py-2 pr-3 font-medium">Documental</th>
-                    <th className="text-left py-2 pr-3 font-medium">Financiero</th>
+                    <th className="text-left py-2 pr-3 font-medium">Cartera</th>
                     <th className="text-left py-2 pr-3 font-medium">Certificado</th>
                     <th className="text-right py-2 font-medium">Acciones</th>
                   </tr>

@@ -107,7 +107,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
         <div className="space-y-3 border-b pb-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del cargo</Label>
+              <Label>Nombre del rol</Label>
               <Input
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}

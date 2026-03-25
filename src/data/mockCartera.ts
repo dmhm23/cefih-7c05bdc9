@@ -24,7 +24,6 @@ export const mockResponsables: ResponsablePago[] = [
     contactoTelefono: '3109876543',
     contactoEmail: 'camila.herrera@infranorte.com',
     direccionFacturacion: 'Carrera 7 #80-15, Bucaramanga',
-    direccionFacturacion: 'Carrera 7 #80-15, Bucaramanga',
   },
   {
     id: 'rp3',

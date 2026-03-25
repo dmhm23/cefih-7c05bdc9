@@ -20,7 +20,7 @@ const STORAGE_KEY = "personal_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre Completo", visible: true },
-  { key: "cargo", header: "Cargo", visible: true },
+  { key: "cargo", header: "Rol", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -58,7 +58,7 @@ export default function GestionPersonalPage() {
   const filterConfigs: FilterConfig[] = [
     {
       key: "cargo",
-      label: "Cargo",
+      label: "Rol",
       type: "select",
       options: cargos.map(c => ({ value: c.id, label: c.nombre })),
     },
@@ -157,7 +157,7 @@ export default function GestionPersonalPage() {
     },
     {
       key: "cargo",
-      header: "Cargo",
+      header: "Rol",
       sortable: true,
       sortKey: "cargoNombre",
       render: (p: Personal) => (
@@ -193,7 +193,7 @@ export default function GestionPersonalPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setCargosModalOpen(true)}>
             <Settings2 className="h-4 w-4 mr-2" />
-            Gestionar Cargos
+            Gestionar Roles
           </Button>
           <Button onClick={() => navigate("/gestion-personal/nuevo")}>
             <Plus className="h-4 w-4 mr-2" />

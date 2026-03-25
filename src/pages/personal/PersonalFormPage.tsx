@@ -43,7 +43,7 @@ import { v4 as uuidv4 } from "uuid";
 const personalSchema = z.object({
   nombres: z.string().min(2, "Ingrese el nombre"),
   apellidos: z.string().min(2, "Ingrese los apellidos"),
-  cargoId: z.string().min(1, "Seleccione un cargo"),
+  cargoId: z.string().min(1, "Seleccione un rol"),
 });
 
 type PersonalFormSchema = z.infer<typeof personalSchema>;
@@ -258,12 +258,12 @@ export default function PersonalFormPage() {
                 name="cargoId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cargo *</FormLabel>
+                    <FormLabel>Rol *</FormLabel>
                     <div className="flex items-center gap-2">
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Seleccionar cargo..." />
+                            <SelectValue placeholder="Seleccionar rol..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -279,7 +279,7 @@ export default function PersonalFormPage() {
                         variant="outline"
                         size="icon"
                         onClick={() => setCargosModalOpen(true)}
-                        title="Gestionar cargos"
+                        title="Gestionar roles"
                       >
                         <Settings2 className="h-4 w-4" />
                       </Button>

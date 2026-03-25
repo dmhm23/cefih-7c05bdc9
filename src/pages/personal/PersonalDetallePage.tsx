@@ -154,7 +154,7 @@ export default function PersonalDetallePage() {
                 icon={User}
               />
               <EditableField
-                label="Cargo"
+                label="Rol"
                 value={getValue("cargoId")}
                 displayValue={getValue("cargoNombre")}
                 onChange={(v) => handleFieldChange("cargoId", v)}

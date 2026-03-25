@@ -209,7 +209,7 @@ export const personalService = {
   async createCargo(data: CargoFormData): Promise<Cargo> {
     await delay(800);
     const exists = mockCargos.find(c => c.nombre.toLowerCase() === data.nombre.toLowerCase());
-    if (exists) throw new ApiError('Ya existe un cargo con ese nombre', 400, 'CARGO_DUPLICADO');
+    if (exists) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
 
     const now = new Date().toISOString();
     const newCargo: Cargo = {
@@ -236,11 +236,11 @@ export const personalService = {
   async updateCargo(id: string, data: Partial<CargoFormData>): Promise<Cargo> {
     await delay(800);
     const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Cargo no encontrado', 404, 'NOT_FOUND');
+    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
 
     if (data.nombre) {
       const duplicate = mockCargos.find(c => c.id !== id && c.nombre.toLowerCase() === data.nombre!.toLowerCase());
-      if (duplicate) throw new ApiError('Ya existe un cargo con ese nombre', 400, 'CARGO_DUPLICADO');
+      if (duplicate) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
     }
 
     const now = new Date().toISOString();
@@ -263,10 +263,10 @@ export const personalService = {
   async deleteCargo(id: string): Promise<void> {
     await delay(600);
     const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Cargo no encontrado', 404, 'NOT_FOUND');
+    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
 
     const inUse = mockPersonalStaff.some(p => p.cargoId === id);
-    if (inUse) throw new ApiError('No se puede eliminar un cargo que está asignado a personal activo', 400, 'CARGO_EN_USO');
+    if (inUse) throw new ApiError('No se puede eliminar un rol que está asignado a personal activo', 400, 'CARGO_EN_USO');
 
     const now = new Date().toISOString();
     mockAuditLogs.push({

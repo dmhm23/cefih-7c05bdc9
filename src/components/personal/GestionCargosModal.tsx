@@ -63,17 +63,17 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
 
   const handleSubmit = async () => {
     if (!nombre.trim()) {
-      toast({ title: "Ingrese un nombre para el cargo", variant: "destructive" });
+      toast({ title: "Ingrese un nombre para el rol", variant: "destructive" });
       return;
     }
 
     try {
       if (editingId) {
         await updateCargo.mutateAsync({ id: editingId, data: { nombre, tipo } });
-        toast({ title: "Cargo actualizado" });
+        toast({ title: "Rol actualizado" });
       } else {
         const newCargo = await createCargo.mutateAsync({ nombre, tipo });
-        toast({ title: "Cargo creado" });
+        toast({ title: "Rol creado" });
         onCargoCreated?.(newCargo.id);
       }
       resetForm();
@@ -85,7 +85,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
   const handleDelete = async (id: string) => {
     try {
       await deleteCargo.mutateAsync(id);
-      toast({ title: "Cargo eliminado" });
+      toast({ title: "Rol eliminado" });
       if (editingId === id) resetForm();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -99,15 +99,15 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Gestionar Cargos</DialogTitle>
-          <DialogDescription>Crear, editar o eliminar cargos del sistema.</DialogDescription>
+          <DialogTitle>Gestionar Roles</DialogTitle>
+          <DialogDescription>Crear, editar o eliminar roles del sistema.</DialogDescription>
         </DialogHeader>
 
         {/* Form */}
         <div className="space-y-3 border-b pb-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Nombre del cargo</Label>
+              <Label>Nombre del rol</Label>
               <Input
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
@@ -115,7 +115,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>Tipo de rol</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoCargo)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -179,7 +179,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
                     size="icon"
                     className="h-7 w-7 text-destructive"
                     disabled={inUse}
-                    title={inUse ? "Cargo en uso, no se puede eliminar" : "Eliminar cargo"}
+                    title={inUse ? "Rol en uso, no se puede eliminar" : "Eliminar rol"}
                     onClick={() => handleDelete(cargo.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

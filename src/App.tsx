@@ -53,6 +53,11 @@ import PlantillaEditorPage from "./pages/certificacion/PlantillaEditorPage";
 import CarteraPage from "./pages/cartera/CarteraPage";
 import GrupoCarteraDetallePage from "./pages/cartera/GrupoCarteraDetallePage";
 
+// Empresas (Módulo J)
+import EmpresasPage from "./pages/empresas/EmpresasPage";
+import EmpresaFormPage from "./pages/empresas/EmpresaFormPage";
+import EmpresaDetallePage from "./pages/empresas/EmpresaDetallePage";
+
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";

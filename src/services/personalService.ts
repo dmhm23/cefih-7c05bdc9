@@ -209,7 +209,7 @@ export const personalService = {
   async createCargo(data: CargoFormData): Promise<Cargo> {
     await delay(800);
     const exists = mockCargos.find(c => c.nombre.toLowerCase() === data.nombre.toLowerCase());
-    if (exists) throw new ApiError('Ya existe un cargo con ese nombre', 400, 'CARGO_DUPLICADO');
+    if (exists) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
 
     const now = new Date().toISOString();
     const newCargo: Cargo = {

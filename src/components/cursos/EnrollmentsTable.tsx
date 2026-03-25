@@ -310,7 +310,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                 filters={filterConfigs}
                 values={filters}
                 onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
-                onClear={() => setFilters({ documental: "todos", financiero: "todos" })}
+                onClear={() => setFilters({ documental: "todos", cartera: "todos" })}
                 trigger={
                   <Button variant="outline" size="sm" className="h-9 gap-2">
                     <Filter className="h-4 w-4" />

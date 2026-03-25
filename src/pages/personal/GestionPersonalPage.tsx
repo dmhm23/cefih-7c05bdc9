@@ -58,7 +58,7 @@ export default function GestionPersonalPage() {
   const filterConfigs: FilterConfig[] = [
     {
       key: "cargo",
-      label: "Cargo",
+      label: "Rol",
       type: "select",
       options: cargos.map(c => ({ value: c.id, label: c.nombre })),
     },

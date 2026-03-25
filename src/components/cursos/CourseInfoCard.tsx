@@ -17,6 +17,21 @@ interface CourseInfoCardProps {
 }
 
 export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: CourseInfoCardProps) {
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+
+  const entrenadorOptions = useMemo(() =>
+    entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),
+    [entrenadores]
+  );
+
+  const handleEntrenadorChange = (entrenadorId: string) => {
+    const selected = entrenadores.find((e) => e.id === entrenadorId);
+    if (selected) {
+      onFieldChange("entrenadorId", entrenadorId);
+      onFieldChange("entrenadorNombre", `${selected.nombres} ${selected.apellidos}`);
+    }
+  };
+
   const handleFechaChange = (campo: "fechaInicio" | "fechaFin", nuevoValor: string) => {
     onFieldChange(campo, nuevoValor);
     const inicio = campo === "fechaInicio" ? nuevoValor : (formData.fechaInicio ?? curso.fechaInicio);

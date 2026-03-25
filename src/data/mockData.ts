@@ -337,6 +337,7 @@ export const mockMatriculas: Matricula[] = [
     fechaInicio: '2024-03-01',
     fechaFin: '2024-03-03',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-010',
     empresaNombre: 'Constructora ABC S.A.S',
     empresaNit: '900123456-1',
     empresaRepresentanteLegal: 'Roberto Gómez',

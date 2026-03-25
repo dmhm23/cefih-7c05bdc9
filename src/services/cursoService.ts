@@ -112,17 +112,17 @@ export const cursoService = {
         );
       }
 
-      // 2. Validar matrículas pendientes
+      // 2. Validar documentos completos de todas las matrículas
       const matriculas = mockMatriculas.filter(m => m.cursoId === id);
-      const matriculasPendientes = matriculas.filter(
-        m => m.estado === 'pendiente' || m.estado === 'creada'
+      const matriculasConDocsIncompletos = matriculas.filter(m =>
+        m.documentos.some(d => !d.opcional && d.estado === 'pendiente')
       );
 
-      if (matriculasPendientes.length > 0) {
+      if (matriculasConDocsIncompletos.length > 0) {
         throw new ApiError(
-          `No se puede cerrar el curso. Hay ${matriculasPendientes.length} matrícula(s) pendiente(s)`,
+          `No se puede cerrar el curso. Hay ${matriculasConDocsIncompletos.length} matrícula(s) con documentos incompletos`,
           400,
-          'MATRICULAS_PENDIENTES'
+          'DOCUMENTOS_INCOMPLETOS'
         );
       }
     }

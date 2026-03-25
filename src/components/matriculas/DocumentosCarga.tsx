@@ -215,7 +215,7 @@ export function DocumentosCarga({
       {/* Progress */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{completados}/{total} documentos</span>
+          <span className="text-sm font-medium">{completados}/{total} requisitos</span>
           {compact && (
             <Button variant="ghost" size="sm" className="h-6 px-1" onClick={() => setExpanded(!expanded)}>
               {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -333,7 +333,7 @@ export function DocumentosCarga({
         <div className="border rounded-lg overflow-hidden">
           {/* Block 1: Checklist */}
           <div className="p-3 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Documentos incluidos en el PDF</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Requisitos incluidos en el PDF</p>
             <div className="space-y-1.5">
               {documentos.map((doc) => {
                 const isPendiente = doc.estado === "pendiente";

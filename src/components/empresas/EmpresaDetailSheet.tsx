@@ -190,6 +190,24 @@ export function EmpresaDetailSheet({
             />
           </div>
         </DetailSection>
+        <Separator />
+
+        <DetailSection title="Estudiantes Enviados">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{estudiantesCount} matrícula(s)</span>
+            </div>
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0 h-auto text-xs"
+              onClick={handleFullScreen}
+            >
+              Ver todos →
+            </Button>
+          </div>
+        </DetailSection>
       </div>
     </DetailSheet>
   );

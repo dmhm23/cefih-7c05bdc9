@@ -263,10 +263,10 @@ export const personalService = {
   async deleteCargo(id: string): Promise<void> {
     await delay(600);
     const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Cargo no encontrado', 404, 'NOT_FOUND');
+    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
 
     const inUse = mockPersonalStaff.some(p => p.cargoId === id);
-    if (inUse) throw new ApiError('No se puede eliminar un cargo que está asignado a personal activo', 400, 'CARGO_EN_USO');
+    if (inUse) throw new ApiError('No se puede eliminar un rol que está asignado a personal activo', 400, 'CARGO_EN_USO');
 
     const now = new Date().toISOString();
     mockAuditLogs.push({

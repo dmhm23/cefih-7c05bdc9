@@ -179,7 +179,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
                     size="icon"
                     className="h-7 w-7 text-destructive"
                     disabled={inUse}
-                    title={inUse ? "Cargo en uso, no se puede eliminar" : "Eliminar cargo"}
+                    title={inUse ? "Rol en uso, no se puede eliminar" : "Eliminar rol"}
                     onClick={() => handleDelete(cargo.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

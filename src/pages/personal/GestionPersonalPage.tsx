@@ -157,7 +157,7 @@ export default function GestionPersonalPage() {
     },
     {
       key: "cargo",
-      header: "Cargo",
+      header: "Rol",
       sortable: true,
       sortKey: "cargoNombre",
       render: (p: Personal) => (

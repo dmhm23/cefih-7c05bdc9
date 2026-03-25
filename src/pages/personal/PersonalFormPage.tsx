@@ -279,7 +279,7 @@ export default function PersonalFormPage() {
                         variant="outline"
                         size="icon"
                         onClick={() => setCargosModalOpen(true)}
-                        title="Gestionar cargos"
+                        title="Gestionar roles"
                       >
                         <Settings2 className="h-4 w-4" />
                       </Button>

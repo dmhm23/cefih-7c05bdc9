@@ -907,7 +907,7 @@ El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja
 | `PersonalDetailSheet` | Panel lateral con datos del perfil, adjuntos y firma (gestión en tiempo real) |
 | `FirmaPersonal` | Componente de captura de firma (dibujo o carga de imagen) |
 | `AdjuntosPersonal` | Gestión de documentos adjuntos con preview, descarga y eliminación |
-| `GestionCargosModal` | Modal para CRUD de cargos accesible desde el formulario de personal |
+| `GestionCargosModal` | Modal para CRUD de roles accesible desde el formulario de personal (internamente opera sobre la entidad `Cargo`) |
 
 ### 7.9 Flujo Funcional
 

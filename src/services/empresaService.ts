@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
-import { Empresa, EmpresaFormData } from '@/types/empresa';
-import { mockEmpresas } from '@/data/mockEmpresas';
+import { Empresa, EmpresaFormData, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
+import { mockEmpresas, mockTarifasEmpresa } from '@/data/mockEmpresas';
 import { delay, ApiError } from './api';
 
 export const empresaService = {
@@ -79,5 +79,41 @@ export const empresaService = {
     }
 
     mockEmpresas.splice(index, 1);
+  },
+
+  // ============ TARIFAS ============
+
+  async getTarifas(empresaId: string): Promise<TarifaEmpresa[]> {
+    await delay(500);
+    return mockTarifasEmpresa.filter(t => t.empresaId === empresaId);
+  },
+
+  async createTarifa(data: TarifaEmpresaFormData): Promise<TarifaEmpresa> {
+    await delay(800);
+    const now = new Date().toISOString();
+    const newTarifa: TarifaEmpresa = {
+      ...data,
+      id: uuid(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockTarifasEmpresa.push(newTarifa);
+    return newTarifa;
+  },
+
+  async updateTarifa(id: string, data: Partial<TarifaEmpresaFormData>): Promise<TarifaEmpresa> {
+    await delay(600);
+    const index = mockTarifasEmpresa.findIndex(t => t.id === id);
+    if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
+    const now = new Date().toISOString();
+    mockTarifasEmpresa[index] = { ...mockTarifasEmpresa[index], ...data, updatedAt: now };
+    return mockTarifasEmpresa[index];
+  },
+
+  async deleteTarifa(id: string): Promise<void> {
+    await delay(400);
+    const index = mockTarifasEmpresa.findIndex(t => t.id === id);
+    if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
+    mockTarifasEmpresa.splice(index, 1);
   },
 };

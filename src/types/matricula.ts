@@ -57,6 +57,7 @@ export interface Matricula {
   id: string;
   personaId: string;
   cursoId: string;
+  empresaId?: string;
   estado: EstadoMatricula;
   
   // Fechas autocompletadas desde curso

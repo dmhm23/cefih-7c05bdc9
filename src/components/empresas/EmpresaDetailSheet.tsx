@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, FileText, MapPin, Phone, Mail, User, Shield } from "lucide-react";
+import { Building2, FileText, MapPin, Phone, Mail, User, Shield, Users } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateEmpresa } from "@/hooks/useEmpresas";
+import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa, EmpresaFormData } from "@/types/empresa";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { Separator } from "@/components/ui/separator";
@@ -31,6 +32,7 @@ export function EmpresaDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateEmpresa = useUpdateEmpresa();
+  const { data: matriculas = [] } = useMatriculas();
   const [formData, setFormData] = useState<Partial<EmpresaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
@@ -40,6 +42,8 @@ export function EmpresaDetailSheet({
   }, [empresa?.id]);
 
   if (!empresa) return null;
+
+  const estudiantesCount = matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
 
   const handleFieldChange = (field: keyof EmpresaFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -184,6 +188,24 @@ export function EmpresaDetailSheet({
               onChange={v => handleFieldChange("emailContacto", v)}
               icon={Mail}
             />
+          </div>
+        </DetailSection>
+        <Separator />
+
+        <DetailSection title="Estudiantes Enviados">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium">{estudiantesCount} matrícula(s)</span>
+            </div>
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0 h-auto text-xs"
+              onClick={handleFullScreen}
+            >
+              Ver todos →
+            </Button>
           </div>
         </DetailSection>
       </div>

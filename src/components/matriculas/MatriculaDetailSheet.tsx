@@ -474,6 +474,17 @@ export function MatriculaDetailSheet({
                   value={getValue("empresaRepresentanteLegal") || ""}
                   onChange={(v) => handleFieldChange("empresaRepresentanteLegal", v)}
                 />
+                {matricula.empresaId && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="px-0 gap-1 h-auto text-xs col-span-2"
+                    onClick={() => { onOpenChange(false); navigate(`/empresas/${matricula.empresaId}`); }}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Ver empresa en directorio
+                  </Button>
+                )}
               </>
             )}
             {(getValue("tipoVinculacion") === 'empresa' || getValue("tipoVinculacion") === 'arl') && (

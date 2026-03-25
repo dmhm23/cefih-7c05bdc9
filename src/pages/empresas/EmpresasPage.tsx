@@ -13,6 +13,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { EmpresaDetailSheet } from "@/components/empresas/EmpresaDetailSheet";
 import { useEmpresas, useDeleteEmpresa } from "@/hooks/useEmpresas";
+import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
@@ -28,6 +29,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "personaContacto", header: "Persona Contacto", visible: true },
   { key: "telefonoContacto", header: "Teléfono Contacto", visible: true },
   { key: "emailContacto", header: "Email", visible: true },
+  { key: "estudiantesEnviados", header: "Estudiantes", visible: true },
   { key: "representanteLegal", header: "Representante Legal", visible: false },
   { key: "direccion", header: "Dirección", visible: false },
   { key: "telefonoEmpresa", header: "Teléfono Empresa", visible: false },
@@ -59,6 +61,7 @@ export default function EmpresasPage() {
   });
 
   const { data: empresas = [], isLoading } = useEmpresas();
+  const { data: matriculas = [] } = useMatriculas();
   const deleteEmpresa = useDeleteEmpresa();
 
   useEffect(() => {
@@ -90,6 +93,10 @@ export default function EmpresasPage() {
 
   const getArlLabel = (value: string) =>
     ARL_OPTIONS.find(a => a.value === value)?.label || value;
+
+  const getEstudiantesCount = (empresa: Empresa) => {
+    return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
+  };
 
   const filteredEmpresas = empresas.filter((e) => {
     const query = searchQuery.toLowerCase();
@@ -212,6 +219,19 @@ export default function EmpresasPage() {
       sortable: true,
     },
     { key: "representanteLegal", header: "Representante Legal" },
+    {
+      key: "estudiantesEnviados",
+      header: "Estudiantes",
+      sortable: true,
+      render: (e) => {
+        const count = getEstudiantesCount(e);
+        return (
+          <Badge variant={count > 0 ? "default" : "secondary"}>
+            {count}
+          </Badge>
+        );
+      },
+    },
     { key: "direccion", header: "Dirección", className: "min-w-[200px]" },
     { key: "telefonoEmpresa", header: "Teléfono Empresa" },
     {

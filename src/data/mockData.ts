@@ -337,6 +337,7 @@ export const mockMatriculas: Matricula[] = [
     fechaInicio: '2024-03-01',
     fechaFin: '2024-03-03',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-010',
     empresaNombre: 'Constructora ABC S.A.S',
     empresaNit: '900123456-1',
     empresaRepresentanteLegal: 'Roberto Gómez',
@@ -431,6 +432,7 @@ export const mockMatriculas: Matricula[] = [
     centroFormacionPrevio: 'Centro de Formación SENA Regional Bogotá',
     fechaCertificacionPrevia: '2023-03-15',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-012',
     empresaNombre: 'Infraestructuras del Norte S.A.',
     empresaNit: '800567890-3',
     empresaRepresentanteLegal: 'Felipe Morales',
@@ -471,6 +473,7 @@ export const mockMatriculas: Matricula[] = [
     centroFormacionPrevio: 'Escuela Colombiana de Ingeniería',
     fechaCertificacionPrevia: '2023-06-20',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-013',
     empresaNombre: 'Telecom Solutions S.A.S',
     empresaNit: '901234567-8',
     empresaRepresentanteLegal: 'Diana Castellanos',
@@ -519,7 +522,7 @@ export const mockMatriculas: Matricula[] = [
   // --- c1: Trabajador Autorizado (empresa: Constructora ABC x3, Energía Solar x2, independiente x1) ---
   {
     id: 'm5', personaId: 'p5', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
+    tipoVinculacion: 'empresa', empresaId: 'emp-010', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd50', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-01' },
@@ -535,7 +538,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm6', personaId: 'p6', cursoId: 'c1', estado: 'completa', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Oficial de alturas', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
+    tipoVinculacion: 'empresa', empresaId: 'emp-010', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Oficial de alturas', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
     consentimientoSalud: true, restriccionMedica: false, alergias: true, alergiasDetalle: 'Polen', consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd54', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-01' },
@@ -550,7 +553,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm7', personaId: 'p7', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Operario de fachada', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
+    tipoVinculacion: 'empresa', empresaId: 'emp-010', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Operario de fachada', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd58', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-02' },
@@ -564,7 +567,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm8', personaId: 'p8', cursoId: 'c1', estado: 'creada', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de instalación', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-011', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de instalación', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd62', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -578,7 +581,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm9', personaId: 'p9', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Operario de montaje', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-011', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Operario de montaje', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd66', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-03' },
@@ -610,7 +613,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm11', personaId: 'p11', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Santander', fechaCertificacionPrevia: '2023-05-10',
-    tipoVinculacion: 'empresa', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Operario de alturas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-012', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Operario de alturas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd74', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-04' },
@@ -627,7 +630,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm12', personaId: 'p12', cursoId: 'c2', estado: 'creada', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Formación Alturas Bogotá', fechaCertificacionPrevia: '2023-08-20',
-    tipoVinculacion: 'empresa', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-012', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd79', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -642,7 +645,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm13', personaId: 'p13', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-04-15',
-    tipoVinculacion: 'empresa', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnico de redes', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
+    tipoVinculacion: 'empresa', empresaId: 'emp-013', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnico de redes', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd83', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-05' },
@@ -658,7 +661,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm14', personaId: 'p14', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro de Capacitación Medellín', fechaCertificacionPrevia: '2023-09-10',
-    tipoVinculacion: 'empresa', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnica de antenas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
+    tipoVinculacion: 'empresa', empresaId: 'emp-013', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnica de antenas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
     consentimientoSalud: true, restriccionMedica: true, restriccionMedicaDetalle: 'Asma leve controlada', alergias: false, consumoMedicamentos: true, consumoMedicamentosDetalle: 'Salbutamol inhalador', nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd87', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-05' },
@@ -691,7 +694,7 @@ export const mockMatriculas: Matricula[] = [
   // --- c5: Jefe de Área (empresa: Minera Andina x2, independientes x2) ---
   {
     id: 'm16', personaId: 'p16', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Jefa de seguridad', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Jefa de seguridad', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd96', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -705,7 +708,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm17', personaId: 'p17', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisor de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisor de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd100', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-07' },
@@ -720,7 +723,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm18', personaId: 'p18', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisora de obra', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisora de obra', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd104', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-07' },
@@ -735,7 +738,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm19', personaId: 'p19', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd108', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -751,7 +754,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm20', personaId: 'p20', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Medellín', fechaCertificacionPrevia: '2023-07-15',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd112', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-08' },
@@ -767,7 +770,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm21', personaId: 'p21', cursoId: 'c6', estado: 'creada', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Alturas Barranquilla', fechaCertificacionPrevia: '2023-03-20',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd116', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },
@@ -782,7 +785,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm22', personaId: 'p22', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Cali', fechaCertificacionPrevia: '2023-10-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de paneles', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-011', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de paneles', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd120', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-09' },
@@ -798,7 +801,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm23', personaId: 'p23', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Bogotá', fechaCertificacionPrevia: '2023-05-25',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de voladura', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Operario de voladura', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd124', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-10' },

@@ -694,7 +694,7 @@ export const mockMatriculas: Matricula[] = [
   // --- c5: Jefe de Área (empresa: Minera Andina x2, independientes x2) ---
   {
     id: 'm16', personaId: 'p16', cursoId: 'c5', estado: 'creada', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Jefa de seguridad', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Jefa de seguridad', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd96', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },

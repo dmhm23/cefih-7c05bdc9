@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, ArrowRight, FileWarning } from "lucide-react";
 import {
   Dialog,
@@ -50,13 +50,11 @@ export function CloseCourseDialog({
       m.documentos.some((d) => !d.opcional && d.estado === "pendiente")
     );
 
-  const handleOpen = (isOpen: boolean) => {
-    if (isOpen) {
-      // 1. Validar MinTrabajo
+  useEffect(() => {
+    if (open) {
       if (!curso.minTrabajoRegistro || !curso.minTrabajoFechaCierrePrincipal) {
         setStep("mintrabajo_missing");
       } else {
-        // 2. Validar documentos completos
         const incompletos = getDocsIncompletos();
         if (incompletos.length > 0) {
           setMatriculasConDocsIncompletos(incompletos);
@@ -68,8 +66,7 @@ export function CloseCourseDialog({
     } else {
       setStep("idle");
     }
-    onOpenChange(isOpen);
-  };
+  }, [open]);
 
   const handleConfirm = async () => {
     try {
@@ -92,7 +89,7 @@ export function CloseCourseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         {step === "mintrabajo_missing" && (
           <>

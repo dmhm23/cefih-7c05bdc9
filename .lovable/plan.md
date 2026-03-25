@@ -1,20 +1,28 @@
 
 
-## Plan: Simplificar UI de documentos adjuntos
+## Diagnóstico: Por qué Chrome bloquea la vista previa de PDFs
 
-### Problema
-Cuando no hay archivos, se muestran dos recuadros con borde punteado: el `FileDropZone` y el mensaje "No hay documentos adjuntos". Ambos parecen zonas de carga, generando confusión.
+### Causa raíz
 
-### Solución
-En `src/components/personal/AdjuntosPersonal.tsx`, cambiar el estado vacío de un recuadro con borde punteado a un simple texto informativo sin borde, para que quede claro que es solo un mensaje y no una segunda zona de carga.
+La aplicación corre dentro del iframe de preview de Lovable (`id-preview--*.lovable.app`). Cuando se intenta mostrar un PDF dentro de un **iframe anidado** (iframe dentro de iframe), Chrome aplica restricciones de seguridad de sandboxing que bloquean la carga de `blob:` URLs en iframes anidados, mostrando el mensaje "This page has been blocked by Chrome".
 
-### Cambio concreto
+El código actual en `AdjuntosPersonal.tsx` (línea 159) hace exactamente esto:
+```html
+<iframe src={blobUrls[adj.id]} ... />  <!-- iframe anidado → bloqueado -->
+```
 
-**`src/components/personal/AdjuntosPersonal.tsx`** (líneas 55-62):
-- Eliminar el `div` con `border-2 border-dashed rounded-lg p-6` que simula visualmente otra dropzone
-- Reemplazar por un texto simple con padding mínimo: `"Aún no hay documentos adjuntos"` en texto `text-xs text-muted-foreground`, sin borde ni icono grande
-- Resultado: un único recuadro visible (el FileDropZone) + un mensaje discreto debajo cuando la lista está vacía
+Adicionalmente, hay un bug en el código: las líneas 160-163 tienen una condición duplicada (`adj.tipo.startsWith("image/")`) que hace la segunda rama inalcanzable — aunque esto no afecta la funcionalidad actual.
+
+### Solución propuesta
+
+Reemplazar el `<iframe>` para PDFs por un `<object>` tag, que Chrome permite en contextos de sandboxing. Si el navegador no puede renderizar el objeto, se muestra un fallback con botón para abrir en nueva pestaña.
+
+### Cambio — `src/components/personal/AdjuntosPersonal.tsx`
+
+1. Reemplazar `<iframe src={blobUrls[adj.id]}>` por `<object data={blobUrls[adj.id]} type="application/pdf">` con un fallback textual que incluya un enlace para abrir en nueva pestaña
+2. Eliminar la rama duplicada de imagen (líneas 162-163) que nunca se ejecuta
+3. Mantener el botón "Abrir" existente que usa `window.open(blobUrl, "_blank")` como alternativa principal
 
 ### Archivo modificado
-- `src/components/personal/AdjuntosPersonal.tsx`
+- `src/components/personal/AdjuntosPersonal.tsx` — solo la sección de renderizado del preview inline (líneas 158-169)
 

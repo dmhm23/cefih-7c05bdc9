@@ -39,9 +39,11 @@ export const mockResponsables: ResponsablePago[] = [
     tipo: 'empresa',
     nombre: 'Telecom Solutions S.A.S',
     nit: '901234567-8',
+    empresaId: 'emp-013',
     contactoNombre: 'Andrés Patiño',
     contactoTelefono: '3154567890',
     contactoEmail: 'andres.patino@telecomsol.com',
+    direccionFacturacion: 'Av. El Dorado #68-45, Bogotá',
     direccionFacturacion: 'Av. El Dorado #68-45, Bogotá',
   },
   // Nuevos responsables

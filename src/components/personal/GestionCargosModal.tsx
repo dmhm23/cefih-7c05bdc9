@@ -70,10 +70,10 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
     try {
       if (editingId) {
         await updateCargo.mutateAsync({ id: editingId, data: { nombre, tipo } });
-        toast({ title: "Cargo actualizado" });
+        toast({ title: "Rol actualizado" });
       } else {
         const newCargo = await createCargo.mutateAsync({ nombre, tipo });
-        toast({ title: "Cargo creado" });
+        toast({ title: "Rol creado" });
         onCargoCreated?.(newCargo.id);
       }
       resetForm();

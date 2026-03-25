@@ -7,6 +7,7 @@ export const mockResponsables: ResponsablePago[] = [
     tipo: 'empresa',
     nombre: 'Constructora ABC S.A.S',
     nit: '900123456-1',
+    empresaId: 'emp-010',
     contactoNombre: 'Sandra Milena López',
     contactoTelefono: '3201234567',
     contactoEmail: 'sandra.lopez@constructoraabc.com',

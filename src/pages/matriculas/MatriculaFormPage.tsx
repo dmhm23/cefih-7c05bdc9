@@ -839,47 +839,118 @@ export default function MatriculaFormPage() {
               {(tipoVinculacion === "empresa" || tipoVinculacion === "independiente" || tipoVinculacion === "arl") && (
                 <div className="space-y-3 pt-2 border-t">
                   <p className="text-sm font-medium text-muted-foreground pt-1">Datos de la Empresa</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="empresaNombre"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre de la Empresa</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Nombre de la empresa" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                  {(tipoVinculacion === "empresa" || tipoVinculacion === "arl") ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="empresaId"
+                        render={({ field }) => {
+                          const empresaOptions = empresas.map(e => ({
+                            value: e.id,
+                            label: `${e.nombreEmpresa} — ${e.nit}`,
+                          }));
+                          return (
+                            <FormItem className="md:col-span-2">
+                              <FormLabel>Empresa</FormLabel>
+                              <FormControl>
+                                <Combobox
+                                  options={empresaOptions}
+                                  value={field.value || ""}
+                                  onValueChange={(val) => {
+                                    field.onChange(val);
+                                    const emp = empresas.find(e => e.id === val);
+                                    if (emp) {
+                                      form.setValue("empresaNombre", emp.nombreEmpresa);
+                                      form.setValue("empresaNit", emp.nit);
+                                      form.setValue("empresaRepresentanteLegal", emp.representanteLegal);
+                                      form.setValue("sectorEconomico", emp.sectorEconomico);
+                                      form.setValue("arl", emp.arl);
+                                      form.setValue("empresaContactoNombre", emp.personaContacto);
+                                      form.setValue("empresaContactoTelefono", emp.telefonoContacto);
+                                    }
+                                  }}
+                                  placeholder="Buscar empresa por nombre o NIT..."
+                                  searchPlaceholder="Buscar empresa..."
+                                  emptyMessage="Empresa no encontrada"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
+                      />
+                      <FormItem>
+                        <FormLabel className="invisible">Acción</FormLabel>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full"
+                          onClick={async () => {
+                            // Simple: prompt for empresa name via a toast placeholder
+                            // For now navigate to create empresa page in new tab
+                            window.open("/empresas/nueva", "_blank");
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Crear empresa
+                        </Button>
+                      </FormItem>
+                      {form.watch("empresaId") && (
+                        <>
+                          <div>
+                            <p className="text-xs text-muted-foreground">NIT</p>
+                            <p className="text-sm font-medium">{form.watch("empresaNit")}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Representante Legal</p>
+                            <p className="text-sm font-medium">{form.watch("empresaRepresentanteLegal")}</p>
+                          </div>
+                        </>
                       )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="empresaNit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>NIT</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="900123456-1" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="empresaRepresentanteLegal"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Representante Legal</FormLabel>
-                          <FormControl>
-                            <Input {...field} placeholder="Nombre completo" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="empresaNombre"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre de la Empresa</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Nombre de la empresa" disabled={tipoVinculacion === "independiente"} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="empresaNit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>NIT</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="900123456-1" disabled={tipoVinculacion === "independiente"} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="empresaRepresentanteLegal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Representante Legal</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Nombre completo" disabled={tipoVinculacion === "independiente"} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                   {(tipoVinculacion === "empresa" || tipoVinculacion === "arl") && (
                     <>
                       <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>

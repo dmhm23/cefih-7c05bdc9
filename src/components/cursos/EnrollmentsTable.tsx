@@ -8,6 +8,7 @@ import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { AgregarEstudiantesModal } from "@/components/cursos/AgregarEstudiantesModal";
 import { GeneracionMasivaDialog } from "@/components/cursos/GeneracionMasivaDialog";
 import { Curso } from "@/types/curso";

@@ -581,7 +581,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm9', personaId: 'p9', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Operario de montaje', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-011', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Operario de montaje', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd66', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-03' },

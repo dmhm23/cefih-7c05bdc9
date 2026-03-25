@@ -665,7 +665,7 @@ abierto → en_progreso → cerrado
 La vista de calendario ofrece:
 
 - **Modos de visualización**: Mes, Semana, Día
-- **Filtros**: Por entrenador (multi-select con colores asignados) y por supervisor
+- **Filtros**: Por entrenador (checkboxes multi-select con indicador de color) y por supervisor
 - **Panel de resumen**: Horas ejecutadas por entrenador en el período visible
 - **Navegación temporal**: Anterior/Siguiente/Hoy
 - **Eventos**: Cada curso se muestra como bloque con nombre, entrenador y estado

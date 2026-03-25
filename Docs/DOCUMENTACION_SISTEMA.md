@@ -867,10 +867,11 @@ El componente `FirmaPersonal` ofrece dos modos de captura:
 
 El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja de vida, contratos, certificaciones, etc.):
 
-- **Carga**: Archivos de hasta 10MB. Lectura como DataURL para almacenamiento mock.
-- **Previsualización inline**: Para imágenes y PDFs.
+- **Carga**: Archivos de hasta 10MB mediante zona de arrastrar y soltar (`FileDropZone`). Lectura como DataURL para almacenamiento mock.
+- **Previsualización inline**: Para imágenes (tag `<img>`) y PDFs (tag `<object>` con fallback de enlace para abrir en nueva pestaña). Se usa `<object>` en lugar de `<iframe>` para evitar bloqueos de seguridad del navegador en entornos de preview con sandboxing.
 - **Descarga**: Botón de descarga individual.
 - **Eliminación**: Con confirmación.
+- **Estado vacío**: Cuando no hay archivos, se muestra un mensaje discreto "Aún no hay documentos adjuntos" (sin borde punteado) debajo de la zona de carga, evitando confusión con múltiples áreas de drop.
 - Los adjuntos son **opcionales** y pueden cargarse durante la creación o posteriormente.
 
 ### 7.7 Operaciones y Reglas de Negocio

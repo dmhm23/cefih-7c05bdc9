@@ -94,6 +94,10 @@ export default function EmpresasPage() {
   const getArlLabel = (value: string) =>
     ARL_OPTIONS.find(a => a.value === value)?.label || value;
 
+  const getEstudiantesCount = (empresa: Empresa) => {
+    return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
+  };
+
   const filteredEmpresas = empresas.filter((e) => {
     const query = searchQuery.toLowerCase();
     const matchesSearch =

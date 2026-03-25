@@ -339,12 +339,19 @@ export const formatoFormacionService = {
 
   /** Obtener formatos aplicables para una matrícula según tipo de curso */
   getForMatricula: async (tipoCurso: string): Promise<FormatoFormacion[]> => {
+    const NIVEL_TO_TIPO_CURSO: Record<string, string> = {
+      nf1: 'reentrenamiento',
+      nf2: 'jefe_area',
+      nf3: 'trabajador_autorizado',
+      nf5: 'coordinador_ta',
+    };
+    const tipoCursoKey = NIVEL_TO_TIPO_CURSO[tipoCurso] || tipoCurso;
     const results = mockFormatos.filter(f =>
       f.activo &&
       f.visibleEnMatricula &&
       (f.asignacionScope === 'tipo_curso'
-        ? f.tipoCursoKeys.includes(tipoCurso as any)
-        : true) // nivel_formacion scope se resolverá en Parte 3
+        ? f.tipoCursoKeys.includes(tipoCursoKey as any)
+        : true)
     );
     return simulateApiCall(results);
   },

@@ -901,7 +901,7 @@ El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja
 
 | Componente | Función |
 |------------|---------|
-| `GestionPersonalPage` | Tabla principal con búsqueda, columnas configurables, panel lateral y acciones por fila |
+| `GestionPersonalPage` | Tabla principal con búsqueda, columnas configurables (columna "Rol" en lugar de "Cargo"), panel lateral y acciones por fila |
 | `PersonalFormPage` | Formulario de creación/edición con secciones opcionales de firma y adjuntos |
 | `PersonalDetallePage` | Vista de detalle en pantalla completa (3 columnas: datos, adjuntos, firma) |
 | `PersonalDetailSheet` | Panel lateral con datos del perfil, adjuntos y firma (gestión en tiempo real) |

@@ -43,7 +43,7 @@ import { v4 as uuidv4 } from "uuid";
 const personalSchema = z.object({
   nombres: z.string().min(2, "Ingrese el nombre"),
   apellidos: z.string().min(2, "Ingrese los apellidos"),
-  cargoId: z.string().min(1, "Seleccione un cargo"),
+  cargoId: z.string().min(1, "Seleccione un rol"),
 });
 
 type PersonalFormSchema = z.infer<typeof personalSchema>;

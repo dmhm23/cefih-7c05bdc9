@@ -19,9 +19,11 @@ export const mockResponsables: ResponsablePago[] = [
     tipo: 'empresa',
     nombre: 'Infraestructuras del Norte S.A.',
     nit: '800567890-3',
+    empresaId: 'emp-012',
     contactoNombre: 'Camila Herrera',
     contactoTelefono: '3109876543',
     contactoEmail: 'camila.herrera@infranorte.com',
+    direccionFacturacion: 'Carrera 7 #80-15, Bucaramanga',
     direccionFacturacion: 'Carrera 7 #80-15, Bucaramanga',
   },
   {

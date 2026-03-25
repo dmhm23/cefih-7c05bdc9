@@ -553,7 +553,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm7', personaId: 'p7', cursoId: 'c1', estado: 'pendiente', fechaInicio: '2026-02-24', fechaFin: '2026-03-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Operario de fachada', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
+    tipoVinculacion: 'empresa', empresaId: 'emp-010', empresaNombre: 'Constructora ABC S.A.S', empresaNit: '900123456-1', empresaCargo: 'Operario de fachada', empresaNivelFormacion: 'trabajador_autorizado', empresaContactoNombre: 'Sandra Milena López', empresaContactoTelefono: '3201234567',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd58', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-02' },

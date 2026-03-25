@@ -13,6 +13,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { EmpresaDetailSheet } from "@/components/empresas/EmpresaDetailSheet";
 import { useEmpresas, useDeleteEmpresa } from "@/hooks/useEmpresas";
+import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";

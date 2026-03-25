@@ -72,6 +72,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [masivaDlg, setMasivaDlg] = useState(false);
   const [masivaGenerating, setMasivaGenerating] = useState(false);
   const [masivaProgreso, setMasivaProgreso] = useState(0);

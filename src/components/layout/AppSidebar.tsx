@@ -95,6 +95,44 @@ export function AppSidebar() {
                 );
               })}
 
+              {/* Directorio - Collapsible */}
+              <Collapsible defaultOpen={isDirectorioActive} className="group/collapsible-dir">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Directorio"
+                      isActive={isDirectorioActive}
+                    >
+                      <Users className="h-4 w-4" />
+                      <span>Directorio</span>
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-dir:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {directorioItems.map((sub) => {
+                        const isSubActive = location.pathname === sub.url ||
+                          (sub.url !== "/personas" && sub.url !== "/empresas" && location.pathname.startsWith(sub.url)) ||
+                          location.pathname.startsWith(sub.url + "/");
+                        return (
+                          <SidebarMenuSubItem key={sub.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isSubActive}
+                            >
+                              <button onClick={() => navigate(sub.url)} className="w-full">
+                                <sub.icon className="h-3.5 w-3.5" />
+                                <span>{sub.title}</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
               {/* Certificación - Collapsible */}
               <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">
                 <SidebarMenuItem>

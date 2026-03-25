@@ -661,7 +661,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm14', personaId: 'p14', cursoId: 'c2', estado: 'pendiente', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro de Capacitación Medellín', fechaCertificacionPrevia: '2023-09-10',
-    tipoVinculacion: 'empresa', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnica de antenas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
+    tipoVinculacion: 'empresa', empresaId: 'emp-013', empresaNombre: 'Telecom Solutions S.A.S', empresaNit: '901234567-8', empresaCargo: 'Técnica de antenas', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Andrés Patiño', empresaContactoTelefono: '3154567890',
     consentimientoSalud: true, restriccionMedica: true, restriccionMedicaDetalle: 'Asma leve controlada', alergias: false, consumoMedicamentos: true, consumoMedicamentosDetalle: 'Salbutamol inhalador', nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd87', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-05' },

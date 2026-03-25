@@ -43,6 +43,8 @@ export function EmpresaDetailSheet({
 
   if (!empresa) return null;
 
+  const estudiantesCount = matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
+
   const handleFieldChange = (field: keyof EmpresaFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setIsDirty(true);

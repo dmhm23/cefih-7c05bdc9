@@ -12,6 +12,8 @@ import { AgregarEstudiantesModal } from "@/components/cursos/AgregarEstudiantesM
 import { GeneracionMasivaDialog } from "@/components/cursos/GeneracionMasivaDialog";
 import { Curso } from "@/types/curso";
 import { Matricula } from "@/types/matricula";
+import { useGruposCartera } from "@/hooks/useCartera";
+import { EstadoGrupoCartera } from "@/types/cartera";
 import { Persona } from "@/types/persona";
 import { useRemoverEstudianteCurso } from "@/hooks/useCursos";
 import { useCertificadosByCurso, useGenerarCertificado } from "@/hooks/useCertificados";

@@ -26,7 +26,7 @@ const ESTADO_OPTIONS = [
 
 const filterConfigs: FilterConfig[] = [
   { key: "tipo", label: "Tipo Responsable", type: "select", options: TIPO_OPTIONS },
-  { key: "estado", label: "Estado", type: "select", options: ESTADO_OPTIONS },
+  { key: "estado", label: "Estado de Cartera", type: "select", options: ESTADO_OPTIONS },
 ];
 
 const formatCurrency = (v: number) =>

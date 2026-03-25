@@ -258,7 +258,7 @@ export default function PersonalFormPage() {
                 name="cargoId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cargo *</FormLabel>
+                    <FormLabel>Rol *</FormLabel>
                     <div className="flex items-center gap-2">
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>

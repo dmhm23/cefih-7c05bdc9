@@ -1,23 +1,17 @@
 
 
-## Plan: Renombrar "Financiero" a "Cartera" y sincronizar estados
+## Plan: Convertir campo Supervisor a selector sincronizado con Gestión de Personal
 
-### Cambios
+### Contexto
+El campo Entrenador ya usa este patrón exacto: `usePersonalByTipoCargo('entrenador')` + `EditableField type="select"`. Solo hay que replicarlo para Supervisor.
 
-#### 1. `src/components/cursos/EnrollmentsTable.tsx`
+### Cambio — `src/components/cursos/CourseInfoCard.tsx`
 
-- **Columna**: Renombrar encabezado "Financiero" → "Cartera" (línea 367)
-- **Filtro**: Renombrar `"Estado Financiero"` → `"Estado de Cartera"` (línea 116), cambiar key de `financiero` a `cartera`
-- **Opciones del filtro**: Reemplazar las 3 opciones actuales (pagado/abonado/sin pagar) por los 5 estados de cartera: sin facturar, facturado, abonado, pagado, vencido
-- **Función `getFinancialStatus`** (líneas 105-109): Renombrar a `getCarteraStatus` y derivar el estado desde el módulo de Cartera consultando el `GrupoCartera` asociado a la matrícula (via `mockGruposCartera` o un hook). Si la matrícula pertenece a un grupo, usar `grupo.estado`; si no, devolver `'sin_facturar'`
-- **Badge visual** (líneas 422-434): Usar `StatusBadge` (ya existente con los estados de cartera) en lugar del Badge manual, para consistencia visual
-- **Estado inicial de filtros**: Actualizar de `{ documental: "todos", financiero: "todos" }` a `{ documental: "todos", cartera: "todos" }`
+1. Agregar query: `const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');`
+2. Crear `supervisorOptions` con `useMemo` (mismo patrón que `entrenadorOptions`)
+3. Crear `handleSupervisorChange` que setee tanto `supervisorId` como `supervisorNombre` (mismo patrón que `handleEntrenadorChange`)
+4. Cambiar el `EditableField` de Supervisor de texto libre a `type="select"` con `value={getValue("supervisorId")}`, `displayValue={getValue("supervisorNombre")}`, y `options={supervisorOptions}`
 
-#### 2. `src/pages/cartera/CarteraPage.tsx`
-
-- **Filtro**: Renombrar label `"Estado"` → `"Estado de Cartera"` (línea 29)
-
-### Archivos modificados
-- `src/components/cursos/EnrollmentsTable.tsx` — renombrar columna, filtro y sincronizar estados desde cartera
-- `src/pages/cartera/CarteraPage.tsx` — renombrar label del filtro de estado
+### Archivo modificado
+- `src/components/cursos/CourseInfoCard.tsx` — único archivo, replicando el patrón existente de Entrenador
 

@@ -1,16 +1,21 @@
 
 
-## Plan: Mejoras al widget de Tareas Rápidas
+## Plan: Agregar barra flotante de acciones masivas en tabla de estudiantes inscritos
 
-### Cambios
+### Decisión de diseño
 
-1. **Placeholder del input** — Cambiar `"Nueva tarea..."` por `"Escribe una nueva tarea…"` (línea 108)
+La aplicación ya usa el componente `BulkActionsBar` (barra flotante inferior) en todas las tablas con selección múltiple (`DataTable` lo integra automáticamente). La tabla de `EnrollmentsTable` es una tabla custom que no usa `DataTable`, por lo que no tiene esta barra. **La mejor opción es reutilizar `BulkActionsBar`** directamente, manteniendo consistencia con el resto de la app y sin modificar el botón "Generar certificados" del header.
 
-2. **Edición inline de tareas** — Al hacer doble clic en el texto de una tarea, se convierte en un input editable. Al presionar Enter o perder foco se guarda; Escape cancela. Se añade estado `editingId` y `editText` al componente.
+### Cambios — `src/components/cursos/EnrollmentsTable.tsx`
 
-3. **Drag & drop para reordenar** — Instalar `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`. Envolver la lista de tareas en `DndContext` + `SortableContext`, y cada fila en un `useSortable`. Se añade un ícono de agarre (`GripVertical`) visible en hover. Al soltar, se reordena el array y se persiste. Se elimina el sort automático por fecha para respetar el orden manual del usuario.
+1. **Importar** `BulkActionsBar` y `BulkAction` desde `@/components/shared/BulkActionsBar`
+2. **Eliminar el botón "Generar certificados" del header** (líneas 328-337), ya que la acción se moverá a la barra flotante
+3. **Agregar `<BulkActionsBar>`** al final del componente con dos acciones:
+   - **Generar certificados** (`Award` icon) → ejecuta `handleGeneracionMasiva` con los IDs seleccionados
+   - **Eliminar seleccionados** (`Trash2` icon, variant `destructive`) → abre un `ConfirmDialog` de confirmación y luego ejecuta `removerEstudiante` para cada ID seleccionado
+4. **Agregar estado** `bulkDeleteConfirm` para el diálogo de confirmación de eliminación masiva
+5. **Agregar función** `handleBulkDelete` que itera sobre los IDs seleccionados, llama `removerEstudiante.mutateAsync` para cada uno, muestra toast de éxito y limpia la selección
 
-### Archivos modificados
-- `src/components/dashboard/TodoWidget.tsx` — placeholder, edición inline, integración drag & drop
-- `package.json` — añadir `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`
+### Archivo modificado
+- `src/components/cursos/EnrollmentsTable.tsx`
 

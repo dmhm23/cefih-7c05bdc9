@@ -29,6 +29,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "personaContacto", header: "Persona Contacto", visible: true },
   { key: "telefonoContacto", header: "Teléfono Contacto", visible: true },
   { key: "emailContacto", header: "Email", visible: true },
+  { key: "estudiantesEnviados", header: "Estudiantes", visible: true },
   { key: "representanteLegal", header: "Representante Legal", visible: false },
   { key: "direccion", header: "Dirección", visible: false },
   { key: "telefonoEmpresa", header: "Teléfono Empresa", visible: false },

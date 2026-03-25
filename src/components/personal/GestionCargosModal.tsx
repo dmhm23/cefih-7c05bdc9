@@ -63,7 +63,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
 
   const handleSubmit = async () => {
     if (!nombre.trim()) {
-      toast({ title: "Ingrese un nombre para el cargo", variant: "destructive" });
+      toast({ title: "Ingrese un nombre para el rol", variant: "destructive" });
       return;
     }
 

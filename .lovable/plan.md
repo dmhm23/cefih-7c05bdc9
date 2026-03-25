@@ -1,46 +1,23 @@
-## Plan: Mejorar modal "Agregar Estudiantes" con filtros por nivel y estado documental
 
-### Cambios en `src/components/cursos/AgregarEstudiantesModal.tsx`
 
-**1. Recibir `tipoFormacion` del curso como prop nueva**
+## Plan: Sincronizar campo Entrenador con Gestión de Personal en CourseInfoCard
 
-Agregar prop `nivelFormacion: string` a la interfaz del componente. Usar `useCurso(cursoId)` o pasar directamente desde el padre.
+### Problema
+En la vista de detalle/edición de un curso (`CourseInfoCard`), el campo "Entrenador" es un campo de texto libre. Debe ser un dropdown que muestre los entrenadores registrados en Gestión de Personal.
 
-**2. Filtrar matrículas disponibles correctamente (3 condiciones)**
+**Nota:** El formulario de creación (`CursoFormPage`) ya tiene esta lógica correcta con `Select` + `usePersonalByTipoCargo('entrenador')`. Solo falta aplicarlo en la tarjeta de edición.
 
-Actualizar el `useMemo` de `disponibles` para:
+### Cambio
 
-- Excluir matrículas ya asignadas a cualquier curso (`m.cursoId` no vacío)
-- Solo mostrar matrículas cuyo `empresaNivelFormacion` coincida con el `tipoFormacion` del curso
-- Excluir las del curso actual (ya cubierto por la condición anterior)
+**`src/components/cursos/CourseInfoCard.tsx`**:
 
-```ts
-const disponibles = useMemo(() => {
-  return matriculas.filter(
-    (m) =>
-      (!m.cursoId || m.cursoId === '') &&
-      m.empresaNivelFormacion === nivelFormacion
-  );
-}, [matriculas, nivelFormacion]);
-```
+1. Importar `usePersonalByTipoCargo` desde `@/hooks/usePersonal`.
+2. Llamar `usePersonalByTipoCargo('entrenador')` para obtener la lista de entrenadores.
+3. Reemplazar el `EditableField` de texto del Entrenador (líneas 83-88) por uno de tipo `select` con las opciones generadas dinámicamente desde la lista de personal.
+4. Al seleccionar un entrenador, actualizar tanto `entrenadorId` como `entrenadorNombre` (nombre completo) en `onFieldChange`.
 
-**3. Mostrar indicador de documentos pendientes**
-
-En cada fila de matrícula, verificar `m.documentos` para detectar documentos con `estado === 'pendiente'`. Mostrar un badge de advertencia "Pendiente documentos" junto al nombre, sin bloquear la selección.
-
-```text
-┌─────────────────────────────────────────────────┐
-│ ☐  Juan Pérez López                    Creada   │
-│    CC: 1234567890                                │
-│    Pendiente de documentos (2)                 │
-└─────────────────────────────────────────────────┘
-```
-
-### Cambios en `src/components/cursos/EnrollmentsTable.tsx`
-
-Pasar la nueva prop `nivelFormacion={curso.tipoFormacion}` al componente `AgregarEstudiantesModal`.
+El campo usará `type="select"` del `EditableField` existente, con `options` mapeadas desde los entrenadores (`{ value: id, label: "nombres apellidos" }`), y un `displayValue` que muestre el nombre actual.
 
 ### Archivos modificados
+- `src/components/cursos/CourseInfoCard.tsx` — un solo archivo
 
-- `src/components/cursos/AgregarEstudiantesModal.tsx` — filtro por nivel, indicador documental
-- `src/components/cursos/EnrollmentsTable.tsx` — pasar prop `nivelFormacion`

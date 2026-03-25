@@ -377,7 +377,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   {filtered.map((m, idx) => {
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
-                    const finStatus = getFinancialStatus(m);
+                    const carteraStatus = getCarteraStatus(m);
                     const certInfo = getCertStatus(m);
                     const codigoEstudiante = codigoConfig?.activo
                       ? generarCodigoEstudiante({ config: codigoConfig, curso, indexEstudiante: idx })

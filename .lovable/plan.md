@@ -1,23 +1,59 @@
 
 
-## Plan: Sincronizar campo Entrenador con Gestión de Personal en CourseInfoCard
+## Plan: Actualizar reglas de cierre de curso y permitir reapertura con justificación
 
-### Problema
-En la vista de detalle/edición de un curso (`CourseInfoCard`), el campo "Entrenador" es un campo de texto libre. Debe ser un dropdown que muestre los entrenadores registrados en Gestión de Personal.
+### Resumen
+Tres cambios principales:
+1. **Cierre de curso**: validar documentos completos + MinTrabajo (el pago NO bloquea el cierre)
+2. **Elegibilidad de certificados**: el pago sigue bloqueando certificados, pero no el cierre
+3. **Reapertura de curso cerrado**: permitir edición solicitando justificación, registrada en auditoría
 
-**Nota:** El formulario de creación (`CursoFormPage`) ya tiene esta lógica correcta con `Select` + `usePersonalByTipoCargo('entrenador')`. Solo falta aplicarlo en la tarjeta de edición.
+---
 
-### Cambio
+### 1. Actualizar validación de cierre — `src/services/cursoService.ts`
 
-**`src/components/cursos/CourseInfoCard.tsx`**:
+En `cambiarEstado`, reemplazar la validación de "matrículas pendientes" por validación de **documentos incompletos**:
 
-1. Importar `usePersonalByTipoCargo` desde `@/hooks/usePersonal`.
-2. Llamar `usePersonalByTipoCargo('entrenador')` para obtener la lista de entrenadores.
-3. Reemplazar el `EditableField` de texto del Entrenador (líneas 83-88) por uno de tipo `select` con las opciones generadas dinámicamente desde la lista de personal.
-4. Al seleccionar un entrenador, actualizar tanto `entrenadorId` como `entrenadorNombre` (nombre completo) en `onFieldChange`.
+- Recorrer las matrículas del curso y verificar que cada una tenga todos sus documentos obligatorios con `estado !== 'pendiente'`
+- Si hay matrículas con documentos pendientes, lanzar error `DOCUMENTOS_INCOMPLETOS` con la lista de afectados
+- Mantener la validación de MinTrabajo existente
+- **Eliminar** la validación que bloquea por estado de matrícula `pendiente`/`creada` (el pago no bloquea cierre)
 
-El campo usará `type="select"` del `EditableField` existente, con `options` mapeadas desde los entrenadores (`{ value: id, label: "nombres apellidos" }`), y un `displayValue` que muestre el nombre actual.
+### 2. Actualizar `CloseCourseDialog.tsx`
+
+- Agregar nuevo step `"documentos_incompletos"` al tipo `Step`
+- En `handleOpen`: además de validar MinTrabajo, verificar si hay matrículas con documentos pendientes en el frontend y mostrar la lista
+- Nuevo panel visual que liste los estudiantes con documentos faltantes, con botón para revisar
+- Reemplazar el step `matriculas_pending` actual por `documentos_incompletos`
+- Actualizar el `handleConfirm` para capturar el nuevo código de error del backend
+
+### 3. Reapertura de curso cerrado — `src/pages/cursos/CursoDetallePage.tsx`
+
+- Cambiar `isReadOnly` para que un curso cerrado **no sea totalmente de solo lectura**
+- Al intentar guardar cambios en un curso cerrado, mostrar un **diálogo de justificación** (textarea) antes de proceder
+- La justificación se registra en el log de auditoría junto con los campos modificados
+
+### 4. Nuevo componente `src/components/cursos/JustificacionEdicionDialog.tsx`
+
+Dialog simple con:
+- Título: "Justificación de edición"
+- Descripción: "Este curso está cerrado. Indique el motivo de la modificación."
+- Textarea obligatorio para la justificación
+- Botones Cancelar / Confirmar edición
+
+### 5. Actualizar servicio `cursoService.update`
+
+- Aceptar campo opcional `justificacion?: string` en los datos
+- Cuando se provea, incluirlo en el log de auditoría
+
+### 6. Actualizar `certificadoGenerator.ts` — `evaluarElegibilidad`
+
+- Sin cambios funcionales necesarios: ya valida pago y documentos por separado
+- Los certificados siguen bloqueados si `!matricula.pagado`, lo cual es correcto
 
 ### Archivos modificados
-- `src/components/cursos/CourseInfoCard.tsx` — un solo archivo
+- `src/services/cursoService.ts` — nueva validación documentos, justificación en update
+- `src/components/cursos/CloseCourseDialog.tsx` — nuevo step documentos incompletos
+- `src/pages/cursos/CursoDetallePage.tsx` — reapertura con justificación
+- `src/components/cursos/JustificacionEdicionDialog.tsx` — nuevo componente
 

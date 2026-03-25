@@ -11,6 +11,19 @@ import {
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
 import { mockMatriculas } from '@/data/mockData';
+import { mockEmpresas } from '@/data/mockEmpresas';
+import {
+  ResponsablePago,
+  GrupoCartera,
+  Factura,
+  RegistroPago,
+  ActividadCartera,
+  MetodoPago,
+  TipoActividadCartera,
+  TipoResponsable,
+  METODO_PAGO_LABELS,
+} from '@/types/cartera';
+import { mockMatriculas } from '@/data/mockData';
 import {
   mockResponsables,
   mockGruposCartera,

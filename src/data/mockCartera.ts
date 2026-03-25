@@ -66,7 +66,6 @@ export const mockResponsables: ResponsablePago[] = [
     contactoTelefono: '3176543210',
     contactoEmail: 'luis.arango@mineraandina.com',
     direccionFacturacion: 'Carrera 15 #45-60, Bucaramanga',
-    direccionFacturacion: 'Carrera 15 #45-60, Bucaramanga',
   },
   // Independientes nuevos
   {

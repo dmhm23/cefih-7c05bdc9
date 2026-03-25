@@ -89,7 +89,7 @@ export function CloseCourseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         {step === "mintrabajo_missing" && (
           <>

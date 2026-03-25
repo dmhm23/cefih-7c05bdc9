@@ -156,11 +156,17 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     </div>
                   </div>
                   {adj.tipo === "application/pdf" ? (
-                    <iframe src={blobUrls[adj.id]} className="w-full h-52 border-0" title="Vista previa" />
+                    <object data={blobUrls[adj.id]} type="application/pdf" className="w-full h-52">
+                      <div className="p-4 text-center text-sm text-muted-foreground space-y-2">
+                        <FileText className="h-6 w-6 mx-auto" />
+                        <p>No se puede mostrar el PDF en este contexto.</p>
+                        <Button variant="outline" size="sm" onClick={() => window.open(blobUrls[adj.id], "_blank")}>
+                          <ExternalLink className="h-3 w-3 mr-1" /> Abrir en nueva pestaña
+                        </Button>
+                      </div>
+                    </object>
                   ) : adj.tipo.startsWith("image/") ? (
                     <img src={blobUrls[adj.id]} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
-                  ) : adj.tipo.startsWith("image/") ? (
-                    <img src={adj.dataUrl} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
                   ) : (
                     <div className="p-3 text-center text-sm text-muted-foreground">
                       <FileText className="h-6 w-6 mx-auto mb-1" />

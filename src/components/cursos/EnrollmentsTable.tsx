@@ -104,10 +104,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     return "pendiente";
   };
 
-  const getFinancialStatus = (m: Matricula) => {
-    if (m.pagado) return "pagado";
-    if (m.abono && m.abono > 0) return "abonado";
-    return "pendiente";
+  const getCarteraStatus = (m: Matricula): EstadoGrupoCartera => {
+    const grupo = grupos.find(g => g.matriculaIds.includes(m.id));
+    return grupo?.estado ?? 'sin_facturar';
   };
 
   const filterConfigs: FilterConfig[] = [
@@ -115,10 +114,12 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       { value: "pendiente", label: "Pendiente" },
       { value: "completo", label: "Completo" },
     ]},
-    { key: "financiero", label: "Estado Financiero", type: "select", options: [
-      { value: "pagado", label: "Pagado" },
+    { key: "cartera", label: "Estado de Cartera", type: "select", options: [
+      { value: "sin_facturar", label: "Sin facturar" },
+      { value: "facturado", label: "Facturado" },
       { value: "abonado", label: "Abonado" },
-      { value: "pendiente", label: "Sin pagar" },
+      { value: "pagado", label: "Pagado" },
+      { value: "vencido", label: "Vencido" },
     ]},
   ];
 

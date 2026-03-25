@@ -91,6 +91,12 @@ const App = () => (
           <Route path="/personas/nuevo" element={<WithLayout><PersonaFormPage /></WithLayout>} />
           <Route path="/personas/:id" element={<WithLayout><PersonaDetallePage /></WithLayout>} />
           <Route path="/personas/:id/editar" element={<WithLayout><PersonaFormPage /></WithLayout>} />
+
+          {/* Módulo J - Empresas */}
+          <Route path="/empresas" element={<WithLayout><EmpresasPage /></WithLayout>} />
+          <Route path="/empresas/nueva" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
+          <Route path="/empresas/:id" element={<WithLayout><EmpresaDetallePage /></WithLayout>} />
+          <Route path="/empresas/:id/editar" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
           
           {/* Módulo B - Matrículas */}
           <Route path="/matriculas" element={<WithLayout><MatriculasPage /></WithLayout>} />

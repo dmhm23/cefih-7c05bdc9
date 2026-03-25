@@ -55,8 +55,8 @@ export const useUpdateCurso = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CursoFormData> }) =>
-      cursoService.update(id, data),
+    mutationFn: ({ id, data, justificacion }: { id: string; data: Partial<CursoFormData>; justificacion?: string }) =>
+      cursoService.update(id, data, justificacion),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] });
       queryClient.invalidateQueries({ queryKey: ['curso', id] });

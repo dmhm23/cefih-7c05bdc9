@@ -32,6 +32,7 @@ export function EmpresaDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateEmpresa = useUpdateEmpresa();
+  const { data: matriculas = [] } = useMatriculas();
   const [formData, setFormData] = useState<Partial<EmpresaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 

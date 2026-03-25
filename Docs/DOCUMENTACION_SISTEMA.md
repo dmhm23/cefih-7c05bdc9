@@ -821,7 +821,7 @@ interface Personal {
 }
 ```
 
-### 7.3 Entidad: `Cargo`
+### 7.3 Entidad: `Cargo` (UI: "Rol")
 
 ```typescript
 interface Cargo {

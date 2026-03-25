@@ -60,6 +60,7 @@ const matriculaSchema = z.object({
   
   // Vinculación laboral
   tipoVinculacion: z.string().optional(),
+  empresaId: z.string().optional(),
   empresaNombre: z.string().optional(),
   empresaNit: z.string().optional(),
   empresaRepresentanteLegal: z.string().optional(),

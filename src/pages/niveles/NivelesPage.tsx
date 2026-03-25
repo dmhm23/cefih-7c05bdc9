@@ -18,7 +18,7 @@ const STORAGE_KEY = "niveles_visible_columns";
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombreNivel", header: "Nombre del Nivel", visible: true },
   { key: "duracion", header: "Duración", visible: true },
-  { key: "documentos", header: "Documentos", visible: true },
+  { key: "documentos", header: "Requisitos", visible: true },
   { key: "updatedAt", header: "Actualización", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
@@ -83,10 +83,10 @@ export default function NivelesPage() {
     },
     {
       key: "documentos",
-      header: "Documentos",
+      header: "Requisitos",
       render: (n) => (
         <Badge variant="secondary">
-          {n.documentosRequeridos.length} documento{n.documentosRequeridos.length !== 1 ? 's' : ''}
+          {n.documentosRequeridos.length} requisito{n.documentosRequeridos.length !== 1 ? 's' : ''}
         </Badge>
       ),
     },

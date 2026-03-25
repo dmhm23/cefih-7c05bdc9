@@ -18,10 +18,16 @@ interface CourseInfoCardProps {
 
 export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: CourseInfoCardProps) {
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+  const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
 
   const entrenadorOptions = useMemo(() =>
     entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),
     [entrenadores]
+  );
+
+  const supervisorOptions = useMemo(() =>
+    supervisores.map((s) => ({ value: s.id, label: `${s.nombres} ${s.apellidos}` })),
+    [supervisores]
   );
 
   const handleEntrenadorChange = (entrenadorId: string) => {
@@ -29,6 +35,14 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
     if (selected) {
       onFieldChange("entrenadorId", entrenadorId);
       onFieldChange("entrenadorNombre", `${selected.nombres} ${selected.apellidos}`);
+    }
+  };
+
+  const handleSupervisorChange = (supervisorId: string) => {
+    const selected = supervisores.find((s) => s.id === supervisorId);
+    if (selected) {
+      onFieldChange("supervisorId", supervisorId);
+      onFieldChange("supervisorNombre", `${selected.nombres} ${selected.apellidos}`);
     }
   };
 

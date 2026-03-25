@@ -55,7 +55,6 @@ export const mockResponsables: ResponsablePago[] = [
     contactoTelefono: '3189876543',
     contactoEmail: 'ricardo.mendoza@energiasolar.com',
     direccionFacturacion: 'Calle 72 #10-20, Barranquilla',
-    direccionFacturacion: 'Calle 72 #10-20, Barranquilla',
   },
   {
     id: 'rp6',

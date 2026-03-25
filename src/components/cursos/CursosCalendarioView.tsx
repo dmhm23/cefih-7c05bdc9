@@ -185,32 +185,32 @@ export default function CursosCalendarioView() {
               </PopoverTrigger>
               <PopoverContent className="w-56 p-2" align="end">
                 <div className="space-y-1">
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-                    onClick={() => setSelectedTrainers([])}
-                  >
-                    <div className="h-3 w-3 rounded-full bg-muted-foreground" />
-                    <span className={selectedTrainers.length === 0 ? "font-semibold" : ""}>
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                    <Checkbox
+                      checked={selectedTrainers.length === 0}
+                      onCheckedChange={() => setSelectedTrainers([])}
+                    />
+                    <label className="text-sm cursor-pointer" onClick={() => setSelectedTrainers([])}>
                       Todos
-                    </span>
-                  </button>
+                    </label>
+                  </div>
                   {trainers.map((t) => {
                     const color = trainerColorMap[t.id];
                     const isActive = activeTrainers.includes(t.id);
                     return (
-                      <button
-                        key={t.id}
-                        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
-                        onClick={() => toggleTrainer(t.id)}
-                      >
+                      <div key={t.id} className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                        <Checkbox
+                          checked={isActive && selectedTrainers.length > 0}
+                          onCheckedChange={() => toggleTrainer(t.id)}
+                        />
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
                           style={{ backgroundColor: isActive ? color.bg : "hsl(var(--muted))" }}
                         />
-                        <span className={isActive && selectedTrainers.length > 0 ? "font-semibold" : ""}>
+                        <label className="text-sm cursor-pointer flex-1" onClick={() => toggleTrainer(t.id)}>
                           {t.nombre}
-                        </span>
-                      </button>
+                        </label>
+                      </div>
                     );
                   })}
                 </div>

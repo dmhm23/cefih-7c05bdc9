@@ -521,6 +521,51 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         total={masivaTotal}
         progreso={masivaProgreso}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+        title="Eliminar estudiantes seleccionados"
+        description={`¿Está seguro de remover ${selectedIds.size} estudiante${selectedIds.size !== 1 ? "s" : ""} de este curso? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={async () => {
+          const ids = Array.from(selectedIds);
+          let removed = 0;
+          for (const id of ids) {
+            try {
+              await removerEstudiante.mutateAsync({ cursoId: curso.id, matriculaId: id });
+              removed++;
+            } catch { /* skip */ }
+          }
+          toast({ title: `${removed} estudiante${removed !== 1 ? "s" : ""} removido${removed !== 1 ? "s" : ""}` });
+          setSelectedIds(new Set());
+          setBulkDeleteConfirm(false);
+        }}
+      />
+
+      {!readOnly && (
+        <BulkActionsBar
+          selectedCount={selectedIds.size}
+          totalCount={filtered.length}
+          selectedIds={Array.from(selectedIds)}
+          onSelectAll={toggleAll}
+          onClearSelection={() => setSelectedIds(new Set())}
+          actions={[
+            {
+              label: "Generar certificados",
+              icon: Award,
+              onClick: () => handleGeneracionMasiva(),
+            },
+            {
+              label: "Eliminar seleccionados",
+              icon: Trash2,
+              variant: "destructive" as const,
+              onClick: () => setBulkDeleteConfirm(true),
+            },
+          ]}
+        />
+      )}
     </>
   );
 }

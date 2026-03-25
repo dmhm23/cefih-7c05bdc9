@@ -11,5 +11,6 @@ export interface AuditLog {
   valorNuevo?: Record<string, unknown>;
   usuarioId: string;
   usuarioNombre: string;
+  justificacion?: string;
   timestamp: string;
 }

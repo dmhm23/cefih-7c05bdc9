@@ -173,8 +173,8 @@ export default function CursoDetallePage() {
           <Button variant="outline" size="sm" onClick={handleCancel}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={updateCurso.isPending}>
-            {updateCurso.isPending ? "Guardando..." : "Guardar Cambios"}
+          <Button size="sm" onClick={handleSaveClick} disabled={updateCurso.isPending}>
+            {updateCurso.isPending ? "Guardando..." : isClosed ? "Guardar (requiere justificación)" : "Guardar Cambios"}
           </Button>
         </div>
       )}

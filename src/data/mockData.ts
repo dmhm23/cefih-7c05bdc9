@@ -432,6 +432,7 @@ export const mockMatriculas: Matricula[] = [
     centroFormacionPrevio: 'Centro de Formación SENA Regional Bogotá',
     fechaCertificacionPrevia: '2023-03-15',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-012',
     empresaNombre: 'Infraestructuras del Norte S.A.',
     empresaNit: '800567890-3',
     empresaRepresentanteLegal: 'Felipe Morales',

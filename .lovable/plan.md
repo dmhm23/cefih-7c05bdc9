@@ -1,49 +1,20 @@
 
 
-## Plan: Renombrar "Cargo" a "Rol" en Gestión de Personal
+## Plan: Simplificar UI de documentos adjuntos
 
-### Alcance
-Solo se cambian **labels/textos visibles** en el módulo de gestión de personal. Los nombres internos de campos (`cargoId`, `cargoNombre`, `TipoCargo`, etc.) se mantienen intactos para no romper la integración con matrículas donde "cargo" sí es correcto.
+### Problema
+Cuando no hay archivos, se muestran dos recuadros con borde punteado: el `FileDropZone` y el mensaje "No hay documentos adjuntos". Ambos parecen zonas de carga, generando confusión.
 
-### Archivos a modificar
+### Solución
+En `src/components/personal/AdjuntosPersonal.tsx`, cambiar el estado vacío de un recuadro con borde punteado a un simple texto informativo sin borde, para que quede claro que es solo un mensaje y no una segunda zona de carga.
 
-#### 1. `src/components/personal/GestionCargosModal.tsx`
-- Título: "Gestionar Cargos" → "Gestionar Roles"
-- Descripción: "Crear, editar o eliminar cargos del sistema" → "...roles del sistema"
-- Label "Nombre del cargo" → "Nombre del rol"
-- Placeholder: "Ej: Entrenador Senior" (se mantiene, es un ejemplo válido)
-- Botón tooltip "Cargo en uso" → "Rol en uso, no se puede eliminar"
-- Mensajes toast: "Cargo creado/actualizado/eliminado" → "Rol creado/actualizado/eliminado"
-- Errores: textos de error que mencionen "cargo" → "rol"
+### Cambio concreto
 
-#### 2. `src/pages/personal/GestionPersonalPage.tsx`
-- Columna header "Cargo" → "Rol"
-- Botón "Gestionar Cargos" → "Gestionar Roles"
-- Filtro label "Cargo" → "Rol"
+**`src/components/personal/AdjuntosPersonal.tsx`** (líneas 55-62):
+- Eliminar el `div` con `border-2 border-dashed rounded-lg p-6` que simula visualmente otra dropzone
+- Reemplazar por un texto simple con padding mínimo: `"Aún no hay documentos adjuntos"` en texto `text-xs text-muted-foreground`, sin borde ni icono grande
+- Resultado: un único recuadro visible (el FileDropZone) + un mensaje discreto debajo cuando la lista está vacía
 
-#### 3. `src/pages/personal/PersonalFormPage.tsx`
-- FormLabel "Cargo *" → "Rol *"
-- Placeholder "Seleccionar cargo..." → "Seleccionar rol..."
-- Validación z: mensaje "Seleccione un cargo" → "Seleccione un rol"
-- Tooltip botón "Gestionar cargos" → "Gestionar roles"
-
-#### 4. `src/pages/personal/PersonalDetallePage.tsx`
-- EditableField label "Cargo" → "Rol"
-
-#### 5. `src/components/personal/PersonalDetailSheet.tsx`
-- Label "Cargo" → "Rol" (en el sheet lateral)
-
-#### 6. `src/types/personal.ts`
-- `TIPOS_CARGO` → renombrar constante a `TIPOS_ROL` (o mantener nombre interno y solo cambiar si se usa en UI)
-- En realidad `TIPOS_CARGO` se usa internamente; lo dejamos igual pero cambiamos el label visible "Tipo" en el modal por "Tipo de rol"
-
-#### 7. `src/services/personalService.ts`
-- Mensajes de error: "Ya existe un cargo con ese nombre" → "Ya existe un rol con ese nombre"
-- "No se puede eliminar un cargo que está asignado..." → "No se puede eliminar un rol que está asignado..."
-- "Cargo no encontrado" → "Rol no encontrado"
-
-### Lo que NO cambia
-- Campos internos: `cargoId`, `cargoNombre`, `TipoCargo`, `mockCargos`, hooks (`useCargos`, `useCreateCargo`, etc.)
-- Todo el módulo de matrículas sigue usando "cargo" (cargo laboral del participante)
-- Datos mock mantienen sus keys
+### Archivo modificado
+- `src/components/personal/AdjuntosPersonal.tsx`
 

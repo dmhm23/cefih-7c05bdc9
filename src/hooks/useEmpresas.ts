@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { empresaService } from '@/services/empresaService';
-import { EmpresaFormData } from '@/types/empresa';
+import { EmpresaFormData, TarifaEmpresaFormData } from '@/types/empresa';
 
 export const useEmpresas = () => {
   return useQuery({
@@ -45,6 +45,47 @@ export const useDeleteEmpresa = () => {
     mutationFn: (id: string) => empresaService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
+    },
+  });
+};
+
+// ============ TARIFAS ============
+
+export const useTarifasEmpresa = (empresaId: string) => {
+  return useQuery({
+    queryKey: ['tarifas-empresa', empresaId],
+    queryFn: () => empresaService.getTarifas(empresaId),
+    enabled: !!empresaId,
+  });
+};
+
+export const useCreateTarifa = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: TarifaEmpresaFormData) => empresaService.createTarifa(data),
+    onSuccess: (_, data) => {
+      queryClient.invalidateQueries({ queryKey: ['tarifas-empresa', data.empresaId] });
+    },
+  });
+};
+
+export const useUpdateTarifa = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<TarifaEmpresaFormData> }) =>
+      empresaService.updateTarifa(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tarifas-empresa'] });
+    },
+  });
+};
+
+export const useDeleteTarifa = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => empresaService.deleteTarifa(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tarifas-empresa'] });
     },
   });
 };

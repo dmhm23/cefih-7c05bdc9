@@ -43,7 +43,6 @@ export const mockResponsables: ResponsablePago[] = [
     contactoTelefono: '3154567890',
     contactoEmail: 'andres.patino@telecomsol.com',
     direccionFacturacion: 'Av. El Dorado #68-45, Bogotá',
-    direccionFacturacion: 'Av. El Dorado #68-45, Bogotá',
   },
   // Nuevos responsables
   {

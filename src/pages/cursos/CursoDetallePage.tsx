@@ -32,6 +32,7 @@ export default function CursoDetallePage() {
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [justificacionDialogOpen, setJustificacionDialogOpen] = useState(false);
 
   const minTrabajoRef = useRef<HTMLDivElement>(null);
 

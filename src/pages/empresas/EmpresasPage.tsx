@@ -219,6 +219,19 @@ export default function EmpresasPage() {
       sortable: true,
     },
     { key: "representanteLegal", header: "Representante Legal" },
+    {
+      key: "estudiantesEnviados",
+      header: "Estudiantes",
+      sortable: true,
+      render: (e) => {
+        const count = getEstudiantesCount(e);
+        return (
+          <Badge variant={count > 0 ? "default" : "secondary"}>
+            {count}
+          </Badge>
+        );
+      },
+    },
     { key: "direccion", header: "Dirección", className: "min-w-[200px]" },
     { key: "telefonoEmpresa", header: "Teléfono Empresa" },
     {

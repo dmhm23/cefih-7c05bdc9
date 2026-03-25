@@ -99,8 +99,8 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Gestionar Cargos</DialogTitle>
-          <DialogDescription>Crear, editar o eliminar cargos del sistema.</DialogDescription>
+          <DialogTitle>Gestionar Roles</DialogTitle>
+          <DialogDescription>Crear, editar o eliminar roles del sistema.</DialogDescription>
         </DialogHeader>
 
         {/* Form */}

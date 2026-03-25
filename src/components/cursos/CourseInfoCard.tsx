@@ -99,8 +99,11 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
           />
           <EditableField
             label="Entrenador"
-            value={getValue("entrenadorNombre")}
-            onChange={(v) => onFieldChange("entrenadorNombre", v)}
+            value={getValue("entrenadorId")}
+            displayValue={getValue("entrenadorNombre")}
+            onChange={handleEntrenadorChange}
+            type="select"
+            options={entrenadorOptions}
             editable={!readOnly}
           />
           <EditableField

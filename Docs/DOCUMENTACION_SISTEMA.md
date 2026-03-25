@@ -801,7 +801,9 @@ Listado (/niveles)
 
 ### 7.1 Propósito
 
-Centraliza la administración de perfiles de **staff interno** del centro de formación (entrenadores, supervisores, administrativos, instructores, etc.). Sustituye las listas estáticas previas del formulario de Cursos, permitiendo que los selectores de entrenador y supervisor consuman registros dinámicos filtrados por tipo de cargo.
+Centraliza la administración de perfiles de **staff interno** del centro de formación (entrenadores, supervisores, administrativos, instructores, etc.). Sustituye las listas estáticas previas del formulario de Cursos, permitiendo que los selectores de entrenador y supervisor consuman registros dinámicos filtrados por tipo de rol.
+
+> **Nota sobre nomenclatura**: En la interfaz de usuario, el término "cargo" se reemplaza por **"rol"** o **"roles"** en todo el módulo de Gestión de Personal. Internamente, los campos (`cargoId`, `cargoNombre`, `TipoCargo`, etc.) mantienen su nombre original para compatibilidad. El término "cargo" se reserva exclusivamente para el cargo laboral del participante dentro de su empresa (módulo de Matrículas).
 
 ### 7.2 Entidad: `Personal`
 

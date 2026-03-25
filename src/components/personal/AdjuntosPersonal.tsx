@@ -134,7 +134,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
               </div>
 
               {/* Inline preview */}
-              {previewId === adj.id && adj.dataUrl && (
+              {previewId === adj.id && blobUrls[adj.id] && (
                 <div className="border rounded-lg overflow-hidden mt-1">
                   <div className="flex items-center justify-between bg-muted px-3 py-1.5">
                     <div className="flex items-center gap-2 text-xs font-medium truncate">
@@ -146,13 +146,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-xs"
-                        onClick={() => {
-                          const w = window.open();
-                          if (w) {
-                            w.document.write(`<iframe src="${adj.dataUrl}" style="width:100%;height:100%;border:none"></iframe>`);
-                            w.document.title = adj.nombre;
-                          }
-                        }}
+                        onClick={() => window.open(blobUrls[adj.id], "_blank")}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" /> Abrir
                       </Button>
@@ -162,7 +156,9 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     </div>
                   </div>
                   {adj.tipo === "application/pdf" ? (
-                    <iframe src={adj.dataUrl} className="w-full h-52 border-0" title="Vista previa" />
+                    <iframe src={blobUrls[adj.id]} className="w-full h-52 border-0" title="Vista previa" />
+                  ) : adj.tipo.startsWith("image/") ? (
+                    <img src={blobUrls[adj.id]} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
                   ) : adj.tipo.startsWith("image/") ? (
                     <img src={adj.dataUrl} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
                   ) : (

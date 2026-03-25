@@ -61,6 +61,7 @@ export default function EmpresasPage() {
   });
 
   const { data: empresas = [], isLoading } = useEmpresas();
+  const { data: matriculas = [] } = useMatriculas();
   const deleteEmpresa = useDeleteEmpresa();
 
   useEffect(() => {

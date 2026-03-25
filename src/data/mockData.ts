@@ -785,7 +785,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm22', personaId: 'p22', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Cali', fechaCertificacionPrevia: '2023-10-05',
-    tipoVinculacion: 'empresa', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de paneles', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-011', empresaNombre: 'Energía Solar del Caribe S.A.S', empresaNit: '902345678-5', empresaCargo: 'Técnica de paneles', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Ricardo Mendoza', empresaContactoTelefono: '3189876543',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd120', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-09' },

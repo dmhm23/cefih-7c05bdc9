@@ -162,13 +162,20 @@ export default function MatriculaFormPage() {
   useEffect(() => {
     if (tipoVinculacion === "independiente" && selectedPersona) {
       const nombreCompleto = `${selectedPersona.nombres} ${selectedPersona.apellidos}`;
+      form.setValue("empresaId", "");
       form.setValue("empresaNombre", nombreCompleto);
       form.setValue("empresaNit", selectedPersona.numeroDocumento);
       form.setValue("empresaRepresentanteLegal", nombreCompleto);
-    } else if (tipoVinculacion === "empresa") {
+    } else if (tipoVinculacion === "empresa" || tipoVinculacion === "arl") {
+      // Clear empresa fields when switching to empresa/arl so user selects from directory
+      form.setValue("empresaId", "");
       form.setValue("empresaNombre", "");
       form.setValue("empresaNit", "");
       form.setValue("empresaRepresentanteLegal", "");
+      form.setValue("empresaContactoNombre", "");
+      form.setValue("empresaContactoTelefono", "");
+      form.setValue("sectorEconomico", "");
+      form.setValue("arl", "");
     }
   }, [tipoVinculacion, selectedPersona, form]);
 

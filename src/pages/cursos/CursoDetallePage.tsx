@@ -9,6 +9,7 @@ import { EnrollmentsTable } from "@/components/cursos/EnrollmentsTable";
 import { CourseStatsChips } from "@/components/cursos/CourseStatsChips";
 import { CourseObservations } from "@/components/cursos/CourseObservations";
 import { CloseCourseDialog } from "@/components/cursos/CloseCourseDialog";
+import { JustificacionEdicionDialog } from "@/components/cursos/JustificacionEdicionDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
@@ -31,6 +32,7 @@ export default function CursoDetallePage() {
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
+  const [justificacionDialogOpen, setJustificacionDialogOpen] = useState(false);
 
   const minTrabajoRef = useRef<HTMLDivElement>(null);
 
@@ -59,24 +61,31 @@ export default function CursoDetallePage() {
     );
   }
 
-  // Edición permitida únicamente cuando el curso está "abierto".
-  // Un administrador podrá sobrepasar este bloqueo (pendiente de implementar con roles).
-  // Solo cursos cerrados son de solo lectura; abierto y en_progreso son editables
-  const isReadOnly = curso.estado === "cerrado";
+  // Cursos cerrados permiten edición pero requieren justificación al guardar
+  const isReadOnly = false;
+  const isClosed = curso.estado === "cerrado";
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (justificacion?: string) => {
     try {
-      await updateCurso.mutateAsync({ id: curso.id, data: formData });
+      await updateCurso.mutateAsync({ id: curso.id, data: formData, justificacion });
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);
     } catch {
       toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (isClosed) {
+      setJustificacionDialogOpen(true);
+    } else {
+      handleSave();
     }
   };
 
@@ -164,8 +173,8 @@ export default function CursoDetallePage() {
           <Button variant="outline" size="sm" onClick={handleCancel}>
             Cancelar
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={updateCurso.isPending}>
-            {updateCurso.isPending ? "Guardando..." : "Guardar Cambios"}
+          <Button size="sm" onClick={handleSaveClick} disabled={updateCurso.isPending}>
+            {updateCurso.isPending ? "Guardando..." : isClosed ? "Guardar (requiere justificación)" : "Guardar Cambios"}
           </Button>
         </div>
       )}
@@ -183,6 +192,17 @@ export default function CursoDetallePage() {
           // For now we just scroll to the table area
           toast({ title: "Filtrando matrículas pendientes..." });
         }}
+      />
+
+      {/* Justification Dialog for editing closed courses */}
+      <JustificacionEdicionDialog
+        open={justificacionDialogOpen}
+        onOpenChange={setJustificacionDialogOpen}
+        onConfirm={(justificacion) => {
+          setJustificacionDialogOpen(false);
+          handleSave(justificacion);
+        }}
+        isPending={updateCurso.isPending}
       />
     </div>
   );

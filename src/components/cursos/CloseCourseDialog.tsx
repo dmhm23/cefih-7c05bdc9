@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, FileWarning } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,7 @@ import { useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
 import { ApiError } from "@/services/api";
 
-type Step = "idle" | "mintrabajo_missing" | "matriculas_pending" | "confirm";
+type Step = "idle" | "mintrabajo_missing" | "documentos_incompletos" | "confirm";
 
 interface CloseCourseDialogProps {
   open: boolean;
@@ -41,17 +41,29 @@ export function CloseCourseDialog({
   const { toast } = useToast();
   const cambiarEstado = useCambiarEstadoCurso();
   const [step, setStep] = useState<Step>("idle");
-  const [pendingMatriculas, setPendingMatriculas] = useState<Matricula[]>([]);
+  const [matriculasConDocsIncompletos, setMatriculasConDocsIncompletos] = useState<Matricula[]>([]);
 
   const getPersona = (id: string) => personas.find((p) => p.id === id);
 
+  const getDocsIncompletos = () =>
+    matriculas.filter((m) =>
+      m.documentos.some((d) => !d.opcional && d.estado === "pendiente")
+    );
+
   const handleOpen = (isOpen: boolean) => {
     if (isOpen) {
-      // Run front-end MinTrabajo validation
+      // 1. Validar MinTrabajo
       if (!curso.minTrabajoRegistro || !curso.minTrabajoFechaCierrePrincipal) {
         setStep("mintrabajo_missing");
       } else {
-        setStep("confirm");
+        // 2. Validar documentos completos
+        const incompletos = getDocsIncompletos();
+        if (incompletos.length > 0) {
+          setMatriculasConDocsIncompletos(incompletos);
+          setStep("documentos_incompletos");
+        } else {
+          setStep("confirm");
+        }
       }
     } else {
       setStep("idle");
@@ -66,10 +78,10 @@ export function CloseCourseDialog({
       onOpenChange(false);
       setStep("idle");
     } catch (error: any) {
-      if (error instanceof ApiError && error.code === "MATRICULAS_PENDIENTES") {
-        const pending = matriculas.filter((m) => m.estado === "creada" || m.estado === "pendiente");
-        setPendingMatriculas(pending);
-        setStep("matriculas_pending");
+      if (error instanceof ApiError && error.code === "DOCUMENTOS_INCOMPLETOS") {
+        const incompletos = getDocsIncompletos();
+        setMatriculasConDocsIncompletos(incompletos);
+        setStep("documentos_incompletos");
       } else if (error instanceof ApiError && error.code === "MINTRABAJO_REQUERIDO") {
         setStep("mintrabajo_missing");
       } else {
@@ -110,24 +122,27 @@ export function CloseCourseDialog({
           </>
         )}
 
-        {step === "matriculas_pending" && (
+        {step === "documentos_incompletos" && (
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                Matrículas Pendientes
+                <FileWarning className="h-5 w-5 text-destructive" />
+                Documentos Incompletos
               </DialogTitle>
               <DialogDescription>
-                No se puede cerrar el curso. Hay {pendingMatriculas.length} matrícula(s) en estado pendiente o creada.
+                No se puede cerrar el curso. Hay {matriculasConDocsIncompletos.length} matrícula(s) con documentos pendientes.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-48 overflow-y-auto space-y-1.5 py-2">
-              {pendingMatriculas.map((m) => {
+              {matriculasConDocsIncompletos.map((m) => {
                 const persona = getPersona(m.personaId);
+                const pendientes = m.documentos.filter((d) => !d.opcional && d.estado === "pendiente");
                 return (
                   <div key={m.id} className="flex items-center justify-between p-2 bg-muted/30 rounded text-sm">
                     <span>{persona ? `${persona.nombres} ${persona.apellidos}` : m.id}</span>
-                    <Badge variant="outline" className="text-xs">{m.estado}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {pendientes.length} doc(s) pendiente(s)
+                    </Badge>
                   </div>
                 );
               })}
@@ -142,7 +157,7 @@ export function CloseCourseDialog({
                   onFilterPendientes();
                 }}
               >
-                Ver pendientes
+                Revisar matrículas
               </Button>
             </DialogFooter>
           </>
@@ -153,7 +168,7 @@ export function CloseCourseDialog({
             <DialogHeader>
               <DialogTitle>¿Cerrar curso?</DialogTitle>
               <DialogDescription>
-                Esta acción marcará el curso como cerrado. Se validará que no existan matrículas pendientes.
+                Esta acción marcará el curso como cerrado. Se validará que todos los documentos estén completos.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

@@ -193,6 +193,17 @@ export default function CursoDetallePage() {
           toast({ title: "Filtrando matrículas pendientes..." });
         }}
       />
+
+      {/* Justification Dialog for editing closed courses */}
+      <JustificacionEdicionDialog
+        open={justificacionDialogOpen}
+        onOpenChange={setJustificacionDialogOpen}
+        onConfirm={(justificacion) => {
+          setJustificacionDialogOpen(false);
+          handleSave(justificacion);
+        }}
+        isPending={updateCurso.isPending}
+      />
     </div>
   );
 }

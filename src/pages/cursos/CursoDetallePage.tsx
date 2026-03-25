@@ -9,6 +9,7 @@ import { EnrollmentsTable } from "@/components/cursos/EnrollmentsTable";
 import { CourseStatsChips } from "@/components/cursos/CourseStatsChips";
 import { CourseObservations } from "@/components/cursos/CourseObservations";
 import { CloseCourseDialog } from "@/components/cursos/CloseCourseDialog";
+import { JustificacionEdicionDialog } from "@/components/cursos/JustificacionEdicionDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";

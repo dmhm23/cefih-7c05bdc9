@@ -26,6 +26,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { useSearchPersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas";
+import { useEmpresas, useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useState, useEffect } from "react";

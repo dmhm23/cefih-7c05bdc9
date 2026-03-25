@@ -708,7 +708,7 @@ export const mockMatriculas: Matricula[] = [
   },
   {
     id: 'm17', personaId: 'p17', cursoId: 'c5', estado: 'pendiente', fechaInicio: '2026-03-03', fechaFin: '2026-03-03',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisor de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Supervisor de mina', empresaNivelFormacion: 'coordinador_ta', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd100', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-07' },

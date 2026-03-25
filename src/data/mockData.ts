@@ -630,7 +630,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm12', personaId: 'p12', cursoId: 'c2', estado: 'creada', fechaInicio: '2026-02-26', fechaFin: '2026-03-04',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Formación Alturas Bogotá', fechaCertificacionPrevia: '2023-08-20',
-    tipoVinculacion: 'empresa', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
+    tipoVinculacion: 'empresa', empresaId: 'emp-012', empresaNombre: 'Infraestructuras del Norte S.A.', empresaNit: '800567890-3', empresaCargo: 'Ayudante de obra', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Camila Herrera', empresaContactoTelefono: '3109876543',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd79', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },

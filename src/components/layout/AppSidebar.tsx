@@ -45,6 +45,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  const isDirectorioActive = location.pathname.startsWith("/personas") || location.pathname.startsWith("/empresas");
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
   const handleLogout = () => {

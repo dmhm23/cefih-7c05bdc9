@@ -570,7 +570,7 @@ export default function MatriculaDetallePage() {
           {/* Documentos */}
           <div className="border rounded-lg p-4 shadow-sm space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Documentos Requeridos
+              Requisitos documentales
             </h3>
             <DocumentosCarga
               documentos={matricula.documentos}

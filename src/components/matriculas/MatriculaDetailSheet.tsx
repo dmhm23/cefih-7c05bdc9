@@ -496,7 +496,7 @@ export function MatriculaDetailSheet({
         <Separator />
 
         {/* Documentos */}
-        <DetailSection title="Documentos">
+        <DetailSection title="Requisitos documentales">
           <DocumentosCarga
             documentos={matricula.documentos}
             onUpload={handleUploadDoc}

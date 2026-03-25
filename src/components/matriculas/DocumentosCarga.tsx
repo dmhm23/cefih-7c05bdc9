@@ -333,7 +333,7 @@ export function DocumentosCarga({
         <div className="border rounded-lg overflow-hidden">
           {/* Block 1: Checklist */}
           <div className="p-3 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Documentos incluidos en el PDF</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Requisitos incluidos en el PDF</p>
             <div className="space-y-1.5">
               {documentos.map((doc) => {
                 const isPendiente = doc.estado === "pendiente";

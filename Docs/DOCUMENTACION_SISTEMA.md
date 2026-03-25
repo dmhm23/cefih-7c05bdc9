@@ -2438,4 +2438,93 @@ Nuevo módulo completo para gestión de facturación, pagos y seguimiento de car
 
 ---
 
+### v1.8 — 25 de Marzo 2026
+
+#### Nomenclatura: "Cargo" → "Rol" en Gestión de Personal
+
+- Todas las etiquetas visibles al usuario en el módulo de Gestión de Personal se renombraron de "Cargo" a **"Rol"** o **"Roles"**.
+- Afecta: columna de tabla, filtros, formularios, panel lateral, modal de gestión de roles, mensajes de error y confirmación.
+- Los campos internos (`cargoId`, `cargoNombre`, `TipoCargo`, hooks, servicios) se mantienen sin cambio para compatibilidad.
+- El módulo de Matrículas conserva "cargo" como cargo laboral del participante.
+
+**Archivos modificados:**
+- `src/pages/personal/GestionPersonalPage.tsx`
+- `src/pages/personal/PersonalFormPage.tsx`
+- `src/components/personal/PersonalDetailSheet.tsx`
+- `src/components/personal/GestionCargosModal.tsx`
+
+#### Nomenclatura: "Documentos" → "Requisitos documentales" en Matrículas y Niveles
+
+- En el módulo de **Niveles de Formación**: columna "Documentos" → "Requisitos", título "Documentos Requeridos" → "Requisitos".
+- En el módulo de **Matrículas**: sección "Documentos" → "Requisitos documentales" en detalle, panel lateral y componente de carga.
+
+**Archivos modificados:**
+- `src/pages/niveles/NivelesPage.tsx`, `src/pages/niveles/NivelDetallePage.tsx`
+- `src/components/matriculas/MatriculaDetailSheet.tsx`
+- `src/pages/matriculas/MatriculaDetallePage.tsx`
+- `src/components/matriculas/DocumentosCarga.tsx`
+
+#### Supervisor como selector sincronizado con Personal
+
+- El campo Supervisor en el formulario de cursos (`CourseInfoCard`) se convirtió de texto libre a **selector desplegable** que lista únicamente personal con rol de tipo `supervisor`, replicando el patrón existente del campo Entrenador.
+- Utiliza `usePersonalByTipoCargo('supervisor')` para obtener los datos dinámicamente.
+
+**Archivos modificados:**
+- `src/components/cursos/CourseInfoCard.tsx`
+
+#### Mejoras al widget de Tareas Rápidas (Dashboard)
+
+- **Placeholder**: Cambiado de "Nueva tarea..." a "Escribe una nueva tarea…".
+- **Edición inline**: Doble clic para editar el texto de una tarea existente. Enter/blur guarda, Escape cancela.
+- **Drag & drop**: Reordenamiento de tareas con `@dnd-kit`. Ícono de agarre visible en hover. Se eliminó el sort automático por fecha para respetar el orden manual.
+
+**Archivos modificados:**
+- `src/components/dashboard/TodoWidget.tsx`
+
+#### Documentos adjuntos de Personal: simplificación de UI
+
+- Se eliminó el segundo recuadro con borde punteado ("No hay documentos adjuntos") que generaba confusión con una segunda zona de carga.
+- Reemplazado por un mensaje de texto discreto sin borde cuando la lista está vacía.
+
+**Archivos modificados:**
+- `src/components/personal/AdjuntosPersonal.tsx`
+
+#### Preview de PDFs: fix de bloqueo por Chrome
+
+- Se reemplazó el tag `<iframe>` por `<object>` para la previsualización inline de PDFs en documentos adjuntos, evitando bloqueos de seguridad del navegador en entornos con sandboxing (iframes anidados).
+- Se agregó un fallback con enlace para abrir en nueva pestaña.
+
+**Archivos modificados:**
+- `src/components/personal/AdjuntosPersonal.tsx`
+
+#### Columna "Financiero" → "Cartera" en tabla de estudiantes inscritos
+
+- Encabezado de columna renombrado de "Financiero" a "Cartera".
+- Filtro renombrado de "Estado Financiero" a "Estado de Cartera".
+- Las opciones del filtro se sincronizaron con los estados reales del módulo de Cartera: Pendiente, Facturado, Abonado, Pagado, Vencido.
+
+**Archivos modificados:**
+- `src/components/cursos/EnrollmentsTable.tsx`
+
+#### Barra flotante de acciones masivas en tabla de estudiantes inscritos
+
+- Se integró el componente `BulkActionsBar` en `EnrollmentsTable` para acciones masivas al seleccionar múltiples estudiantes.
+- **Generar certificados**: Ejecuta generación masiva para los IDs seleccionados.
+- **Eliminar seleccionados**: Con diálogo de confirmación, elimina todos los registros seleccionados.
+- Se eliminó el botón "Generar certificados" del header de la tabla, moviéndolo a la barra flotante.
+
+**Archivos modificados:**
+- `src/components/cursos/EnrollmentsTable.tsx`
+
+#### Filtro de entrenadores en calendario: checkboxes
+
+- El filtro de entrenadores en la vista de calendario de cursos se cambió de botones con círculos de color a **checkboxes** con nombres y punto de color como indicador visual.
+- La opción "Todos" se implementó como checkbox que resetea la selección.
+- La lógica multi-select (`toggleTrainer`) se mantiene igual.
+
+**Archivos modificados:**
+- `src/components/cursos/CursosCalendarioView.tsx`
+
+---
+
 *Documento generado como referencia integral del sistema SAFA. Para dudas técnicas o funcionales, consultar el código fuente en el directorio `src/`.*

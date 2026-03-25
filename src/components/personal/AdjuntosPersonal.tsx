@@ -40,6 +40,15 @@ interface AdjuntosPersonalProps {
 export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, isDeleting }: AdjuntosPersonalProps) {
   const [previewId, setPreviewId] = useState<string | null>(null);
 
+  // Cache blob URLs to avoid re-creating them on every render
+  const blobUrls = useMemo(() => {
+    const map: Record<string, string> = {};
+    adjuntos.forEach((adj) => {
+      if (adj.dataUrl) map[adj.id] = dataUrlToBlobUrl(adj.dataUrl);
+    });
+    return map;
+  }, [adjuntos]);
+
   const handleFile = (file: File) => {
     if (file.size > MAX_FILE_SIZE) return;
     onUpload(file);

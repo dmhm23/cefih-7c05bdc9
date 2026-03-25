@@ -85,7 +85,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
   const handleDelete = async (id: string) => {
     try {
       await deleteCargo.mutateAsync(id);
-      toast({ title: "Cargo eliminado" });
+      toast({ title: "Rol eliminado" });
       if (editingId === id) resetForm();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, FileText, MapPin, Phone, Mail, User, Shield } from "lucide-react";
+import { Building2, FileText, MapPin, Phone, Mail, User, Shield, Users } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateEmpresa } from "@/hooks/useEmpresas";
+import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa, EmpresaFormData } from "@/types/empresa";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { Separator } from "@/components/ui/separator";

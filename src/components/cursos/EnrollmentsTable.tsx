@@ -424,18 +424,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           </Badge>
                         </td>
                         <td className="py-2 pr-3">
-                          <Badge
-                            variant={finStatus === "pagado" ? "default" : "secondary"}
-                            className={
-                              finStatus === "pagado"
-                                ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs"
-                                : finStatus === "abonado"
-                                ? "bg-blue-500/10 text-blue-600 text-xs"
-                                : "bg-amber-500/10 text-amber-600 text-xs"
-                            }
-                          >
-                            {finStatus === "pagado" ? "Pagado" : finStatus === "abonado" ? "Abonado" : "Sin pagar"}
-                          </Badge>
+                          <StatusBadge status={carteraStatus} />
                         </td>
                         <td className="py-2 pr-3">
                           <div className="flex items-center gap-1.5">

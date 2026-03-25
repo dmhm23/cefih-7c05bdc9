@@ -18,7 +18,7 @@ const STORAGE_KEY = "niveles_visible_columns";
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombreNivel", header: "Nombre del Nivel", visible: true },
   { key: "duracion", header: "Duración", visible: true },
-  { key: "documentos", header: "Documentos", visible: true },
+  { key: "documentos", header: "Requisitos", visible: true },
   { key: "updatedAt", header: "Actualización", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];

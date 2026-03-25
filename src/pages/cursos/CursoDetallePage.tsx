@@ -70,14 +70,22 @@ export default function CursoDetallePage() {
     setIsDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (justificacion?: string) => {
     try {
-      await updateCurso.mutateAsync({ id: curso.id, data: formData });
+      await updateCurso.mutateAsync({ id: curso.id, data: formData, justificacion });
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);
     } catch {
       toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (isClosed) {
+      setJustificacionDialogOpen(true);
+    } else {
+      handleSave();
     }
   };
 

@@ -20,7 +20,7 @@ const STORAGE_KEY = "personal_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre Completo", visible: true },
-  { key: "cargo", header: "Cargo", visible: true },
+  { key: "cargo", header: "Rol", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 

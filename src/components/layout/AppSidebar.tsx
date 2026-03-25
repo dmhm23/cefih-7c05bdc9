@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -20,7 +20,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Personas", url: "/personas", icon: Users },
   { title: "Matrículas", url: "/matriculas", icon: GraduationCap },
   { title: "Cursos", url: "/cursos", icon: BookOpen },
   { title: "Cartera", url: "/cartera", icon: Wallet },
@@ -28,6 +27,11 @@ const menuItems = [
   { title: "Gestión de Formatos", url: "/gestion-formatos", icon: FileText },
   { title: "Niveles de Formación", url: "/niveles", icon: Layers },
   { title: "Portal Estudiante", url: "/portal-estudiante", icon: Smartphone },
+];
+
+const directorioItems = [
+  { title: "Personas", url: "/personas", icon: Users },
+  { title: "Empresas", url: "/empresas", icon: Building2 },
 ];
 
 const certificacionItems = [
@@ -41,6 +45,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  const isDirectorioActive = location.pathname.startsWith("/personas") || location.pathname.startsWith("/empresas");
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
   const handleLogout = () => {
@@ -89,6 +94,44 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
+
+              {/* Directorio - Collapsible */}
+              <Collapsible defaultOpen={isDirectorioActive} className="group/collapsible-dir">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Directorio"
+                      isActive={isDirectorioActive}
+                    >
+                      <Users className="h-4 w-4" />
+                      <span>Directorio</span>
+                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-dir:rotate-180" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {directorioItems.map((sub) => {
+                        const isSubActive = location.pathname === sub.url ||
+                          (sub.url !== "/personas" && sub.url !== "/empresas" && location.pathname.startsWith(sub.url)) ||
+                          location.pathname.startsWith(sub.url + "/");
+                        return (
+                          <SidebarMenuSubItem key={sub.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={isSubActive}
+                            >
+                              <button onClick={() => navigate(sub.url)} className="w-full">
+                                <sub.icon className="h-3.5 w-3.5" />
+                                <span>{sub.title}</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
 
               {/* Certificación - Collapsible */}
               <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">

@@ -53,6 +53,11 @@ import PlantillaEditorPage from "./pages/certificacion/PlantillaEditorPage";
 import CarteraPage from "./pages/cartera/CarteraPage";
 import GrupoCarteraDetallePage from "./pages/cartera/GrupoCarteraDetallePage";
 
+// Empresas (Módulo J)
+import EmpresasPage from "./pages/empresas/EmpresasPage";
+import EmpresaFormPage from "./pages/empresas/EmpresaFormPage";
+import EmpresaDetallePage from "./pages/empresas/EmpresaDetallePage";
+
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -86,6 +91,12 @@ const App = () => (
           <Route path="/personas/nuevo" element={<WithLayout><PersonaFormPage /></WithLayout>} />
           <Route path="/personas/:id" element={<WithLayout><PersonaDetallePage /></WithLayout>} />
           <Route path="/personas/:id/editar" element={<WithLayout><PersonaFormPage /></WithLayout>} />
+
+          {/* Módulo J - Empresas */}
+          <Route path="/empresas" element={<WithLayout><EmpresasPage /></WithLayout>} />
+          <Route path="/empresas/nueva" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
+          <Route path="/empresas/:id" element={<WithLayout><EmpresaDetallePage /></WithLayout>} />
+          <Route path="/empresas/:id/editar" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
           
           {/* Módulo B - Matrículas */}
           <Route path="/matriculas" element={<WithLayout><MatriculasPage /></WithLayout>} />

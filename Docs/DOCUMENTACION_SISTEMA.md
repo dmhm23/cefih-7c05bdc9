@@ -47,8 +47,8 @@ El sistema abarca nueve módulos principales:
 | **Personas** | Registro y gestión de datos personales, laborales y de contacto |
 | **Matrículas** | Vinculación persona-curso con gestión documental, financiera y de certificación |
 | **Cursos** | Programación, control de capacidad, calendario y estadísticas de cursos |
-| **Niveles de Formación** | Configuración dinámica de niveles, documentos requeridos y campos adicionales |
-| **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
+| **Niveles de Formación** | Configuración dinámica de niveles, requisitos documentales y campos adicionales |
+| **Gestión de Personal** | Administración de perfiles de staff, roles, firmas digitales y documentos adjuntos |
 | **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
 | **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |

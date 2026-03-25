@@ -115,7 +115,7 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>Tipo de rol</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as TipoCargo)}>
                 <SelectTrigger>
                   <SelectValue />

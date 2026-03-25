@@ -52,9 +52,11 @@ export const mockResponsables: ResponsablePago[] = [
     tipo: 'empresa',
     nombre: 'Energía Solar del Caribe S.A.S',
     nit: '902345678-5',
+    empresaId: 'emp-011',
     contactoNombre: 'Ricardo Mendoza',
     contactoTelefono: '3189876543',
     contactoEmail: 'ricardo.mendoza@energiasolar.com',
+    direccionFacturacion: 'Calle 72 #10-20, Barranquilla',
     direccionFacturacion: 'Calle 72 #10-20, Barranquilla',
   },
   {

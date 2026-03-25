@@ -63,7 +63,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     documental: "todos",
-    financiero: "todos",
+    cartera: "todos",
   });
   const [modalAgregarOpen, setModalAgregarOpen] = useState(false);
   const [estudianteAEliminar, setEstudianteAEliminar] = useState<{ id: string; nombre: string } | null>(null);

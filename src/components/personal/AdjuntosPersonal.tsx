@@ -53,13 +53,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
 
       {/* File list */}
       {adjuntos.length === 0 ? (
-        <div className="border-2 border-dashed rounded-lg p-6 text-center">
-          <FileText className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-sm text-muted-foreground">No hay documentos adjuntos</p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
-            Suba hojas de vida, contratos, cédulas u otros documentos relevantes
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground text-center py-2">Aún no hay documentos adjuntos</p>
       ) : (
         <div className="space-y-1.5">
           {adjuntos.map((adj) => (

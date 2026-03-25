@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Filter, AlertTriangle } from "lucide-react";
+import { Wallet, Filter, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -81,9 +81,20 @@ export default function CarteraPage() {
       key: "responsable",
       header: "Responsable de Pago",
       render: (row) => (
-        <div>
-          <div className="font-medium">{row.responsable?.nombre || "—"}</div>
-          <div className="text-xs text-muted-foreground">{row.responsable?.nit}</div>
+        <div className="flex items-center gap-1.5">
+          <div>
+            <div className="font-medium">{row.responsable?.nombre || "—"}</div>
+            <div className="text-xs text-muted-foreground">{row.responsable?.nit}</div>
+          </div>
+          {row.responsable?.empresaId && (
+            <button
+              onClick={(e) => { e.stopPropagation(); navigate(`/empresas/${row.responsable!.empresaId}`); }}
+              className="text-muted-foreground hover:text-primary transition-colors"
+              title="Ver en Directorio"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       ),
     },

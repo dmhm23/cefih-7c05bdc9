@@ -11,6 +11,7 @@ export interface ResponsablePago {
   tipo: TipoResponsable;
   nombre: string;
   nit: string;
+  empresaId?: string;
   contactoNombre?: string;
   contactoTelefono?: string;
   contactoEmail?: string;

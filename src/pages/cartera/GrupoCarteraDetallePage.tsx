@@ -108,10 +108,22 @@ export default function GrupoCarteraDetallePage() {
         {/* Contacto */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Información de Contacto
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Información de Contacto
+              </CardTitle>
+              {responsable?.empresaId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => navigate(`/empresas/${responsable!.empresaId}`)}
+                >
+                  Ver en Directorio
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {responsable?.nit && (

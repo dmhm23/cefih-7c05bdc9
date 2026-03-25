@@ -11,6 +11,7 @@ import {
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
 import { mockMatriculas } from '@/data/mockData';
+import { mockEmpresas } from '@/data/mockEmpresas';
 import {
   mockResponsables,
   mockGruposCartera,
@@ -98,11 +99,14 @@ export function asignarMatriculaACartera(params: {
     // Find by NIT
     responsable = mockResponsables.find(r => r.nit === empresaNit);
     if (!responsable) {
+      // Try to find empresaId from directorio
+      const empresaDir = mockEmpresas.find(e => e.nit === empresaNit);
       responsable = {
         id: uuid(),
         tipo: 'empresa' as TipoResponsable,
         nombre: empresaNombre || 'Empresa sin nombre',
         nit: empresaNit,
+        empresaId: empresaDir?.id,
         contactoNombre: empresaContactoNombre,
         contactoTelefono: empresaContactoTelefono,
       };

@@ -29,6 +29,11 @@ const menuItems = [
   { title: "Portal Estudiante", url: "/portal-estudiante", icon: Smartphone },
 ];
 
+const directorioItems = [
+  { title: "Personas", url: "/personas", icon: Users },
+  { title: "Empresas", url: "/empresas", icon: Building2 },
+];
+
 const certificacionItems = [
   { title: "Historial", url: "/certificacion/historial", icon: History },
   { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage },

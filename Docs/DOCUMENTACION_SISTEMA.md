@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.7  
-> Última actualización: 9 de Marzo 2026  
+> Versión: 1.8  
+> Última actualización: 25 de Marzo 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -47,8 +47,8 @@ El sistema abarca nueve módulos principales:
 | **Personas** | Registro y gestión de datos personales, laborales y de contacto |
 | **Matrículas** | Vinculación persona-curso con gestión documental, financiera y de certificación |
 | **Cursos** | Programación, control de capacidad, calendario y estadísticas de cursos |
-| **Niveles de Formación** | Configuración dinámica de niveles, documentos requeridos y campos adicionales |
-| **Gestión de Personal** | Administración de perfiles de staff, cargos, firmas digitales y documentos adjuntos |
+| **Niveles de Formación** | Configuración dinámica de niveles, requisitos documentales y campos adicionales |
+| **Gestión de Personal** | Administración de perfiles de staff, roles, firmas digitales y documentos adjuntos |
 | **Portal Estudiante (Admin)** | Configuración del catálogo de documentos, habilitación por nivel, y monitoreo de progreso |
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
 | **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |
@@ -665,7 +665,7 @@ abierto → en_progreso → cerrado
 La vista de calendario ofrece:
 
 - **Modos de visualización**: Mes, Semana, Día
-- **Filtros**: Por entrenador (multi-select con colores asignados) y por supervisor
+- **Filtros**: Por entrenador (checkboxes multi-select con indicador de color) y por supervisor
 - **Panel de resumen**: Horas ejecutadas por entrenador en el período visible
 - **Navegación temporal**: Anterior/Siguiente/Hoy
 - **Eventos**: Cada curso se muestra como bloque con nombre, entrenador y estado
@@ -801,7 +801,9 @@ Listado (/niveles)
 
 ### 7.1 Propósito
 
-Centraliza la administración de perfiles de **staff interno** del centro de formación (entrenadores, supervisores, administrativos, instructores, etc.). Sustituye las listas estáticas previas del formulario de Cursos, permitiendo que los selectores de entrenador y supervisor consuman registros dinámicos filtrados por tipo de cargo.
+Centraliza la administración de perfiles de **staff interno** del centro de formación (entrenadores, supervisores, administrativos, instructores, etc.). Sustituye las listas estáticas previas del formulario de Cursos, permitiendo que los selectores de entrenador y supervisor consuman registros dinámicos filtrados por tipo de rol.
+
+> **Nota sobre nomenclatura**: En la interfaz de usuario, el término "cargo" se reemplaza por **"rol"** o **"roles"** en todo el módulo de Gestión de Personal. Internamente, los campos (`cargoId`, `cargoNombre`, `TipoCargo`, etc.) mantienen su nombre original para compatibilidad. El término "cargo" se reserva exclusivamente para el cargo laboral del participante dentro de su empresa (módulo de Matrículas).
 
 ### 7.2 Entidad: `Personal`
 
@@ -819,7 +821,7 @@ interface Personal {
 }
 ```
 
-### 7.3 Entidad: `Cargo`
+### 7.3 Entidad: `Cargo` (UI: "Rol")
 
 ```typescript
 interface Cargo {
@@ -865,10 +867,11 @@ El componente `FirmaPersonal` ofrece dos modos de captura:
 
 El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja de vida, contratos, certificaciones, etc.):
 
-- **Carga**: Archivos de hasta 10MB. Lectura como DataURL para almacenamiento mock.
-- **Previsualización inline**: Para imágenes y PDFs.
+- **Carga**: Archivos de hasta 10MB mediante zona de arrastrar y soltar (`FileDropZone`). Lectura como DataURL para almacenamiento mock.
+- **Previsualización inline**: Para imágenes (tag `<img>`) y PDFs (tag `<object>` con fallback de enlace para abrir en nueva pestaña). Se usa `<object>` en lugar de `<iframe>` para evitar bloqueos de seguridad del navegador en entornos de preview con sandboxing.
 - **Descarga**: Botón de descarga individual.
 - **Eliminación**: Con confirmación.
+- **Estado vacío**: Cuando no hay archivos, se muestra un mensaje discreto "Aún no hay documentos adjuntos" (sin borde punteado) debajo de la zona de carga, evitando confusión con múltiples áreas de drop.
 - Los adjuntos son **opcionales** y pueden cargarse durante la creación o posteriormente.
 
 ### 7.7 Operaciones y Reglas de Negocio
@@ -898,13 +901,13 @@ El componente `AdjuntosPersonal` permite gestionar documentos del personal (hoja
 
 | Componente | Función |
 |------------|---------|
-| `GestionPersonalPage` | Tabla principal con búsqueda, columnas configurables, panel lateral y acciones por fila |
+| `GestionPersonalPage` | Tabla principal con búsqueda, columnas configurables (columna "Rol" en lugar de "Cargo"), panel lateral y acciones por fila |
 | `PersonalFormPage` | Formulario de creación/edición con secciones opcionales de firma y adjuntos |
 | `PersonalDetallePage` | Vista de detalle en pantalla completa (3 columnas: datos, adjuntos, firma) |
 | `PersonalDetailSheet` | Panel lateral con datos del perfil, adjuntos y firma (gestión en tiempo real) |
 | `FirmaPersonal` | Componente de captura de firma (dibujo o carga de imagen) |
 | `AdjuntosPersonal` | Gestión de documentos adjuntos con preview, descarga y eliminación |
-| `GestionCargosModal` | Modal para CRUD de cargos accesible desde el formulario de personal |
+| `GestionCargosModal` | Modal para CRUD de roles accesible desde el formulario de personal (internamente opera sobre la entidad `Cargo`) |
 
 ### 7.9 Flujo Funcional
 
@@ -1511,6 +1514,10 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.
 - **Matrículas recientes**: Últimas 5 matrículas con tipo de formación y badge de estado.
+- **Tareas rápidas** (`TodoWidget`): Widget de tareas con las siguientes funcionalidades:
+  - **Placeholder claro**: Input con texto "Escribe una nueva tarea…" para evitar confusión con un desplegable.
+  - **Edición inline**: Doble clic en el texto de una tarea para editarla. Enter o blur para guardar, Escape para cancelar.
+  - **Drag & drop**: Reordenamiento de tareas mediante arrastrar y soltar (usando `@dnd-kit`). Ícono de agarre (`GripVertical`) visible en hover. El orden manual del usuario se respeta (sin re-sort automático por fecha).
 
 ---
 
@@ -2428,6 +2435,95 @@ Nuevo módulo completo para gestión de facturación, pagos y seguimiento de car
 - `src/App.tsx` — Rutas `/cartera` y `/cartera/:id`
 - `src/components/layout/AppSidebar.tsx` — Entrada "Cartera" en sidebar
 - `src/components/shared/StatusBadge.tsx` — Variante destructiva para estado `vencido`
+
+---
+
+### v1.8 — 25 de Marzo 2026
+
+#### Nomenclatura: "Cargo" → "Rol" en Gestión de Personal
+
+- Todas las etiquetas visibles al usuario en el módulo de Gestión de Personal se renombraron de "Cargo" a **"Rol"** o **"Roles"**.
+- Afecta: columna de tabla, filtros, formularios, panel lateral, modal de gestión de roles, mensajes de error y confirmación.
+- Los campos internos (`cargoId`, `cargoNombre`, `TipoCargo`, hooks, servicios) se mantienen sin cambio para compatibilidad.
+- El módulo de Matrículas conserva "cargo" como cargo laboral del participante.
+
+**Archivos modificados:**
+- `src/pages/personal/GestionPersonalPage.tsx`
+- `src/pages/personal/PersonalFormPage.tsx`
+- `src/components/personal/PersonalDetailSheet.tsx`
+- `src/components/personal/GestionCargosModal.tsx`
+
+#### Nomenclatura: "Documentos" → "Requisitos documentales" en Matrículas y Niveles
+
+- En el módulo de **Niveles de Formación**: columna "Documentos" → "Requisitos", título "Documentos Requeridos" → "Requisitos".
+- En el módulo de **Matrículas**: sección "Documentos" → "Requisitos documentales" en detalle, panel lateral y componente de carga.
+
+**Archivos modificados:**
+- `src/pages/niveles/NivelesPage.tsx`, `src/pages/niveles/NivelDetallePage.tsx`
+- `src/components/matriculas/MatriculaDetailSheet.tsx`
+- `src/pages/matriculas/MatriculaDetallePage.tsx`
+- `src/components/matriculas/DocumentosCarga.tsx`
+
+#### Supervisor como selector sincronizado con Personal
+
+- El campo Supervisor en el formulario de cursos (`CourseInfoCard`) se convirtió de texto libre a **selector desplegable** que lista únicamente personal con rol de tipo `supervisor`, replicando el patrón existente del campo Entrenador.
+- Utiliza `usePersonalByTipoCargo('supervisor')` para obtener los datos dinámicamente.
+
+**Archivos modificados:**
+- `src/components/cursos/CourseInfoCard.tsx`
+
+#### Mejoras al widget de Tareas Rápidas (Dashboard)
+
+- **Placeholder**: Cambiado de "Nueva tarea..." a "Escribe una nueva tarea…".
+- **Edición inline**: Doble clic para editar el texto de una tarea existente. Enter/blur guarda, Escape cancela.
+- **Drag & drop**: Reordenamiento de tareas con `@dnd-kit`. Ícono de agarre visible en hover. Se eliminó el sort automático por fecha para respetar el orden manual.
+
+**Archivos modificados:**
+- `src/components/dashboard/TodoWidget.tsx`
+
+#### Documentos adjuntos de Personal: simplificación de UI
+
+- Se eliminó el segundo recuadro con borde punteado ("No hay documentos adjuntos") que generaba confusión con una segunda zona de carga.
+- Reemplazado por un mensaje de texto discreto sin borde cuando la lista está vacía.
+
+**Archivos modificados:**
+- `src/components/personal/AdjuntosPersonal.tsx`
+
+#### Preview de PDFs: fix de bloqueo por Chrome
+
+- Se reemplazó el tag `<iframe>` por `<object>` para la previsualización inline de PDFs en documentos adjuntos, evitando bloqueos de seguridad del navegador en entornos con sandboxing (iframes anidados).
+- Se agregó un fallback con enlace para abrir en nueva pestaña.
+
+**Archivos modificados:**
+- `src/components/personal/AdjuntosPersonal.tsx`
+
+#### Columna "Financiero" → "Cartera" en tabla de estudiantes inscritos
+
+- Encabezado de columna renombrado de "Financiero" a "Cartera".
+- Filtro renombrado de "Estado Financiero" a "Estado de Cartera".
+- Las opciones del filtro se sincronizaron con los estados reales del módulo de Cartera: Pendiente, Facturado, Abonado, Pagado, Vencido.
+
+**Archivos modificados:**
+- `src/components/cursos/EnrollmentsTable.tsx`
+
+#### Barra flotante de acciones masivas en tabla de estudiantes inscritos
+
+- Se integró el componente `BulkActionsBar` en `EnrollmentsTable` para acciones masivas al seleccionar múltiples estudiantes.
+- **Generar certificados**: Ejecuta generación masiva para los IDs seleccionados.
+- **Eliminar seleccionados**: Con diálogo de confirmación, elimina todos los registros seleccionados.
+- Se eliminó el botón "Generar certificados" del header de la tabla, moviéndolo a la barra flotante.
+
+**Archivos modificados:**
+- `src/components/cursos/EnrollmentsTable.tsx`
+
+#### Filtro de entrenadores en calendario: checkboxes
+
+- El filtro de entrenadores en la vista de calendario de cursos se cambió de botones con círculos de color a **checkboxes** con nombres y punto de color como indicador visual.
+- La opción "Todos" se implementó como checkbox que resetea la selección.
+- La lógica multi-select (`toggleTrainer`) se mantiene igual.
+
+**Archivos modificados:**
+- `src/components/cursos/CursosCalendarioView.tsx`
 
 ---
 

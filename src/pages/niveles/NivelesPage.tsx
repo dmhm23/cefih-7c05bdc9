@@ -83,10 +83,10 @@ export default function NivelesPage() {
     },
     {
       key: "documentos",
-      header: "Documentos",
+      header: "Requisitos",
       render: (n) => (
         <Badge variant="secondary">
-          {n.documentosRequeridos.length} documento{n.documentosRequeridos.length !== 1 ? 's' : ''}
+          {n.documentosRequeridos.length} requisito{n.documentosRequeridos.length !== 1 ? 's' : ''}
         </Badge>
       ),
     },

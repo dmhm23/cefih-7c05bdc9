@@ -186,7 +186,7 @@ export default function NivelDetallePage() {
                 </div>
               )}
               <Badge variant="secondary" className="mt-3">
-                {nivel.documentosRequeridos.length} documento{nivel.documentosRequeridos.length !== 1 ? 's' : ''}
+                {nivel.documentosRequeridos.length} requisito{nivel.documentosRequeridos.length !== 1 ? 's' : ''}
               </Badge>
             </CardContent>
           </Card>

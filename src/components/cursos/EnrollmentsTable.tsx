@@ -348,7 +348,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {(filters.documental !== "todos" || filters.financiero !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
+              {(filters.documental !== "todos" || filters.cartera !== "todos") ? "No hay resultados con los filtros aplicados" : "No hay estudiantes inscritos"}
             </div>
           ) : (
             <div className="overflow-x-auto">

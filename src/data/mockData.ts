@@ -754,7 +754,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm20', personaId: 'p20', cursoId: 'c6', estado: 'pendiente', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'SENA Regional Medellín', fechaCertificacionPrevia: '2023-07-15',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Técnico de perforación', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: true, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: true,
     documentos: [
       { id: 'd112', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'cargado', fechaCarga: '2024-03-08' },

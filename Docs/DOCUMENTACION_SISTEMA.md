@@ -1514,6 +1514,10 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 - **Tarjetas de estadísticas**: 4 cards clickeables que navegan al módulo correspondiente.
 - **Acciones rápidas**: Botones para crear persona, matrícula o curso.
 - **Matrículas recientes**: Últimas 5 matrículas con tipo de formación y badge de estado.
+- **Tareas rápidas** (`TodoWidget`): Widget de tareas con las siguientes funcionalidades:
+  - **Placeholder claro**: Input con texto "Escribe una nueva tarea…" para evitar confusión con un desplegable.
+  - **Edición inline**: Doble clic en el texto de una tarea para editarla. Enter o blur para guardar, Escape para cancelar.
+  - **Drag & drop**: Reordenamiento de tareas mediante arrastrar y soltar (usando `@dnd-kit`). Ícono de agarre (`GripVertical`) visible en hover. El orden manual del usuario se respeta (sin re-sort automático por fecha).
 
 ---
 

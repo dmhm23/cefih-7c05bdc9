@@ -123,6 +123,7 @@ export default function MatriculaFormPage() {
       centroFormacionPrevio: "",
       
       tipoVinculacion: "",
+      empresaId: "",
       empresaNombre: "",
       empresaNit: "",
       empresaRepresentanteLegal: "",

@@ -104,7 +104,9 @@ export default function MatriculaFormPage() {
   const { data: searchResults = [], isFetching: isSearching } = useSearchPersonas(searchQuery);
   const { data: cursos = [] } = useCursos();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const { data: empresas = [] } = useEmpresas();
   const createMatricula = useCreateMatricula();
+  const createEmpresa = useCreateEmpresa();
   const updatePersona = useUpdatePersona();
 
   const nivelesOptions = nivelesFormacion.map((n) => ({

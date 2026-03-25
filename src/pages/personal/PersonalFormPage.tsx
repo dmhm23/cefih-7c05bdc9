@@ -263,7 +263,7 @@ export default function PersonalFormPage() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Seleccionar cargo..." />
+                            <SelectValue placeholder="Seleccionar rol..." />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

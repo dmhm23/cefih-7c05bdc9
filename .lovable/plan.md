@@ -1,59 +1,39 @@
 
 
-## Plan: Actualizar reglas de cierre de curso y permitir reapertura con justificación
+## Plan: Fix empty Close Course modal
 
-### Resumen
-Tres cambios principales:
-1. **Cierre de curso**: validar documentos completos + MinTrabajo (el pago NO bloquea el cierre)
-2. **Elegibilidad de certificados**: el pago sigue bloqueando certificados, pero no el cierre
-3. **Reapertura de curso cerrado**: permitir edición solicitando justificación, registrada en auditoría
+### Root Cause
 
----
+The `CloseCourseDialog` validates and sets the step (mintrabajo_missing, documentos_incompletos, or confirm) inside `handleOpen`, which is the `onOpenChange` callback. However, the dialog is opened from the parent via `setCloseDialogOpen(true)`, which sets the `open` prop directly. Radix Dialog does NOT call `onOpenChange` when the `open` prop changes programmatically — it only fires on user-initiated close actions.
 
-### 1. Actualizar validación de cierre — `src/services/cursoService.ts`
+Result: step remains `"idle"`, and since no content renders for `step === "idle"`, the modal appears empty.
 
-En `cambiarEstado`, reemplazar la validación de "matrículas pendientes" por validación de **documentos incompletos**:
+### Fix — `src/components/cursos/CloseCourseDialog.tsx`
 
-- Recorrer las matrículas del curso y verificar que cada una tenga todos sus documentos obligatorios con `estado !== 'pendiente'`
-- Si hay matrículas con documentos pendientes, lanzar error `DOCUMENTOS_INCOMPLETOS` con la lista de afectados
-- Mantener la validación de MinTrabajo existente
-- **Eliminar** la validación que bloquea por estado de matrícula `pendiente`/`creada` (el pago no bloquea cierre)
+Add a `useEffect` that watches the `open` prop. When it becomes `true`, run the validation logic to determine the correct step:
 
-### 2. Actualizar `CloseCourseDialog.tsx`
+```ts
+useEffect(() => {
+  if (open) {
+    if (!curso.minTrabajoRegistro || !curso.minTrabajoFechaCierrePrincipal) {
+      setStep("mintrabajo_missing");
+    } else {
+      const incompletos = getDocsIncompletos();
+      if (incompletos.length > 0) {
+        setMatriculasConDocsIncompletos(incompletos);
+        setStep("documentos_incompletos");
+      } else {
+        setStep("confirm");
+      }
+    }
+  } else {
+    setStep("idle");
+  }
+}, [open]);
+```
 
-- Agregar nuevo step `"documentos_incompletos"` al tipo `Step`
-- En `handleOpen`: además de validar MinTrabajo, verificar si hay matrículas con documentos pendientes en el frontend y mostrar la lista
-- Nuevo panel visual que liste los estudiantes con documentos faltantes, con botón para revisar
-- Reemplazar el step `matriculas_pending` actual por `documentos_incompletos`
-- Actualizar el `handleConfirm` para capturar el nuevo código de error del backend
+Simplify `handleOpen` to just forward to `onOpenChange` (reset step on close only).
 
-### 3. Reapertura de curso cerrado — `src/pages/cursos/CursoDetallePage.tsx`
-
-- Cambiar `isReadOnly` para que un curso cerrado **no sea totalmente de solo lectura**
-- Al intentar guardar cambios en un curso cerrado, mostrar un **diálogo de justificación** (textarea) antes de proceder
-- La justificación se registra en el log de auditoría junto con los campos modificados
-
-### 4. Nuevo componente `src/components/cursos/JustificacionEdicionDialog.tsx`
-
-Dialog simple con:
-- Título: "Justificación de edición"
-- Descripción: "Este curso está cerrado. Indique el motivo de la modificación."
-- Textarea obligatorio para la justificación
-- Botones Cancelar / Confirmar edición
-
-### 5. Actualizar servicio `cursoService.update`
-
-- Aceptar campo opcional `justificacion?: string` en los datos
-- Cuando se provea, incluirlo en el log de auditoría
-
-### 6. Actualizar `certificadoGenerator.ts` — `evaluarElegibilidad`
-
-- Sin cambios funcionales necesarios: ya valida pago y documentos por separado
-- Los certificados siguen bloqueados si `!matricula.pagado`, lo cual es correcto
-
-### Archivos modificados
-- `src/services/cursoService.ts` — nueva validación documentos, justificación en update
-- `src/components/cursos/CloseCourseDialog.tsx` — nuevo step documentos incompletos
-- `src/pages/cursos/CursoDetallePage.tsx` — reapertura con justificación
-- `src/components/cursos/JustificacionEdicionDialog.tsx` — nuevo componente
+### Single file change
+- `src/components/cursos/CloseCourseDialog.tsx`
 

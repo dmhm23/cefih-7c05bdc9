@@ -770,7 +770,7 @@ export const mockMatriculas: Matricula[] = [
   {
     id: 'm21', personaId: 'p21', cursoId: 'c6', estado: 'creada', fechaInicio: '2026-03-10', fechaFin: '2026-03-11',
     nivelPrevio: 'trabajador_autorizado', centroFormacionPrevio: 'Centro Alturas Barranquilla', fechaCertificacionPrevia: '2023-03-20',
-    tipoVinculacion: 'empresa', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
+    tipoVinculacion: 'empresa', empresaId: 'emp-014', empresaNombre: 'Minera Andina S.A.S', empresaNit: '903456789-2', empresaCargo: 'Ayudante de mina', empresaNivelFormacion: 'jefe_area', empresaContactoNombre: 'Luis Arango', empresaContactoTelefono: '3176543210',
     consentimientoSalud: false, restriccionMedica: false, alergias: false, consumoMedicamentos: false, nivelLectoescritura: true, autorizacionDatos: false,
     documentos: [
       { id: 'd116', tipo: 'cedula', nombre: 'Cédula de Ciudadanía', estado: 'pendiente' },

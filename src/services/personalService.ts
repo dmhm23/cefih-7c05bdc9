@@ -236,11 +236,11 @@ export const personalService = {
   async updateCargo(id: string, data: Partial<CargoFormData>): Promise<Cargo> {
     await delay(800);
     const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Cargo no encontrado', 404, 'NOT_FOUND');
+    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
 
     if (data.nombre) {
       const duplicate = mockCargos.find(c => c.id !== id && c.nombre.toLowerCase() === data.nombre!.toLowerCase());
-      if (duplicate) throw new ApiError('Ya existe un cargo con ese nombre', 400, 'CARGO_DUPLICADO');
+      if (duplicate) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
     }
 
     const now = new Date().toISOString();

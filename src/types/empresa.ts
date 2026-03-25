@@ -16,3 +16,15 @@ export interface Empresa {
 }
 
 export type EmpresaFormData = Omit<Empresa, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface TarifaEmpresa {
+  id: string;
+  empresaId: string;
+  cursoId: string;
+  cursoNombre: string;
+  valor: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type TarifaEmpresaFormData = Omit<TarifaEmpresa, 'id' | 'createdAt' | 'updatedAt'>;

@@ -473,6 +473,7 @@ export const mockMatriculas: Matricula[] = [
     centroFormacionPrevio: 'Escuela Colombiana de Ingeniería',
     fechaCertificacionPrevia: '2023-06-20',
     tipoVinculacion: 'empresa',
+    empresaId: 'emp-013',
     empresaNombre: 'Telecom Solutions S.A.S',
     empresaNit: '901234567-8',
     empresaRepresentanteLegal: 'Diana Castellanos',

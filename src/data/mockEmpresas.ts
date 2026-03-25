@@ -1,4 +1,4 @@
-import { Empresa } from '@/types/empresa';
+import { Empresa, TarifaEmpresa } from '@/types/empresa';
 
 export const mockEmpresas: Empresa[] = [
   {

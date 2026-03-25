@@ -64,9 +64,11 @@ export const mockResponsables: ResponsablePago[] = [
     tipo: 'empresa',
     nombre: 'Minera Andina S.A.S',
     nit: '903456789-2',
+    empresaId: 'emp-014',
     contactoNombre: 'Luis Arango',
     contactoTelefono: '3176543210',
     contactoEmail: 'luis.arango@mineraandina.com',
+    direccionFacturacion: 'Carrera 15 #45-60, Bucaramanga',
     direccionFacturacion: 'Carrera 15 #45-60, Bucaramanga',
   },
   // Independientes nuevos

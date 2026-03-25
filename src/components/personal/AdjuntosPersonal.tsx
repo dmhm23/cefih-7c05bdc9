@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FileText, Trash2, Download, Loader2, Eye, X, ExternalLink } from "lucide-react";
+import { useState, useMemo } from "react";
+import { FileText, Trash2, Download, Eye, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { AdjuntoPersonal } from "@/types/personal";
@@ -7,6 +7,21 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+/** Convert a base64 data URL to a blob URL that Chrome allows in iframes */
+const dataUrlToBlobUrl = (dataUrl: string): string => {
+  try {
+    const [header, base64] = dataUrl.split(",");
+    const mime = header.match(/:(.*?);/)?.[1] ?? "application/octet-stream";
+    const bytes = atob(base64);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    const blob = new Blob([arr], { type: mime });
+    return URL.createObjectURL(blob);
+  } catch {
+    return dataUrl;
+  }
+};
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;

@@ -122,8 +122,11 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
           />
           <EditableField
             label="Supervisor"
-            value={getValue("supervisorNombre")}
-            onChange={(v) => onFieldChange("supervisorNombre", v)}
+            value={getValue("supervisorId")}
+            displayValue={getValue("supervisorNombre")}
+            onChange={handleSupervisorChange}
+            type="select"
+            options={supervisorOptions}
             editable={!readOnly}
           />
           <div className="space-y-1">

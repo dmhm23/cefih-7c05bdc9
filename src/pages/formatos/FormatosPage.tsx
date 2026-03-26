@@ -27,10 +27,12 @@ const STORAGE_KEY = "formatos_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre", visible: true },
+  { key: "tipo", header: "Tipo", visible: true },
+  { key: "categoria", header: "Categoría", visible: true },
   { key: "codigo", header: "Código", visible: true },
   { key: "scope", header: "Alcance", visible: true },
-  { key: "firmas", header: "Firmas", visible: true },
-  { key: "activo", header: "Estado", visible: true },
+  { key: "firmas", header: "Firmas", visible: false },
+  { key: "estado", header: "Estado", visible: true },
   { key: "updatedAt", header: "Actualización", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];

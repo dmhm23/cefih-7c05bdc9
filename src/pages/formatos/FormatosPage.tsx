@@ -134,6 +134,28 @@ export default function FormatosPage() {
     } catch { toast({ title: "Error al archivar", variant: "destructive" }); }
   };
 
+  const handleBulkDelete = async () => {
+    try {
+      for (const id of selectedIds) {
+        await deleteMutation.mutateAsync(id);
+      }
+      toast({ title: `${selectedIds.length} formato(s) eliminado(s)` });
+      setSelectedIds([]);
+    } catch {
+      toast({ title: "Error al eliminar formatos", variant: "destructive" });
+    }
+    setBulkDeleteConfirm(false);
+  };
+
+  const bulkActions = [
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      variant: "destructive" as const,
+      onClick: () => setBulkDeleteConfirm(true),
+    },
+  ];
+
   const columns: Column<FormatoFormacion>[] = [
     {
       key: "nombre", header: "Nombre", sortable: true, className: "min-w-[220px]",

@@ -1,24 +1,31 @@
 
 
-## Plan: Selección múltiple y eliminación masiva en Gestión de Formatos
+## Plan: Actualizar documento REGLAS_NEGOCIO.md
 
-### Cambios en `src/pages/formatos/FormatosPage.tsx`
+### Contexto
 
-1. **Habilitar selección múltiple** — Agregar props `selectable`, `selectedIds`, `onSelectionChange` y `bulkActions` al `DataTable` existente
-2. **Estado de selección** — Agregar `selectedIds: string[]` y `bulkDeleteConfirm: boolean`
-3. **Acción masiva "Eliminar"** — Un `BulkAction` con icono `Trash2`, variant `destructive`, que abre un `ConfirmDialog` de confirmación
-4. **Handler `handleBulkDelete`** — Itera sobre los IDs seleccionados, llama `archiveMutation.mutateAsync` para cada uno (archivar como eliminación lógica), muestra toast y limpia selección
+El documento `REGLAS_NEGOCIO.md` fue generado previamente como artefacto en `/mnt/documents/`. Desde entonces se han realizado múltiples cambios significativos al sistema que requieren reflejarse:
 
-### Cambios en `src/services/formatoFormacionService.ts`
+1. **Módulo de Empresas** — Entidad nueva con CRUD completo, tarifas por empresa, integración con matrículas (`empresaId`), y sincronización con Cartera (`ResponsablePago.empresaId`)
+2. **Módulo de Formatos** — Reemplazo del constructor de bloques por motor de plantillas HTML con tokens, editor TipTap, versionado, categorías, estados (borrador/activo/archivado), plantillas base, eliminación masiva
+3. **Cartera ↔ Empresas** — `ResponsablePago` ahora tiene `empresaId` opcional para vincular con el directorio
+4. **Matrículas ↔ Empresas** — Campo `empresaId` como FK al directorio, autocomplete en formulario
+5. **Dashboard** — Widget de tareas con drag & drop, edición inline, placeholder mejorado
+6. **Cursos** — Acciones masivas en tabla de estudiantes (generar certificados, eliminar), filtro de entrenadores con checkboxes en calendario
+7. **Auditoría** — Falta incluir `empresa`, `formato`, `tarifa_empresa` en `TipoEntidad`
 
-5. **Agregar método `delete(id)`** — Elimina el formato del array mock (eliminación real para el mock; en producción sería soft-delete)
+### Qué se hará
 
-### Cambios en `src/hooks/useFormatosFormacion.ts`
+Regenerar el archivo `/mnt/documents/REGLAS_NEGOCIO.md` con:
 
-6. **Agregar hook `useDeleteFormato()`** — Mutation que llama al nuevo `delete()` e invalida queries
+- Todas las reglas existentes revisadas y corregidas
+- Nuevas reglas para el módulo de Empresas (~15 reglas)
+- Reglas actualizadas del módulo de Formatos (motor dual, estados, versionado, tokens, eliminación masiva)
+- Reglas de integración Empresas ↔ Matrículas y Empresas ↔ Cartera
+- Reglas de tarifas por empresa
+- Nuevas inconsistencias identificadas resueltas o actualizadas
+- Reglas de acciones masivas en cursos y formatos
 
-### Resumen de archivos
-- `src/services/formatoFormacionService.ts` — agregar método `delete`
-- `src/hooks/useFormatosFormacion.ts` — agregar `useDeleteFormato`
-- `src/pages/formatos/FormatosPage.tsx` — selección + barra flotante con acción eliminar
+### Archivo generado
+- `/mnt/documents/REGLAS_NEGOCIO_v2.md` — versión actualizada completa
 

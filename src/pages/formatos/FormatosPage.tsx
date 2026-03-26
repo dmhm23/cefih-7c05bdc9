@@ -98,6 +98,7 @@ export default function FormatosPage() {
   const toggleActMutation = useToggleFormatoActivo();
   const duplicateMutation = useDuplicateFormato();
   const archiveMutation = useArchiveFormato();
+  const deleteMutation = useDeleteFormato();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));

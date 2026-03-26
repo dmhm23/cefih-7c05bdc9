@@ -95,6 +95,14 @@ export function useArchiveFormato() {
   });
 }
 
+export function useDeleteFormato() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => formatoFormacionService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
 export function usePlantillasBase() {
   return useQuery({
     queryKey: [...QUERY_KEY, 'plantillas-base'],

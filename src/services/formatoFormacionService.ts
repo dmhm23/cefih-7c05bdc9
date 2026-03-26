@@ -524,6 +524,14 @@ export const formatoFormacionService = {
     return simulateApiCall(mockFormatos[idx]);
   },
 
+  // --- Delete ---
+  delete: async (id: string): Promise<void> => {
+    const idx = mockFormatos.findIndex(f => f.id === id);
+    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
+    mockFormatos.splice(idx, 1);
+    return simulateApiCall(undefined as unknown as void);
+  },
+
   // --- Plantillas base ---
   getPlantillasBase: async (): Promise<PlantillaBase[]> => {
     return simulateApiCall([...mockPlantillasBase]);

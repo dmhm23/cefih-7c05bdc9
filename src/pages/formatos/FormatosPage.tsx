@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Copy, Power, PowerOff } from "lucide-react";
+import { Plus, Copy, Power, PowerOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
@@ -8,7 +8,7 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
 import { RowActions } from "@/components/shared/RowActions";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { useFormatos, useToggleFormatoActivo, useDuplicateFormato, useArchiveFormato } from "@/hooks/useFormatosFormacion";
+import { useFormatos, useToggleFormatoActivo, useDuplicateFormato, useArchiveFormato, useDeleteFormato } from "@/hooks/useFormatosFormacion";
 import { FormatoFormacion, CategoriaFormato } from "@/types/formatoFormacion";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +81,8 @@ export default function FormatosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toggleId, setToggleId] = useState<string | null>(null);
   const [toggleActivo, setToggleActivo] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -96,6 +98,7 @@ export default function FormatosPage() {
   const toggleActMutation = useToggleFormatoActivo();
   const duplicateMutation = useDuplicateFormato();
   const archiveMutation = useArchiveFormato();
+  const deleteMutation = useDeleteFormato();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
@@ -130,6 +133,28 @@ export default function FormatosPage() {
       toast({ title: "Formato archivado" });
     } catch { toast({ title: "Error al archivar", variant: "destructive" }); }
   };
+
+  const handleBulkDelete = async () => {
+    try {
+      for (const id of selectedIds) {
+        await deleteMutation.mutateAsync(id);
+      }
+      toast({ title: `${selectedIds.length} formato(s) eliminado(s)` });
+      setSelectedIds([]);
+    } catch {
+      toast({ title: "Error al eliminar formatos", variant: "destructive" });
+    }
+    setBulkDeleteConfirm(false);
+  };
+
+  const bulkActions = [
+    {
+      label: "Eliminar",
+      icon: Trash2,
+      variant: "destructive" as const,
+      onClick: () => setBulkDeleteConfirm(true),
+    },
+  ];
 
   const columns: Column<FormatoFormacion>[] = [
     {
@@ -239,6 +264,10 @@ export default function FormatosPage() {
         defaultSortKey="nombre"
         defaultSortDirection="asc"
         containerClassName="flex-1 min-h-0 mt-4"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={bulkActions}
       />
 
       <ConfirmDialog
@@ -253,6 +282,16 @@ export default function FormatosPage() {
         confirmText={toggleActivo ? "Desactivar" : "Activar"}
         variant={toggleActivo ? "destructive" : "default"}
         onConfirm={handleToggle}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+        title="¿Eliminar formatos seleccionados?"
+        description={`Se eliminarán ${selectedIds.length} formato(s). Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleBulkDelete}
       />
     </div>
   );

@@ -264,6 +264,10 @@ export default function FormatosPage() {
         defaultSortKey="nombre"
         defaultSortDirection="asc"
         containerClassName="flex-1 min-h-0 mt-4"
+        selectable
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
+        bulkActions={bulkActions}
       />
 
       <ConfirmDialog

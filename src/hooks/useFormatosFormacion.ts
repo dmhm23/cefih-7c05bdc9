@@ -109,8 +109,3 @@ export function usePlantillasBase() {
     queryFn: formatoFormacionService.getPlantillasBase,
   });
 }
-  return useQuery({
-    queryKey: [...QUERY_KEY, 'plantillas-base'],
-    queryFn: formatoFormacionService.getPlantillasBase,
-  });
-}

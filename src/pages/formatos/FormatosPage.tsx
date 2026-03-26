@@ -81,6 +81,8 @@ export default function FormatosPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [toggleId, setToggleId] = useState<string | null>(null);
   const [toggleActivo, setToggleActivo] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);

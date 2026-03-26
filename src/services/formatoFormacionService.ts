@@ -1,4 +1,4 @@
-import { FormatoFormacion, FormatoFormacionFormData, Bloque } from '@/types/formatoFormacion';
+import { FormatoFormacion, FormatoFormacionFormData, Bloque, FormatoVersion, PlantillaBase } from '@/types/formatoFormacion';
 import { simulateApiCall } from './api';
 import { v4 as uuidv4 } from 'uuid';
 

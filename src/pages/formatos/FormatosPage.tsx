@@ -283,6 +283,16 @@ export default function FormatosPage() {
         variant={toggleActivo ? "destructive" : "default"}
         onConfirm={handleToggle}
       />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        onOpenChange={setBulkDeleteConfirm}
+        title="¿Eliminar formatos seleccionados?"
+        description={`Se eliminarán ${selectedIds.length} formato(s). Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleBulkDelete}
+      />
     </div>
   );
 }

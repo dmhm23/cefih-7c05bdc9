@@ -446,4 +446,52 @@ export const formatoFormacionService = {
     );
     return simulateApiCall(results);
   },
+
+  // --- Versioning ---
+  saveVersion: async (formatoId: string): Promise<FormatoVersion> => {
+    const formato = mockFormatos.find(f => f.id === formatoId);
+    if (!formato) throw new Error(`Formato ${formatoId} no encontrado`);
+    const ver: FormatoVersion = {
+      id: `ver-${uuidv4().slice(0, 8)}`,
+      formatoId,
+      version: parseInt(formato.version) || 1,
+      htmlTemplate: formato.htmlTemplate || '',
+      cssTemplate: formato.cssTemplate,
+      createdAt: new Date().toISOString(),
+      creadoPor: 'Usuario actual',
+    };
+    mockVersiones.push(ver);
+    return simulateApiCall(ver);
+  },
+
+  getVersiones: async (formatoId: string): Promise<FormatoVersion[]> => {
+    return simulateApiCall(mockVersiones.filter(v => v.formatoId === formatoId));
+  },
+
+  restoreVersion: async (formatoId: string, versionId: string): Promise<FormatoFormacion> => {
+    const ver = mockVersiones.find(v => v.id === versionId && v.formatoId === formatoId);
+    if (!ver) throw new Error('Versión no encontrada');
+    const idx = mockFormatos.findIndex(f => f.id === formatoId);
+    if (idx === -1) throw new Error('Formato no encontrado');
+    mockFormatos[idx] = {
+      ...mockFormatos[idx],
+      htmlTemplate: ver.htmlTemplate,
+      cssTemplate: ver.cssTemplate,
+      updatedAt: new Date().toISOString(),
+    };
+    return simulateApiCall(mockFormatos[idx]);
+  },
+
+  // --- Archive ---
+  archive: async (id: string): Promise<FormatoFormacion> => {
+    const idx = mockFormatos.findIndex(f => f.id === id);
+    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
+    mockFormatos[idx] = { ...mockFormatos[idx], estado: 'archivado', activo: false, updatedAt: new Date().toISOString() };
+    return simulateApiCall(mockFormatos[idx]);
+  },
+
+  // --- Plantillas base ---
+  getPlantillasBase: async (): Promise<PlantillaBase[]> => {
+    return simulateApiCall([...mockPlantillasBase]);
+  },
 };

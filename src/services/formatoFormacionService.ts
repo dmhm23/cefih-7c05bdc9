@@ -249,6 +249,10 @@ let mockFormatos: FormatoFormacion[] = [
     visibleEnCurso: false,
     activo: true,
     esAutomatico: false,
+    motorRender: 'bloques',
+    categoria: 'pta_ats',
+    estado: 'activo',
+    usaEncabezadoInstitucional: true,
     requiereFirmaAprendiz: true,
     requiereFirmaEntrenador: false,
     requiereFirmaSupervisor: false,
@@ -271,12 +275,91 @@ let mockFormatos: FormatoFormacion[] = [
     visibleEnCurso: false,
     activo: true,
     esAutomatico: false,
+    motorRender: 'bloques',
+    categoria: 'evaluacion',
+    estado: 'activo',
+    usaEncabezadoInstitucional: true,
     requiereFirmaAprendiz: true,
     requiereFirmaEntrenador: false,
     requiereFirmaSupervisor: false,
     bloques: BLOQUES_EVALUACION_REENTRENAMIENTO,
     documentMeta: { fechaCreacion: '12/04/2018', fechaEdicion: '03/2025', subsistema: 'Alturas' },
     legacyComponentId: 'evaluacion_reentrenamiento',
+    createdAt: now,
+    updatedAt: now,
+  },
+  // --- Plantillas HTML de ejemplo ---
+  {
+    id: 'fmt-constancia-asistencia',
+    nombre: 'Constancia de Asistencia',
+    descripcion: 'Constancia institucional de asistencia a formación en alturas',
+    codigo: 'FIH04-080',
+    version: '001',
+    asignacionScope: 'tipo_curso',
+    nivelFormacionIds: [],
+    tipoCursoKeys: ['jefe_area', 'trabajador_autorizado', 'reentrenamiento', 'coordinador_ta'],
+    visibleEnMatricula: false,
+    visibleEnCurso: true,
+    activo: true,
+    esAutomatico: false,
+    motorRender: 'plantilla_html',
+    categoria: 'personalizado',
+    estado: 'activo',
+    usaEncabezadoInstitucional: true,
+    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">CONSTANCIA DE ASISTENCIA</h2>
+<p>Por medio de la presente se certifica que <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, asistió al curso <strong>{{curso.nombre}}</strong> realizado del {{curso.fechaInicio}} al {{curso.fechaFin}}, con una intensidad horaria de {{curso.horasTotales}} horas.</p>
+<p style="margin-top:16px;">La empresa responsable es <strong>{{empresa.nombre}}</strong> con NIT {{empresa.nit}}.</p>
+<p style="margin-top:16px;">Se expide la presente constancia a solicitud del interesado, en la ciudad de Bogotá, a los {{sistema.fechaDiligenciamiento}}.</p>
+<div style="margin-top:48px;display:flex;justify-content:space-between;">
+  <div style="text-align:center;">
+    <div style="border-top:1px solid #000;width:200px;padding-top:4px;">{{personal.entrenadorNombre}}<br/><small>Entrenador</small></div>
+  </div>
+  <div style="text-align:center;">
+    <div style="border-top:1px solid #000;width:200px;padding-top:4px;">{{personal.supervisorNombre}}<br/><small>Supervisor</small></div>
+  </div>
+</div>`,
+    requiereFirmaAprendiz: false,
+    requiereFirmaEntrenador: true,
+    requiereFirmaSupervisor: true,
+    bloques: [],
+    documentMeta: { fechaCreacion: '01/01/2025', fechaEdicion: '03/2025', subsistema: 'Alturas' },
+    createdAt: now,
+    updatedAt: now,
+  },
+  {
+    id: 'fmt-acta-compromiso',
+    nombre: 'Acta de Compromiso',
+    descripcion: 'Acta de compromiso del participante con las normas de seguridad',
+    codigo: 'FIH04-081',
+    version: '001',
+    asignacionScope: 'tipo_curso',
+    nivelFormacionIds: [],
+    tipoCursoKeys: ['trabajador_autorizado', 'reentrenamiento'],
+    visibleEnMatricula: true,
+    visibleEnCurso: false,
+    activo: true,
+    esAutomatico: false,
+    motorRender: 'plantilla_html',
+    categoria: 'personalizado',
+    estado: 'borrador',
+    usaEncabezadoInstitucional: true,
+    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">ACTA DE COMPROMISO</h2>
+<p>Yo, <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, trabajador(a) de la empresa <strong>{{empresa.nombre}}</strong>, me comprometo a:</p>
+<ol style="margin:16px 0;padding-left:24px;">
+  <li>Cumplir con todas las normas de seguridad para trabajo en alturas establecidas en la Resolución 4272 de 2021.</li>
+  <li>Utilizar correctamente los equipos de protección personal asignados.</li>
+  <li>Reportar cualquier condición insegura detectada durante las actividades de formación.</li>
+  <li>Participar activamente en todas las actividades programadas del curso {{curso.nombre}}.</li>
+</ol>
+<p>Fecha: {{sistema.fechaDiligenciamiento}}</p>
+<div style="margin-top:48px;text-align:center;">
+  <div style="border-top:1px solid #000;width:250px;margin:0 auto;padding-top:4px;">{{persona.nombreCompleto}}<br/><small>Firma del participante</small></div>
+</div>`,
+    requiereFirmaAprendiz: true,
+    requiereFirmaEntrenador: false,
+    requiereFirmaSupervisor: false,
+    bloques: [],
+    documentMeta: { fechaCreacion: '01/01/2025', fechaEdicion: '03/2025', subsistema: 'Alturas' },
     createdAt: now,
     updatedAt: now,
   },

@@ -59,3 +59,45 @@ export function useDuplicateFormato() {
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
+
+// --- New hooks for template engine ---
+
+export function useFormatoVersiones(formatoId: string | undefined) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'versiones', formatoId],
+    queryFn: () => formatoFormacionService.getVersiones(formatoId!),
+    enabled: !!formatoId,
+  });
+}
+
+export function useSaveVersion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (formatoId: string) => formatoFormacionService.saveVersion(formatoId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+export function useRestoreVersion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ formatoId, versionId }: { formatoId: string; versionId: string }) =>
+      formatoFormacionService.restoreVersion(formatoId, versionId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+export function useArchiveFormato() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => formatoFormacionService.archive(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
+}
+
+export function usePlantillasBase() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'plantillas-base'],
+    queryFn: formatoFormacionService.getPlantillasBase,
+  });
+}

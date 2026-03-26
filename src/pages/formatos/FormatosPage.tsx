@@ -8,21 +8,31 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
 import { RowActions } from "@/components/shared/RowActions";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { useFormatos, useToggleFormatoActivo, useDuplicateFormato } from "@/hooks/useFormatosFormacion";
-import { FormatoFormacion } from "@/types/formatoFormacion";
+import { useFormatos, useToggleFormatoActivo, useDuplicateFormato, useArchiveFormato } from "@/hooks/useFormatosFormacion";
+import { FormatoFormacion, CategoriaFormato } from "@/types/formatoFormacion";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { FileText, PenLine, CheckCircle2, XCircle } from "lucide-react";
+import { FileText, PenLine, CheckCircle2, XCircle, Archive, History, Layers, FileCode2 } from "lucide-react";
+
+const CATEGORIA_LABELS: Record<string, string> = {
+  formacion: 'Formación',
+  evaluacion: 'Evaluación',
+  asistencia: 'Asistencia',
+  pta_ats: 'PTA / ATS',
+  personalizado: 'Personalizado',
+};
 
 const STORAGE_KEY = "formatos_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre", visible: true },
+  { key: "tipo", header: "Tipo", visible: true },
+  { key: "categoria", header: "Categoría", visible: true },
   { key: "codigo", header: "Código", visible: true },
   { key: "scope", header: "Alcance", visible: true },
-  { key: "firmas", header: "Firmas", visible: true },
-  { key: "activo", header: "Estado", visible: true },
+  { key: "firmas", header: "Firmas", visible: false },
+  { key: "estado", header: "Estado", visible: true },
   { key: "updatedAt", header: "Actualización", visible: true },
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
@@ -85,19 +95,17 @@ export default function FormatosPage() {
   const { data: formatos = [], isLoading } = useFormatos();
   const toggleActMutation = useToggleFormatoActivo();
   const duplicateMutation = useDuplicateFormato();
+  const archiveMutation = useArchiveFormato();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
   }, [columnConfig]);
 
   const filtered = formatos.filter((f) => {
+    if (f.estado === 'archivado') return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
-    return (
-      f.nombre.toLowerCase().includes(q) ||
-      f.codigo.toLowerCase().includes(q) ||
-      f.descripcion.toLowerCase().includes(q)
-    );
+    return f.nombre.toLowerCase().includes(q) || f.codigo.toLowerCase().includes(q) || f.descripcion.toLowerCase().includes(q);
   });
 
   const handleToggle = async () => {
@@ -105,9 +113,7 @@ export default function FormatosPage() {
     try {
       await toggleActMutation.mutateAsync(toggleId);
       toast({ title: toggleActivo ? "Formato desactivado" : "Formato activado" });
-    } catch {
-      toast({ title: "Error al cambiar estado", variant: "destructive" });
-    }
+    } catch { toast({ title: "Error al cambiar estado", variant: "destructive" }); }
     setToggleId(null);
   };
 
@@ -115,20 +121,22 @@ export default function FormatosPage() {
     try {
       const nuevo = await duplicateMutation.mutateAsync(id);
       toast({ title: "Formato duplicado", description: nuevo.nombre });
-    } catch {
-      toast({ title: "Error al duplicar", variant: "destructive" });
-    }
+    } catch { toast({ title: "Error al duplicar", variant: "destructive" }); }
+  };
+
+  const handleArchive = async (id: string) => {
+    try {
+      await archiveMutation.mutateAsync(id);
+      toast({ title: "Formato archivado" });
+    } catch { toast({ title: "Error al archivar", variant: "destructive" }); }
   };
 
   const columns: Column<FormatoFormacion>[] = [
     {
-      key: "nombre",
-      header: "Nombre",
-      sortable: true,
-      className: "min-w-[220px]",
+      key: "nombre", header: "Nombre", sortable: true, className: "min-w-[220px]",
       render: (f) => (
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+          {f.motorRender === 'plantilla_html' ? <FileCode2 className="h-4 w-4 text-muted-foreground shrink-0" /> : <FileText className="h-4 w-4 text-muted-foreground shrink-0" />}
           <div className="min-w-0">
             <p className="font-medium truncate">{f.nombre}</p>
             <p className="text-xs text-muted-foreground truncate">{f.descripcion}</p>
@@ -137,84 +145,54 @@ export default function FormatosPage() {
       ),
     },
     {
-      key: "codigo",
-      header: "Código",
-      sortable: true,
-      className: "w-[120px]",
+      key: "tipo", header: "Tipo", className: "w-[100px]",
       render: (f) => (
-        <span className="font-mono text-xs">{f.codigo} v{f.version}</span>
+        <Badge variant="outline" className="text-[10px]">
+          {f.motorRender === 'plantilla_html' ? 'Plantilla' : 'Bloques'}
+        </Badge>
       ),
     },
     {
-      key: "scope",
-      header: "Alcance",
-      className: "min-w-[160px]",
+      key: "categoria", header: "Categoría", className: "w-[110px]",
+      render: (f) => (
+        <Badge variant="secondary" className="text-[10px]">
+          {CATEGORIA_LABELS[f.categoria] || f.categoria}
+        </Badge>
+      ),
+    },
+    {
+      key: "codigo", header: "Código", sortable: true, className: "w-[120px]",
+      render: (f) => <span className="font-mono text-xs">{f.codigo} v{f.version}</span>,
+    },
+    {
+      key: "scope", header: "Alcance", className: "min-w-[160px]",
       render: (f) => <ScopeBadges formato={f} />,
     },
     {
-      key: "firmas",
-      header: "Firmas",
-      className: "min-w-[140px]",
+      key: "firmas", header: "Firmas", className: "min-w-[140px]",
       render: (f) => <FirmaIcons formato={f} />,
     },
     {
-      key: "activo",
-      header: "Estado",
-      sortable: true,
-      className: "w-[100px]",
-      render: (f) =>
-        f.activo ? (
-          <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-            <CheckCircle2 className="h-3 w-3 mr-1" />
-            Activo
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="text-muted-foreground">
-            <XCircle className="h-3 w-3 mr-1" />
-            Inactivo
-          </Badge>
-        ),
+      key: "estado", header: "Estado", sortable: true, className: "w-[110px]",
+      render: (f) => {
+        if (f.estado === 'activo') return <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100"><CheckCircle2 className="h-3 w-3 mr-1" />Activo</Badge>;
+        if (f.estado === 'borrador') return <Badge variant="outline" className="text-amber-600 border-amber-300">Borrador</Badge>;
+        return <Badge variant="secondary" className="text-muted-foreground"><XCircle className="h-3 w-3 mr-1" />Archivado</Badge>;
+      },
     },
     {
-      key: "updatedAt",
-      header: "Actualización",
-      sortable: true,
-      className: "w-[120px]",
-      render: (f) => (
-        <span className="text-sm text-muted-foreground">
-          {format(new Date(f.updatedAt), "dd/MM/yyyy")}
-        </span>
-      ),
+      key: "updatedAt", header: "Actualización", sortable: true, className: "w-[120px]",
+      render: (f) => <span className="text-sm text-muted-foreground">{format(new Date(f.updatedAt), "dd/MM/yyyy")}</span>,
     },
     {
-      key: "actions",
-      header: "",
-      className: "w-[120px]",
+      key: "actions", header: "", className: "w-[120px]",
       render: (f) => (
-        <RowActions
-          showOnHover
-          actions={[
-            {
-              label: "Editar",
-              icon: PenLine,
-              onClick: () => navigate(`/gestion-formatos/${f.id}/editar`),
-            },
-            {
-              label: "Duplicar",
-              icon: Copy,
-              onClick: () => handleDuplicate(f.id),
-            },
-            {
-              label: f.activo ? "Desactivar" : "Activar",
-              icon: f.activo ? PowerOff : Power,
-              onClick: () => {
-                setToggleId(f.id);
-                setToggleActivo(f.activo);
-              },
-              variant: f.activo ? "destructive" : "default",
-            },
-          ]}
-        />
+        <RowActions showOnHover actions={[
+          { label: "Editar", icon: PenLine, onClick: () => navigate(`/gestion-formatos/${f.id}/editar`) },
+          { label: "Duplicar", icon: Copy, onClick: () => handleDuplicate(f.id) },
+          { label: f.activo ? "Desactivar" : "Activar", icon: f.activo ? PowerOff : Power, onClick: () => { setToggleId(f.id); setToggleActivo(f.activo); }, variant: f.activo ? "destructive" : "default" },
+          { label: "Archivar", icon: Archive, onClick: () => handleArchive(f.id), variant: "destructive" },
+        ]} />
       ),
     },
   ];

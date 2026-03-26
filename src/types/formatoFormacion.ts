@@ -205,6 +205,38 @@ export type Bloque =
 export type AsignacionScope = 'nivel_formacion' | 'tipo_curso';
 
 // ---------------------------------------------------------------------------
+// Motor de render
+// ---------------------------------------------------------------------------
+
+export type MotorRender = 'bloques' | 'plantilla_html';
+
+// ---------------------------------------------------------------------------
+// Categoría del formato
+// ---------------------------------------------------------------------------
+
+export type CategoriaFormato = 'formacion' | 'evaluacion' | 'asistencia' | 'pta_ats' | 'personalizado';
+
+// ---------------------------------------------------------------------------
+// Estado del formato
+// ---------------------------------------------------------------------------
+
+export type EstadoFormato = 'borrador' | 'activo' | 'archivado';
+
+// ---------------------------------------------------------------------------
+// Encabezado institucional
+// ---------------------------------------------------------------------------
+
+export interface EncabezadoConfig {
+  mostrarLogo: boolean;
+  mostrarNombreCentro: boolean;
+  mostrarCodigoDocumento: boolean;
+  mostrarVersion: boolean;
+  mostrarFecha: boolean;
+  mostrarPaginacion: boolean;
+  alineacion: 'izquierda' | 'centro' | 'derecha';
+}
+
+// ---------------------------------------------------------------------------
 // FormatoFormacion — entidad principal
 // ---------------------------------------------------------------------------
 
@@ -224,12 +256,35 @@ export interface FormatoFormacion {
   activo: boolean;
   esAutomatico: boolean;
 
+  // Motor de render
+  motorRender: MotorRender;
+
+  // Categoría
+  categoria: CategoriaFormato;
+
+  // Estado del formato
+  estado: EstadoFormato;
+
+  // Plantilla HTML (motor 'plantilla_html')
+  htmlTemplate?: string;
+  cssTemplate?: string;
+
+  // Encabezado institucional
+  usaEncabezadoInstitucional: boolean;
+  encabezadoConfig?: EncabezadoConfig;
+
+  // Plantilla base de la que se originó
+  plantillaBaseId?: string;
+
+  // Tokens presentes en la plantilla
+  tokensUsados?: string[];
+
   // Firmas requeridas
   requiereFirmaAprendiz: boolean;
   requiereFirmaEntrenador: boolean;
   requiereFirmaSupervisor: boolean;
 
-  // Bloques del constructor
+  // Bloques del constructor (motor 'bloques')
   bloques: Bloque[];
 
   // Metadata del documento impreso
@@ -247,6 +302,34 @@ export interface FormatoFormacion {
 }
 
 export type FormatoFormacionFormData = Omit<FormatoFormacion, 'id' | 'createdAt' | 'updatedAt'>;
+
+// ---------------------------------------------------------------------------
+// FormatoVersion — historial de versiones
+// ---------------------------------------------------------------------------
+
+export interface FormatoVersion {
+  id: string;
+  formatoId: string;
+  version: number;
+  htmlTemplate: string;
+  cssTemplate?: string;
+  createdAt: string;
+  creadoPor?: string;
+}
+
+// ---------------------------------------------------------------------------
+// PlantillaBase — templates preconstruidos
+// ---------------------------------------------------------------------------
+
+export interface PlantillaBase {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  categoria: CategoriaFormato;
+  htmlTemplate: string;
+  cssTemplate?: string;
+  thumbnail?: string;
+}
 
 // ---------------------------------------------------------------------------
 // FormatoRespuesta — respuestas por matrícula y formato (futuro)

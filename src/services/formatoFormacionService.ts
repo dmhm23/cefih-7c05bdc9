@@ -366,6 +366,40 @@ let mockFormatos: FormatoFormacion[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Mock versiones
+// ---------------------------------------------------------------------------
+
+let mockVersiones: FormatoVersion[] = [];
+
+// ---------------------------------------------------------------------------
+// Mock plantillas base
+// ---------------------------------------------------------------------------
+
+const mockPlantillasBase: PlantillaBase[] = [
+  {
+    id: 'pb-constancia',
+    nombre: 'Constancia Institucional',
+    descripcion: 'Plantilla base para constancias y certificaciones',
+    categoria: 'personalizado',
+    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">TÍTULO DEL DOCUMENTO</h2>\n<p>Por medio de la presente se certifica que <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, [contenido de la constancia].</p>\n<p style="margin-top:16px;">Fecha: {{sistema.fechaDiligenciamiento}}</p>\n<div style="margin-top:48px;text-align:center;">\n  <div style="border-top:1px solid #000;width:250px;margin:0 auto;padding-top:4px;">Firma<br/><small>Cargo</small></div>\n</div>`,
+  },
+  {
+    id: 'pb-acta',
+    nombre: 'Acta de Compromiso',
+    descripcion: 'Plantilla base para actas y compromisos del participante',
+    categoria: 'personalizado',
+    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">ACTA DE COMPROMISO</h2>\n<p>Yo, <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, me comprometo a:</p>\n<ol style="margin:16px 0;padding-left:24px;">\n  <li>Punto 1</li>\n  <li>Punto 2</li>\n</ol>\n<p>Fecha: {{sistema.fechaDiligenciamiento}}</p>`,
+  },
+  {
+    id: 'pb-registro',
+    nombre: 'Registro de Actividad',
+    descripcion: 'Plantilla base para registros y formatos de seguimiento',
+    categoria: 'formacion',
+    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">REGISTRO DE ACTIVIDAD</h2>\n<table style="width:100%;border-collapse:collapse;margin:16px 0;">\n<tr><td style="border:1px solid #ccc;padding:8px;width:30%;font-weight:bold;">Participante</td><td style="border:1px solid #ccc;padding:8px;">{{persona.nombreCompleto}}</td></tr>\n<tr><td style="border:1px solid #ccc;padding:8px;font-weight:bold;">Documento</td><td style="border:1px solid #ccc;padding:8px;">{{persona.numeroDocumento}}</td></tr>\n<tr><td style="border:1px solid #ccc;padding:8px;font-weight:bold;">Curso</td><td style="border:1px solid #ccc;padding:8px;">{{curso.nombre}}</td></tr>\n<tr><td style="border:1px solid #ccc;padding:8px;font-weight:bold;">Empresa</td><td style="border:1px solid #ccc;padding:8px;">{{empresa.nombre}}</td></tr>\n<tr><td style="border:1px solid #ccc;padding:8px;font-weight:bold;">Fecha</td><td style="border:1px solid #ccc;padding:8px;">{{sistema.fechaDiligenciamiento}}</td></tr>\n</table>`,
+  },
+];
+
+// ---------------------------------------------------------------------------
 // CRUD Service
 // ---------------------------------------------------------------------------
 

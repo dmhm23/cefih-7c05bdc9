@@ -5,7 +5,6 @@ import {
   Clock,
   Users,
   User,
-  FileCheck,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";

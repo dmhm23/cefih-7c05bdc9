@@ -112,8 +112,8 @@ export function CursoDetailSheet({
             <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={updateCurso.isPending || cambiarEstado.isPending}>
-              {updateCurso.isPending || cambiarEstado.isPending ? "Guardando..." : "Guardar Cambios"}
+            <Button onClick={handleSave} disabled={updateCurso.isPending}>
+              {updateCurso.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
         ) : undefined

@@ -65,20 +65,10 @@ export function CursoDetailSheet({
 
   const handleSave = async () => {
     try {
-      if (formData.estado && formData.estado !== curso.estado) {
-        await cambiarEstado.mutateAsync({
-          id: curso.id,
-          estado: formData.estado as EstadoCurso,
-        });
-      }
-
-      const otherChanges = { ...formData };
-      delete otherChanges.estado;
-
-      if (Object.keys(otherChanges).length > 0) {
+      if (Object.keys(formData).length > 0) {
         await updateCurso.mutateAsync({
           id: curso.id,
-          data: otherChanges,
+          data: formData,
         });
       }
 

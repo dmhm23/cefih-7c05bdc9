@@ -29,13 +29,6 @@ interface CursoDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
-// El estado 'en_progreso' se asigna automáticamente al agregar estudiantes;
-// el usuario solo puede cambiar entre 'abierto' y 'cerrado' manualmente.
-const ESTADO_OPTIONS = [
-  { value: "abierto", label: "Abierto" },
-  { value: "cerrado", label: "Cerrado" },
-];
-
 const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
 
 export function CursoDetailSheet({

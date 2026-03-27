@@ -14,7 +14,18 @@ export const matriculaService = {
 
   async getById(id: string): Promise<Matricula | null> {
     await delay(500);
-    return mockMatriculas.find(m => m.id === id) || null;
+    const matricula = mockMatriculas.find(m => m.id === id);
+    if (!matricula) return null;
+
+    // Sincronizar requisitos documentales con el nivel vigente
+    const nivelKey = (matricula as any).empresaNivelFormacion || undefined;
+    const { documentos, huboCambios } = sincronizarDocumentos(matricula.documentos, nivelKey);
+    if (huboCambios) {
+      matricula.documentos = documentos;
+      matricula.updatedAt = new Date().toISOString();
+    }
+
+    return matricula;
   },
 
   async getByPersonaId(personaId: string): Promise<Matricula[]> {

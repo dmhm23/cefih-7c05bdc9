@@ -51,3 +51,27 @@ export function getDocumentosRequeridos(
     };
   });
 }
+
+/**
+ * Sincroniza los documentos de una matrícula con los requisitos vigentes del nivel.
+ * Añade requisitos faltantes sin alterar los existentes (preserva archivos cargados).
+ */
+export function sincronizarDocumentos(
+  documentosActuales: DocumentoRequerido[],
+  nivelFormacionKey?: string
+): { documentos: DocumentoRequerido[]; huboCambios: boolean } {
+  const requisitosVigentes = getDocumentosRequeridos(nivelFormacionKey);
+
+  const tiposExistentes = new Set(documentosActuales.map(d => d.tipo));
+
+  const nuevos = requisitosVigentes.filter(r => !tiposExistentes.has(r.tipo));
+
+  if (nuevos.length === 0) {
+    return { documentos: documentosActuales, huboCambios: false };
+  }
+
+  return {
+    documentos: [...documentosActuales, ...nuevos],
+    huboCambios: true,
+  };
+}

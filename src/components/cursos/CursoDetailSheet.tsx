@@ -89,14 +89,6 @@ export function CursoDetailSheet({
     return (formData[field as keyof CursoFormData] as Curso[K]) ?? curso[field];
   };
 
-  const getEstadoBadgeVariant = (estado: EstadoCurso) => {
-    switch (estado) {
-      case "abierto": return "default" as const;
-      case "en_progreso": return "secondary" as const;
-      case "cerrado": return "outline" as const;
-      default: return "secondary" as const;
-    }
-  };
 
   const handleFullScreen = () => {
     onOpenChange(false);

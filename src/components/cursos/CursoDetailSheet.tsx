@@ -120,40 +120,6 @@ export function CursoDetailSheet({
       }
     >
       <div className="space-y-6">
-        {/* Capacity compact */}
-        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">
-            <span className="font-medium">{curso.matriculasIds.length}</span>
-            <span className="text-muted-foreground">/{curso.capacidadMaxima} inscritos</span>
-          </span>
-          <span className="text-xs text-muted-foreground ml-auto">
-            {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles
-          </span>
-        </div>
-
-        <Separator />
-
-        {/* Estado */}
-        <DetailSection title="Estado del Curso">
-          <EditableField
-            label="Estado"
-            value={getValue("estado")}
-            displayValue={ESTADO_CURSO_LABELS[getValue("estado")]}
-            onChange={(v) => handleFieldChange("estado", v)}
-            type="select"
-            options={ESTADO_OPTIONS}
-            icon={FileCheck}
-            badge
-            badgeVariant={getEstadoBadgeVariant(getValue("estado"))}
-            editable={getValue("estado") !== "en_progreso"}
-          />
-          {getValue("estado") === "en_progreso" && (
-            <p className="text-xs text-muted-foreground mt-1">
-              El estado pasa a "En Progreso" automáticamente al inscribir estudiantes.
-            </p>
-          )}
-        </DetailSection>
 
         <Separator />
 

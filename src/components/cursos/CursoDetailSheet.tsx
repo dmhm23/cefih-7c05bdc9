@@ -5,17 +5,16 @@ import {
   Clock,
   Users,
   User,
-  FileCheck,
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateCurso, useCambiarEstadoCurso } from "@/hooks/useCursos";
+import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso } from "@/types/curso";
+import { Curso, CursoFormData } from "@/types/curso";
 import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
@@ -30,13 +29,6 @@ interface CursoDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
-// El estado 'en_progreso' se asigna automáticamente al agregar estudiantes;
-// el usuario solo puede cambiar entre 'abierto' y 'cerrado' manualmente.
-const ESTADO_OPTIONS = [
-  { value: "abierto", label: "Abierto" },
-  { value: "cerrado", label: "Cerrado" },
-];
-
 const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
 
 export function CursoDetailSheet({
@@ -50,7 +42,6 @@ export function CursoDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
-  const cambiarEstado = useCambiarEstadoCurso();
   const { data: personas = [] } = usePersonas();
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -74,20 +65,10 @@ export function CursoDetailSheet({
 
   const handleSave = async () => {
     try {
-      if (formData.estado && formData.estado !== curso.estado) {
-        await cambiarEstado.mutateAsync({
-          id: curso.id,
-          estado: formData.estado as EstadoCurso,
-        });
-      }
-
-      const otherChanges = { ...formData };
-      delete otherChanges.estado;
-
-      if (Object.keys(otherChanges).length > 0) {
+      if (Object.keys(formData).length > 0) {
         await updateCurso.mutateAsync({
           id: curso.id,
-          data: otherChanges,
+          data: formData,
         });
       }
 
@@ -108,14 +89,6 @@ export function CursoDetailSheet({
     return (formData[field as keyof CursoFormData] as Curso[K]) ?? curso[field];
   };
 
-  const getEstadoBadgeVariant = (estado: EstadoCurso) => {
-    switch (estado) {
-      case "abierto": return "default" as const;
-      case "en_progreso": return "secondary" as const;
-      case "cerrado": return "outline" as const;
-      default: return "secondary" as const;
-    }
-  };
 
   const handleFullScreen = () => {
     onOpenChange(false);
@@ -139,48 +112,14 @@ export function CursoDetailSheet({
             <Button variant="outline" onClick={handleCancel}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={updateCurso.isPending || cambiarEstado.isPending}>
-              {updateCurso.isPending || cambiarEstado.isPending ? "Guardando..." : "Guardar Cambios"}
+            <Button onClick={handleSave} disabled={updateCurso.isPending}>
+              {updateCurso.isPending ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </div>
         ) : undefined
       }
     >
       <div className="space-y-6">
-        {/* Capacity compact */}
-        <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">
-            <span className="font-medium">{curso.matriculasIds.length}</span>
-            <span className="text-muted-foreground">/{curso.capacidadMaxima} inscritos</span>
-          </span>
-          <span className="text-xs text-muted-foreground ml-auto">
-            {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles
-          </span>
-        </div>
-
-        <Separator />
-
-        {/* Estado */}
-        <DetailSection title="Estado del Curso">
-          <EditableField
-            label="Estado"
-            value={getValue("estado")}
-            displayValue={ESTADO_CURSO_LABELS[getValue("estado")]}
-            onChange={(v) => handleFieldChange("estado", v)}
-            type="select"
-            options={ESTADO_OPTIONS}
-            icon={FileCheck}
-            badge
-            badgeVariant={getEstadoBadgeVariant(getValue("estado"))}
-            editable={getValue("estado") !== "en_progreso"}
-          />
-          {getValue("estado") === "en_progreso" && (
-            <p className="text-xs text-muted-foreground mt-1">
-              El estado pasa a "En Progreso" automáticamente al inscribir estudiantes.
-            </p>
-          )}
-        </DetailSection>
 
         <Separator />
 
@@ -265,7 +204,11 @@ export function CursoDetailSheet({
         <Separator />
 
         {/* Students */}
-        <DetailSection title="Estudiantes Inscritos">
+        <DetailSection title={`Estudiantes Inscritos (${curso.matriculasIds.length}/${curso.capacidadMaxima})`}>
+          <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{curso.matriculasIds.length} inscritos · {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles</span>
+          </div>
           {matriculas.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hay estudiantes inscritos</p>
           ) : (

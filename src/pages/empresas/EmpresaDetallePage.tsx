@@ -186,12 +186,7 @@ export default function EmpresaDetallePage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">{getValue("nombreEmpresa")}</h1>
-            <Badge variant={getValue("activo") ? "default" : "secondary"}>
-              {getValue("activo") ? "Activa" : "Inactiva"}
-            </Badge>
-          </div>
+          <h1 className="text-xl font-semibold">{getValue("nombreEmpresa")}</h1>
           <p className="text-sm text-muted-foreground">NIT: {getValue("nit")}</p>
         </div>
       </div>

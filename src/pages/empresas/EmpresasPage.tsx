@@ -235,15 +235,6 @@ export default function EmpresasPage() {
     { key: "direccion", header: "Dirección", className: "min-w-[200px]" },
     { key: "telefonoEmpresa", header: "Teléfono Empresa" },
     {
-      key: "activo",
-      header: "Estado",
-      render: (e) => (
-        <Badge variant={e.activo ? "default" : "secondary"}>
-          {e.activo ? "Activa" : "Inactiva"}
-        </Badge>
-      ),
-    },
-    {
       key: "actions",
       header: "",
       className: "w-[100px]",

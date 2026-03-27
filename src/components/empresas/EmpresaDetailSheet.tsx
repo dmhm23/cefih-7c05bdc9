@@ -107,11 +107,6 @@ export function EmpresaDetailSheet({
       }
     >
       <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <Badge variant={getValue("activo") ? "default" : "secondary"}>
-            {getValue("activo") ? "Activa" : "Inactiva"}
-          </Badge>
-        </div>
 
         <DetailSection title="Información General">
           <div className="grid grid-cols-2 gap-4">

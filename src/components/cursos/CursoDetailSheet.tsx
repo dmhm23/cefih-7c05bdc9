@@ -42,7 +42,6 @@ export function CursoDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
-  const cambiarEstado = useCambiarEstadoCurso();
   const { data: personas = [] } = usePersonas();
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);

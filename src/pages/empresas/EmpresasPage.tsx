@@ -33,7 +33,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "representanteLegal", header: "Representante Legal", visible: false },
   { key: "direccion", header: "Dirección", visible: false },
   { key: "telefonoEmpresa", header: "Teléfono Empresa", visible: false },
-  { key: "activo", header: "Estado", visible: false },
+  
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 
@@ -234,15 +234,6 @@ export default function EmpresasPage() {
     },
     { key: "direccion", header: "Dirección", className: "min-w-[200px]" },
     { key: "telefonoEmpresa", header: "Teléfono Empresa" },
-    {
-      key: "activo",
-      header: "Estado",
-      render: (e) => (
-        <Badge variant={e.activo ? "default" : "secondary"}>
-          {e.activo ? "Activa" : "Inactiva"}
-        </Badge>
-      ),
-    },
     {
       key: "actions",
       header: "",

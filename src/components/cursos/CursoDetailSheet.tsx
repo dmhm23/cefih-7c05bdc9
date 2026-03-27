@@ -11,7 +11,7 @@ import { EditableField } from "@/components/shared/EditableField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateCurso, useCambiarEstadoCurso } from "@/hooks/useCursos";
+import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso } from "@/types/curso";

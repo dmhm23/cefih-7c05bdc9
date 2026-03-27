@@ -33,7 +33,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "representanteLegal", header: "Representante Legal", visible: false },
   { key: "direccion", header: "Dirección", visible: false },
   { key: "telefonoEmpresa", header: "Teléfono Empresa", visible: false },
-  { key: "activo", header: "Estado", visible: false },
+  
   { key: "actions", header: "", visible: true, alwaysVisible: true },
 ];
 

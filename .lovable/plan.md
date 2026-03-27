@@ -1,31 +1,48 @@
 
 
-## Plan: Actualizar documento REGLAS_NEGOCIO.md
+## Plan: Sincronización automática de requisitos documentales Nivel → Matrículas
 
-### Contexto
+### Problema actual
 
-El documento `REGLAS_NEGOCIO.md` fue generado previamente como artefacto en `/mnt/documents/`. Desde entonces se han realizado múltiples cambios significativos al sistema que requieren reflejarse:
+Los requisitos documentales se generan una sola vez al crear la matrícula (`matriculaService.create` → `getDocumentosRequeridos`). Si un administrador agrega un nuevo requisito al Nivel de Formación después de la creación, las matrículas existentes no lo reflejan.
 
-1. **Módulo de Empresas** — Entidad nueva con CRUD completo, tarifas por empresa, integración con matrículas (`empresaId`), y sincronización con Cartera (`ResponsablePago.empresaId`)
-2. **Módulo de Formatos** — Reemplazo del constructor de bloques por motor de plantillas HTML con tokens, editor TipTap, versionado, categorías, estados (borrador/activo/archivado), plantillas base, eliminación masiva
-3. **Cartera ↔ Empresas** — `ResponsablePago` ahora tiene `empresaId` opcional para vincular con el directorio
-4. **Matrículas ↔ Empresas** — Campo `empresaId` como FK al directorio, autocomplete en formulario
-5. **Dashboard** — Widget de tareas con drag & drop, edición inline, placeholder mejorado
-6. **Cursos** — Acciones masivas en tabla de estudiantes (generar certificados, eliminar), filtro de entrenadores con checkboxes en calendario
-7. **Auditoría** — Falta incluir `empresa`, `formato`, `tarifa_empresa` en `TipoEntidad`
+### Solución
 
-### Qué se hará
+Agregar una función de sincronización que, al consultar una matrícula, compare sus documentos actuales contra los requisitos vigentes del nivel y añada los faltantes sin alterar los ya cargados.
 
-Regenerar el archivo `/mnt/documents/REGLAS_NEGOCIO.md` con:
+### Cambios
 
-- Todas las reglas existentes revisadas y corregidas
-- Nuevas reglas para el módulo de Empresas (~15 reglas)
-- Reglas actualizadas del módulo de Formatos (motor dual, estados, versionado, tokens, eliminación masiva)
-- Reglas de integración Empresas ↔ Matrículas y Empresas ↔ Cartera
-- Reglas de tarifas por empresa
-- Nuevas inconsistencias identificadas resueltas o actualizadas
-- Reglas de acciones masivas en cursos y formatos
+#### 1. `src/services/documentoService.ts` — nueva función `sincronizarDocumentos`
 
-### Archivo generado
-- `/mnt/documents/REGLAS_NEGOCIO_v2.md` — versión actualizada completa
+Crear función `sincronizarDocumentos(documentosActuales, nivelFormacionKey)`:
+- Obtiene los requisitos vigentes del nivel via `getDocumentosRequeridos`
+- Compara por `tipo`: identifica requisitos que existen en el nivel pero no en la matrícula
+- Agrega los faltantes con estado `pendiente`
+- Retorna el array combinado (existentes intactos + nuevos)
+- No elimina documentos que ya no estén en el nivel (datos históricos se preservan)
+
+#### 2. `src/services/matriculaService.ts` — sincronizar al consultar
+
+Modificar `getById(id)`:
+- Después de encontrar la matrícula, obtener el `empresaNivelFormacion` (o el nivel del curso asociado)
+- Llamar `sincronizarDocumentos(matricula.documentos, nivelKey)`
+- Si hay nuevos documentos, actualizar `matricula.documentos` y `matricula.updatedAt` en el mock
+- Retornar la matrícula actualizada
+
+Esto garantiza que al abrir cualquier matrícula existente, los nuevos requisitos aparezcan automáticamente.
+
+#### 3. `src/pages/niveles/NivelDetallePage.tsx` — sin cambios UI
+
+No se requieren cambios en la UI de niveles. La sincronización es transparente: el admin añade el requisito en el nivel, y al abrir cualquier matrícula de ese nivel, los nuevos requisitos ya están visibles.
+
+### Archivos afectados
+| Archivo | Cambio |
+|---|---|
+| `src/services/documentoService.ts` | Nueva función `sincronizarDocumentos` |
+| `src/services/matriculaService.ts` | Llamar sincronización en `getById` |
+
+### Lo que NO cambia
+- `DocumentosCarga.tsx` — ya renderiza dinámicamente lo que reciba en `documentos`
+- Documentos ya cargados (estado `cargado`) se preservan intactos
+- El flujo de creación de matrícula sigue igual
 

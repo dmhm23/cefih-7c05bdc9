@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 import { mockMatriculas, mockCursos, mockAuditLogs, mockPersonas } from '@/data/mockData';
 import { delay, ApiError } from './api';
-import { getDocumentosRequeridos } from './documentoService';
+import { getDocumentosRequeridos, sincronizarDocumentos } from './documentoService';
 import { initPortalEstudiante } from './portalInitService';
 import { asignarMatriculaACartera } from './carteraService';
 
@@ -14,7 +14,18 @@ export const matriculaService = {
 
   async getById(id: string): Promise<Matricula | null> {
     await delay(500);
-    return mockMatriculas.find(m => m.id === id) || null;
+    const matricula = mockMatriculas.find(m => m.id === id);
+    if (!matricula) return null;
+
+    // Sincronizar requisitos documentales con el nivel vigente
+    const nivelKey = (matricula as any).empresaNivelFormacion || undefined;
+    const { documentos, huboCambios } = sincronizarDocumentos(matricula.documentos, nivelKey);
+    if (huboCambios) {
+      matricula.documentos = documentos;
+      matricula.updatedAt = new Date().toISOString();
+    }
+
+    return matricula;
   },
 
   async getByPersonaId(personaId: string): Promise<Matricula[]> {

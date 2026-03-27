@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { Curso, CursoFormData, ESTADO_CURSO_LABELS, EstadoCurso } from "@/types/curso";
+import { Curso, CursoFormData } from "@/types/curso";
 import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";

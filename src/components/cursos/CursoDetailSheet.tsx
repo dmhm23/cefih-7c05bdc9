@@ -204,7 +204,11 @@ export function CursoDetailSheet({
         <Separator />
 
         {/* Students */}
-        <DetailSection title="Estudiantes Inscritos">
+        <DetailSection title={`Estudiantes Inscritos (${curso.matriculasIds.length}/${curso.capacidadMaxima})`}>
+          <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{curso.matriculasIds.length} inscritos · {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles</span>
+          </div>
           {matriculas.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hay estudiantes inscritos</p>
           ) : (

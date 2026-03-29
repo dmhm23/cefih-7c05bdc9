@@ -215,7 +215,7 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
               <div key={o.value} className="text-center py-1 border-r last:border-r-0">{o.label}</div>
             ))}
           </div>
-          {escalaPreguntas.slice(0, 3).map((q, i) => (
+          {escalaPreguntas.map((q, i) => (
             <div key={i} className="grid border-t text-[10px] min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
               <div className="px-2 py-1.5 border-r text-foreground break-words whitespace-pre-wrap leading-relaxed min-w-0">{q}</div>
               {escalaOpciones.map((o) => (
@@ -225,9 +225,6 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
               ))}
             </div>
           ))}
-          {escalaPreguntas.length > 3 && (
-            <div className="text-center text-[10px] text-muted-foreground py-1 border-t">+{escalaPreguntas.length - 3} más</div>
-          )}
         </div>
       )}
       {preguntaSiNo && (

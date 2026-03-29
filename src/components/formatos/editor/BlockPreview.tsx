@@ -249,7 +249,7 @@ function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
         <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Consentimiento de salud'}</span>
         <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{questions.length} pregunta{questions.length !== 1 ? 's' : ''}</Badge>
       </div>
-      {questions.slice(0, 4).map((q) => (
+      {questions.map((q) => (
         <div key={q.id} className="border rounded-md p-1.5 bg-background flex items-center gap-2 text-[10px]">
           <div className="flex gap-1.5 shrink-0">
             <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
@@ -259,7 +259,6 @@ function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
           {q.hasDetail && <Badge variant="outline" className="text-[8px] h-3.5 px-1 ml-auto">Detalle</Badge>}
         </div>
       ))}
-      {questions.length > 4 && <p className="text-[10px] text-muted-foreground text-center">+{questions.length - 4} más</p>}
     </div>
   );
 }

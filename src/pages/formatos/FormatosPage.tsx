@@ -27,7 +27,7 @@ const STORAGE_KEY = "formatos_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre", visible: true },
-  { key: "tipo", header: "Tipo", visible: true },
+  { key: "categoria", header: "Categoría", visible: true },
   { key: "categoria", header: "Categoría", visible: true },
   { key: "codigo", header: "Código", visible: true },
   { key: "scope", header: "Alcance", visible: true },

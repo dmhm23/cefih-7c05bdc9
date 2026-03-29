@@ -270,12 +270,11 @@ function DataAuthorizationPreview({ block }: { block: BloqueDataAuthorization })
     <div className="space-y-1.5">
       <span className="block text-xs font-semibold text-muted-foreground">{block.label || 'Autorización de datos'}</span>
       <div className="border rounded-md p-2 bg-background space-y-1">
-        {summaryItems.slice(0, 3).map((item, i) => (
+        {summaryItems.map((item, i) => (
           <div key={i} className="flex items-start gap-1.5 text-[10px] text-foreground">
             <span className="text-muted-foreground">•</span> {item}
           </div>
         ))}
-        {summaryItems.length > 3 && <p className="text-[10px] text-muted-foreground">+{summaryItems.length - 3} más</p>}
       </div>
       {fullText && <p className="text-[10px] text-muted-foreground line-clamp-2 italic">{fullText}</p>}
       <div className="flex items-center gap-2 text-[10px]">

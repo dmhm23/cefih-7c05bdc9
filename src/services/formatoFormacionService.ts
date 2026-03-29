@@ -302,20 +302,6 @@ let mockVersiones: FormatoVersion[] = [];
 
 const mockPlantillasBase: PlantillaBase[] = [
   {
-    id: 'pb-constancia',
-    nombre: 'Constancia Institucional',
-    descripcion: 'Plantilla base para constancias y certificaciones',
-    categoria: 'personalizado',
-    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">TÍTULO DEL DOCUMENTO</h2>\n<p>Por medio de la presente se certifica que <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, [contenido de la constancia].</p>\n<p style="margin-top:16px;">Fecha: {{sistema.fechaDiligenciamiento}}</p>\n<div style="margin-top:48px;text-align:center;">\n  <div style="border-top:1px solid #000;width:250px;margin:0 auto;padding-top:4px;">Firma<br/><small>Cargo</small></div>\n</div>`,
-  },
-  {
-    id: 'pb-acta',
-    nombre: 'Acta de Compromiso',
-    descripcion: 'Plantilla base para actas y compromisos del participante',
-    categoria: 'personalizado',
-    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">ACTA DE COMPROMISO</h2>\n<p>Yo, <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, me comprometo a:</p>\n<ol style="margin:16px 0;padding-left:24px;">\n  <li>Punto 1</li>\n  <li>Punto 2</li>\n</ol>\n<p>Fecha: {{sistema.fechaDiligenciamiento}}</p>`,
-  },
-  {
     id: 'pb-registro',
     nombre: 'Registro de Actividad',
     descripcion: 'Plantilla base para registros y formatos de seguimiento',

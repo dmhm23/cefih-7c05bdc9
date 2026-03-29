@@ -57,7 +57,7 @@ export default function EditorCanvas() {
 
   return (
     <div
-      className="flex-1 overflow-y-auto p-6 bg-muted/30 flex flex-col items-center"
+      className="h-full overflow-y-auto p-6 bg-muted/30 flex flex-col items-center"
       onClick={() => setSelected(null)}
       onDrop={handleCanvasDrop}
       onDragOver={handleDragOver}

@@ -199,7 +199,7 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
 function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey }) {
   const { escalaPreguntas = [], escalaOpciones = [], preguntaSiNo } = block.props || {};
   return (
-    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+    <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Encuesta de satisfacción'}</span>
         <Badge variant="secondary" className="text-[9px] h-4 px-1.5">

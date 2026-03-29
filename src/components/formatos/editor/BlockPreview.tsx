@@ -208,7 +208,7 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
       </div>
       {/* Scale header */}
       {escalaOpciones.length > 0 && (
-        <div className="border rounded-md overflow-hidden max-w-full">
+        <div className="border rounded-md overflow-visible max-w-full">
           <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
             <div className="px-2 py-1 border-r">Pregunta</div>
             {escalaOpciones.map((o) => (

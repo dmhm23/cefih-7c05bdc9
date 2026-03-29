@@ -1,30 +1,41 @@
 
 
-## Plan: Corregir scroll del canvas y desbordamiento de texto en el inspector
+## Diagnóstico: Por qué el canvas no crece con los bloques
 
-### Problema 1 — Sin scroll vertical en el canvas
+### Causa raíz
 
-El `EditorCanvas` tiene `overflow-y-auto` en su div externo, pero el `ResizablePanel` padre tiene `overflow-hidden` implícito. El contenido del canvas no puede hacer scroll porque el panel no permite que el overflow se propague.
+El `CanvasBlock` (línea 37) tiene `overflow-hidden` en su clase CSS. Esto **recorta** todo contenido que exceda el alto calculado del bloque — especialmente los bloques de evaluación con múltiples preguntas. Como el contenido se recorta en lugar de expandir el bloque, la "hoja" blanca nunca crece porque sus hijos reportan una altura truncada.
 
-**Solución**: Agregar `overflow-hidden` al `ResizablePanel` del canvas no es el problema — el issue es que el componente `ResizablePanel` de Radix no propaga overflow. Se debe añadir una clase `overflow-hidden` explícita al panel y asegurar que el div interno del `EditorCanvas` tenga `h-full overflow-y-auto`.
+En resumen: `overflow-hidden` en cada bloque → los bloques no crecen → la hoja no crece.
 
-**Archivo**: `src/components/formatos/editor/EditorCanvas.tsx`
-- Cambiar el div raíz de `className="flex-1 overflow-y-auto ..."` a `className="h-full overflow-y-auto ..."` para que tome el alto completo del panel y permita scroll.
+### Plan de corrección
 
-### Problema 2 — Texto largo sin salto de línea en el inspector
+#### 1. `src/components/formatos/editor/CanvasBlock.tsx` — Quitar `overflow-hidden`
 
-En el `QuestionEditor` (dentro de `InspectorFields.tsx`), el texto de la pregunta en el encabezado colapsable usa `truncate` (línea 352), lo cual es correcto para el header. Pero el problema real es que el `ScrollArea` del `BlockInspector` no permite word-wrap adecuado porque el viewport de Radix ScrollArea no tiene `min-width: 0` ni `overflow-wrap: break-word`.
+Cambiar la clase del contenedor principal de:
+```
+overflow-hidden
+```
+a:
+```
+overflow-visible
+```
 
-**Solución**:
-1. En `BlockInspector.tsx`: agregar `className="[&>div]:!overflow-x-hidden"` o `overflow-x-hidden` al contenedor interno del ScrollArea para forzar el contenido a respetar el ancho.
-2. En el `InspectorFields.tsx`, cambiar el `Input` de texto de pregunta (línea 366-370) por un `Textarea` para que las preguntas largas tengan salto de línea automático y sean más legibles.
-3. Agregar `break-words` al contenedor `p-4` del inspector.
+Esto permite que bloques con contenido extenso (evaluación, encuesta, salud) se expandan a su tamaño natural, y la hoja blanca crecerá automáticamente con ellos gracias al `h-fit` que ya tiene el canvas.
+
+#### 2. `src/components/formatos/editor/CanvasRow.tsx` — Mismo ajuste
+
+Si `CanvasRow` también tiene `overflow-hidden`, aplicar el mismo cambio para filas de 2 columnas.
 
 ### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/formatos/editor/EditorCanvas.tsx` | `flex-1` → `h-full` en div raíz |
-| `src/components/formatos/editor/BlockInspector.tsx` | Agregar `overflow-x-hidden` y `break-words` al contenido |
-| `src/components/formatos/editor/InspectorFields.tsx` | Cambiar `Input` → `Textarea` para texto de pregunta en `QuestionEditor` |
+| `src/components/formatos/editor/CanvasBlock.tsx` | `overflow-hidden` → `overflow-visible` |
+| `src/components/formatos/editor/CanvasRow.tsx` | Verificar y corregir si aplica |
+
+### Por qué esto resuelve ambos problemas
+
+- **Hoja no crece**: Al dejar de recortar los bloques, su altura real se propaga al contenedor padre (la hoja blanca con `h-fit`), que crecerá naturalmente.
+- **Contenido cortado**: Las preguntas de evaluación y otros bloques extensos se mostrarán completos.
 

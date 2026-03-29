@@ -162,9 +162,9 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
 function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
   const { umbralAprobacion = 70, preguntas = [] } = block.props || {};
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Evaluación'}</span>
+    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+        <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Evaluación'}</span>
         <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-amber-300 text-amber-700 bg-amber-50">
           Mín. {umbralAprobacion}%
         </Badge>
@@ -178,13 +178,13 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
         </div>
       )}
       {preguntas.slice(0, 3).map((p, idx) => (
-        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1">
-          <p className="text-[11px] font-medium text-foreground">{idx + 1}. {p.texto}</p>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-hidden">
+          <p className="text-[11px] font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">{idx + 1}. {p.texto}</p>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-3 gap-y-1 min-w-0 max-w-full">
             {p.opciones.map((op, oi) => (
-              <label key={oi} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                <div className={`h-3 w-3 rounded-full border ${oi === p.correcta ? 'border-emerald-500 bg-emerald-500/20' : 'border-muted-foreground/30'}`} />
-                <span className={oi === p.correcta ? 'text-emerald-700 font-medium' : ''}>{op}</span>
+              <label key={oi} className="flex items-start gap-1.5 text-[10px] text-muted-foreground min-w-0 max-w-full">
+                <div className={`h-3 w-3 rounded-full border shrink-0 mt-0.5 ${oi === p.correcta ? 'border-emerald-500 bg-emerald-500/20' : 'border-muted-foreground/30'}`} />
+                <span className={oi === p.correcta ? 'text-emerald-700 font-medium break-words whitespace-pre-wrap leading-relaxed min-w-0' : 'break-words whitespace-pre-wrap leading-relaxed min-w-0'}>{op}</span>
                 {oi === p.correcta && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500 ml-0.5" />}
               </label>
             ))}
@@ -202,25 +202,25 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
 function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey }) {
   const { escalaPreguntas = [], escalaOpciones = [], preguntaSiNo } = block.props || {};
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Encuesta de satisfacción'}</span>
+    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+        <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Encuesta de satisfacción'}</span>
         <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
           {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''}
         </Badge>
       </div>
       {/* Scale header */}
       {escalaOpciones.length > 0 && (
-        <div className="border rounded-md overflow-hidden">
-          <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground" style={{ gridTemplateColumns: `1fr repeat(${escalaOpciones.length}, 48px)` }}>
+        <div className="border rounded-md overflow-hidden max-w-full">
+          <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
             <div className="px-2 py-1 border-r">Pregunta</div>
             {escalaOpciones.map((o) => (
               <div key={o.value} className="text-center py-1 border-r last:border-r-0">{o.label}</div>
             ))}
           </div>
           {escalaPreguntas.slice(0, 3).map((q, i) => (
-            <div key={i} className="grid border-t text-[10px]" style={{ gridTemplateColumns: `1fr repeat(${escalaOpciones.length}, 48px)` }}>
-              <div className="px-2 py-1.5 border-r text-foreground">{q}</div>
+            <div key={i} className="grid border-t text-[10px] min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
+              <div className="px-2 py-1.5 border-r text-foreground break-words whitespace-pre-wrap leading-relaxed min-w-0">{q}</div>
               {escalaOpciones.map((o) => (
                 <div key={o.value} className="flex items-center justify-center border-r last:border-r-0">
                   <div className="h-3 w-3 rounded-full border border-muted-foreground/30" />

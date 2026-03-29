@@ -13,7 +13,7 @@ import { FormatoFormacion, CategoriaFormato } from "@/types/formatoFormacion";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { FileText, PenLine, CheckCircle2, XCircle, Archive, History, Layers, FileCode2 } from "lucide-react";
+import { FileText, PenLine, CheckCircle2, XCircle, Archive } from "lucide-react";
 
 const CATEGORIA_LABELS: Record<string, string> = {
   formacion: 'Formación',

@@ -72,7 +72,7 @@ export default function EditorCanvas() {
       onDrop={handleCanvasDrop}
       onDragOver={handleDragOver}
     >
-      <div ref={hojaDinamicaRef} id="hojaDinamica" className={`bg-background w-full max-w-4xl self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto ${items.length === 0 ? 'min-h-[600px]' : 'min-h-0 h-auto'}`}>
+      <div ref={hojaDinamicaRef} id="hojaDinamica" className={`bg-background w-full max-w-4xl self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto shrink-0 ${items.length === 0 ? 'min-h-[600px]' : 'min-h-0 h-auto'}`}>
         {/* Document title */}
         <input
           className="text-center text-xl font-bold w-full mb-7 text-foreground bg-transparent border-none outline-none focus:ring-0"

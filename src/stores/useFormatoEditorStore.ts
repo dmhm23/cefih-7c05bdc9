@@ -169,13 +169,13 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => ({
   })),
 
   updateBlock: (id, updates) => set((s) => ({
-    items: s.items.map((it) => {
-      if (it.id === id) return { ...it, ...updates };
+    items: s.items.map((it): EditorItem => {
+      if (it.id === id && it.type !== 'row2') return { ...it, ...updates } as Bloque;
       if (it.type === 'row2') {
         const row = it as Row2Block;
         return {
           ...row,
-          cols: row.cols.map((c) => (c && c.id === id ? { ...c, ...updates } : c)) as Row2Block['cols'],
+          cols: row.cols.map((c) => (c && c.id === id ? { ...c, ...updates } as Bloque : c)) as Row2Block['cols'],
         };
       }
       return it;

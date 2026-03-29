@@ -147,6 +147,6 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       );
 
     default:
-      return <p className="text-xs text-muted-foreground">Bloque: {block.type}</p>;
+      return <p className="text-xs text-muted-foreground">Bloque: {(block as any).type}</p>;
   }
 }

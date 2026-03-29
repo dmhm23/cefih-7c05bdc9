@@ -34,7 +34,7 @@ export default function CanvasBlock({ block }: CanvasBlockProps) {
       style={style}
       {...attributes}
       className={cn(
-        'group relative rounded-lg px-3 py-2.5 my-0.5 border transition-colors duration-150 cursor-pointer',
+        'group relative rounded-lg px-3 py-2.5 my-0.5 border transition-colors duration-150 cursor-pointer overflow-hidden',
         isDragging && 'opacity-40',
         isSelected
           ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
@@ -51,7 +51,7 @@ export default function CanvasBlock({ block }: CanvasBlockProps) {
       </span>
 
       {/* Content */}
-      <div className="pl-5 pr-14">
+      <div className="pl-5 pr-14 min-w-0 overflow-hidden">
         <BlockPreview block={block} />
       </div>
 

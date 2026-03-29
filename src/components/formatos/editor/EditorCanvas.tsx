@@ -57,12 +57,12 @@ export default function EditorCanvas() {
 
   return (
     <div
-      className="h-full overflow-y-auto p-6 bg-muted/30 flex flex-col items-center"
+      className="h-full min-h-0 overflow-y-auto p-6 bg-muted/30 flex flex-col items-center"
       onClick={() => setSelected(null)}
       onDrop={handleCanvasDrop}
       onDragOver={handleDragOver}
     >
-      <div className="bg-background w-full max-w-4xl min-h-[600px] rounded-lg shadow-md px-8 py-10 pb-20 border">
+      <div className="bg-background w-full max-w-4xl min-h-[600px] h-fit self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto">
         {/* Document title */}
         <input
           className="text-center text-xl font-bold w-full mb-7 text-foreground bg-transparent border-none outline-none focus:ring-0"

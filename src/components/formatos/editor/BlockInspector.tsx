@@ -28,8 +28,8 @@ export default function BlockInspector({ onOpenConfig }: BlockInspectorProps) {
         </Button>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4 break-words overflow-x-hidden">
+      <ScrollArea className="flex-1 min-h-0 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-0 [&_[data-radix-scroll-area-viewport]]:max-w-full">
+        <div className="p-4 space-y-4 break-words whitespace-normal overflow-x-hidden min-w-0 max-w-full">
           {block ? (
             <>
               {/* Block header */}

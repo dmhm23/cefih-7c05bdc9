@@ -126,7 +126,7 @@ function ColDrop({
       {col ? (
         <div
           className={cn(
-            'relative rounded px-2 py-2 pr-8 cursor-pointer border transition-colors min-w-0 overflow-hidden',
+            'relative rounded px-2 py-2 pr-8 cursor-pointer border transition-colors min-w-0 overflow-visible',
             isSelected
               ? 'border-primary/60 bg-primary/5'
               : 'border-transparent hover:border-border hover:bg-muted/50'

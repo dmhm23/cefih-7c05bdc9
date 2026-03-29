@@ -1,66 +1,61 @@
 
-Objetivo: corregir de verdad el “papel” blanco del editor para que tenga una altura base coherente con una hoja carta y, a partir de ahí, crezca con el contenido real de los bloques.
+Objetivo: hacer que la hoja blanca del editor tenga altura realmente dinámica y crezca conforme se agregan bloques, sin mantener una altura fija que da la sensación de “media carta”.
 
-Diagnóstico
+Diagnóstico actual
 
-1. El canvas sí tiene altura dinámica, pero parte de una base incorrecta
-- En `src/components/formatos/editor/EditorCanvas.tsx`, la hoja usa `min-h-[600px] h-fit`.
-- `600px` es visualmente “media carta” para el ancho actual (`max-w-4xl`), por eso la hoja se ve corta aunque técnicamente pueda crecer.
-- Resultado: mientras el contenido no supere esos 600px, la hoja siempre parece demasiado baja.
+- El problema principal ya no es el `overflow` de los bloques: en el código actual `CanvasBlock`, `CanvasRow` y los previews complejos ya usan `overflow-visible`.
+- La causa real ahora está en `src/components/formatos/editor/EditorCanvas.tsx`: la hoja sigue teniendo `min-h-[1056px] h-fit`.
+- Eso significa que la altura visible de la hoja no depende de los bloques mientras el contenido no supere esos 1056px. En la práctica:
+  - agregas bloques,
+  - los bloques sí crecen,
+  - pero la hoja no cambia visualmente hasta rebasar ese mínimo.
+- Por eso da la impresión de que “no acompaña” el contenido: la hoja está anclada a una base fija demasiado dominante para el editor.
 
-2. El ajuste anterior no resolvió la causa completa
-- En `src/components/formatos/editor/CanvasBlock.tsx` se cambió el contenedor externo a `overflow-visible`, pero el contenedor interno del contenido sigue con `overflow-hidden`:
-  `className="pl-5 pr-14 min-w-0 overflow-hidden"`
-- Eso todavía puede recortar previews altos o anchos antes de que su altura real llegue al contenedor blanco.
+Qué corregir
 
-3. Los previews complejos están truncados a propósito
-- En `src/components/formatos/editor/BlockPreview.tsx`, bloques como evaluación y encuesta usan:
-  - `preguntas.slice(0, 3)`
-  - `escalaPreguntas.slice(0, 3)`
-  - `line-clamp-2`
-  - varios `overflow-hidden`
-- Entonces el canvas no está midiendo el contenido real del bloque, sino una versión resumida.
-- Aunque el bloque tenga muchas preguntas, el alto renderizado sigue siendo pequeño; por eso la hoja no “acompaña” el largo real del formato.
+1. Hacer que la altura de la hoja dependa del contenido
+- En `EditorCanvas.tsx`, quitar la lógica fija de `min-h-[1056px]`.
+- Dejar la hoja con altura natural (`h-auto` / `min-h-0`) para que el largo lo determinen los bloques renderizados.
 
-Conclusión
-- El problema no es solo “overflow” del bloque.
-- Hay 3 causas combinadas:
-  1) altura base de hoja demasiado baja,
-  2) clipping interno aún activo,
-  3) previews resumidos que no representan el contenido completo.
+2. Mantener una buena experiencia cuando el formato está vacío
+- Si se quiere conservar la sensación visual de “documento” al iniciar, aplicar una altura base solo en estado vacío.
+- Regla propuesta:
+  - sin bloques: mostrar una hoja con alto de referencia,
+  - con bloques: usar altura totalmente dinámica.
 
-Plan de corrección
+3. Separar “apariencia de hoja” de “altura real del contenido”
+- El canvas debe tener:
+  - contenedor externo con scroll,
+  - hoja interna con ancho fijo visual,
+  - contenido interno que define la altura.
+- Así el scroll vive en el canvas, pero la hoja no queda artificialmente congelada.
 
-1. Corregir la base visual de la hoja en `EditorCanvas.tsx`
-- Reemplazar la lógica `min-h-[600px] h-fit` por una base con proporción carta.
-- Propuesta:
-  - mantener `w-full max-w-4xl`
-  - usar una relación `aspect-[8.5/11]` como altura base visual
-  - permitir crecimiento natural si el contenido supera esa altura
-- Efecto: la hoja dejará de verse como “media carta” incluso con pocos bloques.
+4. Revisar bloques que compactan demasiado el contenido
+- En `BlockPreview.tsx`, validar que evaluación y encuesta no usen layouts que aparenten menos altura de la real.
+- No es el problema principal, pero conviene mantener:
+  - `break-words`
+  - `whitespace-pre-wrap`
+  - `min-w-0`
+  para que el bloque crezca hacia abajo y no “ahorre” altura empujando contenido horizontalmente.
 
-2. Eliminar el clipping restante en el contenido de cada bloque
-- En `CanvasBlock.tsx`, cambiar el contenedor interno del preview de `overflow-hidden` a `overflow-visible` o quitar esa restricción.
-- Revisar el bloque interno de columnas en `CanvasRow.tsx` para asegurar que tampoco recorte contenido.
+Implementación propuesta
 
-3. Hacer que los bloques complejos rendericen su altura real en el canvas
-- En `BlockPreview.tsx`, para `evaluation_quiz` y `satisfaction_survey`:
-  - quitar `slice(0, 3)` del preview del canvas
-  - quitar `line-clamp` y `overflow-hidden` donde esté limitando la altura
-  - permitir que preguntas, opciones y filas de encuesta se rendericen completas
-- Así el alto del bloque reflejará el contenido real y la hoja podrá crecer correctamente.
-
-4. Mantener legibilidad sin volver inmanejable el canvas
-- Conservar wrapping (`break-words`, `whitespace-pre-wrap`, `min-w-0`) para textos largos.
-- Si algún bloque queda demasiado extenso, usar espaciado y secciones internas, pero no truncamiento visual en el canvas.
-
-Archivos a ajustar
 - `src/components/formatos/editor/EditorCanvas.tsx`
-- `src/components/formatos/editor/CanvasBlock.tsx`
-- `src/components/formatos/editor/CanvasRow.tsx`
+  - reemplazar `min-h-[1056px] h-fit` por una altura natural
+  - condicionar la altura base solo cuando `items.length === 0`
+  - mantener el scroll en el contenedor externo
+
 - `src/components/formatos/editor/BlockPreview.tsx`
+  - revisar especialmente previews de evaluación y encuesta para asegurar crecimiento vertical estable y sin compresión visual excesiva
 
 Resultado esperado
-- La hoja blanca tendrá una altura inicial coherente con tamaño carta.
-- Cuando agregues más bloques, o un bloque tenga muchas preguntas, la hoja crecerá de forma visible y natural.
-- El canvas dejará de mostrar una versión “resumida” que engaña la altura real del documento.
+
+- La hoja blanca crecerá inmediatamente conforme se agreguen bloques.
+- Ya no se verá “media carta” por culpa de un mínimo fijo.
+- El editor mantendrá el estilo visual actual, pero con un comportamiento más coherente con el contenido construido.
+
+Criterio de validación
+
+- Al agregar un bloque simple, la hoja debe aumentar su largo visible.
+- Al agregar varias preguntas en evaluación o encuesta, la hoja debe seguir creciendo sin esperar a superar una altura fija inicial.
+- El scroll debe seguir funcionando en el canvas, no dentro de la hoja.

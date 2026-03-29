@@ -177,8 +177,8 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
           <AlertCircle className="h-3.5 w-3.5" /> Sin preguntas configuradas
         </div>
       )}
-      {preguntas.slice(0, 3).map((p, idx) => (
-        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-hidden">
+      {preguntas.map((p, idx) => (
+        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-visible">
           <p className="text-[11px] font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">{idx + 1}. {p.texto}</p>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-3 gap-y-1 min-w-0 max-w-full">
             {p.opciones.map((op, oi) => (
@@ -191,9 +191,6 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
           </div>
         </div>
       ))}
-      {preguntas.length > 3 && (
-        <p className="text-[10px] text-muted-foreground text-center">+{preguntas.length - 3} preguntas más</p>
-      )}
     </div>
   );
 }

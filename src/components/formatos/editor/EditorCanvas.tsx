@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,16 @@ import type { TipoBloque, Bloque } from '@/types/formatoFormacion';
 
 export default function EditorCanvas() {
   const { items, docTitle, setDocTitle, setSelected, reorderBlock, addBlock, addRow2 } = useFormatoEditorStore();
+  const hojaDinamicaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hojaDinamicaRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      console.log(`[hojaDinamica] altura: ${entry.contentRect.height}px | bloques: ${items.length}`);
+    });
+    ro.observe(hojaDinamicaRef.current);
+    return () => ro.disconnect();
+  }, [items.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -62,7 +72,7 @@ export default function EditorCanvas() {
       onDrop={handleCanvasDrop}
       onDragOver={handleDragOver}
     >
-      <div className={`bg-background w-full max-w-4xl self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto ${items.length === 0 ? 'min-h-[600px]' : 'min-h-0 h-auto'}`}>
+      <div ref={hojaDinamicaRef} id="hojaDinamica" className={`bg-background w-full max-w-4xl self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto ${items.length === 0 ? 'min-h-[600px]' : 'min-h-0 h-auto'}`}>
         {/* Document title */}
         <input
           className="text-center text-xl font-bold w-full mb-7 text-foreground bg-transparent border-none outline-none focus:ring-0"

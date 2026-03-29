@@ -6,6 +6,7 @@ import { useFormato, useUpdateFormato, useCreateFormato, useSaveVersion } from '
 import { useFormatoEditorStore, type EditorItem, type FormatoConfig } from '@/stores/useFormatoEditorStore';
 import type { FormatoFormacion, FormatoFormacionFormData, Bloque } from '@/types/formatoFormacion';
 
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import EditorHeader from '@/components/formatos/editor/EditorHeader';
 import BlockCatalog from '@/components/formatos/editor/BlockCatalog';
 import EditorCanvas from '@/components/formatos/editor/EditorCanvas';
@@ -163,11 +164,19 @@ export default function FormatoEditorPage() {
         onClear={handleClear}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <BlockCatalog />
-        <EditorCanvas />
-        <BlockInspector onOpenConfig={() => setShowConfig(true)} />
-      </div>
+      <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+        <ResizablePanel defaultSize={15} minSize={12} maxSize={22}>
+          <BlockCatalog />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={55} minSize={40}>
+          <EditorCanvas />
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={40}>
+          <BlockInspector onOpenConfig={() => setShowConfig(true)} />
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       <FormatoConfigSheet open={showConfig} onOpenChange={setShowConfig} />
       <FormatoPreviewDialog open={showPreview} onOpenChange={setShowPreview} formato={formatoPreview} />

@@ -101,7 +101,7 @@ export default function BlockCatalog() {
   );
 
   return (
-    <div className="w-[220px] shrink-0 bg-background border-r overflow-hidden flex flex-col select-none">
+    <div className="w-full min-w-0 bg-background border-r overflow-hidden flex flex-col select-none h-full">
       {/* Search */}
       <div className="p-2 border-b">
         <div className="relative">

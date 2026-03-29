@@ -1,9 +1,10 @@
-import type { Bloque } from '@/types/formatoFormacion';
+import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization } from '@/types/formatoFormacion';
 import { BLOQUE_TYPE_LABELS } from '@/data/bloqueConstants';
 import { Badge } from '@/components/ui/badge';
 import { getAutoFieldLabel } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface BlockPreviewProps {
   block: Bloque;
@@ -132,21 +133,162 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
         </>
       );
 
-    case 'health_consent':
-    case 'data_authorization':
     case 'evaluation_quiz':
+      return <EvaluationQuizPreview block={block as BloqueEvaluationQuiz} />;
+
     case 'satisfaction_survey':
+      return <SatisfactionSurveyPreview block={block as BloqueSatisfactionSurvey} />;
+
+    case 'health_consent':
+      return <HealthConsentPreview block={block as BloqueHealthConsent} />;
+
+    case 'data_authorization':
+      return <DataAuthorizationPreview block={block as BloqueDataAuthorization} />;
+
     case 'attendance_by_day':
       return (
         <div className="border rounded-lg p-2.5 bg-muted/20">
-          <Badge variant="secondary" className="text-[10px]">
-            {BLOQUE_TYPE_LABELS[block.type] || block.type}
-          </Badge>
-          <p className="text-xs text-muted-foreground mt-1">Componente especializado</p>
+          <Badge variant="secondary" className="text-[10px]">Asistencia por día</Badge>
+          <p className="text-xs text-muted-foreground mt-1">Tabla de asistencia diaria generada automáticamente</p>
         </div>
       );
 
     default:
       return <p className="text-xs text-muted-foreground">Bloque: {(block as any).type}</p>;
   }
+}
+
+/* ── Evaluation Quiz Preview ── */
+function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
+  const { umbralAprobacion = 70, preguntas = [] } = block.props || {};
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Evaluación'}</span>
+        <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-amber-300 text-amber-700 bg-amber-50">
+          Mín. {umbralAprobacion}%
+        </Badge>
+        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
+          {preguntas.length} pregunta{preguntas.length !== 1 ? 's' : ''}
+        </Badge>
+      </div>
+      {preguntas.length === 0 && (
+        <div className="border border-dashed rounded-md p-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <AlertCircle className="h-3.5 w-3.5" /> Sin preguntas configuradas
+        </div>
+      )}
+      {preguntas.slice(0, 3).map((p, idx) => (
+        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1">
+          <p className="text-[11px] font-medium text-foreground">{idx + 1}. {p.texto}</p>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+            {p.opciones.map((op, oi) => (
+              <label key={oi} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <div className={`h-3 w-3 rounded-full border ${oi === p.correcta ? 'border-emerald-500 bg-emerald-500/20' : 'border-muted-foreground/30'}`} />
+                <span className={oi === p.correcta ? 'text-emerald-700 font-medium' : ''}>{op}</span>
+                {oi === p.correcta && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500 ml-0.5" />}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      {preguntas.length > 3 && (
+        <p className="text-[10px] text-muted-foreground text-center">+{preguntas.length - 3} preguntas más</p>
+      )}
+    </div>
+  );
+}
+
+/* ── Satisfaction Survey Preview ── */
+function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey }) {
+  const { escalaPreguntas = [], escalaOpciones = [], preguntaSiNo } = block.props || {};
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Encuesta de satisfacción'}</span>
+        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
+          {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''}
+        </Badge>
+      </div>
+      {/* Scale header */}
+      {escalaOpciones.length > 0 && (
+        <div className="border rounded-md overflow-hidden">
+          <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground" style={{ gridTemplateColumns: `1fr repeat(${escalaOpciones.length}, 48px)` }}>
+            <div className="px-2 py-1 border-r">Pregunta</div>
+            {escalaOpciones.map((o) => (
+              <div key={o.value} className="text-center py-1 border-r last:border-r-0">{o.label}</div>
+            ))}
+          </div>
+          {escalaPreguntas.slice(0, 3).map((q, i) => (
+            <div key={i} className="grid border-t text-[10px]" style={{ gridTemplateColumns: `1fr repeat(${escalaOpciones.length}, 48px)` }}>
+              <div className="px-2 py-1.5 border-r text-foreground">{q}</div>
+              {escalaOpciones.map((o) => (
+                <div key={o.value} className="flex items-center justify-center border-r last:border-r-0">
+                  <div className="h-3 w-3 rounded-full border border-muted-foreground/30" />
+                </div>
+              ))}
+            </div>
+          ))}
+          {escalaPreguntas.length > 3 && (
+            <div className="text-center text-[10px] text-muted-foreground py-1 border-t">+{escalaPreguntas.length - 3} más</div>
+          )}
+        </div>
+      )}
+      {preguntaSiNo && (
+        <div className="border rounded-md p-2 bg-background text-[10px] flex items-center gap-2">
+          <span className="text-foreground">{preguntaSiNo}</span>
+          <div className="flex gap-1.5 ml-auto">
+            <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
+            <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Health Consent Preview ── */
+function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
+  const { questions = [] } = block.props || {};
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Consentimiento de salud'}</span>
+        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{questions.length} pregunta{questions.length !== 1 ? 's' : ''}</Badge>
+      </div>
+      {questions.slice(0, 4).map((q) => (
+        <div key={q.id} className="border rounded-md p-1.5 bg-background flex items-center gap-2 text-[10px]">
+          <div className="flex gap-1.5 shrink-0">
+            <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
+            <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
+          </div>
+          <span className="text-foreground">{q.label}</span>
+          {q.hasDetail && <Badge variant="outline" className="text-[8px] h-3.5 px-1 ml-auto">Detalle</Badge>}
+        </div>
+      ))}
+      {questions.length > 4 && <p className="text-[10px] text-muted-foreground text-center">+{questions.length - 4} más</p>}
+    </div>
+  );
+}
+
+/* ── Data Authorization Preview ── */
+function DataAuthorizationPreview({ block }: { block: BloqueDataAuthorization }) {
+  const { summaryItems = [], fullText } = block.props || {};
+  return (
+    <div className="space-y-1.5">
+      <span className="block text-xs font-semibold text-muted-foreground">{block.label || 'Autorización de datos'}</span>
+      <div className="border rounded-md p-2 bg-background space-y-1">
+        {summaryItems.slice(0, 3).map((item, i) => (
+          <div key={i} className="flex items-start gap-1.5 text-[10px] text-foreground">
+            <span className="text-muted-foreground">•</span> {item}
+          </div>
+        ))}
+        {summaryItems.length > 3 && <p className="text-[10px] text-muted-foreground">+{summaryItems.length - 3} más</p>}
+      </div>
+      {fullText && <p className="text-[10px] text-muted-foreground line-clamp-2 italic">{fullText}</p>}
+      <div className="flex items-center gap-2 text-[10px]">
+        <div className="h-4 w-4 border rounded bg-background" />
+        <span className="text-foreground">Acepto los términos</span>
+      </div>
+    </div>
+  );
 }

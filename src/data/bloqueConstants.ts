@@ -86,11 +86,11 @@ export const BLOCK_PALETTE: { type: TipoBloque; label: string }[] = [
   { type: "signature_aprendiz", label: "Firma aprendiz" },
   { type: "signature_entrenador_auto", label: "Firma entrenador" },
   { type: "signature_supervisor_auto", label: "Firma supervisor" },
+  { type: "health_consent", label: "Consentimiento salud" },
+  { type: "data_authorization", label: "Autorización datos" },
+  { type: "evaluation_quiz", label: "Evaluación" },
+  { type: "satisfaction_survey", label: "Encuesta satisfacción" },
+  { type: "attendance_by_day", label: "Asistencia por día" },
 ];
 
-export const COMPLEX_TYPES: TipoBloque[] = [
-  "health_consent",
-  "data_authorization",
-  "evaluation_quiz",
-  "satisfaction_survey",
-];
+export const COMPLEX_TYPES: TipoBloque[] = [];

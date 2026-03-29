@@ -52,6 +52,8 @@ export const BLOQUE_ICONS: Record<string, LucideIcon> = {
   heading: Heading,
   paragraph: AlignLeft,
   text: TextCursorInput,
+  textarea: AlignLeft,
+  email: Mail,
   date: CalendarDays,
   number: Hash,
   radio: CircleDot,
@@ -66,6 +68,8 @@ export const BLOQUE_ICONS: Record<string, LucideIcon> = {
   data_authorization: ShieldCheck,
   evaluation_quiz: ClipboardCheck,
   satisfaction_survey: SmilePlus,
+  divider: Minus,
+  file: Paperclip,
 };
 
 export const BLOCK_PALETTE: { type: TipoBloque; label: string }[] = [

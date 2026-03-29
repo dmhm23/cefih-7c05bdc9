@@ -8,6 +8,8 @@ export type TipoBloque =
   | 'heading'
   | 'paragraph'
   | 'text'
+  | 'textarea'
+  | 'email'
   | 'date'
   | 'number'
   | 'radio'
@@ -22,7 +24,9 @@ export type TipoBloque =
   | 'data_authorization'
   | 'evaluation_quiz'
   | 'satisfaction_survey'
-  | 'section_title';
+  | 'section_title'
+  | 'divider'
+  | 'file';
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.

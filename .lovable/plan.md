@@ -1,61 +1,31 @@
 
-Objetivo: hacer que la hoja blanca del editor tenga altura realmente dinámica y crezca conforme se agregan bloques, sin mantener una altura fija que da la sensación de “media carta”.
 
-Diagnóstico actual
+## Diagnóstico: Por qué hojaDinamica se detiene en 523px
 
-- El problema principal ya no es el `overflow` de los bloques: en el código actual `CanvasBlock`, `CanvasRow` y los previews complejos ya usan `overflow-visible`.
-- La causa real ahora está en `src/components/formatos/editor/EditorCanvas.tsx`: la hoja sigue teniendo `min-h-[1056px] h-fit`.
-- Eso significa que la altura visible de la hoja no depende de los bloques mientras el contenido no supere esos 1056px. En la práctica:
-  - agregas bloques,
-  - los bloques sí crecen,
-  - pero la hoja no cambia visualmente hasta rebasar ese mínimo.
-- Por eso da la impresión de que “no acompaña” el contenido: la hoja está anclada a una base fija demasiado dominante para el editor.
+### Causa raíz
 
-Qué corregir
+El contenedor externo de `EditorCanvas` (línea 70) es un **flex column** con `h-full`:
 
-1. Hacer que la altura de la hoja dependa del contenido
-- En `EditorCanvas.tsx`, quitar la lógica fija de `min-h-[1056px]`.
-- Dejar la hoja con altura natural (`h-auto` / `min-h-0`) para que el largo lo determinen los bloques renderizados.
+```text
+div.outer  →  h-full flex flex-col overflow-y-auto
+  └─ div#hojaDinamica  →  h-auto (flex child)
+```
 
-2. Mantener una buena experiencia cuando el formato está vacío
-- Si se quiere conservar la sensación visual de “documento” al iniciar, aplicar una altura base solo en estado vacío.
-- Regla propuesta:
-  - sin bloques: mostrar una hoja con alto de referencia,
-  - con bloques: usar altura totalmente dinámica.
+Por defecto, los hijos de un flex container tienen `flex-shrink: 1`. Esto significa que cuando el contenido de `hojaDinamica` supera la altura del padre, **el navegador lo encoge para que quepa** en lugar de dejarlo crecer y activar el scroll.
 
-3. Separar “apariencia de hoja” de “altura real del contenido”
-- El canvas debe tener:
-  - contenedor externo con scroll,
-  - hoja interna con ancho fijo visual,
-  - contenido interno que define la altura.
-- Así el scroll vive en el canvas, pero la hoja no queda artificialmente congelada.
+Los números lo confirman: 523px (content) + 40px (py-10) + 80px (pb-20) = **643px**, que coincide exactamente con la altura disponible del `ResizablePanel`. Una vez que hojaDinamica alcanza el tope del panel, flex-shrink la comprime y los bloques se desbordan visualmente.
 
-4. Revisar bloques que compactan demasiado el contenido
-- En `BlockPreview.tsx`, validar que evaluación y encuesta no usen layouts que aparenten menos altura de la real.
-- No es el problema principal, pero conviene mantener:
-  - `break-words`
-  - `whitespace-pre-wrap`
-  - `min-w-0`
-  para que el bloque crezca hacia abajo y no “ahorre” altura empujando contenido horizontalmente.
+### Corrección
 
-Implementación propuesta
+**Archivo**: `src/components/formatos/editor/EditorCanvas.tsx`
 
-- `src/components/formatos/editor/EditorCanvas.tsx`
-  - reemplazar `min-h-[1056px] h-fit` por una altura natural
-  - condicionar la altura base solo cuando `items.length === 0`
-  - mantener el scroll en el contenedor externo
+Agregar `shrink-0` (equivalente a `flex-shrink: 0`) al div `hojaDinamica`. Esto le indica al flex container que no comprima la hoja, permitiéndole crecer más allá del padre y activar el `overflow-y-auto` del contenedor externo.
 
-- `src/components/formatos/editor/BlockPreview.tsx`
-  - revisar especialmente previews de evaluación y encuesta para asegurar crecimiento vertical estable y sin compresión visual excesiva
+Cambio en línea 75: agregar `shrink-0` a las clases de hojaDinamica.
 
-Resultado esperado
+### Resultado esperado
 
-- La hoja blanca crecerá inmediatamente conforme se agreguen bloques.
-- Ya no se verá “media carta” por culpa de un mínimo fijo.
-- El editor mantendrá el estilo visual actual, pero con un comportamiento más coherente con el contenido construido.
+- hojaDinamica crecerá sin límite conforme se agreguen bloques
+- El scroll vertical del contenedor externo se activará naturalmente
+- El log mostrará alturas incrementales sin techo artificial
 
-Criterio de validación
-
-- Al agregar un bloque simple, la hoja debe aumentar su largo visible.
-- Al agregar varias preguntas en evaluación o encuesta, la hoja debe seguir creciendo sin esperar a superar una altura fija inicial.
-- El scroll debe seguir funcionando en el canvas, no dentro de la hoja.

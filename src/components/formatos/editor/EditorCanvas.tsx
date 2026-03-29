@@ -62,7 +62,7 @@ export default function EditorCanvas() {
       onDrop={handleCanvasDrop}
       onDragOver={handleDragOver}
     >
-      <div className="bg-background w-full max-w-4xl min-h-[600px] h-fit self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto">
+      <div className="bg-background w-full max-w-4xl min-h-[1056px] h-fit self-start rounded-lg shadow-md px-8 py-10 pb-20 border overflow-visible mx-auto">
         {/* Document title */}
         <input
           className="text-center text-xl font-bold w-full mb-7 text-foreground bg-transparent border-none outline-none focus:ring-0"

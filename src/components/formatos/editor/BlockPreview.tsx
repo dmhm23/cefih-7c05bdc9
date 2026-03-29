@@ -162,7 +162,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
 function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
   const { umbralAprobacion = 70, preguntas = [] } = block.props || {};
   return (
-    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+    <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Evaluación'}</span>
         <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-amber-300 text-amber-700 bg-amber-50">
@@ -177,8 +177,8 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
           <AlertCircle className="h-3.5 w-3.5" /> Sin preguntas configuradas
         </div>
       )}
-      {preguntas.slice(0, 3).map((p, idx) => (
-        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-hidden">
+      {preguntas.map((p, idx) => (
+        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-visible">
           <p className="text-[11px] font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">{idx + 1}. {p.texto}</p>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-3 gap-y-1 min-w-0 max-w-full">
             {p.opciones.map((op, oi) => (
@@ -191,9 +191,6 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
           </div>
         </div>
       ))}
-      {preguntas.length > 3 && (
-        <p className="text-[10px] text-muted-foreground text-center">+{preguntas.length - 3} preguntas más</p>
-      )}
     </div>
   );
 }
@@ -202,7 +199,7 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
 function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey }) {
   const { escalaPreguntas = [], escalaOpciones = [], preguntaSiNo } = block.props || {};
   return (
-    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+    <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Encuesta de satisfacción'}</span>
         <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
@@ -211,14 +208,14 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
       </div>
       {/* Scale header */}
       {escalaOpciones.length > 0 && (
-        <div className="border rounded-md overflow-hidden max-w-full">
+        <div className="border rounded-md overflow-visible max-w-full">
           <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
             <div className="px-2 py-1 border-r">Pregunta</div>
             {escalaOpciones.map((o) => (
               <div key={o.value} className="text-center py-1 border-r last:border-r-0">{o.label}</div>
             ))}
           </div>
-          {escalaPreguntas.slice(0, 3).map((q, i) => (
+          {escalaPreguntas.map((q, i) => (
             <div key={i} className="grid border-t text-[10px] min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
               <div className="px-2 py-1.5 border-r text-foreground break-words whitespace-pre-wrap leading-relaxed min-w-0">{q}</div>
               {escalaOpciones.map((o) => (
@@ -228,9 +225,6 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
               ))}
             </div>
           ))}
-          {escalaPreguntas.length > 3 && (
-            <div className="text-center text-[10px] text-muted-foreground py-1 border-t">+{escalaPreguntas.length - 3} más</div>
-          )}
         </div>
       )}
       {preguntaSiNo && (
@@ -255,7 +249,7 @@ function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
         <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Consentimiento de salud'}</span>
         <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{questions.length} pregunta{questions.length !== 1 ? 's' : ''}</Badge>
       </div>
-      {questions.slice(0, 4).map((q) => (
+      {questions.map((q) => (
         <div key={q.id} className="border rounded-md p-1.5 bg-background flex items-center gap-2 text-[10px]">
           <div className="flex gap-1.5 shrink-0">
             <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
@@ -265,7 +259,6 @@ function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
           {q.hasDetail && <Badge variant="outline" className="text-[8px] h-3.5 px-1 ml-auto">Detalle</Badge>}
         </div>
       ))}
-      {questions.length > 4 && <p className="text-[10px] text-muted-foreground text-center">+{questions.length - 4} más</p>}
     </div>
   );
 }
@@ -277,12 +270,11 @@ function DataAuthorizationPreview({ block }: { block: BloqueDataAuthorization })
     <div className="space-y-1.5">
       <span className="block text-xs font-semibold text-muted-foreground">{block.label || 'Autorización de datos'}</span>
       <div className="border rounded-md p-2 bg-background space-y-1">
-        {summaryItems.slice(0, 3).map((item, i) => (
+        {summaryItems.map((item, i) => (
           <div key={i} className="flex items-start gap-1.5 text-[10px] text-foreground">
             <span className="text-muted-foreground">•</span> {item}
           </div>
         ))}
-        {summaryItems.length > 3 && <p className="text-[10px] text-muted-foreground">+{summaryItems.length - 3} más</p>}
       </div>
       {fullText && <p className="text-[10px] text-muted-foreground line-clamp-2 italic">{fullText}</p>}
       <div className="flex items-center gap-2 text-[10px]">

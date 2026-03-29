@@ -51,7 +51,7 @@ export default function CanvasBlock({ block }: CanvasBlockProps) {
       </span>
 
       {/* Content */}
-      <div className="pl-5 pr-14 min-w-0 overflow-hidden">
+      <div className="pl-5 pr-14 min-w-0 overflow-visible">
         <BlockPreview block={block} />
       </div>
 

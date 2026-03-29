@@ -170,14 +170,6 @@ export default function FormatosPage() {
       ),
     },
     {
-      key: "tipo", header: "Tipo", className: "w-[100px]",
-      render: (f) => (
-        <Badge variant="outline" className="text-[10px]">
-          {f.motorRender === 'plantilla_html' ? 'Plantilla' : 'Bloques'}
-        </Badge>
-      ),
-    },
-    {
       key: "categoria", header: "Categoría", className: "w-[110px]",
       render: (f) => (
         <Badge variant="secondary" className="text-[10px]">

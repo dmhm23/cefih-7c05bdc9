@@ -1,0 +1,49 @@
+import { z } from 'zod';
+
+const bloqueBaseSchema = z.object({
+  id: z.string().min(1),
+  type: z.string().min(1),
+  label: z.string(),
+  required: z.boolean().optional(),
+});
+
+const row2Schema = z.object({
+  id: z.string().min(1),
+  type: z.literal('row2'),
+  cols: z.tuple([
+    bloqueBaseSchema.nullable(),
+    bloqueBaseSchema.nullable(),
+  ]),
+});
+
+const editorItemSchema = z.union([row2Schema, bloqueBaseSchema]);
+
+export const formatoConfigSchema = z.object({
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
+  descripcion: z.string(),
+  codigo: z.string(),
+  version: z.string(),
+  categoria: z.enum(['formacion', 'evaluacion', 'asistencia', 'pta_ats', 'personalizado']),
+  asignacionScope: z.enum(['nivel_formacion', 'tipo_curso']),
+  tipoCursoKeys: z.array(z.string()),
+  nivelFormacionIds: z.array(z.string()),
+  visibleEnMatricula: z.boolean(),
+  visibleEnCurso: z.boolean(),
+  activo: z.boolean(),
+  requiereFirmaAprendiz: z.boolean(),
+  requiereFirmaEntrenador: z.boolean(),
+  requiereFirmaSupervisor: z.boolean(),
+  usaEncabezadoInstitucional: z.boolean(),
+});
+
+export const formatoEditorSchema = z.object({
+  config: formatoConfigSchema,
+  items: z.array(editorItemSchema),
+  docTitle: z.string(),
+});
+
+export type FormatoEditorValidation = z.infer<typeof formatoEditorSchema>;
+
+export function validateFormato(data: unknown) {
+  return formatoEditorSchema.safeParse(data);
+}

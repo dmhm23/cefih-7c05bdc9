@@ -13,7 +13,7 @@ import { FormatoFormacion, CategoriaFormato } from "@/types/formatoFormacion";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { FileText, PenLine, CheckCircle2, XCircle, Archive, History, Layers, FileCode2 } from "lucide-react";
+import { FileText, PenLine, CheckCircle2, XCircle, Archive } from "lucide-react";
 
 const CATEGORIA_LABELS: Record<string, string> = {
   formacion: 'Formación',
@@ -27,7 +27,7 @@ const STORAGE_KEY = "formatos_visible_columns";
 
 const DEFAULT_COLUMNS: ColumnConfig[] = [
   { key: "nombre", header: "Nombre", visible: true },
-  { key: "tipo", header: "Tipo", visible: true },
+  { key: "categoria", header: "Categoría", visible: true },
   { key: "categoria", header: "Categoría", visible: true },
   { key: "codigo", header: "Código", visible: true },
   { key: "scope", header: "Alcance", visible: true },
@@ -161,20 +161,12 @@ export default function FormatosPage() {
       key: "nombre", header: "Nombre", sortable: true, className: "min-w-[220px]",
       render: (f) => (
         <div className="flex items-center gap-2">
-          {f.motorRender === 'plantilla_html' ? <FileCode2 className="h-4 w-4 text-muted-foreground shrink-0" /> : <FileText className="h-4 w-4 text-muted-foreground shrink-0" />}
+          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
           <div className="min-w-0">
             <p className="font-medium truncate">{f.nombre}</p>
             <p className="text-xs text-muted-foreground truncate">{f.descripcion}</p>
           </div>
         </div>
-      ),
-    },
-    {
-      key: "tipo", header: "Tipo", className: "w-[100px]",
-      render: (f) => (
-        <Badge variant="outline" className="text-[10px]">
-          {f.motorRender === 'plantilla_html' ? 'Plantilla' : 'Bloques'}
-        </Badge>
       ),
     },
     {

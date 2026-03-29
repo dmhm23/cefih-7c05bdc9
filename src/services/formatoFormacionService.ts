@@ -288,7 +288,7 @@ let mockFormatos: FormatoFormacion[] = [
     createdAt: now,
     updatedAt: now,
   },
-  // --- Plantillas HTML de ejemplo ---
+  // --- Migrated from HTML templates to bloques ---
   {
     id: 'fmt-constancia-asistencia',
     nombre: 'Constancia de Asistencia',
@@ -302,26 +302,29 @@ let mockFormatos: FormatoFormacion[] = [
     visibleEnCurso: true,
     activo: true,
     esAutomatico: false,
-    motorRender: 'plantilla_html',
+    motorRender: 'bloques',
     categoria: 'personalizado',
     estado: 'activo',
     usaEncabezadoInstitucional: true,
-    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">CONSTANCIA DE ASISTENCIA</h2>
-<p>Por medio de la presente se certifica que <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, asistió al curso <strong>{{curso.nombre}}</strong> realizado del {{curso.fechaInicio}} al {{curso.fechaFin}}, con una intensidad horaria de {{curso.horasTotales}} horas.</p>
-<p style="margin-top:16px;">La empresa responsable es <strong>{{empresa.nombre}}</strong> con NIT {{empresa.nit}}.</p>
-<p style="margin-top:16px;">Se expide la presente constancia a solicitud del interesado, en la ciudad de Bogotá, a los {{sistema.fechaDiligenciamiento}}.</p>
-<div style="margin-top:48px;display:flex;justify-content:space-between;">
-  <div style="text-align:center;">
-    <div style="border-top:1px solid #000;width:200px;padding-top:4px;">{{personal.entrenadorNombre}}<br/><small>Entrenador</small></div>
-  </div>
-  <div style="text-align:center;">
-    <div style="border-top:1px solid #000;width:200px;padding-top:4px;">{{personal.supervisorNombre}}<br/><small>Supervisor</small></div>
-  </div>
-</div>`,
     requiereFirmaAprendiz: false,
     requiereFirmaEntrenador: true,
     requiereFirmaSupervisor: true,
-    bloques: [],
+    bloques: [
+      b('heading', 'CONSTANCIA DE ASISTENCIA', { level: 1 }),
+      b('paragraph', 'Certificación', { text: 'Por medio de la presente se certifica que el participante asistió al curso de formación y entrenamiento en trabajo seguro en alturas, cumpliendo con los requisitos establecidos.' }),
+      b('auto_field', 'Nombre completo', { key: 'nombre_aprendiz', span: true }),
+      b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
+      b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
+      b('auto_field', 'Curso', { key: 'nombre_curso', span: true }),
+      b('auto_field', 'Fecha inicio', { key: 'fecha_inicio_curso' }),
+      b('auto_field', 'Fecha fin', { key: 'fecha_fin_curso' }),
+      b('auto_field', 'Horas totales', { key: 'horas_totales_curso' }),
+      b('auto_field', 'Empresa', { key: 'empresa_nombre', span: true }),
+      b('auto_field', 'NIT empresa', { key: 'empresa_nit' }),
+      b('paragraph', 'Expedición', { text: 'Se expide la presente constancia a solicitud del interesado.' }),
+      b('signature_entrenador_auto', 'Firma del Entrenador'),
+      b('signature_supervisor_auto', 'Firma del Supervisor'),
+    ],
     documentMeta: { fechaCreacion: '01/01/2025', fechaEdicion: '03/2025', subsistema: 'Alturas' },
     createdAt: now,
     updatedAt: now,
@@ -339,26 +342,22 @@ let mockFormatos: FormatoFormacion[] = [
     visibleEnCurso: false,
     activo: true,
     esAutomatico: false,
-    motorRender: 'plantilla_html',
+    motorRender: 'bloques',
     categoria: 'personalizado',
     estado: 'borrador',
     usaEncabezadoInstitucional: true,
-    htmlTemplate: `<h2 style="text-align:center;margin-bottom:24px;">ACTA DE COMPROMISO</h2>
-<p>Yo, <strong>{{persona.nombreCompleto}}</strong>, identificado(a) con {{persona.tipoDocumento}} No. <strong>{{persona.numeroDocumento}}</strong>, trabajador(a) de la empresa <strong>{{empresa.nombre}}</strong>, me comprometo a:</p>
-<ol style="margin:16px 0;padding-left:24px;">
-  <li>Cumplir con todas las normas de seguridad para trabajo en alturas establecidas en la Resolución 4272 de 2021.</li>
-  <li>Utilizar correctamente los equipos de protección personal asignados.</li>
-  <li>Reportar cualquier condición insegura detectada durante las actividades de formación.</li>
-  <li>Participar activamente en todas las actividades programadas del curso {{curso.nombre}}.</li>
-</ol>
-<p>Fecha: {{sistema.fechaDiligenciamiento}}</p>
-<div style="margin-top:48px;text-align:center;">
-  <div style="border-top:1px solid #000;width:250px;margin:0 auto;padding-top:4px;">{{persona.nombreCompleto}}<br/><small>Firma del participante</small></div>
-</div>`,
     requiereFirmaAprendiz: true,
     requiereFirmaEntrenador: false,
     requiereFirmaSupervisor: false,
-    bloques: [],
+    bloques: [
+      b('heading', 'ACTA DE COMPROMISO', { level: 1 }),
+      b('auto_field', 'Nombre completo', { key: 'nombre_aprendiz', span: true }),
+      b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
+      b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
+      b('auto_field', 'Empresa', { key: 'empresa_nombre', span: true }),
+      b('paragraph', 'Compromisos', { text: '1. Cumplir con todas las normas de seguridad para trabajo en alturas establecidas en la Resolución 4272 de 2021.\n2. Utilizar correctamente los equipos de protección personal asignados.\n3. Reportar cualquier condición insegura detectada durante las actividades de formación.\n4. Participar activamente en todas las actividades programadas del curso.' }),
+      b('signature_aprendiz', 'Firma del Participante'),
+    ],
     documentMeta: { fechaCreacion: '01/01/2025', fechaEdicion: '03/2025', subsistema: 'Alturas' },
     createdAt: now,
     updatedAt: now,

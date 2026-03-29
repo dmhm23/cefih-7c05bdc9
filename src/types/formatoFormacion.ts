@@ -8,6 +8,8 @@ export type TipoBloque =
   | 'heading'
   | 'paragraph'
   | 'text'
+  | 'textarea'
+  | 'email'
   | 'date'
   | 'number'
   | 'radio'
@@ -22,7 +24,9 @@ export type TipoBloque =
   | 'data_authorization'
   | 'evaluation_quiz'
   | 'satisfaction_survey'
-  | 'section_title';
+  | 'section_title'
+  | 'divider'
+  | 'file';
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
@@ -136,6 +140,25 @@ export interface BloqueSignatureSupervisor extends BloqueBase {
   type: 'signature_supervisor_auto';
 }
 
+export interface BloqueTextarea extends BloqueBase {
+  type: 'textarea';
+  props?: { placeholder?: string };
+}
+
+export interface BloqueEmail extends BloqueBase {
+  type: 'email';
+  props?: { placeholder?: string };
+}
+
+export interface BloqueDivider extends BloqueBase {
+  type: 'divider';
+}
+
+export interface BloqueFile extends BloqueBase {
+  type: 'file';
+  props?: { accept?: string };
+}
+
 export interface BloqueHealthConsent extends BloqueBase {
   type: 'health_consent';
   props: {
@@ -143,7 +166,7 @@ export interface BloqueHealthConsent extends BloqueBase {
       id: string;
       label: string;
       hasDetail?: boolean;
-      conditionalOn?: string; // e.g. genero === 'F' for embarazo
+      conditionalOn?: string;
     }[];
   };
 }
@@ -183,6 +206,8 @@ export type Bloque =
   | BloqueParagraph
   | BloqueSectionTitle
   | BloqueText
+  | BloqueTextarea
+  | BloqueEmail
   | BloqueDate
   | BloqueNumber
   | BloqueRadio
@@ -196,7 +221,9 @@ export type Bloque =
   | BloqueHealthConsent
   | BloqueDataAuthorization
   | BloqueEvaluationQuiz
-  | BloqueSatisfactionSurvey;
+  | BloqueSatisfactionSurvey
+  | BloqueDivider
+  | BloqueFile;
 
 // ---------------------------------------------------------------------------
 // Scope de asignación

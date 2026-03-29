@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download } from "lucide-react";
 import FormatoPreviewDocument from "./FormatoPreviewDocument";
-import TemplatePreviewDialog from "./TemplatePreviewDialog";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 
 const PRINT_STYLES = `
@@ -28,13 +27,6 @@ interface Props {
 }
 
 export default function FormatoPreviewDialog({ open, onOpenChange, formato }: Props) {
-  if (formato.motorRender === 'plantilla_html') {
-    return <TemplatePreviewDialog open={open} onOpenChange={onOpenChange} formato={formato} />;
-  }
-  return <BloquesPreviewDialog open={open} onOpenChange={onOpenChange} formato={formato} />;
-}
-
-function BloquesPreviewDialog({ open, onOpenChange, formato }: Props) {
   const documentRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useCallback(() => {

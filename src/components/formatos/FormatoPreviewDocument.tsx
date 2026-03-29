@@ -116,11 +116,27 @@ function renderBloque(bloque: Bloque): React.ReactNode {
     case "text":
       return <FieldCell label={bloque.label || "Campo de texto"} value="Dato de ejemplo" />;
 
+    case "textarea":
+      return <FieldCell label={bloque.label || "Texto largo"} value="Texto de ejemplo..." />;
+
+    case "email":
+      return <FieldCell label={bloque.label || "Correo"} value="correo@ejemplo.com" />;
+
     case "date":
       return <FieldCell label={bloque.label || "Fecha"} value="15/01/2025" />;
 
     case "number":
       return <FieldCell label={bloque.label || "Número"} value="42" />;
+
+    case "divider":
+      return (
+        <div style={{ gridColumn: "span 2" }}>
+          <hr className="border-t-2 border-muted my-2" />
+        </div>
+      );
+
+    case "file":
+      return <FieldCell label={bloque.label || "Archivo adjunto"} value={`[Adjuntar: ${(bloque as any).props?.accept || '*'}]`} />;
 
     case "radio": {
       const options = ("props" in bloque && (bloque as any).props?.options) || [];

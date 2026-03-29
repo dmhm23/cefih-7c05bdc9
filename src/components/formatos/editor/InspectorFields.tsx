@@ -363,11 +363,11 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="p-2 space-y-2 border-t">
-            <Input
+            <Textarea
               value={question.texto}
               onChange={(e) => onUpdate({ texto: e.target.value })}
               placeholder="Texto de la pregunta..."
-              className="h-8 text-xs"
+              className="min-h-[60px] text-xs resize-none"
             />
             <Label className="text-[10px] text-muted-foreground">Opciones (selecciona la correcta)</Label>
             {opciones.map((op: string, oi: number) => (

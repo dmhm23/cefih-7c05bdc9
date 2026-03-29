@@ -17,7 +17,7 @@ export default function BlockInspector({ onOpenConfig }: BlockInspectorProps) {
   const block = getSelectedBlock();
 
   return (
-    <div className="w-full min-w-0 bg-background border-l overflow-hidden flex flex-col h-full">
+    <div className="w-full min-w-0 bg-background border-l overflow-hidden flex flex-col h-full overflow-x-hidden">
       <div className="px-4 py-3 border-b flex items-center justify-between shrink-0">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {block ? 'Propiedades' : 'Inspector'}
@@ -29,7 +29,7 @@ export default function BlockInspector({ onOpenConfig }: BlockInspectorProps) {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 break-words overflow-x-hidden">
           {block ? (
             <>
               {/* Block header */}

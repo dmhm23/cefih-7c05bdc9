@@ -16,6 +16,9 @@ import {
   ClipboardCheck,
   SmilePlus,
   CalendarCheck,
+  Mail,
+  Minus,
+  Paperclip,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -24,6 +27,8 @@ export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
   heading: "Encabezado",
   paragraph: "Párrafo",
   text: "Campo de texto",
+  textarea: "Texto largo",
+  email: "Correo electrónico",
   date: "Fecha",
   number: "Numérico",
   radio: "Radio",
@@ -38,6 +43,8 @@ export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
   data_authorization: "Autorización datos",
   evaluation_quiz: "Evaluación",
   satisfaction_survey: "Encuesta satisfacción",
+  divider: "Divisor",
+  file: "Archivo adjunto",
 };
 
 export const BLOQUE_ICONS: Record<string, LucideIcon> = {

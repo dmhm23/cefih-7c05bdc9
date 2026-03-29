@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
-import { COMPLEX_TYPES } from '@/data/bloqueConstants';
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,10 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
   SelectGroup, SelectLabel,
 } from '@/components/ui/select';
-import { Plus, X } from 'lucide-react';
+import {
+  Collapsible, CollapsibleTrigger, CollapsibleContent,
+} from '@/components/ui/collapsible';
+import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2 } from 'lucide-react';
 
 interface InspectorFieldsProps {
   bloque: Bloque;
@@ -21,12 +24,11 @@ interface InspectorFieldsProps {
 const HIDE_REQUIRED: TipoBloque[] = [
   'section_title', 'heading', 'paragraph', 'divider',
   'signature_aprendiz', 'signature_entrenador_auto', 'signature_supervisor_auto',
-  ...COMPLEX_TYPES,
+  'health_consent', 'data_authorization', 'evaluation_quiz', 'satisfaction_survey',
+  'attendance_by_day',
 ];
 
 export default function InspectorFields({ bloque, onChange }: InspectorFieldsProps) {
-  const b = bloque as any;
-
   return (
     <div className="space-y-4">
       {/* Label */}
@@ -241,10 +243,418 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'signature_supervisor_auto':
       return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (supervisor del curso).</p>;
 
+    case 'evaluation_quiz':
+      return <EvaluationQuizInspector bloque={bloque} onChange={onChange} />;
+
+    case 'satisfaction_survey':
+      return <SatisfactionSurveyInspector bloque={bloque} onChange={onChange} />;
+
+    case 'health_consent':
+      return <HealthConsentInspector bloque={bloque} onChange={onChange} />;
+
+    case 'data_authorization':
+      return <DataAuthorizationInspector bloque={bloque} onChange={onChange} />;
+
+    case 'attendance_by_day':
+      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;
+
     default:
-      if (COMPLEX_TYPES.includes(bloque.type)) {
-        return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Componente especializado — configuración avanzada.</p>;
-      }
       return null;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Evaluation Quiz Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || { umbralAprobacion: 70, preguntas: [] };
+  const preguntas = props.preguntas || [];
+
+  const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
+
+  const updatePregunta = (idx: number, upd: any) => {
+    const updated = preguntas.map((p: any, i: number) => i === idx ? { ...p, ...upd } : p);
+    updateProps({ preguntas: updated });
+  };
+
+  const addPregunta = () => {
+    const id = preguntas.length > 0 ? Math.max(...preguntas.map((p: any) => p.id)) + 1 : 1;
+    updateProps({
+      preguntas: [...preguntas, { id, texto: '', opciones: ['Opción A', 'Opción B'], correcta: 0 }],
+    });
+  };
+
+  const removePregunta = (idx: number) => {
+    updateProps({ preguntas: preguntas.filter((_: any, i: number) => i !== idx) });
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Umbral */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Umbral de aprobación</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            min={0} max={100}
+            value={props.umbralAprobacion ?? 70}
+            onChange={(e) => updateProps({ umbralAprobacion: Number(e.target.value) })}
+            className="h-9 text-sm w-20"
+          />
+          <span className="text-sm text-muted-foreground">%</span>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+        <p className="text-xs text-amber-800">
+          Se aprueba con {props.umbralAprobacion ?? 70}% — {preguntas.length} pregunta{preguntas.length !== 1 ? 's' : ''} configurada{preguntas.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+
+      {/* Preguntas */}
+      <div className="space-y-2">
+        <Label className="text-xs">Preguntas</Label>
+        {preguntas.map((p: any, idx: number) => (
+          <QuestionEditor
+            key={p.id}
+            question={p}
+            index={idx}
+            onUpdate={(upd) => updatePregunta(idx, upd)}
+            onRemove={() => removePregunta(idx)}
+          />
+        ))}
+        <Button variant="outline" size="sm" className="w-full" onClick={addPregunta}>
+          <Plus className="h-3.5 w-3.5 mr-1" /> Agregar pregunta
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function QuestionEditor({ question, index, onUpdate, onRemove }: {
+  question: any;
+  index: number;
+  onUpdate: (upd: any) => void;
+  onRemove: () => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const opciones: string[] = question.opciones || [];
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="border rounded-md overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors">
+            <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+            <span className="text-xs font-medium flex-1 truncate">
+              {index + 1}. {question.texto || 'Sin texto'}
+            </span>
+            <Button
+              variant="ghost" size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="p-2 space-y-2 border-t">
+            <Input
+              value={question.texto}
+              onChange={(e) => onUpdate({ texto: e.target.value })}
+              placeholder="Texto de la pregunta..."
+              className="h-8 text-xs"
+            />
+            <Label className="text-[10px] text-muted-foreground">Opciones (selecciona la correcta)</Label>
+            {opciones.map((op: string, oi: number) => (
+              <div key={oi} className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onUpdate({ correcta: oi })}
+                  className={`h-4 w-4 rounded-full border-2 shrink-0 transition-colors ${oi === question.correcta ? 'border-emerald-500 bg-emerald-500' : 'border-muted-foreground/40 hover:border-emerald-400'}`}
+                >
+                  {oi === question.correcta && <CheckCircle2 className="h-3 w-3 text-white" />}
+                </button>
+                <Input
+                  value={op}
+                  onChange={(e) => {
+                    const updated = opciones.map((o, i) => i === oi ? e.target.value : o);
+                    onUpdate({ opciones: updated });
+                  }}
+                  className="h-7 text-xs flex-1"
+                />
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    if (opciones.length <= 2) return;
+                    const filtered = opciones.filter((_, i) => i !== oi);
+                    const newCorrecta = question.correcta >= filtered.length ? filtered.length - 1 : question.correcta > oi ? question.correcta - 1 : question.correcta;
+                    onUpdate({ opciones: filtered, correcta: newCorrecta });
+                  }}
+                  disabled={opciones.length <= 2}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+            <Button
+              variant="ghost" size="sm" className="w-full text-xs h-7"
+              onClick={() => onUpdate({ opciones: [...opciones, `Opción ${opciones.length + 1}`] })}
+            >
+              <Plus className="h-3 w-3 mr-1" /> Opción
+            </Button>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Satisfaction Survey Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || { escalaPreguntas: [], escalaOpciones: [], preguntaSiNo: '' };
+  const escalaPreguntas: string[] = props.escalaPreguntas || [];
+  const escalaOpciones: { value: string; label: string }[] = props.escalaOpciones || [];
+  const preguntaSiNo: string = props.preguntaSiNo || '';
+
+  const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
+
+  return (
+    <div className="space-y-4">
+      {/* Info */}
+      <div className="bg-muted/50 border rounded-md px-3 py-2">
+        <p className="text-xs text-muted-foreground">
+          {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''} de escala
+          {preguntaSiNo ? ' + 1 pregunta Sí/No' : ''}
+        </p>
+      </div>
+
+      {/* Escala opciones */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Opciones de escala</Label>
+        {escalaOpciones.map((opt, idx) => (
+          <div key={idx} className="flex items-center gap-1.5">
+            <Input
+              value={opt.value}
+              onChange={(e) => {
+                const updated = escalaOpciones.map((o, i) => i === idx ? { ...o, value: e.target.value } : o);
+                updateProps({ escalaOpciones: updated });
+              }}
+              placeholder="Valor"
+              className="h-7 text-xs w-12 font-mono text-center"
+            />
+            <Input
+              value={opt.label}
+              onChange={(e) => {
+                const updated = escalaOpciones.map((o, i) => i === idx ? { ...o, label: e.target.value } : o);
+                updateProps({ escalaOpciones: updated });
+              }}
+              placeholder="Etiqueta"
+              className="h-7 text-xs flex-1"
+            />
+            <Button
+              variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => {
+                if (escalaOpciones.length <= 1) return;
+                updateProps({ escalaOpciones: escalaOpciones.filter((_, i) => i !== idx) });
+              }}
+              disabled={escalaOpciones.length <= 1}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          variant="ghost" size="sm" className="w-full text-xs h-7"
+          onClick={() => {
+            const n = escalaOpciones.length + 1;
+            updateProps({ escalaOpciones: [...escalaOpciones, { value: String(n), label: `Opción ${n}` }] });
+          }}
+        >
+          <Plus className="h-3 w-3 mr-1" /> Opción de escala
+        </Button>
+      </div>
+
+      {/* Preguntas de escala */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Preguntas de escala</Label>
+        {escalaPreguntas.map((q, idx) => (
+          <div key={idx} className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
+            <Input
+              value={q}
+              onChange={(e) => {
+                const updated = escalaPreguntas.map((p, i) => i === idx ? e.target.value : p);
+                updateProps({ escalaPreguntas: updated });
+              }}
+              className="h-7 text-xs flex-1"
+            />
+            <Button
+              variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => updateProps({ escalaPreguntas: escalaPreguntas.filter((_, i) => i !== idx) })}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          variant="ghost" size="sm" className="w-full text-xs h-7"
+          onClick={() => updateProps({ escalaPreguntas: [...escalaPreguntas, ''] })}
+        >
+          <Plus className="h-3 w-3 mr-1" /> Pregunta
+        </Button>
+      </div>
+
+      {/* Pregunta Sí/No */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Pregunta Sí/No</Label>
+          <Switch
+            checked={!!preguntaSiNo}
+            onCheckedChange={(v) => updateProps({ preguntaSiNo: v ? '¿Recomendaría este curso?' : '' })}
+          />
+        </div>
+        {preguntaSiNo && (
+          <Input
+            value={preguntaSiNo}
+            onChange={(e) => updateProps({ preguntaSiNo: e.target.value })}
+            className="h-8 text-xs"
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Health Consent Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || { questions: [] };
+  const questions = props.questions || [];
+
+  const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
+
+  const updateQuestion = (idx: number, upd: any) => {
+    const updated = questions.map((q: any, i: number) => i === idx ? { ...q, ...upd } : q);
+    updateProps({ questions: updated });
+  };
+
+  return (
+    <div className="space-y-3">
+      <Label className="text-xs">Preguntas de salud</Label>
+      {questions.map((q: any, idx: number) => (
+        <div key={q.id} className="border rounded-md p-2 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={q.label}
+              onChange={(e) => updateQuestion(idx, { label: e.target.value })}
+              className="h-7 text-xs flex-1"
+              placeholder="Texto de la pregunta"
+            />
+            <Button
+              variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => updateProps({ questions: questions.filter((_: any, i: number) => i !== idx) })}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Switch
+                checked={q.hasDetail ?? false}
+                onCheckedChange={(v) => updateQuestion(idx, { hasDetail: v })}
+              />
+              <Label className="text-[10px]">Detalle</Label>
+            </div>
+            {q.hasDetail && (
+              <Input
+                value={q.conditionalOn || ''}
+                onChange={(e) => updateQuestion(idx, { conditionalOn: e.target.value })}
+                placeholder="Condicional (ID)"
+                className="h-6 text-[10px] w-28"
+              />
+            )}
+          </div>
+        </div>
+      ))}
+      <Button
+        variant="outline" size="sm" className="w-full"
+        onClick={() => {
+          const id = `hc_${Date.now()}`;
+          updateProps({ questions: [...questions, { id, label: '', hasDetail: false }] });
+        }}
+      >
+        <Plus className="h-3.5 w-3.5 mr-1" /> Agregar pregunta
+      </Button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Data Authorization Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || { summaryItems: [], fullText: '' };
+  const summaryItems: string[] = props.summaryItems || [];
+
+  const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
+
+  return (
+    <div className="space-y-3">
+      {/* Summary items */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Puntos del resumen</Label>
+        {summaryItems.map((item, idx) => (
+          <div key={idx} className="flex items-center gap-1.5">
+            <span className="text-[10px] text-muted-foreground w-4 shrink-0">•</span>
+            <Input
+              value={item}
+              onChange={(e) => {
+                const updated = summaryItems.map((s, i) => i === idx ? e.target.value : s);
+                updateProps({ summaryItems: updated });
+              }}
+              className="h-7 text-xs flex-1"
+            />
+            <Button
+              variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => updateProps({ summaryItems: summaryItems.filter((_, i) => i !== idx) })}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          variant="ghost" size="sm" className="w-full text-xs h-7"
+          onClick={() => updateProps({ summaryItems: [...summaryItems, ''] })}
+        >
+          <Plus className="h-3 w-3 mr-1" /> Punto
+        </Button>
+      </div>
+
+      {/* Full text */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Texto completo de autorización</Label>
+        <Textarea
+          value={props.fullText || ''}
+          onChange={(e) => updateProps({ fullText: e.target.value })}
+          placeholder="Texto legal completo..."
+          className="min-h-[100px] text-xs"
+        />
+      </div>
+    </div>
+  );
 }

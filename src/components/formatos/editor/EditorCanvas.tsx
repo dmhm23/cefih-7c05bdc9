@@ -21,6 +21,16 @@ import type { TipoBloque, Bloque } from '@/types/formatoFormacion';
 
 export default function EditorCanvas() {
   const { items, docTitle, setDocTitle, setSelected, reorderBlock, addBlock, addRow2 } = useFormatoEditorStore();
+  const hojaDinamicaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hojaDinamicaRef.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      console.log(`[hojaDinamica] altura: ${entry.contentRect.height}px | bloques: ${items.length}`);
+    });
+    ro.observe(hojaDinamicaRef.current);
+    return () => ro.disconnect();
+  }, [items.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

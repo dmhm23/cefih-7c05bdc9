@@ -6,6 +6,7 @@ import { useFormato, useUpdateFormato, useCreateFormato, useSaveVersion } from '
 import { useFormatoEditorStore, type EditorItem, type FormatoConfig } from '@/stores/useFormatoEditorStore';
 import type { FormatoFormacion, FormatoFormacionFormData, Bloque } from '@/types/formatoFormacion';
 
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import EditorHeader from '@/components/formatos/editor/EditorHeader';
 import BlockCatalog from '@/components/formatos/editor/BlockCatalog';
 import EditorCanvas from '@/components/formatos/editor/EditorCanvas';

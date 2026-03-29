@@ -162,7 +162,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
 function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
   const { umbralAprobacion = 70, preguntas = [] } = block.props || {};
   return (
-    <div className="space-y-2 min-w-0 max-w-full overflow-hidden">
+    <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
         <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Evaluación'}</span>
         <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-amber-300 text-amber-700 bg-amber-50">

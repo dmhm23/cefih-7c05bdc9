@@ -247,34 +247,20 @@ export default function NivelFormPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="duracionHoras"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duración (horas)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={0} max={2000} placeholder="0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="duracionDias"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duración (días)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={0} max={365} placeholder="0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="duracionHoras"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duración en horas *</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} min={1} max={2000} placeholder="Ej: 40" className="max-w-[200px]" />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Los días se calculan automáticamente según las fechas del curso</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Campos adicionales — lista */}
               {camposAdicionales.length > 0 && (

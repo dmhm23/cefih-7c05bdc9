@@ -530,7 +530,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
       {/* Pregunta Sí/No */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-xs">Pregunta Sí/No</Label>
+          <Label className="text-sm">Pregunta Sí/No</Label>
           <Switch
             checked={!!preguntaSiNo}
             onCheckedChange={(v) => updateProps({ preguntaSiNo: v ? '¿Recomendaría este curso?' : '' })}

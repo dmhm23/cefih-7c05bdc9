@@ -445,7 +445,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
     <div className="space-y-4">
       {/* Info */}
       <div className="bg-muted/50 border rounded-md px-3 py-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''} de escala
           {preguntaSiNo ? ' + 1 pregunta Sí/No' : ''}
         </p>

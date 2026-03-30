@@ -915,7 +915,6 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf1',
     nombreNivel: 'Reentrenamiento',
-    duracionDias: 1,
     duracionHoras: 8,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {

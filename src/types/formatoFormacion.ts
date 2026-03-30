@@ -247,7 +247,7 @@ export type Bloque =
 // Scope de asignación
 // ---------------------------------------------------------------------------
 
-export type AsignacionScope = 'nivel_formacion' | 'tipo_curso';
+export type AsignacionScope = 'todos' | 'nivel_formacion';
 
 // ---------------------------------------------------------------------------
 // Motor de render

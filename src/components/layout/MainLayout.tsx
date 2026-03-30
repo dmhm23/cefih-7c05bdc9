@@ -1,8 +1,7 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Search, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -56,14 +55,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           </Breadcrumb>
 
           <div className="flex-1" />
-          
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por cédula..."
-              className="pl-9 h-9 bg-muted/50"
-            />
-          </div>
 
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

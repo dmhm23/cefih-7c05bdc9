@@ -472,7 +472,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
                 updateProps({ escalaOpciones: updated });
               }}
               placeholder="Etiqueta"
-              className="h-7 text-xs flex-1"
+              className="h-8 text-sm flex-1"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"

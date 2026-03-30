@@ -296,17 +296,20 @@ interface FormatoPreviewDocumentProps {
 export default function FormatoPreviewDocument({ formato }: FormatoPreviewDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
+  const hasHeaderBlock = bloques.some(b => b.type === 'document_header');
 
   return (
     <div className="bg-white p-6" style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px" }}>
-      <DocumentHeader
-        nombreDocumento={formato.nombre || "Formato sin nombre"}
-        codigo={formato.codigo || "---"}
-        version={formato.version || "---"}
-        fechaCreacion={meta?.fechaCreacion || "01/01/2025"}
-        fechaEdicion={meta?.fechaEdicion || "01/01/2025"}
-        subsistema={meta?.subsistema || "FORMACIÓN"}
-      />
+      {!hasHeaderBlock && (
+        <DocumentHeader
+          nombreDocumento={formato.nombre || "Formato sin nombre"}
+          codigo={formato.codigo || "---"}
+          version={formato.version || "---"}
+          fechaCreacion={meta?.fechaCreacion || "01/01/2025"}
+          fechaEdicion={meta?.fechaEdicion || "01/01/2025"}
+          subsistema={meta?.subsistema || "FORMACIÓN"}
+        />
+      )}
 
       {/* Bloques */}
       {bloques.length > 0 ? (

@@ -509,7 +509,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
                 const updated = escalaPreguntas.map((p, i) => i === idx ? e.target.value : p);
                 updateProps({ escalaPreguntas: updated });
               }}
-              className="min-h-[60px] text-xs flex-1 resize-y"
+              className="min-h-[60px] text-sm flex-1 resize-y"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
@@ -520,7 +520,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => updateProps({ escalaPreguntas: [...escalaPreguntas, ''] })}
         >
           <Plus className="h-3 w-3 mr-1" /> Pregunta

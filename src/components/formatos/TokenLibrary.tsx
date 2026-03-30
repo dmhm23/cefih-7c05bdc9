@@ -62,7 +62,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
                   <ChevronRight className="h-3 w-3" />
                 )}
                 {cat.name}
-                <Badge variant="secondary" className="ml-auto text-[9px] h-4 px-1">
+                <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5">
                   {cat.tokens.length}
                 </Badge>
               </button>

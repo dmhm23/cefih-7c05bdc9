@@ -362,7 +362,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
         <CollapsibleTrigger asChild>
           <div className="flex items-start gap-2 px-2 py-1.5 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors min-w-0 max-w-full">
             <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0 mt-0.5 ${open ? '' : '-rotate-90'}`} />
-            <span className="text-xs font-medium flex-1 min-w-0 break-words whitespace-normal leading-relaxed pr-1">
+            <span className="text-sm font-medium flex-1 min-w-0 break-words whitespace-normal leading-relaxed pr-1">
               {index + 1}. {question.texto || 'Sin texto'}
             </span>
             <Button

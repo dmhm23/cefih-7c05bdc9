@@ -9,7 +9,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 import { TipoFormacion, TIPO_FORMACION_LABELS } from '@/types/curso';
-import { CategoriaFormato, AsignacionScope } from '@/types/formatoFormacion';
+import { CategoriaFormato, AsignacionScope, ModoDiligenciamiento } from '@/types/formatoFormacion';
 import { cn } from '@/lib/utils';
 
 const TIPO_CURSO_OPTIONS = Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][];
@@ -20,6 +20,12 @@ const CATEGORIA_OPTIONS: { value: CategoriaFormato; label: string }[] = [
   { value: 'asistencia', label: 'Asistencia' },
   { value: 'pta_ats', label: 'PTA / ATS' },
   { value: 'personalizado', label: 'Personalizado' },
+];
+
+const MODO_DILIGENCIAMIENTO_OPTIONS: { value: ModoDiligenciamiento; label: string; description: string }[] = [
+  { value: 'manual_estudiante', label: 'Manual — Estudiante', description: 'Lo diligencia el estudiante desde el portal' },
+  { value: 'manual_admin', label: 'Manual — Administrativo', description: 'Lo diligencia el entrenador o administrador' },
+  { value: 'automatico_sistema', label: 'Automático — Sistema', description: 'Se genera automáticamente según datos del curso (ej: asistencia por días)' },
 ];
 
 interface Props {
@@ -42,7 +48,7 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[420px] sm:w-[480px] p-0 flex flex-col">
         <SheetHeader className="px-6 py-4 border-b shrink-0">
-          <SheetTitle>Configuración del Formato</SheetTitle>
+          <SheetTitle>Ajustes del Formato</SheetTitle>
         </SheetHeader>
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-5">
@@ -55,7 +61,6 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
                   onChange={(e) => {
                     const nombre = e.target.value;
                     setConfig({ nombre });
-                    // Sync to document_header block label
                     const headerBlock = items.find((it) => it.type === 'document_header');
                     if (headerBlock) updateBlock(headerBlock.id, { label: nombre });
                   }}
@@ -119,22 +124,59 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* Visibility */}
-            <div className="space-y-3">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Visibilidad</Label>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Switch checked={config.visibleEnMatricula} onCheckedChange={(v) => setConfig({ visibleEnMatricula: v })} />
-                  <Label className="text-sm">Visible en Matrícula</Label>
+            {/* Visibility & Filing */}
+            <div className="space-y-4">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Visibilidad y Diligenciamiento</Label>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Switch checked={config.visibleEnMatricula} onCheckedChange={(v) => setConfig({ visibleEnMatricula: v })} className="mt-0.5" />
+                  <div>
+                    <Label className="text-sm">Visible en Matrícula</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">El formato aparece en la ficha de matrícula mostrando su estado (borrador/completo)</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={config.visibleEnCurso} onCheckedChange={(v) => setConfig({ visibleEnCurso: v })} />
-                  <Label className="text-sm">Visible en Curso</Label>
+
+                <div className="flex items-start gap-3">
+                  <Switch checked={config.visibleEnCurso} onCheckedChange={(v) => setConfig({ visibleEnCurso: v })} className="mt-0.5" />
+                  <div>
+                    <Label className="text-sm">Visible en Curso</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">El formato aparece en la vista del curso para consulta administrativa</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Switch checked={config.activo} onCheckedChange={(v) => setConfig({ activo: v })} />
-                  <Label className="text-sm">Activo</Label>
+
+                <div className="flex items-start gap-3">
+                  <Switch checked={config.visibleEnPortalEstudiante} onCheckedChange={(v) => setConfig({ visibleEnPortalEstudiante: v })} className="mt-0.5" />
+                  <div>
+                    <Label className="text-sm">Visible en Portal Estudiante</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">El estudiante puede ver y diligenciar este formato desde su portal</p>
+                  </div>
                 </div>
+
+                <div className="flex items-start gap-3">
+                  <Switch checked={config.activo} onCheckedChange={(v) => setConfig({ activo: v })} className="mt-0.5" />
+                  <div>
+                    <Label className="text-sm">Activo</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Habilita o deshabilita el formato para su uso</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Modo de diligenciamiento</Label>
+                <Select value={config.modoDiligenciamiento} onValueChange={(v) => setConfig({ modoDiligenciamiento: v as ModoDiligenciamiento })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {MODO_DILIGENCIAMIENTO_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {MODO_DILIGENCIAMIENTO_OPTIONS.find((o) => o.value === config.modoDiligenciamiento)?.description}
+                </p>
               </div>
             </div>
 

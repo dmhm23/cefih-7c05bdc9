@@ -127,7 +127,7 @@ export default function BlockCatalog() {
               Bloques
             </button>
             <button
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => setShowTokens(true)}
             >
               Tokens

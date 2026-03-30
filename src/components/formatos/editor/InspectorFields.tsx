@@ -566,7 +566,7 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
 
   return (
     <div className="space-y-3">
-      <Label className="text-xs">Preguntas de salud</Label>
+      <Label className="text-sm">Preguntas de salud</Label>
       {questions.map((q: any, idx: number) => (
         <div key={q.id} className="border rounded-md p-2 space-y-1.5 min-w-0 max-w-full">
           <div className="flex items-start gap-1.5 min-w-0 max-w-full">

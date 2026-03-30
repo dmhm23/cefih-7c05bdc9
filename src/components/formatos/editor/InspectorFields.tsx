@@ -640,7 +640,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
                 const updated = summaryItems.map((s, i) => i === idx ? e.target.value : s);
                 updateProps({ summaryItems: updated });
               }}
-              className="h-7 text-xs flex-1"
+              className="h-8 text-sm flex-1"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
@@ -651,7 +651,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => updateProps({ summaryItems: [...summaryItems, ''] })}
         >
           <Plus className="h-3 w-3 mr-1" /> Punto

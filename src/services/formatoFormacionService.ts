@@ -381,21 +381,12 @@ export const formatoFormacionService = {
     return simulateApiCall(results);
   },
 
-  /** Obtener formatos aplicables para una matrícula según tipo de curso */
-  getForMatricula: async (tipoCurso: string): Promise<FormatoFormacion[]> => {
-    const NIVEL_TO_TIPO_CURSO: Record<string, string> = {
-      nf1: 'reentrenamiento',
-      nf2: 'jefe_area',
-      nf3: 'trabajador_autorizado',
-      nf5: 'coordinador_ta',
-    };
-    const tipoCursoKey = NIVEL_TO_TIPO_CURSO[tipoCurso] || tipoCurso;
+  /** Obtener formatos aplicables para una matrícula según nivel de formación */
+  getForMatricula: async (nivelFormacionId: string): Promise<FormatoFormacion[]> => {
     const results = mockFormatos.filter(f =>
       f.activo &&
       f.visibleEnMatricula &&
-      (f.asignacionScope === 'tipo_curso'
-        ? f.tipoCursoKeys.includes(tipoCursoKey as any)
-        : true)
+      (f.asignacionScope === 'todos' || f.nivelFormacionIds.includes(nivelFormacionId))
     );
     return simulateApiCall(results);
   },

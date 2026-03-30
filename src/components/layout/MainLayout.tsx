@@ -1,8 +1,7 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Search, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,

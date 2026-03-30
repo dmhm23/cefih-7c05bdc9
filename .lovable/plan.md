@@ -1,31 +1,49 @@
 
 
-## Diagnóstico: Por qué hojaDinamica se detiene en 523px
+## Plan: Aumentar tamaño de texto en bloques del canvas del editor
 
-### Causa raíz
+### Problema
 
-El contenedor externo de `EditorCanvas` (línea 70) es un **flex column** con `h-full`:
+Los textos dentro de los bloques renderizados en el canvas usan tamaños muy pequeños (`text-[9px]`, `text-[10px]`, `text-[11px]`, `text-xs` = 12px). En pantallas normales esto obliga al usuario a forzar la vista para leer preguntas, opciones y etiquetas.
 
-```text
-div.outer  →  h-full flex flex-col overflow-y-auto
-  └─ div#hojaDinamica  →  h-auto (flex child)
-```
+### Escala propuesta
 
-Por defecto, los hijos de un flex container tienen `flex-shrink: 1`. Esto significa que cuando el contenido de `hojaDinamica` supera la altura del padre, **el navegador lo encoge para que quepa** en lugar de dejarlo crecer y activar el scroll.
+| Actual | Nuevo | Uso |
+|---|---|---|
+| `text-[9px]` | `text-xs` (12px) | Badges, etiquetas secundarias |
+| `text-[10px]` | `text-sm` (14px) | Opciones de respuesta, filas de encuesta, ítems de salud |
+| `text-[11px]` | `text-sm` (14px) | Texto de preguntas |
+| `text-xs` (12px) | `text-sm` (14px) | Labels de campos, placeholders, textos generales |
+| `text-sm` (14px) | `text-base` (16px) | Headings de sección |
 
-Los números lo confirman: 523px (content) + 40px (py-10) + 80px (pb-20) = **643px**, que coincide exactamente con la altura disponible del `ResizablePanel`. Una vez que hojaDinamica alcanza el tope del panel, flex-shrink la comprime y los bloques se desbordan visualmente.
+### Cambios en `src/components/formatos/editor/BlockPreview.tsx`
 
-### Corrección
+1. **Componente `L` (label genérico)**: `text-xs` → `text-sm`
+2. **Inputs/Textarea**: `text-xs` → `text-sm`, altura `h-8` → `h-9`
+3. **Section title**: `text-[10px]` → `text-xs`
+4. **Paragraph**: `text-xs` → `text-sm`
+5. **Auto field**: label `text-xs` → `text-sm`, badge `text-[9px]` → `text-xs`, valor `text-xs` → `text-sm`
+6. **EvaluationQuizPreview**:
+   - Label: `text-xs` → `text-sm`
+   - Badges: `text-[9px]` → `text-xs`
+   - Pregunta: `text-[11px]` → `text-sm`
+   - Opciones: `text-[10px]` → `text-sm`, radio `h-3 w-3` → `h-4 w-4`
+7. **SatisfactionSurveyPreview**:
+   - Label: `text-xs` → `text-sm`
+   - Header grid: `text-[9px]` → `text-xs`
+   - Filas: `text-[10px]` → `text-sm`
+   - Pregunta Sí/No: `text-[10px]` → `text-sm`
+8. **HealthConsentPreview**:
+   - Label: `text-xs` → `text-sm`
+   - Preguntas: `text-[10px]` → `text-sm`
+9. **DataAuthorizationPreview**:
+   - Label: `text-xs` → `text-sm`
+   - Items y texto: `text-[10px]` → `text-sm`
+10. **Attendance by day**: badge `text-[10px]` → `text-xs`, párrafo `text-xs` → `text-sm`
 
-**Archivo**: `src/components/formatos/editor/EditorCanvas.tsx`
+### Archivo afectado
 
-Agregar `shrink-0` (equivalente a `flex-shrink: 0`) al div `hojaDinamica`. Esto le indica al flex container que no comprima la hoja, permitiéndole crecer más allá del padre y activar el `overflow-y-auto` del contenedor externo.
-
-Cambio en línea 75: agregar `shrink-0` a las clases de hojaDinamica.
-
-### Resultado esperado
-
-- hojaDinamica crecerá sin límite conforme se agreguen bloques
-- El scroll vertical del contenedor externo se activará naturalmente
-- El log mostrará alturas incrementales sin techo artificial
+| Archivo | Cambio |
+|---|---|
+| `src/components/formatos/editor/BlockPreview.tsx` | Escalar todos los tamaños de fuente un nivel arriba |
 

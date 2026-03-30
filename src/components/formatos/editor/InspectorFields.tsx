@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';

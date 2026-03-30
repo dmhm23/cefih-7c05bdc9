@@ -573,7 +573,7 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
             <Textarea
               value={q.label}
               onChange={(e) => updateQuestion(idx, { label: e.target.value })}
-              className="min-h-[60px] text-xs flex-1 resize-y"
+              className="min-h-[60px] text-sm flex-1 resize-y"
               placeholder="Texto de la pregunta"
             />
             <Button

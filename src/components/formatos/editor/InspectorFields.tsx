@@ -463,7 +463,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
                 updateProps({ escalaOpciones: updated });
               }}
               placeholder="Valor"
-              className="h-7 text-xs w-12 font-mono text-center"
+              className="h-8 text-sm w-14 font-mono text-center"
             />
             <Input
               value={opt.label}

@@ -499,7 +499,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
 
       {/* Preguntas de escala */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Preguntas de escala</Label>
+        <Label className="text-sm">Preguntas de escala</Label>
         {escalaPreguntas.map((q, idx) => (
           <div key={idx} className="flex items-start gap-1.5 min-w-0 max-w-full">
             <span className="text-[10px] text-muted-foreground w-4 shrink-0">{idx + 1}.</span>

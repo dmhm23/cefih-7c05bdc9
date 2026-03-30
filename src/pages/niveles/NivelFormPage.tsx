@@ -70,7 +70,6 @@ export default function NivelFormPage() {
     resolver: zodResolver(nivelSchema),
     defaultValues: {
       nombreNivel: "",
-      duracionDias: undefined,
       duracionHoras: undefined,
       documentosRequeridos: [],
       observaciones: "",

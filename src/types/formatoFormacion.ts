@@ -262,6 +262,12 @@ export type MotorRender = 'bloques' | 'plantilla_html';
 export type CategoriaFormato = 'formacion' | 'evaluacion' | 'asistencia' | 'pta_ats' | 'personalizado';
 
 // ---------------------------------------------------------------------------
+// Modo de diligenciamiento
+// ---------------------------------------------------------------------------
+
+export type ModoDiligenciamiento = 'manual_estudiante' | 'manual_admin' | 'automatico_sistema';
+
+// ---------------------------------------------------------------------------
 // Estado del formato
 // ---------------------------------------------------------------------------
 

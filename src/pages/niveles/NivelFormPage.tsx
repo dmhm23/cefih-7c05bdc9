@@ -88,7 +88,6 @@ export default function NivelFormPage() {
 
       form.reset({
         nombreNivel: nivel.nombreNivel,
-        duracionDias: nivel.duracionDias,
         duracionHoras: nivel.duracionHoras,
         documentosRequeridos: nivel.documentosRequeridos,
         observaciones: nivel.observaciones || "",

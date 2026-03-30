@@ -50,6 +50,20 @@ export default function FormatoEditorPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [savedOnce, setSavedOnce] = useState(false);
 
+  // Block navigation when there are unsaved changes
+  const blocker = useBlocker(store.isDirty);
+
+  // Native browser warning on tab close / reload
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [store.isDirty]);
+
   // Load existing formato into store
   useEffect(() => {
     if (existing) {

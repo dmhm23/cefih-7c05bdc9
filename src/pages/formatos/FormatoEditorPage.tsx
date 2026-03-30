@@ -28,6 +28,23 @@ export default function FormatoEditorPage() {
 
   const store = useFormatoEditorStore();
   const [showPreview, setShowPreview] = useState(false);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod) return;
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        store.undo();
+      } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        store.redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [store]);
   const [showConfig, setShowConfig] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [savedOnce, setSavedOnce] = useState(false);

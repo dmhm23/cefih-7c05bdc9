@@ -1,10 +1,10 @@
-import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization } from '@/types/formatoFormacion';
+import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization, BloqueDocumentHeader } from '@/types/formatoFormacion';
 import { BLOQUE_TYPE_LABELS } from '@/data/bloqueConstants';
 import { Badge } from '@/components/ui/badge';
 import { getAutoFieldLabel } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ImageIcon } from 'lucide-react';
 
 interface BlockPreviewProps {
   block: Bloque;
@@ -145,6 +145,9 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
     case 'data_authorization':
       return <DataAuthorizationPreview block={block as BloqueDataAuthorization} />;
 
+    case 'document_header':
+      return <DocumentHeaderPreview block={block as BloqueDocumentHeader} />;
+
     case 'attendance_by_day':
       return (
         <div className="border rounded-lg p-2.5 bg-muted/20">
@@ -280,6 +283,105 @@ function DataAuthorizationPreview({ block }: { block: BloqueDataAuthorization })
       <div className="flex items-center gap-2 text-sm">
         <div className="h-4 w-4 border rounded bg-background" />
         <span className="text-foreground">Acepto los términos</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Document Header Preview ── */
+function DocumentHeaderPreview({ block }: { block: BloqueDocumentHeader }) {
+  const p = block.props || {} as any;
+  const border = `1px solid ${p.borderColor || '#9ca3af'}`;
+
+  return (
+    <div className="min-w-0 max-w-full overflow-visible">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '120px 1fr 1fr',
+          border,
+          fontSize: '11px',
+          lineHeight: '1.4',
+        }}
+      >
+        {/* Logo */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            borderRight: border,
+          }}
+        >
+          {p.logoUrl ? (
+            <img src={p.logoUrl} alt="Logo" style={{ maxWidth: '105px', maxHeight: '73px', objectFit: 'contain' }} />
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-muted-foreground">
+              <ImageIcon className="h-8 w-8" />
+              <span className="text-[9px]">Logo</span>
+            </div>
+          )}
+        </div>
+
+        {/* Center */}
+        <div style={{ display: 'flex', flexDirection: 'column', borderRight: border }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '13px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              padding: '8px',
+              textAlign: 'center',
+            }}
+          >
+            {block.label || 'NOMBRE DEL DOCUMENTO'}
+          </div>
+          {(p.mostrarCodigo || p.mostrarVersion) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: border }}>
+              {p.mostrarCodigo && (
+                <div style={{ padding: '4px 8px', borderRight: border, display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#6b7280' }}>Código:</span>
+                  <span style={{ fontWeight: 600 }}>---</span>
+                </div>
+              )}
+              {p.mostrarVersion && (
+                <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#6b7280' }}>Versión:</span>
+                  <span style={{ fontWeight: 600 }}>---</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontWeight: 700, textTransform: 'uppercase', padding: '6px 8px', borderBottom: border, fontSize: '11px', lineHeight: '1.3' }}>
+            {p.empresaNombre || 'Nombre empresa'}
+          </div>
+          <div style={{ padding: '4px 8px', borderBottom: border, fontWeight: 500 }}>
+            {p.sistemaGestion || 'SGI'}
+          </div>
+          <div style={{ padding: '4px 8px', borderBottom: border }}>
+            SUBSISTEMA: {p.subsistema || '---'}
+          </div>
+          {p.mostrarFechas && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+              <div style={{ padding: '4px 8px', borderRight: border, fontSize: '10px', fontWeight: 500 }}>
+                CREACIÓN: {p.fechaCreacion || '---'}
+              </div>
+              <div style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 500 }}>
+                EDICIÓN: {p.fechaEdicion || '---'}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -19,10 +19,12 @@ import {
   Mail,
   Minus,
   Paperclip,
+  LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 
 export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
+  document_header: "Encabezado institucional",
   section_title: "Título de sección",
   heading: "Encabezado",
   paragraph: "Párrafo",
@@ -48,6 +50,7 @@ export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
 };
 
 export const BLOQUE_ICONS: Record<string, LucideIcon> = {
+  document_header: LayoutGrid,
   section_title: Bookmark,
   heading: Heading,
   paragraph: AlignLeft,
@@ -73,6 +76,7 @@ export const BLOQUE_ICONS: Record<string, LucideIcon> = {
 };
 
 export const BLOCK_PALETTE: { type: TipoBloque; label: string }[] = [
+  { type: "document_header", label: "Encabezado institucional" },
   { type: "section_title", label: "Título de sección" },
   { type: "heading", label: "Encabezado" },
   { type: "paragraph", label: "Párrafo" },

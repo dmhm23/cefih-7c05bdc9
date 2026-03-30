@@ -26,7 +26,8 @@ export type TipoBloque =
   | 'satisfaction_survey'
   | 'section_title'
   | 'divider'
-  | 'file';
+  | 'file'
+  | 'document_header';
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
@@ -201,6 +202,22 @@ export interface BloqueSatisfactionSurvey extends BloqueBase {
   };
 }
 
+export interface BloqueDocumentHeader extends BloqueBase {
+  type: 'document_header';
+  props: {
+    logoUrl?: string;
+    empresaNombre: string;
+    sistemaGestion: string;
+    subsistema: string;
+    fechaCreacion: string;
+    fechaEdicion: string;
+    mostrarCodigo: boolean;
+    mostrarVersion: boolean;
+    mostrarFechas: boolean;
+    borderColor: string;
+  };
+}
+
 export type Bloque =
   | BloqueHeading
   | BloqueParagraph
@@ -223,7 +240,8 @@ export type Bloque =
   | BloqueEvaluationQuiz
   | BloqueSatisfactionSurvey
   | BloqueDivider
-  | BloqueFile;
+  | BloqueFile
+  | BloqueDocumentHeader;
 
 // ---------------------------------------------------------------------------
 // Scope de asignación

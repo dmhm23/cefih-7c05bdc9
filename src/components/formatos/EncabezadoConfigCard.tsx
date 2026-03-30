@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { EncabezadoConfig } from '@/types/formatoFormacion';
+import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
+import { LayoutGrid } from 'lucide-react';
+import type { TipoBloque } from '@/types/formatoFormacion';
 
 interface EncabezadoConfigCardProps {
   config: EncabezadoConfig;
@@ -24,7 +27,15 @@ const DEFAULT_CONFIG: EncabezadoConfig = {
 export { DEFAULT_CONFIG as DEFAULT_ENCABEZADO_CONFIG };
 
 export default function EncabezadoConfigCard({ config, onChange, enabled, onEnabledChange }: EncabezadoConfigCardProps) {
-  const update = (partial: Partial<EncabezadoConfig>) => onChange({ ...config, ...partial });
+  const { items, addBlock } = useFormatoEditorStore();
+
+  const hasHeaderBlock = items.some((it) => it.type === 'document_header');
+
+  const handleInsertHeader = () => {
+    if (!hasHeaderBlock) {
+      addBlock('document_header' as TipoBloque, 0);
+    }
+  };
 
   return (
     <Card>
@@ -36,38 +47,21 @@ export default function EncabezadoConfigCard({ config, onChange, enabled, onEnab
       </CardHeader>
       {enabled && (
         <CardContent className="space-y-3">
-          <div className="space-y-2">
-            {([
-              ['mostrarLogo', 'Logo del centro'],
-              ['mostrarNombreCentro', 'Nombre del centro'],
-              ['mostrarCodigoDocumento', 'Código del documento'],
-              ['mostrarVersion', 'Versión'],
-              ['mostrarFecha', 'Fecha'],
-              ['mostrarPaginacion', 'Paginación'],
-            ] as [keyof EncabezadoConfig, string][]).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between">
-                <Label className="text-xs">{label}</Label>
-                <Switch
-                  checked={!!config[key]}
-                  onCheckedChange={(v) => update({ [key]: v })}
-                  className="scale-75"
-                />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Alineación</Label>
-            <Select value={config.alineacion} onValueChange={(v) => update({ alineacion: v as EncabezadoConfig['alineacion'] })}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="izquierda">Izquierda</SelectItem>
-                <SelectItem value="centro">Centro</SelectItem>
-                <SelectItem value="derecha">Derecha</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {hasHeaderBlock ? (
+            <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+              El encabezado se edita directamente en el canvas. Selecciónalo para modificar textos, logo y bordes.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Inserta un bloque de encabezado en el canvas para editarlo visualmente.
+              </p>
+              <Button variant="outline" size="sm" className="w-full" onClick={handleInsertHeader}>
+                <LayoutGrid className="h-3.5 w-3.5 mr-1.5" />
+                Insertar encabezado en el canvas
+              </Button>
+            </div>
+          )}
         </CardContent>
       )}
     </Card>

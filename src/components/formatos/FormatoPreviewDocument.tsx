@@ -262,6 +262,24 @@ function renderBloque(bloque: Bloque): React.ReactNode {
         </div>
       );
 
+    case "document_header": {
+      const hp = (bloque as any).props || {};
+      return (
+        <div style={{ gridColumn: "span 2" }}>
+          <DocumentHeader
+            nombreDocumento={bloque.label || "Formato sin nombre"}
+            codigo={hp.mostrarCodigo ? "---" : ""}
+            version={hp.mostrarVersion ? "---" : ""}
+            fechaCreacion={hp.fechaCreacion || "01/01/2025"}
+            fechaEdicion={hp.fechaEdicion || "01/01/2025"}
+            empresaNombre={hp.empresaNombre}
+            sistemaGestion={hp.sistemaGestion}
+            subsistema={hp.subsistema || "FORMACIÓN"}
+          />
+        </div>
+      );
+    }
+
     default:
       return null;
   }

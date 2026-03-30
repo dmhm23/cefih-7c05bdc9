@@ -87,6 +87,18 @@ const BLOCK_DEFAULTS: Partial<Record<TipoBloque, Record<string, unknown>>> = {
   select: { options: [{ value: 'opcion_1', label: 'Opción 1' }, { value: 'opcion_2', label: 'Opción 2' }] },
   auto_field: { key: 'nombre_aprendiz' },
   heading: { level: 2 },
+  document_header: {
+    logoUrl: '',
+    empresaNombre: 'FREDDY IVAN HOYOS INSTRUCTORES Y FACILITADORES LTDA.',
+    sistemaGestion: 'SISTEMA DE GESTIÓN INTEGRADO',
+    subsistema: 'FORMACIÓN',
+    fechaCreacion: '01/01/2025',
+    fechaEdicion: '01/01/2025',
+    mostrarCodigo: true,
+    mostrarVersion: true,
+    mostrarFechas: true,
+    borderColor: '#9ca3af',
+  },
 };
 
 export function createDefaultBlock(type: TipoBloque): Bloque {

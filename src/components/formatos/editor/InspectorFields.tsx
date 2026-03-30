@@ -589,7 +589,7 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
                 checked={q.hasDetail ?? false}
                 onCheckedChange={(v) => updateQuestion(idx, { hasDetail: v })}
               />
-              <Label className="text-[10px]">Detalle</Label>
+              <Label className="text-xs">Detalle</Label>
             </div>
             {q.hasDetail && (
               <Input

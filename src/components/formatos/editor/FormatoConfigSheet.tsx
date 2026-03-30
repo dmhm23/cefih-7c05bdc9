@@ -96,25 +96,25 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
               <Select value={config.asignacionScope} onValueChange={(v) => setConfig({ asignacionScope: v as AsignacionScope })}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="tipo_curso">Por tipo de curso</SelectItem>
+                  <SelectItem value="todos">Todos los niveles de formación</SelectItem>
                   <SelectItem value="nivel_formacion">Por nivel de formación</SelectItem>
                 </SelectContent>
               </Select>
-              {config.asignacionScope === 'tipo_curso' && (
+              {config.asignacionScope === 'nivel_formacion' && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {TIPO_CURSO_OPTIONS.map(([key, label]) => (
+                  {niveles.map((nivel) => (
                     <button
-                      key={key}
+                      key={nivel.id}
                       type="button"
-                      onClick={() => toggleTipoCurso(key)}
+                      onClick={() => toggleNivel(nivel.id)}
                       className={cn(
                         'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
-                        config.tipoCursoKeys.includes(key)
+                        config.nivelFormacionIds.includes(nivel.id)
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-background text-foreground border-border hover:border-primary/50'
                       )}
                     >
-                      {label}
+                      {nivel.nombreNivel}
                     </button>
                   ))}
                 </div>

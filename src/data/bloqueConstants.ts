@@ -50,6 +50,7 @@ export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
 };
 
 export const BLOQUE_ICONS: Record<string, LucideIcon> = {
+  document_header: LayoutGrid,
   section_title: Bookmark,
   heading: Heading,
   paragraph: AlignLeft,

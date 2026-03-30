@@ -307,7 +307,7 @@ function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
     <div className="space-y-4">
       {/* Umbral */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Umbral de aprobación</Label>
+        <Label className="text-sm">Umbral de aprobación</Label>
         <div className="flex items-center gap-2">
           <Input
             type="number"

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,9 @@ const HIDE_REQUIRED: TipoBloque[] = [
 ];
 
 export default function InspectorFields({ bloque, onChange }: InspectorFieldsProps) {
+  const configNombre = useFormatoEditorStore((s) => s.config.nombre);
+  const setConfig = useFormatoEditorStore((s) => s.setConfig);
+
   return (
     <div className="space-y-4">
       {/* Label */}
@@ -36,9 +40,15 @@ export default function InspectorFields({ bloque, onChange }: InspectorFieldsPro
         <div className="space-y-1.5">
           <Label className="text-xs">{bloque.type === 'document_header' ? 'Nombre del formato/documento' : 'Etiqueta'}</Label>
           <Input
-            value={bloque.label}
-            onChange={(e) => onChange({ label: e.target.value })}
-            placeholder="Etiqueta del campo"
+            value={bloque.type === 'document_header' ? configNombre : bloque.label}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange({ label: val });
+              if (bloque.type === 'document_header') {
+                setConfig({ nombre: val });
+              }
+            }}
+            placeholder={bloque.type === 'document_header' ? 'Nombre del formato' : 'Etiqueta del campo'}
             className="h-9 text-sm"
           />
         </div>

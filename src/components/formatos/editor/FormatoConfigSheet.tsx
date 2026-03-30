@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
-  const { config, setConfig } = useFormatoEditorStore();
+  const { config, setConfig, items, updateBlock } = useFormatoEditorStore();
 
   const toggleTipoCurso = (key: TipoFormacion) => {
     setConfig({
@@ -52,7 +52,13 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
                 <Label>Nombre del formato</Label>
                 <Input
                   value={config.nombre}
-                  onChange={(e) => setConfig({ nombre: e.target.value })}
+                  onChange={(e) => {
+                    const nombre = e.target.value;
+                    setConfig({ nombre });
+                    // Sync to document_header block label
+                    const headerBlock = items.find((it) => it.type === 'document_header');
+                    if (headerBlock) updateBlock(headerBlock.id, { label: nombre });
+                  }}
                   placeholder="Ej: Registro de Asistencia"
                 />
               </div>
@@ -64,26 +70,6 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
                   placeholder="Descripción breve..."
                   className="min-h-[60px]"
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Código</Label>
-                  <Input
-                    value={config.codigo}
-                    onChange={(e) => setConfig({ codigo: e.target.value })}
-                    placeholder="FIH04-XXX"
-                    className="font-mono"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Versión</Label>
-                  <Input
-                    value={config.version}
-                    onChange={(e) => setConfig({ version: e.target.value })}
-                    placeholder="001"
-                    className="font-mono"
-                  />
-                </div>
               </div>
               <div className="space-y-1.5">
                 <Label>Categoría</Label>

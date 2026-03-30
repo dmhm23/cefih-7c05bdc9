@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -50,8 +50,25 @@ export default function FormatoEditorPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [savedOnce, setSavedOnce] = useState(false);
 
-  // Block navigation when there are unsaved changes
-  const blocker = useBlocker(store.isDirty);
+  // Pending navigation path when user tries to leave with unsaved changes
+  const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
+
+  // Intercept all internal link clicks when dirty
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      // Internal link — block and show dialog
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavPath(href);
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [store.isDirty]);
 
   // Native browser warning on tab close / reload
   useEffect(() => {
@@ -62,6 +79,18 @@ export default function FormatoEditorPage() {
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
+  }, [store.isDirty]);
+
+  // Intercept browser back/forward buttons via popstate
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handlePop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavPath('__back__');
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
   }, [store.isDirty]);
 
   // Load existing formato into store
@@ -222,13 +251,22 @@ export default function FormatoEditorPage() {
       )}
 
       <ConfirmDialog
-        open={blocker.state === 'blocked'}
-        onOpenChange={() => blocker.state === 'blocked' && blocker.reset?.()}
+        open={pendingNavPath !== null}
+        onOpenChange={(open) => { if (!open) setPendingNavPath(null); }}
         title="Cambios sin guardar"
         description="Tienes cambios sin guardar. Si sales ahora, se perderán."
         confirmText="Salir sin guardar"
         cancelText="Seguir editando"
-        onConfirm={() => blocker.state === 'blocked' && blocker.proceed?.()}
+        onConfirm={() => {
+          const path = pendingNavPath;
+          setPendingNavPath(null);
+          store.markClean();
+          if (path === '__back__') {
+            window.history.back();
+          } else if (path) {
+            navigate(path);
+          }
+        }}
         variant="destructive"
       />
     </div>

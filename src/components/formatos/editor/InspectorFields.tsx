@@ -633,7 +633,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
         <Label className="text-sm">Puntos del resumen</Label>
         {summaryItems.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1.5">
-            <span className="text-[10px] text-muted-foreground w-4 shrink-0">•</span>
+            <span className="text-xs text-muted-foreground w-4 shrink-0">•</span>
             <Input
               value={item}
               onChange={(e) => {

@@ -38,21 +38,19 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 ];
 
 function ScopeBadges({ formato }: { formato: FormatoFormacion }) {
-  if (formato.asignacionScope === "tipo_curso") {
+  if (formato.asignacionScope === "todos") {
     return (
-      <div className="flex flex-wrap gap-1">
-        {formato.tipoCursoKeys.map((k) => (
-          <Badge key={k} variant="outline" className="text-[10px] font-normal">
-            {resolveNivelCursoLabel(k)}
-          </Badge>
-        ))}
-      </div>
+      <Badge variant="secondary" className="text-[10px]">
+        Todos los niveles
+      </Badge>
     );
   }
   return (
-    <Badge variant="secondary" className="text-[10px]">
-      {formato.nivelFormacionIds.length} nivel(es)
-    </Badge>
+    <div className="flex flex-wrap gap-1">
+      <Badge variant="outline" className="text-[10px] font-normal">
+        {formato.nivelFormacionIds.length} nivel(es)
+      </Badge>
+    </div>
   );
 }
 

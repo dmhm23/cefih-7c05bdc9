@@ -382,7 +382,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
               placeholder="Texto de la pregunta..."
               className="min-h-[72px] text-sm resize-y break-words"
             />
-            <Label className="text-[10px] text-muted-foreground">Opciones (selecciona la correcta)</Label>
+            <Label className="text-xs text-muted-foreground">Opciones (selecciona la correcta)</Label>
             {opciones.map((op: string, oi: number) => (
               <div key={oi} className="flex items-start gap-1.5 min-w-0 max-w-full">
                 <button

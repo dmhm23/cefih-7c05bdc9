@@ -250,13 +250,22 @@ export default function FormatoEditorPage() {
       )}
 
       <ConfirmDialog
-        open={blocker.state === 'blocked'}
-        onOpenChange={() => blocker.state === 'blocked' && blocker.reset?.()}
+        open={pendingNavPath !== null}
+        onOpenChange={(open) => { if (!open) setPendingNavPath(null); }}
         title="Cambios sin guardar"
         description="Tienes cambios sin guardar. Si sales ahora, se perderán."
         confirmText="Salir sin guardar"
         cancelText="Seguir editando"
-        onConfirm={() => blocker.state === 'blocked' && blocker.proceed?.()}
+        onConfirm={() => {
+          const path = pendingNavPath;
+          setPendingNavPath(null);
+          store.markClean();
+          if (path === '__back__') {
+            window.history.back();
+          } else if (path) {
+            navigate(path);
+          }
+        }}
         variant="destructive"
       />
     </div>

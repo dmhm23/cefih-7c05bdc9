@@ -665,7 +665,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
           value={props.fullText || ''}
           onChange={(e) => updateProps({ fullText: e.target.value })}
           placeholder="Texto legal completo..."
-          className="min-h-[100px] text-xs"
+          className="min-h-[100px] text-sm"
         />
       </div>
     </div>

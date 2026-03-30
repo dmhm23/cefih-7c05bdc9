@@ -37,9 +37,15 @@ export default function InspectorFields({ bloque, onChange }: InspectorFieldsPro
         <div className="space-y-1.5">
           <Label className="text-xs">{bloque.type === 'document_header' ? 'Nombre del formato/documento' : 'Etiqueta'}</Label>
           <Input
-            value={bloque.label}
-            onChange={(e) => onChange({ label: e.target.value })}
-            placeholder="Etiqueta del campo"
+            value={bloque.type === 'document_header' ? useFormatoEditorStore.getState().config.nombre : bloque.label}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange({ label: val });
+              if (bloque.type === 'document_header') {
+                useFormatoEditorStore.getState().setConfig({ nombre: val });
+              }
+            }}
+            placeholder={bloque.type === 'document_header' ? 'Nombre del formato' : 'Etiqueta del campo'}
             className="h-9 text-sm"
           />
         </div>

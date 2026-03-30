@@ -226,6 +226,7 @@ let mockFormatos: FormatoFormacion[] = [
     visibleEnPortalEstudiante: false,
     activo: true,
     modoDiligenciamiento: 'automatico_sistema' as const,
+    esAutomatico: true,
     motorRender: 'bloques',
     categoria: 'asistencia',
     estado: 'activo',

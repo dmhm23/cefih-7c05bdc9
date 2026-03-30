@@ -96,7 +96,7 @@ export default function BlockCatalog() {
   };
 
   const SectionHeader = ({ title }: { title: string }) => (
-    <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+    <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
       {title}
     </div>
   );
@@ -111,7 +111,7 @@ export default function BlockCatalog() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar bloque..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-8 text-sm"
           />
         </div>
       </div>
@@ -121,13 +121,13 @@ export default function BlockCatalog() {
           {/* Toggle: Blocks vs Tokens */}
           <div className="flex border-b">
             <button
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${!showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${!showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => setShowTokens(false)}
             >
               Bloques
             </button>
             <button
-              className={`flex-1 py-2 text-xs font-medium transition-colors ${showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`flex-1 py-2 text-sm font-medium transition-colors ${showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}
               onClick={() => setShowTokens(true)}
             >
               Tokens
@@ -150,9 +150,9 @@ export default function BlockCatalog() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, item)}
                         onClick={() => handleClick(item)}
-                        className="flex items-center justify-center gap-1.5 border border-primary/20 bg-primary/5 text-primary rounded-md py-2 text-xs font-medium cursor-grab hover:bg-primary/10 hover:border-primary/30 transition-colors mb-1"
+                        className="flex items-center justify-center gap-1.5 border border-primary/20 bg-primary/5 text-primary rounded-md py-2 text-sm font-medium cursor-grab hover:bg-primary/10 hover:border-primary/30 transition-colors mb-1"
                       >
-                        <item.icon size={14} /> {item.label}
+                        <item.icon size={16} /> {item.label}
                       </div>
                     ))}
                   </div>
@@ -169,9 +169,9 @@ export default function BlockCatalog() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, item)}
                         onClick={() => handleClick(item)}
-                        className="border rounded-md py-2 px-1 cursor-grab bg-muted/30 text-center text-[11px] text-muted-foreground hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-colors flex flex-col items-center gap-1"
+                        className="border rounded-md py-2 px-1 cursor-grab bg-muted/30 text-center text-sm text-muted-foreground hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-colors flex flex-col items-center gap-1"
                       >
-                        <item.icon size={14} />
+                        <item.icon size={16} />
                         {item.label}
                       </div>
                     ))}
@@ -189,9 +189,9 @@ export default function BlockCatalog() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, item)}
                         onClick={() => handleClick(item)}
-                        className="border rounded-md py-2 px-1 cursor-grab bg-muted/30 text-center text-[11px] text-muted-foreground hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-colors flex flex-col items-center gap-1"
+                        className="border rounded-md py-2 px-1 cursor-grab bg-muted/30 text-center text-sm text-muted-foreground hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-colors flex flex-col items-center gap-1"
                       >
-                        <item.icon size={14} />
+                        <item.icon size={16} />
                         {item.label}
                       </div>
                     ))}

@@ -42,7 +42,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar token..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-8 text-sm"
           />
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
               <button
                 type="button"
                 onClick={() => toggleCategory(cat.name)}
-                className="flex items-center gap-1.5 w-full text-left py-1.5 px-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 w-full text-left py-1.5 px-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 {expandedCategories.has(cat.name) ? (
                   <ChevronDown className="h-3 w-3" />
@@ -62,7 +62,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
                   <ChevronRight className="h-3 w-3" />
                 )}
                 {cat.name}
-                <Badge variant="secondary" className="ml-auto text-[9px] h-4 px-1">
+                <Badge variant="secondary" className="ml-auto text-xs h-5 px-1.5">
                   {cat.tokens.length}
                 </Badge>
               </button>
@@ -90,10 +90,10 @@ function TokenItem({ token, onInsert }: { token: TokenDefinition; onInsert: () =
       className="w-full flex flex-col gap-0.5 px-2 py-1.5 rounded text-left hover:bg-muted/60 transition-colors group"
       title={`Insertar {{${token.key}}}`}
     >
-      <span className="text-xs font-medium group-hover:text-primary transition-colors">
+      <span className="text-sm font-medium group-hover:text-primary transition-colors">
         {token.label}
       </span>
-      <code className="text-[10px] text-muted-foreground font-mono">
+      <code className="text-xs text-muted-foreground font-mono">
         {`{{${token.key}}}`}
       </code>
     </button>

@@ -130,7 +130,6 @@ export default function NivelFormPage() {
 
       const payload = {
         nombreNivel: data.nombreNivel,
-        duracionDias: data.duracionDias,
         duracionHoras: data.duracionHoras,
         documentosRequeridos: data.documentosRequeridos,
         camposAdicionales,

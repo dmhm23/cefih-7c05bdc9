@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useFormato, useUpdateFormato, useCreateFormato, useSaveVersion } from '@/hooks/useFormatosFormacion';
@@ -48,6 +49,20 @@ export default function FormatoEditorPage() {
   const [showConfig, setShowConfig] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [savedOnce, setSavedOnce] = useState(false);
+
+  // Block navigation when there are unsaved changes
+  const blocker = useBlocker(store.isDirty);
+
+  // Native browser warning on tab close / reload
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [store.isDirty]);
 
   // Load existing formato into store
   useEffect(() => {
@@ -205,6 +220,17 @@ export default function FormatoEditorPage() {
           formatoId={id}
         />
       )}
+
+      <ConfirmDialog
+        open={blocker.state === 'blocked'}
+        onOpenChange={() => blocker.state === 'blocked' && blocker.reset?.()}
+        title="Cambios sin guardar"
+        description="Tienes cambios sin guardar. Si sales ahora, se perderán."
+        confirmText="Salir sin guardar"
+        cancelText="Seguir editando"
+        onConfirm={() => blocker.state === 'blocked' && blocker.proceed?.()}
+        variant="destructive"
+      />
     </div>
   );
 }

@@ -1,40 +1,56 @@
 
 
-## Plan: Confirmar antes de salir del editor con cambios sin guardar
+## Plan: Aumentar tamaño de texto en el panel de Propiedades (Inspector)
 
-### Enfoque
+### Problema
 
-Usar dos mecanismos complementarios:
+Los textos en el inspector usan `text-xs` (12px) y `text-[10px]` (10px), lo que dificulta la lectura — especialmente en los bloques de evaluación, encuesta, consentimiento de salud y autorización de datos.
 
-1. **Navegacion interna (React Router)**: Interceptar con `useBlocker` de react-router-dom v6. Cuando `isDirty` es `true`, bloquear la navegacion y mostrar un `ConfirmDialog` (ya existe en `src/components/shared/ConfirmDialog.tsx`) preguntando si desea guardar o descartar.
+### Escala propuesta
 
-2. **Cierre de pestana / recarga**: Usar el evento `beforeunload` del navegador para mostrar el dialogo nativo del browser cuando `isDirty` es `true`.
+| Actual | Nuevo | Contexto |
+|---|---|---|
+| `text-[10px]` | `text-xs` (12px) | Labels secundarios, numeración, badges |
+| `text-xs` (12px) | `text-sm` (14px) | Labels, preguntas, opciones, textareas, inputs, info text |
+| `h-6` / `h-7` | `h-8` / `h-9` | Inputs y botones pequeños |
 
-### Cambios
+### Cambios en `src/components/formatos/editor/InspectorFields.tsx`
 
-**`src/pages/formatos/FormatoEditorPage.tsx`**
+**EvaluationQuizInspector** (líneas 306-347):
+- Labels `text-xs` → `text-sm`
+- Info box `text-xs` → `text-sm`
+- **QuestionEditor** (líneas 350-428):
+  - Trigger text `text-xs` → `text-sm`
+  - Textarea preguntas `text-xs` → `text-sm`
+  - Label opciones `text-[10px]` → `text-xs`
+  - Textarea opciones `text-xs` → `text-sm`
+  - Botones `h-7` → `h-8`
 
-- Importar `useBlocker` de `react-router-dom` y `ConfirmDialog` de `@/components/shared/ConfirmDialog`
-- Crear blocker: `const blocker = useBlocker(store.isDirty)`
-- Renderizar `ConfirmDialog` condicionado a `blocker.state === 'blocked'`:
-  - Titulo: "Cambios sin guardar"
-  - Descripcion: "Tienes cambios sin guardar. Si sales ahora, se perderan."
-  - Boton confirmar: "Salir sin guardar" (variant destructive) → `blocker.proceed()`
-  - Boton cancelar: "Seguir editando" → `blocker.reset()`
-- Agregar `useEffect` para `beforeunload`:
-  ```
-  useEffect(() => {
-    if (!store.isDirty) return;
-    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [store.isDirty]);
-  ```
-- Tras guardar exitosamente (`handleSave`), `markClean()` ya se llama, lo que desactivara ambos mecanismos automaticamente
+**SatisfactionSurveyInspector** (líneas 435-548):
+- Info text `text-xs` → `text-sm`
+- Labels `text-xs` → `text-sm`
+- Inputs escala `text-xs` → `text-sm`, `h-7` → `h-8`
+- Numeración `text-[10px]` → `text-xs`
+- Textareas `text-xs` → `text-sm`
+
+**HealthConsentInspector** (líneas 555-615):
+- Labels `text-xs` → `text-sm`
+- Textareas `text-xs` → `text-sm`
+- Label "Detalle" `text-[10px]` → `text-xs`
+- Input condicional `text-[10px]` → `text-xs`, `h-6` → `h-8`
+
+**DataAuthorizationInspector** (líneas 622-672):
+- Labels `text-xs` → `text-sm`
+- Bullets `text-[10px]` → `text-xs`
+- Inputs `text-xs` → `text-sm`, `h-7` → `h-8`
+- Textarea `text-xs` → `text-sm`
+
+**Attendance by day** (línea 269):
+- `text-xs` → `text-sm`
 
 ### Archivo afectado
 
 | Archivo | Cambio |
 |---|---|
-| `src/pages/formatos/FormatoEditorPage.tsx` | `useBlocker` + `ConfirmDialog` + `beforeunload` listener |
+| `src/components/formatos/editor/InspectorFields.tsx` | Escalar tamaños de fuente un nivel arriba en inspectores especializados |
 

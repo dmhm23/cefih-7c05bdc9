@@ -933,7 +933,6 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf2',
     nombreNivel: 'Jefe de Área',
-    duracionDias: 1,
     duracionHoras: 8,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {

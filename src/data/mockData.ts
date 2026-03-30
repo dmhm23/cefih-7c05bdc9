@@ -951,7 +951,7 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf3',
     nombreNivel: 'Trabajador Autorizado',
-    duracionDias: 4,
+    
     duracionHoras: 32,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {

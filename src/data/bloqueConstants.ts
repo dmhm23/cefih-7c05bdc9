@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export const BLOQUE_TYPE_LABELS: Partial<Record<TipoBloque, string>> = {
+  document_header: "Encabezado institucional",
   section_title: "Título de sección",
   heading: "Encabezado",
   paragraph: "Párrafo",

@@ -329,7 +329,7 @@ function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
 
       {/* Preguntas */}
       <div className="space-y-2">
-        <Label className="text-xs">Preguntas</Label>
+        <Label className="text-sm">Preguntas</Label>
         {preguntas.map((p: any, idx: number) => (
           <QuestionEditor
             key={p.id}

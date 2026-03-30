@@ -1,23 +1,40 @@
 
 
-## Plan: Ajustes al inspector del bloque `document_header`
+## Plan: Confirmar antes de salir del editor con cambios sin guardar
+
+### Enfoque
+
+Usar dos mecanismos complementarios:
+
+1. **Navegacion interna (React Router)**: Interceptar con `useBlocker` de react-router-dom v6. Cuando `isDirty` es `true`, bloquear la navegacion y mostrar un `ConfirmDialog` (ya existe en `src/components/shared/ConfirmDialog.tsx`) preguntando si desea guardar o descartar.
+
+2. **Cierre de pestana / recarga**: Usar el evento `beforeunload` del navegador para mostrar el dialogo nativo del browser cuando `isDirty` es `true`.
 
 ### Cambios
 
-**1. `src/components/formatos/editor/InspectorFields.tsx` — DocumentHeaderInspector**
+**`src/pages/formatos/FormatoEditorPage.tsx`**
 
-- Renombrar "Etiqueta" → "Nombre del formato/documento" solo para `document_header`. En `InspectorFields` (línea 37), condicionar el label: si `bloque.type === 'document_header'` mostrar "Nombre del formato/documento", de lo contrario mantener "Etiqueta".
-- Reordenar campos: mover "Color de bordes" (actualmente líneas 757-773) después de "Código" y "Versión" (líneas 775-795). El orden final será: Logo → Empresa → SGI → Subsistema → Fechas → Código/Versión → Color de bordes.
-- Logo: ya funciona correctamente con carga y preview. Si `logoUrl` tiene valor (ya sea del default del store o cargado por el usuario), se muestra la imagen con botón de eliminar. Si está vacío, se muestra el dropzone. No requiere cambio funcional, solo confirmar que el store default ya trae un `logoUrl` válido (actualmente es `''`). Si se desea que un logo previamente cargado persista, eso depende de la persistencia del formato — no del inspector.
+- Importar `useBlocker` de `react-router-dom` y `ConfirmDialog` de `@/components/shared/ConfirmDialog`
+- Crear blocker: `const blocker = useBlocker(store.isDirty)`
+- Renderizar `ConfirmDialog` condicionado a `blocker.state === 'blocked'`:
+  - Titulo: "Cambios sin guardar"
+  - Descripcion: "Tienes cambios sin guardar. Si sales ahora, se perderan."
+  - Boton confirmar: "Salir sin guardar" (variant destructive) → `blocker.proceed()`
+  - Boton cancelar: "Seguir editando" → `blocker.reset()`
+- Agregar `useEffect` para `beforeunload`:
+  ```
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [store.isDirty]);
+  ```
+- Tras guardar exitosamente (`handleSave`), `markClean()` ya se llama, lo que desactivara ambos mecanismos automaticamente
 
-**2. `src/components/formatos/editor/BlockInspector.tsx` — Botón "Config"**
-
-- El botón "Config" abre `FormatoConfigSheet`, que contiene configuración general del formato (nombre, categoría, alcance, visibilidad, firmas). Esta configuración NO se duplica con las propiedades del encabezado — son cosas distintas. **Se conserva el botón** pero se renombra a "Ajustes del formato" para mayor claridad y evitar confusión con las propiedades del bloque.
-
-### Archivos afectados
+### Archivo afectado
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/formatos/editor/InspectorFields.tsx` | Condicionar label "Etiqueta"→"Nombre del formato/documento" para `document_header`; reordenar campos en `DocumentHeaderInspector` |
-| `src/components/formatos/editor/BlockInspector.tsx` | Renombrar botón "Config" → "Ajustes del formato" |
+| `src/pages/formatos/FormatoEditorPage.tsx` | `useBlocker` + `ConfirmDialog` + `beforeunload` listener |
 

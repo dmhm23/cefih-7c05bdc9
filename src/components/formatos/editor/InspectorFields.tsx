@@ -322,7 +322,7 @@ function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
 
       {/* Info */}
       <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-        <p className="text-xs text-amber-800">
+        <p className="text-sm text-amber-800">
           Se aprueba con {props.umbralAprobacion ?? 70}% — {preguntas.length} pregunta{preguntas.length !== 1 ? 's' : ''} configurada{preguntas.length !== 1 ? 's' : ''}
         </p>
       </div>

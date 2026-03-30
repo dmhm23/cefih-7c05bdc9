@@ -487,7 +487,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => {
             const n = escalaOpciones.length + 1;
             updateProps({ escalaOpciones: [...escalaOpciones, { value: String(n), label: `Opción ${n}` }] });

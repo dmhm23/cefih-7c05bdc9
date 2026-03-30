@@ -90,9 +90,7 @@ export default function NivelDetallePage() {
                 <div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="h-3 w-3" /> Duración</p>
                   <p className="font-medium">
-                    {nivel.duracionDias ? `${nivel.duracionDias} día${nivel.duracionDias > 1 ? 's' : ''}` : '—'}
-                    {nivel.duracionDias && nivel.duracionHoras ? ' / ' : ''}
-                    {nivel.duracionHoras ? `${nivel.duracionHoras} horas` : ''}
+                    {nivel.duracionHoras ? `${nivel.duracionHoras} horas` : '—'}
                   </p>
                 </div>
                 <div>

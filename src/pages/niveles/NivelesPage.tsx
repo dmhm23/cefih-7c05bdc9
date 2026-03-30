@@ -74,11 +74,8 @@ export default function NivelesPage() {
       key: "duracion",
       header: "Duración",
       render: (n) => {
-        if (!n.duracionDias && !n.duracionHoras) return <span className="text-muted-foreground">—</span>;
-        const parts: string[] = [];
-        if (n.duracionDias) parts.push(`${n.duracionDias} día${n.duracionDias > 1 ? 's' : ''}`);
-        if (n.duracionHoras) parts.push(`${n.duracionHoras} h`);
-        return parts.join(' / ');
+        if (!n.duracionHoras) return <span className="text-muted-foreground">—</span>;
+        return `${n.duracionHoras} h`;
       },
     },
     {

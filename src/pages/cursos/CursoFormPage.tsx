@@ -167,7 +167,6 @@ export default function CursoFormPage() {
     form.setValue("tipoFormacion", value);
     const nivel = niveles.find((n) => n.id === value);
     if (nivel) {
-      if (nivel.duracionDias) form.setValue("duracionDias", nivel.duracionDias);
       if (nivel.duracionHoras) form.setValue("horasTotales", nivel.duracionHoras);
 
       const campos = nivel.camposAdicionales || [];

@@ -48,13 +48,17 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
 
   const handleFechaChange = (campo: "fechaInicio" | "fechaFin", nuevoValor: string) => {
     onFieldChange(campo, nuevoValor);
-    const inicio = campo === "fechaInicio" ? nuevoValor : (formData.fechaInicio ?? curso.fechaInicio);
-    const fin    = campo === "fechaFin"    ? nuevoValor : (formData.fechaFin    ?? curso.fechaFin);
+  };
+
+  const duracionDiasCalculada = useMemo(() => {
+    const inicio = formData.fechaInicio ?? curso.fechaInicio;
+    const fin = formData.fechaFin ?? curso.fechaFin;
     if (inicio && fin) {
       const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
-      if (dias >= 1) onFieldChange("duracionDias", dias);
+      return dias >= 0 ? dias : 0;
     }
-  };
+    return curso.duracionDias ?? 0;
+  }, [formData.fechaInicio, formData.fechaFin, curso.fechaInicio, curso.fechaFin, curso.duracionDias]);
 
   const getValue = (field: keyof Curso): string => {
     const val = (formData[field as keyof CursoFormData] ?? curso[field]) as string | number | undefined;

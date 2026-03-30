@@ -380,7 +380,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
               value={question.texto}
               onChange={(e) => onUpdate({ texto: e.target.value })}
               placeholder="Texto de la pregunta..."
-              className="min-h-[72px] text-xs resize-y break-words"
+              className="min-h-[72px] text-sm resize-y break-words"
             />
             <Label className="text-[10px] text-muted-foreground">Opciones (selecciona la correcta)</Label>
             {opciones.map((op: string, oi: number) => (

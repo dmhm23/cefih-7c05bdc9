@@ -24,7 +24,7 @@ export default function BlockInspector({ onOpenConfig }: BlockInspectorProps) {
         </span>
         <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs" onClick={onOpenConfig}>
           <Settings className="h-3.5 w-3.5" />
-          Config
+          Ajustes del formato
         </Button>
       </div>
 

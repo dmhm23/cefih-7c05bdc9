@@ -754,24 +754,6 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       </div>
 
-      {/* Color de borde */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">Color de bordes</Label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={props.borderColor || '#9ca3af'}
-            onChange={(e) => updateProps({ borderColor: e.target.value })}
-            className="h-8 w-10 rounded border cursor-pointer"
-          />
-          <Input
-            value={props.borderColor || '#9ca3af'}
-            onChange={(e) => updateProps({ borderColor: e.target.value })}
-            className="h-9 text-sm font-mono flex-1"
-          />
-        </div>
-      </div>
-
       {/* Código y versión */}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-1.5">
@@ -790,6 +772,24 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
             onChange={(e) => updateProps({ mostrarVersion: !!e.target.value, version: e.target.value })}
             placeholder="Ej: 001"
             className="h-9 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Color de borde */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Color de bordes</Label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={props.borderColor || '#9ca3af'}
+            onChange={(e) => updateProps({ borderColor: e.target.value })}
+            className="h-8 w-10 rounded border cursor-pointer"
+          />
+          <Input
+            value={props.borderColor || '#9ca3af'}
+            onChange={(e) => updateProps({ borderColor: e.target.value })}
+            className="h-9 text-sm font-mono flex-1"
           />
         </div>
       </div>

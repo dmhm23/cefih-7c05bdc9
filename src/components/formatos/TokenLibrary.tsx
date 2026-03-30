@@ -42,7 +42,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar token..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-8 text-sm"
           />
         </div>
       </div>

@@ -18,7 +18,7 @@ interface ConsentimientoData {
 interface ConsentimientoSaludProps {
   data: ConsentimientoData;
   onChange: (field: string, value: unknown) => void;
-  genero?: 'M' | 'F';
+  genero?: 'M' | 'F' | 'O';
   readOnly?: boolean;
 }
 

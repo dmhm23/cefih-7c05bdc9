@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
-  const { config, setConfig } = useFormatoEditorStore();
+  const { config, setConfig, items, updateBlock } = useFormatoEditorStore();
 
   const toggleTipoCurso = (key: TipoFormacion) => {
     setConfig({

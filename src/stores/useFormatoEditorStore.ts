@@ -94,6 +94,8 @@ const BLOCK_DEFAULTS: Partial<Record<TipoBloque, Record<string, unknown>>> = {
     subsistema: 'FORMACIÓN',
     fechaCreacion: '01/01/2025',
     fechaEdicion: '01/01/2025',
+    codigo: '',
+    version: '',
     mostrarCodigo: true,
     mostrarVersion: true,
     mostrarFechas: true,

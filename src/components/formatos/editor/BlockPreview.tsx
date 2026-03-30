@@ -342,18 +342,18 @@ function DocumentHeaderPreview({ block }: { block: BloqueDocumentHeader }) {
           >
             {block.label || 'NOMBRE DEL DOCUMENTO'}
           </div>
-          {(p.mostrarCodigo || p.mostrarVersion) && (
+          {(p.codigo || p.version) && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderTop: border }}>
-              {p.mostrarCodigo && (
+              {p.codigo && (
                 <div style={{ padding: '4px 8px', borderRight: border, display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#6b7280' }}>Código:</span>
-                  <span style={{ fontWeight: 600 }}>---</span>
+                  <span style={{ fontWeight: 600 }}>{p.codigo}</span>
                 </div>
               )}
-              {p.mostrarVersion && (
+              {p.version && (
                 <div style={{ padding: '4px 8px', display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '9px', textTransform: 'uppercase', color: '#6b7280' }}>Versión:</span>
-                  <span style={{ fontWeight: 600 }}>---</span>
+                  <span style={{ fontWeight: 600 }}>{p.version}</span>
                 </div>
               )}
             </div>

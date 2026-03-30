@@ -772,19 +772,25 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       </div>
 
-      {/* Toggles */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Mostrar código</Label>
-          <Switch checked={props.mostrarCodigo ?? true} onCheckedChange={(v) => updateProps({ mostrarCodigo: v })} />
+      {/* Código y versión */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Código</Label>
+          <Input
+            value={props.mostrarCodigo === false ? '' : (props.codigo || '')}
+            onChange={(e) => updateProps({ mostrarCodigo: !!e.target.value, codigo: e.target.value })}
+            placeholder="Ej: FIH04-013"
+            className="h-9 text-sm"
+          />
         </div>
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Mostrar versión</Label>
-          <Switch checked={props.mostrarVersion ?? true} onCheckedChange={(v) => updateProps({ mostrarVersion: v })} />
-        </div>
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Mostrar fechas</Label>
-          <Switch checked={props.mostrarFechas ?? true} onCheckedChange={(v) => updateProps({ mostrarFechas: v })} />
+        <div className="space-y-1.5">
+          <Label className="text-xs">Versión</Label>
+          <Input
+            value={props.mostrarVersion === false ? '' : (props.version || '')}
+            onChange={(e) => updateProps({ mostrarVersion: !!e.target.value, version: e.target.value })}
+            placeholder="Ej: 001"
+            className="h-9 text-sm"
+          />
         </div>
       </div>
     </div>

@@ -54,7 +54,7 @@ export default function TokenLibrary({ onInsertToken, className }: TokenLibraryP
               <button
                 type="button"
                 onClick={() => toggleCategory(cat.name)}
-                className="flex items-center gap-1.5 w-full text-left py-1.5 px-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 w-full text-left py-1.5 px-1 text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 {expandedCategories.has(cat.name) ? (
                   <ChevronDown className="h-3 w-3" />

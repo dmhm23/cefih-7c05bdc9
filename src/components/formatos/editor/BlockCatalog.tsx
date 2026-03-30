@@ -3,7 +3,7 @@ import {
   Columns2, Type, AlignLeft, Hash, Mail, Calendar, ChevronDown,
   CheckSquare, CircleDot, Heading, Minus, PenTool, Paperclip,
   Zap, Heart, ShieldCheck, ClipboardCheck, SmilePlus, CalendarCheck,
-  Bookmark, Search,
+  Bookmark, Search, LayoutGrid,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';

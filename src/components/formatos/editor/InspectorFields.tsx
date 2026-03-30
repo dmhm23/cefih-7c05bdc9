@@ -258,6 +258,9 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'attendance_by_day':
       return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;
 
+    case 'document_header':
+      return <DocumentHeaderInspector bloque={bloque} onChange={onChange} />;
+
     default:
       return null;
   }

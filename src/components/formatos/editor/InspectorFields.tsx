@@ -660,7 +660,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
 
       {/* Full text */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Texto completo de autorización</Label>
+        <Label className="text-sm">Texto completo de autorización</Label>
         <Textarea
           value={props.fullText || ''}
           onChange={(e) => updateProps({ fullText: e.target.value })}

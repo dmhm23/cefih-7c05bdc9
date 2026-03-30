@@ -540,7 +540,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           <Textarea
             value={preguntaSiNo}
             onChange={(e) => updateProps({ preguntaSiNo: e.target.value })}
-            className="min-h-[60px] text-xs resize-y"
+            className="min-h-[60px] text-sm resize-y"
           />
         )}
       </div>

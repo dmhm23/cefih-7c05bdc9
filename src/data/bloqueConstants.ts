@@ -19,6 +19,7 @@ import {
   Mail,
   Minus,
   Paperclip,
+  LayoutGrid,
   type LucideIcon,
 } from 'lucide-react';
 

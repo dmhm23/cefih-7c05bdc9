@@ -90,7 +90,7 @@ function TokenItem({ token, onInsert }: { token: TokenDefinition; onInsert: () =
       className="w-full flex flex-col gap-0.5 px-2 py-1.5 rounded text-left hover:bg-muted/60 transition-colors group"
       title={`Insertar {{${token.key}}}`}
     >
-      <span className="text-xs font-medium group-hover:text-primary transition-colors">
+      <span className="text-sm font-medium group-hover:text-primary transition-colors">
         {token.label}
       </span>
       <code className="text-[10px] text-muted-foreground font-mono">

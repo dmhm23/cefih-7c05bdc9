@@ -33,12 +33,13 @@ interface Props {
 
 export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
   const { config, setConfig, items, updateBlock } = useFormatoEditorStore();
+  const { data: niveles = [] } = useNivelesFormacion();
 
-  const toggleTipoCurso = (key: TipoFormacion) => {
+  const toggleNivel = (id: string) => {
     setConfig({
-      tipoCursoKeys: config.tipoCursoKeys.includes(key)
-        ? config.tipoCursoKeys.filter((k) => k !== key)
-        : [...config.tipoCursoKeys, key],
+      nivelFormacionIds: config.nivelFormacionIds.includes(id)
+        ? config.nivelFormacionIds.filter((n) => n !== id)
+        : [...config.nivelFormacionIds, id],
     });
   };
 

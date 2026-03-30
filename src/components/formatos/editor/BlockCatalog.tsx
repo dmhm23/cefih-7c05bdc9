@@ -24,6 +24,7 @@ interface PaletteItem {
 const PALETTE: PaletteItem[] = [
   // Layout
   { type: 'row2', label: '2 columnas', icon: Columns2, category: 'layout' },
+  { type: 'document_header', label: 'Encabezado', icon: LayoutGrid, category: 'layout' },
   // Fields
   { type: 'section_title', label: 'Título sección', icon: Bookmark, category: 'fields' },
   { type: 'heading', label: 'Encabezado', icon: Heading, category: 'fields' },

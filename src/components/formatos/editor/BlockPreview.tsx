@@ -145,6 +145,9 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
     case 'data_authorization':
       return <DataAuthorizationPreview block={block as BloqueDataAuthorization} />;
 
+    case 'document_header':
+      return <DocumentHeaderPreview block={block as BloqueDocumentHeader} />;
+
     case 'attendance_by_day':
       return (
         <div className="border rounded-lg p-2.5 bg-muted/20">

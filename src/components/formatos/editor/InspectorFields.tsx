@@ -596,7 +596,7 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
                 value={q.conditionalOn || ''}
                 onChange={(e) => updateQuestion(idx, { conditionalOn: e.target.value })}
                 placeholder="Condicional (ID)"
-                className="h-6 text-[10px] w-28"
+                className="h-8 text-xs w-28"
               />
             )}
           </div>

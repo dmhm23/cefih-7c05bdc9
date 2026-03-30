@@ -247,20 +247,156 @@ function renderBloque(bloque: Bloque): React.ReactNode {
         </div>
       );
 
-    case "health_consent":
-    case "data_authorization":
-    case "evaluation_quiz":
-    case "satisfaction_survey":
+    case "evaluation_quiz": {
+      const quizProps = (bloque as any).props || {};
+      const preguntas = quizProps.preguntas || [];
+      const umbral = quizProps.umbralAprobacion || 70;
       return (
-        <div style={{ gridColumn: "span 2" }} className="border rounded-lg p-3 bg-muted/20 mt-2">
-          <Badge variant="secondary" className="text-[10px]">
-            {BLOQUE_TYPE_LABELS[bloque.type]}
-          </Badge>
-          <p className="text-xs text-muted-foreground mt-1">
-            Bloque complejo — se renderiza con su componente especializado
-          </p>
+        <div style={{ gridColumn: "span 2" }} className="mt-3">
+          <div className="section-title flex items-center gap-2 border-b border-border pb-1 mb-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.1em]">
+              {bloque.label || "Evaluación de Conocimientos"}
+            </h2>
+            <Badge variant="secondary" className="text-[9px]">Umbral: {umbral}%</Badge>
+          </div>
+          {preguntas.length > 0 ? (
+            <div className="space-y-3">
+              {preguntas.map((p: any, idx: number) => (
+                <div key={p.id ?? idx} className="border rounded p-2">
+                  <p className="text-xs font-semibold mb-1">{idx + 1}. {p.texto || "Pregunta sin texto"}</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(p.opciones || []).map((opt: string, oi: number) => (
+                      <div key={oi} className="flex items-center gap-1.5">
+                        <div className="h-3 w-3 rounded-full border border-muted-foreground/40 shrink-0" />
+                        <span className="text-xs">{opt || `Opción ${oi + 1}`}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Sin preguntas configuradas</p>
+          )}
         </div>
       );
+    }
+
+    case "satisfaction_survey": {
+      const surveyProps = (bloque as any).props || {};
+      const escalaPreguntas = surveyProps.escalaPreguntas || [];
+      const escalaOpciones = surveyProps.escalaOpciones || [];
+      const preguntaSiNo = surveyProps.preguntaSiNo;
+      return (
+        <div style={{ gridColumn: "span 2" }} className="mt-3">
+          <div className="section-title flex items-center gap-2 border-b border-border pb-1 mb-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.1em]">
+              {bloque.label || "Encuesta de Satisfacción"}
+            </h2>
+          </div>
+          {escalaPreguntas.length > 0 ? (
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-1 px-2 font-semibold">Aspecto a evaluar</th>
+                  {escalaOpciones.map((opt: any) => (
+                    <th key={opt.value} className="text-center py-1 px-2 font-semibold text-[10px]">{opt.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {escalaPreguntas.map((pregunta: string, idx: number) => (
+                  <tr key={idx} className="border-b border-border/50">
+                    <td className="py-1.5 px-2">{pregunta || `Pregunta ${idx + 1}`}</td>
+                    {escalaOpciones.map((opt: any) => (
+                      <td key={opt.value} className="text-center py-1.5 px-2">
+                        <div className="h-3 w-3 rounded-full border border-muted-foreground/40 mx-auto" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Sin preguntas configuradas</p>
+          )}
+          {preguntaSiNo && (
+            <div className="mt-3 border rounded p-2">
+              <p className="text-xs font-medium">{preguntaSiNo}</p>
+              <div className="flex gap-4 mt-1">
+                <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/40" /><span className="text-xs">Sí</span></div>
+                <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/40" /><span className="text-xs">No</span></div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    case "health_consent": {
+      const hcProps = (bloque as any).props || {};
+      const questions = hcProps.questions || [];
+      return (
+        <div style={{ gridColumn: "span 2" }} className="mt-3">
+          <div className="section-title flex items-center gap-2 border-b border-border pb-1 mb-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.1em]">
+              {bloque.label || "Consentimiento de Salud"}
+            </h2>
+          </div>
+          {questions.length > 0 ? (
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-1 px-2 font-semibold">Pregunta</th>
+                  <th className="text-center py-1 px-2 font-semibold w-12">Sí</th>
+                  <th className="text-center py-1 px-2 font-semibold w-12">No</th>
+                  <th className="text-left py-1 px-2 font-semibold">Detalle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {questions.map((q: any, idx: number) => (
+                  <tr key={q.id ?? idx} className="border-b border-border/50">
+                    <td className="py-1.5 px-2">{q.label || `Pregunta ${idx + 1}`}</td>
+                    <td className="text-center py-1.5 px-2"><div className="h-3 w-3 rounded-full border border-muted-foreground/40 mx-auto" /></td>
+                    <td className="text-center py-1.5 px-2"><div className="h-3 w-3 rounded-full border border-muted-foreground/40 mx-auto" /></td>
+                    <td className="py-1.5 px-2">{q.hasDetail ? <span className="text-muted-foreground italic">_______________</span> : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">Sin preguntas configuradas</p>
+          )}
+        </div>
+      );
+    }
+
+    case "data_authorization": {
+      const daProps = (bloque as any).props || {};
+      const items = daProps.summaryItems || [];
+      const fullText = daProps.fullText;
+      return (
+        <div style={{ gridColumn: "span 2" }} className="mt-3">
+          <div className="section-title flex items-center gap-2 border-b border-border pb-1 mb-3">
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.1em]">
+              {bloque.label || "Autorización de Datos"}
+            </h2>
+          </div>
+          {fullText && <p className="text-xs leading-relaxed text-justify mb-2">{fullText}</p>}
+          {items.length > 0 && (
+            <ul className="list-disc list-inside space-y-0.5">
+              {items.map((item: string, idx: number) => (
+                <li key={idx} className="text-xs">{item}</li>
+              ))}
+            </ul>
+          )}
+          <div className="flex gap-4 mt-2">
+            <div className="flex items-center gap-1.5"><div className="h-3.5 w-3.5 border rounded bg-foreground flex items-center justify-center"><svg className="h-2.5 w-2.5 text-background" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg></div><span className="text-xs">Autorizo</span></div>
+            <div className="flex items-center gap-1.5"><div className="h-3.5 w-3.5 border rounded" /><span className="text-xs">No autorizo</span></div>
+          </div>
+        </div>
+      );
+    }
 
     case "document_header": {
       const hp = (bloque as any).props || {};

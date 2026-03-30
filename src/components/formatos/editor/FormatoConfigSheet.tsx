@@ -52,7 +52,13 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
                 <Label>Nombre del formato</Label>
                 <Input
                   value={config.nombre}
-                  onChange={(e) => setConfig({ nombre: e.target.value })}
+                  onChange={(e) => {
+                    const nombre = e.target.value;
+                    setConfig({ nombre });
+                    // Sync to document_header block label
+                    const headerBlock = items.find((it) => it.type === 'document_header');
+                    if (headerBlock) updateBlock(headerBlock.id, { label: nombre });
+                  }}
                   placeholder="Ej: Registro de Asistencia"
                 />
               </div>

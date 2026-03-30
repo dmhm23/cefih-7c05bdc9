@@ -76,6 +76,7 @@ export const BLOQUE_ICONS: Record<string, LucideIcon> = {
 };
 
 export const BLOCK_PALETTE: { type: TipoBloque; label: string }[] = [
+  { type: "document_header", label: "Encabezado institucional" },
   { type: "section_title", label: "Título de sección" },
   { type: "heading", label: "Encabezado" },
   { type: "paragraph", label: "Párrafo" },

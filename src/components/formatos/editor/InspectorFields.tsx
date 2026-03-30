@@ -34,7 +34,7 @@ export default function InspectorFields({ bloque, onChange }: InspectorFieldsPro
       {/* Label */}
       {bloque.type !== 'divider' && (
         <div className="space-y-1.5">
-          <Label className="text-xs">Etiqueta</Label>
+          <Label className="text-xs">{bloque.type === 'document_header' ? 'Nombre del formato/documento' : 'Etiqueta'}</Label>
           <Input
             value={bloque.label}
             onChange={(e) => onChange({ label: e.target.value })}

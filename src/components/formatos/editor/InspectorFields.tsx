@@ -266,7 +266,7 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
       return <DataAuthorizationInspector bloque={bloque} onChange={onChange} />;
 
     case 'attendance_by_day':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;
+      return <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;
 
     case 'document_header':
       return <DocumentHeaderInspector bloque={bloque} onChange={onChange} />;
@@ -307,7 +307,7 @@ function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
     <div className="space-y-4">
       {/* Umbral */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Umbral de aprobación</Label>
+        <Label className="text-sm">Umbral de aprobación</Label>
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -322,14 +322,14 @@ function EvaluationQuizInspector({ bloque, onChange }: InspectorFieldsProps) {
 
       {/* Info */}
       <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
-        <p className="text-xs text-amber-800">
+        <p className="text-sm text-amber-800">
           Se aprueba con {props.umbralAprobacion ?? 70}% — {preguntas.length} pregunta{preguntas.length !== 1 ? 's' : ''} configurada{preguntas.length !== 1 ? 's' : ''}
         </p>
       </div>
 
       {/* Preguntas */}
       <div className="space-y-2">
-        <Label className="text-xs">Preguntas</Label>
+        <Label className="text-sm">Preguntas</Label>
         {preguntas.map((p: any, idx: number) => (
           <QuestionEditor
             key={p.id}
@@ -362,7 +362,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
         <CollapsibleTrigger asChild>
           <div className="flex items-start gap-2 px-2 py-1.5 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors min-w-0 max-w-full">
             <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0 mt-0.5 ${open ? '' : '-rotate-90'}`} />
-            <span className="text-xs font-medium flex-1 min-w-0 break-words whitespace-normal leading-relaxed pr-1">
+            <span className="text-sm font-medium flex-1 min-w-0 break-words whitespace-normal leading-relaxed pr-1">
               {index + 1}. {question.texto || 'Sin texto'}
             </span>
             <Button
@@ -380,9 +380,9 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
               value={question.texto}
               onChange={(e) => onUpdate({ texto: e.target.value })}
               placeholder="Texto de la pregunta..."
-              className="min-h-[72px] text-xs resize-y break-words"
+              className="min-h-[72px] text-sm resize-y break-words"
             />
-            <Label className="text-[10px] text-muted-foreground">Opciones (selecciona la correcta)</Label>
+            <Label className="text-xs text-muted-foreground">Opciones (selecciona la correcta)</Label>
             {opciones.map((op: string, oi: number) => (
               <div key={oi} className="flex items-start gap-1.5 min-w-0 max-w-full">
                 <button
@@ -398,7 +398,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
                     const updated = opciones.map((o, i) => i === oi ? e.target.value : o);
                     onUpdate({ opciones: updated });
                   }}
-                  className="min-h-[52px] text-xs flex-1 resize-y"
+                  className="min-h-[52px] text-sm flex-1 resize-y"
                 />
                 <Button
                   variant="ghost" size="icon"
@@ -416,7 +416,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
               </div>
             ))}
             <Button
-              variant="ghost" size="sm" className="w-full text-xs h-7"
+              variant="ghost" size="sm" className="w-full text-sm h-8"
               onClick={() => onUpdate({ opciones: [...opciones, `Opción ${opciones.length + 1}`] })}
             >
               <Plus className="h-3 w-3 mr-1" /> Opción
@@ -445,7 +445,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
     <div className="space-y-4">
       {/* Info */}
       <div className="bg-muted/50 border rounded-md px-3 py-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''} de escala
           {preguntaSiNo ? ' + 1 pregunta Sí/No' : ''}
         </p>
@@ -453,7 +453,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
 
       {/* Escala opciones */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Opciones de escala</Label>
+        <Label className="text-sm">Opciones de escala</Label>
         {escalaOpciones.map((opt, idx) => (
           <div key={idx} className="flex items-center gap-1.5">
             <Input
@@ -463,7 +463,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
                 updateProps({ escalaOpciones: updated });
               }}
               placeholder="Valor"
-              className="h-7 text-xs w-12 font-mono text-center"
+              className="h-8 text-sm w-14 font-mono text-center"
             />
             <Input
               value={opt.label}
@@ -472,7 +472,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
                 updateProps({ escalaOpciones: updated });
               }}
               placeholder="Etiqueta"
-              className="h-7 text-xs flex-1"
+              className="h-8 text-sm flex-1"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
@@ -487,7 +487,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => {
             const n = escalaOpciones.length + 1;
             updateProps({ escalaOpciones: [...escalaOpciones, { value: String(n), label: `Opción ${n}` }] });
@@ -499,17 +499,17 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
 
       {/* Preguntas de escala */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Preguntas de escala</Label>
+        <Label className="text-sm">Preguntas de escala</Label>
         {escalaPreguntas.map((q, idx) => (
           <div key={idx} className="flex items-start gap-1.5 min-w-0 max-w-full">
-            <span className="text-[10px] text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
+            <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
             <Textarea
               value={q}
               onChange={(e) => {
                 const updated = escalaPreguntas.map((p, i) => i === idx ? e.target.value : p);
                 updateProps({ escalaPreguntas: updated });
               }}
-              className="min-h-[60px] text-xs flex-1 resize-y"
+              className="min-h-[60px] text-sm flex-1 resize-y"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
@@ -520,7 +520,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => updateProps({ escalaPreguntas: [...escalaPreguntas, ''] })}
         >
           <Plus className="h-3 w-3 mr-1" /> Pregunta
@@ -530,7 +530,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
       {/* Pregunta Sí/No */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label className="text-xs">Pregunta Sí/No</Label>
+          <Label className="text-sm">Pregunta Sí/No</Label>
           <Switch
             checked={!!preguntaSiNo}
             onCheckedChange={(v) => updateProps({ preguntaSiNo: v ? '¿Recomendaría este curso?' : '' })}
@@ -540,7 +540,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
           <Textarea
             value={preguntaSiNo}
             onChange={(e) => updateProps({ preguntaSiNo: e.target.value })}
-            className="min-h-[60px] text-xs resize-y"
+            className="min-h-[60px] text-sm resize-y"
           />
         )}
       </div>
@@ -566,14 +566,14 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
 
   return (
     <div className="space-y-3">
-      <Label className="text-xs">Preguntas de salud</Label>
+      <Label className="text-sm">Preguntas de salud</Label>
       {questions.map((q: any, idx: number) => (
         <div key={q.id} className="border rounded-md p-2 space-y-1.5 min-w-0 max-w-full">
           <div className="flex items-start gap-1.5 min-w-0 max-w-full">
             <Textarea
               value={q.label}
               onChange={(e) => updateQuestion(idx, { label: e.target.value })}
-              className="min-h-[60px] text-xs flex-1 resize-y"
+              className="min-h-[60px] text-sm flex-1 resize-y"
               placeholder="Texto de la pregunta"
             />
             <Button
@@ -589,14 +589,14 @@ function HealthConsentInspector({ bloque, onChange }: InspectorFieldsProps) {
                 checked={q.hasDetail ?? false}
                 onCheckedChange={(v) => updateQuestion(idx, { hasDetail: v })}
               />
-              <Label className="text-[10px]">Detalle</Label>
+              <Label className="text-xs">Detalle</Label>
             </div>
             {q.hasDetail && (
               <Input
                 value={q.conditionalOn || ''}
                 onChange={(e) => updateQuestion(idx, { conditionalOn: e.target.value })}
                 placeholder="Condicional (ID)"
-                className="h-6 text-[10px] w-28"
+                className="h-8 text-xs w-28"
               />
             )}
           </div>
@@ -630,17 +630,17 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
     <div className="space-y-3">
       {/* Summary items */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Puntos del resumen</Label>
+        <Label className="text-sm">Puntos del resumen</Label>
         {summaryItems.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1.5">
-            <span className="text-[10px] text-muted-foreground w-4 shrink-0">•</span>
+            <span className="text-xs text-muted-foreground w-4 shrink-0">•</span>
             <Input
               value={item}
               onChange={(e) => {
                 const updated = summaryItems.map((s, i) => i === idx ? e.target.value : s);
                 updateProps({ summaryItems: updated });
               }}
-              className="h-7 text-xs flex-1"
+              className="h-8 text-sm flex-1"
             />
             <Button
               variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
@@ -651,7 +651,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
           </div>
         ))}
         <Button
-          variant="ghost" size="sm" className="w-full text-xs h-7"
+          variant="ghost" size="sm" className="w-full text-sm h-8"
           onClick={() => updateProps({ summaryItems: [...summaryItems, ''] })}
         >
           <Plus className="h-3 w-3 mr-1" /> Punto
@@ -660,12 +660,12 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
 
       {/* Full text */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Texto completo de autorización</Label>
+        <Label className="text-sm">Texto completo de autorización</Label>
         <Textarea
           value={props.fullText || ''}
           onChange={(e) => updateProps({ fullText: e.target.value })}
           placeholder="Texto legal completo..."
-          className="min-h-[100px] text-xs"
+          className="min-h-[100px] text-sm"
         />
       </div>
     </div>

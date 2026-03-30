@@ -398,7 +398,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
                     const updated = opciones.map((o, i) => i === oi ? e.target.value : o);
                     onUpdate({ opciones: updated });
                   }}
-                  className="min-h-[52px] text-xs flex-1 resize-y"
+                  className="min-h-[52px] text-sm flex-1 resize-y"
                 />
                 <Button
                   variant="ghost" size="icon"

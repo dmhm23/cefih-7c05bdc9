@@ -30,6 +30,9 @@ const HIDE_REQUIRED: TipoBloque[] = [
 ];
 
 export default function InspectorFields({ bloque, onChange }: InspectorFieldsProps) {
+  const configNombre = useFormatoEditorStore((s) => s.config.nombre);
+  const setConfig = useFormatoEditorStore((s) => s.setConfig);
+
   return (
     <div className="space-y-4">
       {/* Label */}
@@ -37,12 +40,12 @@ export default function InspectorFields({ bloque, onChange }: InspectorFieldsPro
         <div className="space-y-1.5">
           <Label className="text-xs">{bloque.type === 'document_header' ? 'Nombre del formato/documento' : 'Etiqueta'}</Label>
           <Input
-            value={bloque.type === 'document_header' ? useFormatoEditorStore.getState().config.nombre : bloque.label}
+            value={bloque.type === 'document_header' ? configNombre : bloque.label}
             onChange={(e) => {
               const val = e.target.value;
               onChange({ label: val });
               if (bloque.type === 'document_header') {
-                useFormatoEditorStore.getState().setConfig({ nombre: val });
+                setConfig({ nombre: val });
               }
             }}
             placeholder={bloque.type === 'document_header' ? 'Nombre del formato' : 'Etiqueta del campo'}

@@ -36,14 +36,10 @@ import { generarPreviewCodigo } from "@/utils/codigoEstudiante";
 
 const nivelSchema = z.object({
   nombreNivel: z.string().min(1, "El nombre es obligatorio"),
-  duracionDias: z.coerce.number().min(0).optional(),
-  duracionHoras: z.coerce.number().min(0).optional(),
+  duracionHoras: z.coerce.number().min(1, "Debe especificar las horas de formación"),
   documentosRequeridos: z.array(z.string()),
   observaciones: z.string().optional(),
-}).refine(
-  (data) => (data.duracionDias && data.duracionDias > 0) || (data.duracionHoras && data.duracionHoras > 0),
-  { message: "Debe especificar al menos días u horas", path: ["duracionDias"] }
-);
+});
 
 type FormValues = z.infer<typeof nivelSchema>;
 

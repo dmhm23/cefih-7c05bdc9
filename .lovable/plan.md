@@ -1,20 +1,23 @@
 
 
-## Plan: Eliminar encabezado duplicado en vista previa
+## Plan: Ajustes al inspector del bloque `document_header`
 
-### Problema
+### Cambios
 
-En `FormatoPreviewDocument.tsx`, líneas 302-309, siempre se renderiza un `DocumentHeader` hardcodeado antes de los bloques. Si el usuario ya añadió un bloque `document_header` en el canvas, este se renderiza otra vez dentro del loop de bloques (línea 265-281), produciendo dos encabezados.
+**1. `src/components/formatos/editor/InspectorFields.tsx` — DocumentHeaderInspector**
 
-### Solución
+- Renombrar "Etiqueta" → "Nombre del formato/documento" solo para `document_header`. En `InspectorFields` (línea 37), condicionar el label: si `bloque.type === 'document_header'` mostrar "Nombre del formato/documento", de lo contrario mantener "Etiqueta".
+- Reordenar campos: mover "Color de bordes" (actualmente líneas 757-773) después de "Código" y "Versión" (líneas 775-795). El orden final será: Logo → Empresa → SGI → Subsistema → Fechas → Código/Versión → Color de bordes.
+- Logo: ya funciona correctamente con carga y preview. Si `logoUrl` tiene valor (ya sea del default del store o cargado por el usuario), se muestra la imagen con botón de eliminar. Si está vacío, se muestra el dropzone. No requiere cambio funcional, solo confirmar que el store default ya trae un `logoUrl` válido (actualmente es `''`). Si se desea que un logo previamente cargado persista, eso depende de la persistencia del formato — no del inspector.
 
-En `FormatoPreviewDocument.tsx`, condicionar el `DocumentHeader` por defecto (líneas 302-309): solo renderizarlo si **no existe** ningún bloque de tipo `document_header` en el array `bloques`. Si existe, el bloque del canvas se encarga de renderizarlo.
+**2. `src/components/formatos/editor/BlockInspector.tsx` — Botón "Config"**
 
-### Cambio en un solo archivo
+- El botón "Config" abre `FormatoConfigSheet`, que contiene configuración general del formato (nombre, categoría, alcance, visibilidad, firmas). Esta configuración NO se duplica con las propiedades del encabezado — son cosas distintas. **Se conserva el botón** pero se renombra a "Ajustes del formato" para mayor claridad y evitar confusión con las propiedades del bloque.
 
-**`src/components/formatos/FormatoPreviewDocument.tsx`** (líneas 296-310)
+### Archivos afectados
 
-- Agregar: `const hasHeaderBlock = bloques.some(b => b.type === 'document_header');`
-- Envolver el `DocumentHeader` default en `{!hasHeaderBlock && <DocumentHeader ... />}`
-- Todo lo demás permanece igual
+| Archivo | Cambio |
+|---|---|
+| `src/components/formatos/editor/InspectorFields.tsx` | Condicionar label "Etiqueta"→"Nombre del formato/documento" para `document_header`; reordenar campos en `DocumentHeaderInspector` |
+| `src/components/formatos/editor/BlockInspector.tsx` | Renombrar botón "Config" → "Ajustes del formato" |
 

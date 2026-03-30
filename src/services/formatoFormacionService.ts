@@ -190,9 +190,9 @@ let mockFormatos: FormatoFormacion[] = [
     descripcion: 'Ficha completa del aprendiz con autoevaluación, competencias, salud y autorización de datos',
     codigo: 'FIH04-013',
     version: '021',
-    asignacionScope: 'tipo_curso',
-    nivelFormacionIds: [],
-    tipoCursoKeys: ['jefe_area', 'trabajador_autorizado', 'reentrenamiento', 'coordinador_ta'],
+    asignacionScope: 'todos',
+    nivelFormacionIds: ['nf1', 'nf2', 'nf3', 'nf4', 'nf5'],
+    tipoCursoKeys: [],
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: true,
@@ -218,9 +218,9 @@ let mockFormatos: FormatoFormacion[] = [
     descripcion: 'Registro de asistencia por día de formación',
     codigo: 'FIH04-014',
     version: '009',
-    asignacionScope: 'tipo_curso',
-    nivelFormacionIds: [],
-    tipoCursoKeys: ['jefe_area', 'trabajador_autorizado', 'reentrenamiento', 'coordinador_ta'],
+    asignacionScope: 'todos',
+    nivelFormacionIds: ['nf1', 'nf2', 'nf3', 'nf4', 'nf5'],
+    tipoCursoKeys: [],
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: false,
@@ -246,9 +246,9 @@ let mockFormatos: FormatoFormacion[] = [
     descripcion: 'Declaración de participación en Permiso de Trabajo en Alturas y Análisis de Trabajo Seguro',
     codigo: 'FIH04-077',
     version: '001',
-    asignacionScope: 'tipo_curso',
-    nivelFormacionIds: [],
-    tipoCursoKeys: ['trabajador_autorizado', 'reentrenamiento', 'coordinador_ta'],
+    asignacionScope: 'nivel_formacion',
+    nivelFormacionIds: ['nf3', 'nf1', 'nf5'],
+    tipoCursoKeys: [],
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: true,
@@ -274,9 +274,9 @@ let mockFormatos: FormatoFormacion[] = [
     descripcion: 'Evaluación de conocimientos (15 preguntas) con encuesta de satisfacción',
     codigo: 'FIH04-019',
     version: '009',
-    asignacionScope: 'tipo_curso',
-    nivelFormacionIds: [],
-    tipoCursoKeys: ['reentrenamiento'],
+    asignacionScope: 'nivel_formacion',
+    nivelFormacionIds: ['nf1'],
+    tipoCursoKeys: [],
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: true,
@@ -381,21 +381,12 @@ export const formatoFormacionService = {
     return simulateApiCall(results);
   },
 
-  /** Obtener formatos aplicables para una matrícula según tipo de curso */
-  getForMatricula: async (tipoCurso: string): Promise<FormatoFormacion[]> => {
-    const NIVEL_TO_TIPO_CURSO: Record<string, string> = {
-      nf1: 'reentrenamiento',
-      nf2: 'jefe_area',
-      nf3: 'trabajador_autorizado',
-      nf5: 'coordinador_ta',
-    };
-    const tipoCursoKey = NIVEL_TO_TIPO_CURSO[tipoCurso] || tipoCurso;
+  /** Obtener formatos aplicables para una matrícula según nivel de formación */
+  getForMatricula: async (nivelFormacionId: string): Promise<FormatoFormacion[]> => {
     const results = mockFormatos.filter(f =>
       f.activo &&
       f.visibleEnMatricula &&
-      (f.asignacionScope === 'tipo_curso'
-        ? f.tipoCursoKeys.includes(tipoCursoKey as any)
-        : true)
+      (f.asignacionScope === 'todos' || f.nivelFormacionIds.includes(nivelFormacionId))
     );
     return simulateApiCall(results);
   },

@@ -304,7 +304,9 @@ export interface FormatoFormacion {
 
   visibleEnMatricula: boolean;
   visibleEnCurso: boolean;
+  visibleEnPortalEstudiante: boolean;
   activo: boolean;
+  modoDiligenciamiento: ModoDiligenciamiento;
   esAutomatico: boolean;
 
   // Motor de render

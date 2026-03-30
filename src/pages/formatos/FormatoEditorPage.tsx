@@ -220,6 +220,17 @@ export default function FormatoEditorPage() {
           formatoId={id}
         />
       )}
+
+      <ConfirmDialog
+        open={blocker.state === 'blocked'}
+        onOpenChange={() => blocker.state === 'blocked' && blocker.reset?.()}
+        title="Cambios sin guardar"
+        description="Tienes cambios sin guardar. Si sales ahora, se perderán."
+        confirmText="Salir sin guardar"
+        cancelText="Seguir editando"
+        onConfirm={() => blocker.state === 'blocked' && blocker.proceed?.()}
+        variant="destructive"
+      />
     </div>
   );
 }

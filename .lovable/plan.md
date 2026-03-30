@@ -1,56 +1,96 @@
 
 
-## Plan: Aumentar tamaño de texto en el panel de Propiedades (Inspector)
+## Análisis: Reglas de negocio de diligenciamiento en la gestión de formatos
 
-### Problema
+### Estado actual de la configuración
 
-Los textos en el inspector usan `text-xs` (12px) y `text-[10px]` (10px), lo que dificulta la lectura — especialmente en los bloques de evaluación, encuesta, consentimiento de salud y autorización de datos.
+En `FormatoConfigSheet` (panel "Ajustes del formato") existen estos controles:
 
-### Escala propuesta
-
-| Actual | Nuevo | Contexto |
+| Campo | Tipo | Función actual |
 |---|---|---|
-| `text-[10px]` | `text-xs` (12px) | Labels secundarios, numeración, badges |
-| `text-xs` (12px) | `text-sm` (14px) | Labels, preguntas, opciones, textareas, inputs, info text |
-| `h-6` / `h-7` | `h-8` / `h-9` | Inputs y botones pequeños |
+| Categoría | Select | formación, evaluación, asistencia, pta_ats, personalizado |
+| Alcance de asignación | Select | Por tipo de curso / Por nivel de formación |
+| Tipos de curso | Chips | Selección múltiple de tipos aplicables |
+| Visible en Matrícula | Switch | Determina si aparece en la ficha de matrícula |
+| Visible en Curso | Switch | Determina si aparece en la vista del curso |
+| Activo | Switch | Habilita/deshabilita el formato |
 
-### Cambios en `src/components/formatos/editor/InspectorFields.tsx`
+### Lo que falta
 
-**EvaluationQuizInspector** (líneas 306-347):
-- Labels `text-xs` → `text-sm`
-- Info box `text-xs` → `text-sm`
-- **QuestionEditor** (líneas 350-428):
-  - Trigger text `text-xs` → `text-sm`
-  - Textarea preguntas `text-xs` → `text-sm`
-  - Label opciones `text-[10px]` → `text-xs`
-  - Textarea opciones `text-xs` → `text-sm`
-  - Botones `h-7` → `h-8`
+Según tus reglas de negocio, hay **tres conceptos de visibilidad/diligenciamiento** que no están completos:
 
-**SatisfactionSurveyInspector** (líneas 435-548):
-- Info text `text-xs` → `text-sm`
-- Labels `text-xs` → `text-sm`
-- Inputs escala `text-xs` → `text-sm`, `h-7` → `h-8`
-- Numeración `text-[10px]` → `text-xs`
-- Textareas `text-xs` → `text-sm`
+1. **Visible en Portal Estudiante** — No existe. No hay un campo `visibleEnPortalEstudiante` que indique que este formato debe ser diligenciado por el estudiante desde su portal. Actualmente el portal usa lógica hardcodeada por `legacyComponentId`.
 
-**HealthConsentInspector** (líneas 555-615):
-- Labels `text-xs` → `text-sm`
-- Textareas `text-xs` → `text-sm`
-- Label "Detalle" `text-[10px]` → `text-xs`
-- Input condicional `text-[10px]` → `text-xs`, `h-6` → `h-8`
+2. **Modo de diligenciamiento** — No existe. No hay forma de configurar **quién** o **cómo** se diligencia:
+   - Manual por el estudiante (evaluación, info aprendiz, consentimiento)
+   - Automático por el sistema (asistencia diaria se llena según días del curso)
+   - Administrativo (lo llena el entrenador/admin)
 
-**DataAuthorizationInspector** (líneas 622-672):
-- Labels `text-xs` → `text-sm`
-- Bullets `text-[10px]` → `text-xs`
-- Inputs `text-xs` → `text-sm`, `h-7` → `h-8`
-- Textarea `text-xs` → `text-sm`
+3. **Descripciones contextuales** — Los switches actuales no explican su propósito. "Visible en Matrícula" no aclara que se refiere a ver el estado del formato (borrador/completo), y "Visible en Curso" no tiene uso funcional real.
 
-**Attendance by day** (línea 269):
-- `text-xs` → `text-sm`
+### Plan: Agregar configuración completa de reglas de diligenciamiento
 
-### Archivo afectado
+**1. Agregar campos al modelo y store**
+
+En `FormatoConfig` (`useFormatoEditorStore.ts`) y `FormatoFormacion` (`types/formatoFormacion.ts`):
+
+```text
++ visibleEnPortalEstudiante: boolean    // ¿Aparece en el portal para que el estudiante lo diligencie?
++ modoDiligenciamiento: 'manual_estudiante' | 'manual_admin' | 'automatico_sistema'
+```
+
+- `manual_estudiante`: el estudiante lo diligencia desde el portal
+- `manual_admin`: lo diligencia el entrenador/admin desde la matrícula o curso
+- `automatico_sistema`: el sistema lo llena automáticamente (ej: asistencia por días)
+
+**2. Actualizar `FormatoConfigSheet`**
+
+Reorganizar la sección de Visibilidad con descripciones claras:
+
+```text
+VISIBILIDAD Y DILIGENCIAMIENTO
+─────────────────────────────────
+☐ Visible en Matrícula
+  "El formato aparece en la ficha de matrícula mostrando su estado (borrador/completo)"
+
+☐ Visible en Curso
+  "El formato aparece en la vista del curso para consulta administrativa"
+
+☐ Visible en Portal Estudiante
+  "El estudiante puede ver y diligenciar este formato desde su portal"
+
+Modo de diligenciamiento: [Select]
+  • Manual — Estudiante: "Lo diligencia el estudiante desde el portal"
+  • Manual — Administrativo: "Lo diligencia el entrenador o administrador"
+  • Automático — Sistema: "Se genera automáticamente según datos del curso (ej: asistencia por días)"
+```
+
+**3. Actualizar schema de validación**
+
+En `formatoSchema.ts`, agregar:
+- `visibleEnPortalEstudiante: z.boolean()`
+- `modoDiligenciamiento: z.enum(['manual_estudiante', 'manual_admin', 'automatico_sistema'])`
+
+**4. Actualizar `FormatoEditorPage` (persistencia)**
+
+Incluir los nuevos campos al construir el objeto `FormatoFormacion` para guardar/actualizar.
+
+**5. Actualizar mocks existentes**
+
+En `formatoFormacionService.ts`, asignar valores coherentes a los formatos existentes:
+- Info Aprendiz → `manual_estudiante`, `visibleEnPortalEstudiante: true`
+- Registro Asistencia → `automatico_sistema`, `visibleEnPortalEstudiante: false`
+- Evaluación → `manual_estudiante`, `visibleEnPortalEstudiante: true`
+- Participación PTA/ATS → `manual_estudiante`, `visibleEnPortalEstudiante: true`
+
+### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/formatos/editor/InspectorFields.tsx` | Escalar tamaños de fuente un nivel arriba en inspectores especializados |
+| `src/types/formatoFormacion.ts` | Agregar `visibleEnPortalEstudiante`, tipo `ModoDiligenciamiento` |
+| `src/stores/useFormatoEditorStore.ts` | Agregar campos a `FormatoConfig` y defaults |
+| `src/schemas/formatoSchema.ts` | Agregar validaciones |
+| `src/components/formatos/editor/FormatoConfigSheet.tsx` | Nuevo select + switch + descripciones |
+| `src/pages/formatos/FormatoEditorPage.tsx` | Persistir nuevos campos |
+| `src/services/formatoFormacionService.ts` | Actualizar mocks con valores correctos |
 

@@ -630,7 +630,7 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
     <div className="space-y-3">
       {/* Summary items */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Puntos del resumen</Label>
+        <Label className="text-sm">Puntos del resumen</Label>
         {summaryItems.map((item, idx) => (
           <div key={idx} className="flex items-center gap-1.5">
             <span className="text-[10px] text-muted-foreground w-4 shrink-0">•</span>

@@ -53,20 +53,22 @@ export default function FormatoEditorPage() {
   // Pending navigation path when user tries to leave with unsaved changes
   const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
 
-  // Intercept sidebar / internal navigation via custom navigate wrapper
-  const guardedNavigate = (to: string) => {
-    if (store.isDirty) {
-      setPendingNavPath(to);
-    } else {
-      navigate(to);
-    }
-  };
-
-  // Expose guardedNavigate on window so sidebar links can use it
+  // Intercept all internal link clicks when dirty
   useEffect(() => {
-    (window as any).__formatoGuardedNavigate = guardedNavigate;
-    return () => { delete (window as any).__formatoGuardedNavigate; };
-  });
+    if (!store.isDirty) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      // Internal link — block and show dialog
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavPath(href);
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [store.isDirty]);
 
   // Native browser warning on tab close / reload
   useEffect(() => {
@@ -83,7 +85,6 @@ export default function FormatoEditorPage() {
   useEffect(() => {
     if (!store.isDirty) return;
     const handlePop = () => {
-      // Push state back to prevent leaving
       window.history.pushState(null, '', window.location.href);
       setPendingNavPath('__back__');
     };

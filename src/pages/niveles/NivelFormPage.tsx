@@ -36,14 +36,10 @@ import { generarPreviewCodigo } from "@/utils/codigoEstudiante";
 
 const nivelSchema = z.object({
   nombreNivel: z.string().min(1, "El nombre es obligatorio"),
-  duracionDias: z.coerce.number().min(0).optional(),
-  duracionHoras: z.coerce.number().min(0).optional(),
+  duracionHoras: z.coerce.number().min(1, "Debe especificar las horas de formación"),
   documentosRequeridos: z.array(z.string()),
   observaciones: z.string().optional(),
-}).refine(
-  (data) => (data.duracionDias && data.duracionDias > 0) || (data.duracionHoras && data.duracionHoras > 0),
-  { message: "Debe especificar al menos días u horas", path: ["duracionDias"] }
-);
+});
 
 type FormValues = z.infer<typeof nivelSchema>;
 
@@ -74,7 +70,6 @@ export default function NivelFormPage() {
     resolver: zodResolver(nivelSchema),
     defaultValues: {
       nombreNivel: "",
-      duracionDias: undefined,
       duracionHoras: undefined,
       documentosRequeridos: [],
       observaciones: "",
@@ -93,7 +88,6 @@ export default function NivelFormPage() {
 
       form.reset({
         nombreNivel: nivel.nombreNivel,
-        duracionDias: nivel.duracionDias,
         duracionHoras: nivel.duracionHoras,
         documentosRequeridos: nivel.documentosRequeridos,
         observaciones: nivel.observaciones || "",
@@ -136,7 +130,6 @@ export default function NivelFormPage() {
 
       const payload = {
         nombreNivel: data.nombreNivel,
-        duracionDias: data.duracionDias,
         duracionHoras: data.duracionHoras,
         documentosRequeridos: data.documentosRequeridos,
         camposAdicionales,
@@ -254,34 +247,20 @@ export default function NivelFormPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="duracionHoras"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duración (horas)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={0} max={2000} placeholder="0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="duracionDias"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duración (días)</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={0} max={365} placeholder="0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="duracionHoras"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duración en horas *</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} min={1} max={2000} placeholder="Ej: 40" className="max-w-[200px]" />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Los días se calculan automáticamente según las fechas del curso</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {/* Campos adicionales — lista */}
               {camposAdicionales.length > 0 && (

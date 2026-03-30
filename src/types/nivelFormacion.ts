@@ -60,7 +60,6 @@ export interface NivelFormacion {
   id: string;
   nombreNivel: string;
   duracionHoras?: number;
-  duracionDias?: number;
   documentosRequeridos: string[];
   camposAdicionales?: CampoAdicional[];
   configuracionCodigoEstudiante?: ConfiguracionCodigoEstudiante;

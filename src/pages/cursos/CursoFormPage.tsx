@@ -167,7 +167,6 @@ export default function CursoFormPage() {
     form.setValue("tipoFormacion", value);
     const nivel = niveles.find((n) => n.id === value);
     if (nivel) {
-      if (nivel.duracionDias) form.setValue("duracionDias", nivel.duracionDias);
       if (nivel.duracionHoras) form.setValue("horasTotales", nivel.duracionHoras);
 
       const campos = nivel.camposAdicionales || [];
@@ -361,24 +360,30 @@ export default function CursoFormPage() {
                       <FormControl>
                         <Input type="number" {...field} min={1} max={200} />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground">Heredadas del nivel de formación</p>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="duracionDias"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Duración (días) *</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} min={1} max={30} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <FormLabel>Duración (días)</FormLabel>
+                  <Input
+                    type="number"
+                    value={(() => {
+                      const inicio = form.watch("fechaInicio");
+                      const fin = form.watch("fechaFin");
+                      if (inicio && fin) {
+                        const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+                        return dias >= 0 ? dias : 0;
+                      }
+                      return form.watch("duracionDias") || 0;
+                    })()}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">Calculado automáticamente desde las fechas</p>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -915,7 +915,6 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf1',
     nombreNivel: 'Reentrenamiento',
-    duracionDias: 1,
     duracionHoras: 8,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {
@@ -934,7 +933,6 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf2',
     nombreNivel: 'Jefe de Área',
-    duracionDias: 1,
     duracionHoras: 8,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {
@@ -953,7 +951,7 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf3',
     nombreNivel: 'Trabajador Autorizado',
-    duracionDias: 4,
+    
     duracionHoras: 32,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social'],
     configuracionCodigoEstudiante: {
@@ -972,7 +970,7 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf5',
     nombreNivel: 'Coordinador T.A.',
-    duracionDias: 10,
+    
     duracionHoras: 80,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social', 'curso_previo'],
     configuracionCodigoEstudiante: {

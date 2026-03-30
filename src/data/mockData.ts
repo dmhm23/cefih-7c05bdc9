@@ -970,7 +970,7 @@ export const mockNivelesFormacion: NivelFormacion[] = [
   {
     id: 'nf5',
     nombreNivel: 'Coordinador T.A.',
-    duracionDias: 10,
+    
     duracionHoras: 80,
     documentosRequeridos: ['cedula', 'examen_medico', 'arl', 'certificado_eps', 'planilla_seguridad_social', 'curso_previo'],
     configuracionCodigoEstudiante: {

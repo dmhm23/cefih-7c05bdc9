@@ -1,10 +1,10 @@
-import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization } from '@/types/formatoFormacion';
+import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization, BloqueDocumentHeader } from '@/types/formatoFormacion';
 import { BLOQUE_TYPE_LABELS } from '@/data/bloqueConstants';
 import { Badge } from '@/components/ui/badge';
 import { getAutoFieldLabel } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ImageIcon } from 'lucide-react';
 
 interface BlockPreviewProps {
   block: Bloque;

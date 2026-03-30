@@ -93,7 +93,7 @@ function TokenItem({ token, onInsert }: { token: TokenDefinition; onInsert: () =
       <span className="text-sm font-medium group-hover:text-primary transition-colors">
         {token.label}
       </span>
-      <code className="text-[10px] text-muted-foreground font-mono">
+      <code className="text-xs text-muted-foreground font-mono">
         {`{{${token.key}}}`}
       </code>
     </button>

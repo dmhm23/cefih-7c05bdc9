@@ -26,7 +26,8 @@ export type TipoBloque =
   | 'satisfaction_survey'
   | 'section_title'
   | 'divider'
-  | 'file';
+  | 'file'
+  | 'document_header';
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.

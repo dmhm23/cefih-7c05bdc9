@@ -103,12 +103,11 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             type="date"
             editable={!readOnly}
           />
-          <EditableField
-            label="Duración (días)"
-            value={getValue("duracionDias")}
-            onChange={(v) => onFieldChange("duracionDias", Number(v) || 0)}
-            editable={!readOnly}
-          />
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Duración (días)</p>
+            <p className="text-sm">{duracionDiasCalculada} día{duracionDiasCalculada !== 1 ? 's' : ''}</p>
+            <p className="text-[10px] text-muted-foreground">Calculado desde fechas</p>
+          </div>
           <EditableField
             label="Horas Totales"
             value={getValue("horasTotales")}

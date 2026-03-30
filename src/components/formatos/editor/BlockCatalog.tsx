@@ -150,9 +150,9 @@ export default function BlockCatalog() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, item)}
                         onClick={() => handleClick(item)}
-                        className="flex items-center justify-center gap-1.5 border border-primary/20 bg-primary/5 text-primary rounded-md py-2 text-xs font-medium cursor-grab hover:bg-primary/10 hover:border-primary/30 transition-colors mb-1"
+                        className="flex items-center justify-center gap-1.5 border border-primary/20 bg-primary/5 text-primary rounded-md py-2 text-sm font-medium cursor-grab hover:bg-primary/10 hover:border-primary/30 transition-colors mb-1"
                       >
-                        <item.icon size={14} /> {item.label}
+                        <item.icon size={16} /> {item.label}
                       </div>
                     ))}
                   </div>

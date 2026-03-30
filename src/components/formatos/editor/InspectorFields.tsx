@@ -416,7 +416,7 @@ function QuestionEditor({ question, index, onUpdate, onRemove }: {
               </div>
             ))}
             <Button
-              variant="ghost" size="sm" className="w-full text-xs h-7"
+              variant="ghost" size="sm" className="w-full text-sm h-8"
               onClick={() => onUpdate({ opciones: [...opciones, `Opción ${opciones.length + 1}`] })}
             >
               <Plus className="h-3 w-3 mr-1" /> Opción

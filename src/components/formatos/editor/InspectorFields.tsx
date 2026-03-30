@@ -502,7 +502,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
         <Label className="text-sm">Preguntas de escala</Label>
         {escalaPreguntas.map((q, idx) => (
           <div key={idx} className="flex items-start gap-1.5 min-w-0 max-w-full">
-            <span className="text-[10px] text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
+            <span className="text-xs text-muted-foreground w-4 shrink-0">{idx + 1}.</span>
             <Textarea
               value={q}
               onChange={(e) => {

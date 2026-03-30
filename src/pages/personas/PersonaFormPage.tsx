@@ -42,7 +42,7 @@ const personaSchema = z.object({
   // Datos personales
   nombres: z.string().min(2, "Ingrese el nombre"),
   apellidos: z.string().min(2, "Ingrese los apellidos"),
-  genero: z.enum(['M', 'F'], { required_error: "Seleccione el género" }),
+  genero: z.enum(['M', 'F', 'O'], { required_error: "Seleccione el género" }),
   paisNacimiento: z.string().min(1, "Seleccione el país"),
   fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
   rh: z.string().min(1, "Seleccione el RH"),

@@ -453,7 +453,7 @@ function SatisfactionSurveyInspector({ bloque, onChange }: InspectorFieldsProps)
 
       {/* Escala opciones */}
       <div className="space-y-1.5">
-        <Label className="text-xs">Opciones de escala</Label>
+        <Label className="text-sm">Opciones de escala</Label>
         {escalaOpciones.map((opt, idx) => (
           <div key={idx} className="flex items-center gap-1.5">
             <Input

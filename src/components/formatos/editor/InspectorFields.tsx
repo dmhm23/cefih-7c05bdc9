@@ -25,7 +25,7 @@ const HIDE_REQUIRED: TipoBloque[] = [
   'section_title', 'heading', 'paragraph', 'divider',
   'signature_aprendiz', 'signature_entrenador_auto', 'signature_supervisor_auto',
   'health_consent', 'data_authorization', 'evaluation_quiz', 'satisfaction_survey',
-  'attendance_by_day',
+  'attendance_by_day', 'document_header',
 ];
 
 export default function InspectorFields({ bloque, onChange }: InspectorFieldsProps) {

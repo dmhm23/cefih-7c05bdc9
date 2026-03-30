@@ -14,32 +14,32 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
   const b = block as any;
   const req = b.required && <span className="text-destructive ml-0.5">*</span>;
   const L = () => (
-    <span className="block text-xs font-semibold text-muted-foreground mb-1">
+    <span className="block text-sm font-semibold text-muted-foreground mb-1">
       {b.label || 'Sin etiqueta'}{req}
     </span>
   );
 
   switch (block.type) {
     case 'text':
-      return <><L /><Input disabled placeholder={b.props?.placeholder || ''} className="h-8 text-xs pointer-events-none" /></>;
+      return <><L /><Input disabled placeholder={b.props?.placeholder || ''} className="h-9 text-sm pointer-events-none" /></>;
 
     case 'textarea':
-      return <><L /><Textarea disabled placeholder={b.props?.placeholder || ''} className="h-16 text-xs resize-none pointer-events-none" /></>;
+      return <><L /><Textarea disabled placeholder={b.props?.placeholder || ''} className="h-16 text-sm resize-none pointer-events-none" /></>;
 
     case 'email':
-      return <><L /><Input disabled type="email" placeholder={b.props?.placeholder || 'correo@ejemplo.com'} className="h-8 text-xs pointer-events-none" /></>;
+      return <><L /><Input disabled type="email" placeholder={b.props?.placeholder || 'correo@ejemplo.com'} className="h-9 text-sm pointer-events-none" /></>;
 
     case 'number':
-      return <><L /><Input disabled type="number" placeholder={b.props?.placeholder || '0'} className="h-8 text-xs pointer-events-none" /></>;
+      return <><L /><Input disabled type="number" placeholder={b.props?.placeholder || '0'} className="h-9 text-sm pointer-events-none" /></>;
 
     case 'date':
-      return <><L /><Input disabled type="date" className="h-8 text-xs pointer-events-none" /></>;
+      return <><L /><Input disabled type="date" className="h-9 text-sm pointer-events-none" /></>;
 
     case 'select':
       return (
         <>
           <L />
-          <div className="h-8 w-full border rounded-md bg-background px-2 flex items-center text-xs text-muted-foreground pointer-events-none">
+          <div className="h-9 w-full border rounded-md bg-background px-2 flex items-center text-sm text-muted-foreground pointer-events-none">
             Selecciona…
           </div>
         </>
@@ -49,7 +49,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       return (
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 border rounded bg-background" />
-          <span className="text-xs">{b.label || 'Opción'}</span>
+          <span className="text-sm">{b.label || 'Opción'}</span>
         </div>
       );
 
@@ -60,8 +60,8 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
           <L />
           <div className="space-y-1">
             {options.map((o: any, i: number) => (
-              <label key={i} className="flex items-center gap-1.5 text-xs">
-                <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/40" />
+              <label key={i} className="flex items-center gap-1.5 text-sm">
+                <div className="h-4 w-4 rounded-full border border-muted-foreground/40" />
                 {o.label}
               </label>
             ))}
@@ -72,7 +72,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
 
     case 'heading':
       return (
-        <div className="text-sm font-semibold text-foreground my-1">
+        <div className="text-base font-semibold text-foreground my-1">
           {b.label || 'Nueva sección'}
         </div>
       );
@@ -80,7 +80,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
     case 'section_title':
       return (
         <div className="border-b border-border pb-1">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
             {b.label || 'Título de sección'}
           </h3>
         </div>
@@ -88,7 +88,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
 
     case 'paragraph':
       return (
-        <p className="text-xs text-muted-foreground leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {b.props?.text || 'Texto del párrafo...'}
         </p>
       );
@@ -100,11 +100,11 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       const key = b.props?.key || '';
       return (
         <div>
-          <span className="block text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1.5">
+          <span className="block text-sm font-semibold text-muted-foreground mb-1 flex items-center gap-1.5">
             {b.label || getAutoFieldLabel(key)}
-            <Badge variant="secondary" className="text-[9px] bg-blue-50 text-blue-700 border-blue-200 h-4 px-1">Auto</Badge>
+            <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200 h-5 px-1.5">Auto</Badge>
           </span>
-          <div className="h-8 w-full border border-dashed rounded-md bg-blue-50/30 px-2 flex items-center text-xs text-blue-600 pointer-events-none">
+          <div className="h-9 w-full border border-dashed rounded-md bg-blue-50/30 px-2 flex items-center text-sm text-blue-600 pointer-events-none">
             {`{{${key}}}`}
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       return (
         <>
           <L />
-          <div className="border-2 border-dashed border-muted rounded h-12 flex items-center justify-center text-muted-foreground text-xs">
+          <div className="border-2 border-dashed border-muted rounded h-14 flex items-center justify-center text-muted-foreground text-sm">
             Firma aquí
           </div>
         </>
@@ -127,7 +127,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       return (
         <>
           <L />
-          <div className="h-8 w-full border rounded-md bg-background px-2 flex items-center text-xs text-muted-foreground pointer-events-none">
+          <div className="h-9 w-full border rounded-md bg-background px-2 flex items-center text-sm text-muted-foreground pointer-events-none">
             Adjuntar ({b.props?.accept || '*'})
           </div>
         </>
@@ -148,13 +148,13 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
     case 'attendance_by_day':
       return (
         <div className="border rounded-lg p-2.5 bg-muted/20">
-          <Badge variant="secondary" className="text-[10px]">Asistencia por día</Badge>
-          <p className="text-xs text-muted-foreground mt-1">Tabla de asistencia diaria generada automáticamente</p>
+          <Badge variant="secondary" className="text-xs">Asistencia por día</Badge>
+          <p className="text-sm text-muted-foreground mt-1">Tabla de asistencia diaria generada automáticamente</p>
         </div>
       );
 
     default:
-      return <p className="text-xs text-muted-foreground">Bloque: {(block as any).type}</p>;
+      return <p className="text-sm text-muted-foreground">Bloque: {(block as any).type}</p>;
   }
 }
 
@@ -164,28 +164,28 @@ function EvaluationQuizPreview({ block }: { block: BloqueEvaluationQuiz }) {
   return (
     <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
-        <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Evaluación'}</span>
-        <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-amber-300 text-amber-700 bg-amber-50">
+        <span className="text-sm font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Evaluación'}</span>
+        <Badge variant="outline" className="text-xs h-5 px-1.5 border-amber-300 text-amber-700 bg-amber-50">
           Mín. {umbralAprobacion}%
         </Badge>
-        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
+        <Badge variant="secondary" className="text-xs h-5 px-1.5">
           {preguntas.length} pregunta{preguntas.length !== 1 ? 's' : ''}
         </Badge>
       </div>
       {preguntas.length === 0 && (
-        <div className="border border-dashed rounded-md p-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <AlertCircle className="h-3.5 w-3.5" /> Sin preguntas configuradas
+        <div className="border border-dashed rounded-md p-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <AlertCircle className="h-4 w-4" /> Sin preguntas configuradas
         </div>
       )}
       {preguntas.map((p, idx) => (
-        <div key={p.id} className="border rounded-md p-2 bg-background space-y-1 min-w-0 max-w-full overflow-visible">
-          <p className="text-[11px] font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">{idx + 1}. {p.texto}</p>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-3 gap-y-1 min-w-0 max-w-full">
+        <div key={p.id} className="border rounded-md p-2.5 bg-background space-y-1.5 min-w-0 max-w-full overflow-visible">
+          <p className="text-sm font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">{idx + 1}. {p.texto}</p>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-x-3 gap-y-1.5 min-w-0 max-w-full">
             {p.opciones.map((op, oi) => (
-              <label key={oi} className="flex items-start gap-1.5 text-[10px] text-muted-foreground min-w-0 max-w-full">
-                <div className={`h-3 w-3 rounded-full border shrink-0 mt-0.5 ${oi === p.correcta ? 'border-emerald-500 bg-emerald-500/20' : 'border-muted-foreground/30'}`} />
+              <label key={oi} className="flex items-start gap-1.5 text-sm text-muted-foreground min-w-0 max-w-full">
+                <div className={`h-4 w-4 rounded-full border shrink-0 mt-0.5 ${oi === p.correcta ? 'border-emerald-500 bg-emerald-500/20' : 'border-muted-foreground/30'}`} />
                 <span className={oi === p.correcta ? 'text-emerald-700 font-medium break-words whitespace-pre-wrap leading-relaxed min-w-0' : 'break-words whitespace-pre-wrap leading-relaxed min-w-0'}>{op}</span>
-                {oi === p.correcta && <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500 ml-0.5" />}
+                {oi === p.correcta && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 ml-0.5" />}
               </label>
             ))}
           </div>
@@ -201,26 +201,26 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
   return (
     <div className="space-y-2 min-w-0 max-w-full overflow-visible">
       <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
-        <span className="text-xs font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Encuesta de satisfacción'}</span>
-        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">
+        <span className="text-sm font-semibold text-muted-foreground min-w-0 break-words">{block.label || 'Encuesta de satisfacción'}</span>
+        <Badge variant="secondary" className="text-xs h-5 px-1.5">
           {escalaPreguntas.length} pregunta{escalaPreguntas.length !== 1 ? 's' : ''}
         </Badge>
       </div>
       {/* Scale header */}
       {escalaOpciones.length > 0 && (
         <div className="border rounded-md overflow-visible max-w-full">
-          <div className="grid bg-muted/40 text-[9px] font-medium text-muted-foreground min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
-            <div className="px-2 py-1 border-r">Pregunta</div>
+          <div className="grid bg-muted/40 text-xs font-medium text-muted-foreground min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(48px, 60px))` }}>
+            <div className="px-2 py-1.5 border-r">Pregunta</div>
             {escalaOpciones.map((o) => (
-              <div key={o.value} className="text-center py-1 border-r last:border-r-0">{o.label}</div>
+              <div key={o.value} className="text-center py-1.5 border-r last:border-r-0">{o.label}</div>
             ))}
           </div>
           {escalaPreguntas.map((q, i) => (
-            <div key={i} className="grid border-t text-[10px] min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(44px, 56px))` }}>
-              <div className="px-2 py-1.5 border-r text-foreground break-words whitespace-pre-wrap leading-relaxed min-w-0">{q}</div>
+            <div key={i} className="grid border-t text-sm min-w-0" style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(${escalaOpciones.length}, minmax(48px, 60px))` }}>
+              <div className="px-2 py-2 border-r text-foreground break-words whitespace-pre-wrap leading-relaxed min-w-0">{q}</div>
               {escalaOpciones.map((o) => (
                 <div key={o.value} className="flex items-center justify-center border-r last:border-r-0">
-                  <div className="h-3 w-3 rounded-full border border-muted-foreground/30" />
+                  <div className="h-4 w-4 rounded-full border border-muted-foreground/30" />
                 </div>
               ))}
             </div>
@@ -228,11 +228,11 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
         </div>
       )}
       {preguntaSiNo && (
-        <div className="border rounded-md p-2 bg-background text-[10px] flex items-center gap-2">
+        <div className="border rounded-md p-2.5 bg-background text-sm flex items-center gap-2">
           <span className="text-foreground">{preguntaSiNo}</span>
-          <div className="flex gap-1.5 ml-auto">
-            <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
-            <div className="flex items-center gap-1"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
+          <div className="flex gap-2 ml-auto">
+            <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
+            <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
           </div>
         </div>
       )}
@@ -244,19 +244,19 @@ function SatisfactionSurveyPreview({ block }: { block: BloqueSatisfactionSurvey 
 function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
   const { questions = [] } = block.props || {};
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-muted-foreground">{block.label || 'Consentimiento de salud'}</span>
-        <Badge variant="secondary" className="text-[9px] h-4 px-1.5">{questions.length} pregunta{questions.length !== 1 ? 's' : ''}</Badge>
+        <span className="text-sm font-semibold text-muted-foreground">{block.label || 'Consentimiento de salud'}</span>
+        <Badge variant="secondary" className="text-xs h-5 px-1.5">{questions.length} pregunta{questions.length !== 1 ? 's' : ''}</Badge>
       </div>
       {questions.map((q) => (
-        <div key={q.id} className="border rounded-md p-1.5 bg-background flex items-center gap-2 text-[10px]">
-          <div className="flex gap-1.5 shrink-0">
-            <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
-            <div className="flex items-center gap-0.5"><div className="h-3 w-3 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
+        <div key={q.id} className="border rounded-md p-2 bg-background flex items-center gap-2 text-sm">
+          <div className="flex gap-2 shrink-0">
+            <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">Sí</span></div>
+            <div className="flex items-center gap-1"><div className="h-4 w-4 rounded-full border border-muted-foreground/30" /><span className="text-muted-foreground">No</span></div>
           </div>
           <span className="text-foreground">{q.label}</span>
-          {q.hasDetail && <Badge variant="outline" className="text-[8px] h-3.5 px-1 ml-auto">Detalle</Badge>}
+          {q.hasDetail && <Badge variant="outline" className="text-xs h-4.5 px-1.5 ml-auto">Detalle</Badge>}
         </div>
       ))}
     </div>
@@ -267,17 +267,17 @@ function HealthConsentPreview({ block }: { block: BloqueHealthConsent }) {
 function DataAuthorizationPreview({ block }: { block: BloqueDataAuthorization }) {
   const { summaryItems = [], fullText } = block.props || {};
   return (
-    <div className="space-y-1.5">
-      <span className="block text-xs font-semibold text-muted-foreground">{block.label || 'Autorización de datos'}</span>
-      <div className="border rounded-md p-2 bg-background space-y-1">
+    <div className="space-y-2">
+      <span className="block text-sm font-semibold text-muted-foreground">{block.label || 'Autorización de datos'}</span>
+      <div className="border rounded-md p-2.5 bg-background space-y-1.5">
         {summaryItems.map((item, i) => (
-          <div key={i} className="flex items-start gap-1.5 text-[10px] text-foreground">
+          <div key={i} className="flex items-start gap-1.5 text-sm text-foreground">
             <span className="text-muted-foreground">•</span> {item}
           </div>
         ))}
       </div>
-      {fullText && <p className="text-[10px] text-muted-foreground line-clamp-2 italic">{fullText}</p>}
-      <div className="flex items-center gap-2 text-[10px]">
+      {fullText && <p className="text-sm text-muted-foreground line-clamp-2 italic">{fullText}</p>}
+      <div className="flex items-center gap-2 text-sm">
         <div className="h-4 w-4 border rounded bg-background" />
         <span className="text-foreground">Acepto los términos</span>
       </div>

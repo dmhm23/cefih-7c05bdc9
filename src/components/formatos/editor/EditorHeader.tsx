@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Save, Eye, History, RotateCcw } from 'lucide-react';
+import { Save, Eye, History, RotateCcw, Undo2, Redo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 
 const CATEGORIA_LABELS: Record<string, string> = {
@@ -34,7 +35,9 @@ export default function EditorHeader({
   onVersionHistory,
   onClear,
 }: EditorHeaderProps) {
-  const { config, isDirty, items } = useFormatoEditorStore();
+  const { config, isDirty, items, history, future, undo, redo } = useFormatoEditorStore();
+  const canUndo = history.length > 0;
+  const canRedo = future.length > 0;
 
   return (
     <header className="sticky top-0 z-50 h-14 shrink-0 border-b bg-background px-4 flex items-center gap-3 shadow-sm">
@@ -68,6 +71,32 @@ export default function EditorHeader({
         {!isDirty && savedOnce && (
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">Guardado</Badge>
         )}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost" size="sm" className="h-8 w-8 p-0"
+              onClick={undo}
+              disabled={!canUndo}
+            >
+              <Undo2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Deshacer (Ctrl+Z)</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost" size="sm" className="h-8 w-8 p-0"
+              onClick={redo}
+              disabled={!canRedo}
+            >
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Rehacer (Ctrl+Shift+Z)</TooltipContent>
+        </Tooltip>
 
         <Button
           variant="ghost" size="sm" className="h-8 text-xs"

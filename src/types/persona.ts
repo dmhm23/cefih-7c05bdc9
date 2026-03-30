@@ -2,7 +2,7 @@
 export type TipoDocumento = 'CC' | 'CE' | 'PA' | 'PE' | 'PP';
 
 // Género
-export type Genero = 'M' | 'F';
+export type Genero = 'M' | 'F' | 'O';
 
 // Niveles educativos
 export type NivelEducativo = 

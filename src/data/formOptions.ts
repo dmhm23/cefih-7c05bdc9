@@ -11,6 +11,7 @@ export const TIPOS_DOCUMENTO = [
 export const GENEROS = [
   { value: 'M', label: 'Masculino' },
   { value: 'F', label: 'Femenino' },
+  { value: 'O', label: 'Otro' },
 ] as const;
 
 export const NIVELES_EDUCATIVOS = [

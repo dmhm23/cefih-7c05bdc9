@@ -36,7 +36,9 @@ export interface FormatoConfig {
   nivelFormacionIds: string[];
   visibleEnMatricula: boolean;
   visibleEnCurso: boolean;
+  visibleEnPortalEstudiante: boolean;
   activo: boolean;
+  modoDiligenciamiento: import('@/types/formatoFormacion').ModoDiligenciamiento;
   requiereFirmaAprendiz: boolean;
   requiereFirmaEntrenador: boolean;
   requiereFirmaSupervisor: boolean;

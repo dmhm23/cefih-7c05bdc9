@@ -661,3 +661,132 @@ function DataAuthorizationInspector({ bloque, onChange }: InspectorFieldsProps) 
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Document Header Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || {};
+
+  const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => updateProps({ logoUrl: reader.result as string });
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Logo */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Logo</Label>
+        {props.logoUrl ? (
+          <div className="relative border rounded-md p-2 flex items-center justify-center bg-muted/20">
+            <img src={props.logoUrl} alt="Logo" className="max-h-16 object-contain" />
+            <Button
+              variant="ghost" size="icon"
+              className="absolute top-1 right-1 h-6 w-6 text-muted-foreground hover:text-destructive"
+              onClick={() => updateProps({ logoUrl: '' })}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ) : (
+          <label className="flex items-center justify-center border-2 border-dashed rounded-md p-4 cursor-pointer hover:bg-muted/20 transition-colors">
+            <span className="text-xs text-muted-foreground">Subir logo…</span>
+            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+          </label>
+        )}
+      </div>
+
+      {/* Empresa */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Nombre empresa</Label>
+        <Textarea
+          value={props.empresaNombre || ''}
+          onChange={(e) => updateProps({ empresaNombre: e.target.value })}
+          className="min-h-[60px] text-xs resize-y"
+        />
+      </div>
+
+      {/* SGI */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Sistema de gestión</Label>
+        <Input
+          value={props.sistemaGestion || ''}
+          onChange={(e) => updateProps({ sistemaGestion: e.target.value })}
+          className="h-9 text-sm"
+        />
+      </div>
+
+      {/* Subsistema */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Subsistema</Label>
+        <Input
+          value={props.subsistema || ''}
+          onChange={(e) => updateProps({ subsistema: e.target.value })}
+          className="h-9 text-sm"
+        />
+      </div>
+
+      {/* Fechas */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs">Fecha creación</Label>
+          <Input
+            value={props.fechaCreacion || ''}
+            onChange={(e) => updateProps({ fechaCreacion: e.target.value })}
+            className="h-9 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Fecha edición</Label>
+          <Input
+            value={props.fechaEdicion || ''}
+            onChange={(e) => updateProps({ fechaEdicion: e.target.value })}
+            className="h-9 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Color de borde */}
+      <div className="space-y-1.5">
+        <Label className="text-xs">Color de bordes</Label>
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={props.borderColor || '#9ca3af'}
+            onChange={(e) => updateProps({ borderColor: e.target.value })}
+            className="h-8 w-10 rounded border cursor-pointer"
+          />
+          <Input
+            value={props.borderColor || '#9ca3af'}
+            onChange={(e) => updateProps({ borderColor: e.target.value })}
+            className="h-9 text-sm font-mono flex-1"
+          />
+        </div>
+      </div>
+
+      {/* Toggles */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Mostrar código</Label>
+          <Switch checked={props.mostrarCodigo ?? true} onCheckedChange={(v) => updateProps({ mostrarCodigo: v })} />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Mostrar versión</Label>
+          <Switch checked={props.mostrarVersion ?? true} onCheckedChange={(v) => updateProps({ mostrarVersion: v })} />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Mostrar fechas</Label>
+          <Switch checked={props.mostrarFechas ?? true} onCheckedChange={(v) => updateProps({ mostrarFechas: v })} />
+        </div>
+      </div>
+    </div>
+  );
+}

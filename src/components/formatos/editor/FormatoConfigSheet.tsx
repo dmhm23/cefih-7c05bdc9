@@ -8,11 +8,9 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
-import { TipoFormacion, TIPO_FORMACION_LABELS } from '@/types/curso';
 import { CategoriaFormato, AsignacionScope, ModoDiligenciamiento } from '@/types/formatoFormacion';
+import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
 import { cn } from '@/lib/utils';
-
-const TIPO_CURSO_OPTIONS = Object.entries(TIPO_FORMACION_LABELS) as [TipoFormacion, string][];
 
 const CATEGORIA_OPTIONS: { value: CategoriaFormato; label: string }[] = [
   { value: 'formacion', label: 'Formación' },

@@ -50,8 +50,23 @@ export default function FormatoEditorPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [savedOnce, setSavedOnce] = useState(false);
 
-  // Block navigation when there are unsaved changes
-  const blocker = useBlocker(store.isDirty);
+  // Pending navigation path when user tries to leave with unsaved changes
+  const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
+
+  // Intercept sidebar / internal navigation via custom navigate wrapper
+  const guardedNavigate = (to: string) => {
+    if (store.isDirty) {
+      setPendingNavPath(to);
+    } else {
+      navigate(to);
+    }
+  };
+
+  // Expose guardedNavigate on window so sidebar links can use it
+  useEffect(() => {
+    (window as any).__formatoGuardedNavigate = guardedNavigate;
+    return () => { delete (window as any).__formatoGuardedNavigate; };
+  });
 
   // Native browser warning on tab close / reload
   useEffect(() => {
@@ -62,6 +77,19 @@ export default function FormatoEditorPage() {
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
+  }, [store.isDirty]);
+
+  // Intercept browser back/forward buttons via popstate
+  useEffect(() => {
+    if (!store.isDirty) return;
+    const handlePop = () => {
+      // Push state back to prevent leaving
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavPath('__back__');
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
   }, [store.isDirty]);
 
   // Load existing formato into store

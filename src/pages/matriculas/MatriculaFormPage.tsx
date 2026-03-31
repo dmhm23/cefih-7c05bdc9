@@ -132,6 +132,7 @@ export default function MatriculaFormPage() {
       empresaRepresentanteLegal: "",
       empresaCargo: "",
       empresaNivelFormacion: "",
+      empresaContactoId: "",
       empresaContactoNombre: "",
       empresaContactoTelefono: "",
       areaTrabajo: "",

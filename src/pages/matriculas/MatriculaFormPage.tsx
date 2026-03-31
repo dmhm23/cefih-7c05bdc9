@@ -1174,8 +1174,15 @@ export default function MatriculaFormPage() {
           form.setValue("empresaRepresentanteLegal", empresa.representanteLegal);
           form.setValue("sectorEconomico", empresa.sectorEconomico);
           form.setValue("arl", empresa.arl);
-          form.setValue("empresaContactoNombre", empresa.personaContacto);
-          form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+          const principal = empresa.contactos?.find(c => c.esPrincipal) || empresa.contactos?.[0];
+          if (principal) {
+            form.setValue("empresaContactoId", principal.id);
+            form.setValue("empresaContactoNombre", principal.nombre);
+            form.setValue("empresaContactoTelefono", principal.telefono);
+          } else {
+            form.setValue("empresaContactoNombre", empresa.personaContacto);
+            form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+          }
         }}
       />
     </div>

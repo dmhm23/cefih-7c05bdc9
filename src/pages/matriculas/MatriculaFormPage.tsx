@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useState, useEffect } from "react";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
+import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { Persona, PersonaFormData } from "@/types/persona";
 import { EditableField } from "@/components/shared/EditableField";
@@ -97,6 +98,7 @@ export default function MatriculaFormPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [crearPersonaOpen, setCrearPersonaOpen] = useState(false);
+  const [crearEmpresaOpen, setCrearEmpresaOpen] = useState(false);
   const [showPersonaDetails, setShowPersonaDetails] = useState(false);
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [personaIsDirty, setPersonaIsDirty] = useState(false);
@@ -885,11 +887,7 @@ export default function MatriculaFormPage() {
                           type="button"
                           variant="outline"
                           className="w-full"
-                          onClick={async () => {
-                            // Simple: prompt for empresa name via a toast placeholder
-                            // For now navigate to create empresa page in new tab
-                            window.open("/empresas/nueva", "_blank");
-                          }}
+                          onClick={() => setCrearEmpresaOpen(true)}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Crear empresa
@@ -1098,6 +1096,21 @@ export default function MatriculaFormPage() {
         open={crearPersonaOpen}
         onOpenChange={setCrearPersonaOpen}
         onPersonaCreated={handlePersonaCreated}
+      />
+
+      <CrearEmpresaModal
+        open={crearEmpresaOpen}
+        onOpenChange={setCrearEmpresaOpen}
+        onEmpresaCreated={(empresa) => {
+          form.setValue("empresaId", empresa.id);
+          form.setValue("empresaNombre", empresa.nombreEmpresa);
+          form.setValue("empresaNit", empresa.nit);
+          form.setValue("empresaRepresentanteLegal", empresa.representanteLegal);
+          form.setValue("sectorEconomico", empresa.sectorEconomico);
+          form.setValue("arl", empresa.arl);
+          form.setValue("empresaContactoNombre", empresa.personaContacto);
+          form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+        }}
       />
     </div>
   );

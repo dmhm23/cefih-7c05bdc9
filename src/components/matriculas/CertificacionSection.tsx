@@ -36,7 +36,7 @@ interface Props {
 }
 
 const ESTADO_CONFIG: Record<EstadoCertificado, { label: string; icon: React.ElementType; className: string }> = {
-  elegible: { label: "Elegible", icon: ShieldCheck, className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  elegible: { label: "Listo para certificar", icon: ShieldCheck, className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
   generado: { label: "Generado", icon: Award, className: "bg-blue-100 text-blue-700 border-blue-200" },
   bloqueado: { label: "Bloqueado", icon: ShieldAlert, className: "bg-red-100 text-red-700 border-red-200" },
   revocado: { label: "Revocado", icon: FileWarning, className: "bg-gray-100 text-gray-700 border-gray-200" },

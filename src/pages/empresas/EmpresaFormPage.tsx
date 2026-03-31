@@ -2,11 +2,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -18,8 +19,10 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { useEmpresa, useCreateEmpresa, useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { v4 as uuid } from "uuid";
+import { ContactoEmpresa } from "@/types/empresa";
 
 const empresaSchema = z.object({
   nombreEmpresa: z.string().min(2, "Ingrese el nombre de la empresa"),
@@ -29,9 +32,6 @@ const empresaSchema = z.object({
   arl: z.string().optional().or(z.literal("")),
   direccion: z.string().optional().or(z.literal("")),
   telefonoEmpresa: z.string().optional().or(z.literal("")),
-  personaContacto: z.string().optional().or(z.literal("")),
-  telefonoContacto: z.string().optional().or(z.literal("")),
-  emailContacto: z.string().email("Email inválido").optional().or(z.literal("")),
   activo: z.boolean(),
 });
 
@@ -47,6 +47,10 @@ export default function EmpresaFormPage() {
   const createEmpresa = useCreateEmpresa();
   const updateEmpresa = useUpdateEmpresa();
 
+  const [contactos, setContactos] = useState<ContactoEmpresa[]>([
+    { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true },
+  ]);
+
   const form = useForm<EmpresaFormSchema>({
     resolver: zodResolver(empresaSchema),
     defaultValues: {
@@ -57,9 +61,6 @@ export default function EmpresaFormPage() {
       arl: "",
       direccion: "",
       telefonoEmpresa: "",
-      personaContacto: "",
-      telefonoContacto: "",
-      emailContacto: "",
       activo: true,
     },
   });
@@ -74,16 +75,39 @@ export default function EmpresaFormPage() {
         arl: empresa.arl || "",
         direccion: empresa.direccion || "",
         telefonoEmpresa: empresa.telefonoEmpresa || "",
-        personaContacto: empresa.personaContacto || "",
-        telefonoContacto: empresa.telefonoContacto || "",
-        emailContacto: empresa.emailContacto || "",
         activo: empresa.activo,
       });
+      if (empresa.contactos && empresa.contactos.length > 0) {
+        setContactos(empresa.contactos);
+      }
     }
   }, [empresa, form]);
 
+  const handleContactoChange = (index: number, field: keyof Omit<ContactoEmpresa, 'id' | 'esPrincipal'>, value: string) => {
+    setContactos(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  };
+
+  const handleAddContacto = () => {
+    setContactos(prev => [...prev, { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: false }]);
+  };
+
+  const handleRemoveContacto = (index: number) => {
+    setContactos(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(c => c.esPrincipal)) {
+        updated[0].esPrincipal = true;
+      }
+      return updated;
+    });
+  };
+
+  const handleSetPrincipal = (index: number) => {
+    setContactos(prev => prev.map((c, i) => ({ ...c, esPrincipal: i === index })));
+  };
+
   const onSubmit = async (data: EmpresaFormSchema) => {
     try {
+      const principal = contactos.find(c => c.esPrincipal) || contactos[0];
       const empresaData = {
         nombreEmpresa: data.nombreEmpresa,
         nit: data.nit,
@@ -92,9 +116,10 @@ export default function EmpresaFormPage() {
         arl: data.arl || "",
         direccion: data.direccion || "",
         telefonoEmpresa: data.telefonoEmpresa || "",
-        personaContacto: data.personaContacto || "",
-        telefonoContacto: data.telefonoContacto || "",
-        emailContacto: data.emailContacto || "",
+        contactos,
+        personaContacto: principal?.nombre || "",
+        telefonoContacto: principal?.telefono || "",
+        emailContacto: principal?.email || "",
         activo: data.activo,
       };
 
@@ -270,49 +295,75 @@ export default function EmpresaFormPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Datos de Contacto</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Personas de Contacto</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={handleAddContacto}>
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar contacto
+              </Button>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="personaContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Persona de Contacto</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nombre completo" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="telefonoContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono Contacto</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="3001234567" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="emailContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Contacto</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} placeholder="contacto@empresa.com" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent className="space-y-4">
+              {contactos.map((contacto, index) => (
+                <div key={contacto.id} className="relative border rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Contacto {index + 1}</span>
+                      {contacto.esPrincipal ? (
+                        <Badge variant="default" className="text-xs">Principal</Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs text-muted-foreground"
+                          onClick={() => handleSetPrincipal(index)}
+                        >
+                          <Star className="h-3 w-3 mr-1" />
+                          Marcar como principal
+                        </Button>
+                      )}
+                    </div>
+                    {contactos.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveContacto(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">Nombre</label>
+                      <Input
+                        value={contacto.nombre}
+                        onChange={e => handleContactoChange(index, "nombre", e.target.value)}
+                        placeholder="Nombre completo"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">Teléfono</label>
+                      <Input
+                        value={contacto.telefono}
+                        onChange={e => handleContactoChange(index, "telefono", e.target.value)}
+                        placeholder="3001234567"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">Email</label>
+                      <Input
+                        type="email"
+                        value={contacto.email}
+                        onChange={e => handleContactoChange(index, "email", e.target.value)}
+                        placeholder="contacto@empresa.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 

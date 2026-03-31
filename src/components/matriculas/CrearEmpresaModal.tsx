@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,9 @@ import { Combobox } from "@/components/ui/combobox";
 import { useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
-import { Empresa } from "@/types/empresa";
+import { Empresa, ContactoEmpresa } from "@/types/empresa";
+import { useState } from "react";
+import { v4 as uuid } from "uuid";
 
 const empresaSchema = z.object({
   nombreEmpresa: z.string().min(2, "Ingrese el nombre de la empresa"),
@@ -33,9 +36,6 @@ const empresaSchema = z.object({
   arl: z.string().optional().or(z.literal("")),
   direccion: z.string().optional().or(z.literal("")),
   telefonoEmpresa: z.string().optional().or(z.literal("")),
-  personaContacto: z.string().optional().or(z.literal("")),
-  telefonoContacto: z.string().optional().or(z.literal("")),
-  emailContacto: z.string().email("Email inválido").optional().or(z.literal("")),
 });
 
 type FormData = z.infer<typeof empresaSchema>;
@@ -50,6 +50,10 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
   const { toast } = useToast();
   const createEmpresa = useCreateEmpresa();
 
+  const [contactos, setContactos] = useState<ContactoEmpresa[]>([
+    { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true },
+  ]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(empresaSchema),
     defaultValues: {
@@ -60,14 +64,34 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
       arl: "",
       direccion: "",
       telefonoEmpresa: "",
-      personaContacto: "",
-      telefonoContacto: "",
-      emailContacto: "",
     },
   });
 
+  const handleContactoChange = (index: number, field: keyof Omit<ContactoEmpresa, 'id' | 'esPrincipal'>, value: string) => {
+    setContactos(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+  };
+
+  const handleAddContacto = () => {
+    setContactos(prev => [...prev, { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: false }]);
+  };
+
+  const handleRemoveContacto = (index: number) => {
+    setContactos(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(c => c.esPrincipal)) {
+        updated[0].esPrincipal = true;
+      }
+      return updated;
+    });
+  };
+
+  const handleSetPrincipal = (index: number) => {
+    setContactos(prev => prev.map((c, i) => ({ ...c, esPrincipal: i === index })));
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
+      const principal = contactos.find(c => c.esPrincipal) || contactos[0];
       const result = await createEmpresa.mutateAsync({
         nombreEmpresa: data.nombreEmpresa,
         nit: data.nit,
@@ -76,13 +100,15 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
         arl: data.arl || "",
         direccion: data.direccion || "",
         telefonoEmpresa: data.telefonoEmpresa || "",
-        personaContacto: data.personaContacto || "",
-        telefonoContacto: data.telefonoContacto || "",
-        emailContacto: data.emailContacto || "",
+        contactos,
+        personaContacto: principal?.nombre || "",
+        telefonoContacto: principal?.telefono || "",
+        emailContacto: principal?.email || "",
         activo: true,
       });
       toast({ title: "Empresa creada correctamente" });
       form.reset();
+      setContactos([{ id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true }]);
       onEmpresaCreated(result);
       onOpenChange(false);
     } catch (error: any) {
@@ -102,7 +128,6 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Información General */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -204,62 +229,81 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="telefonoEmpresa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono Empresa</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="6011234567" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="personaContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Persona de Contacto</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Nombre completo" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="telefonoEmpresa"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Teléfono Empresa</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="6011234567" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="telefonoContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono Contacto</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="3001234567" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="emailContacto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Contacto</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} placeholder="contacto@empresa.com" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Contactos dinámicos */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">Personas de Contacto</p>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddContacto}>
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Agregar
+                </Button>
+              </div>
+              {contactos.map((contacto, index) => (
+                <div key={contacto.id} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">Contacto {index + 1}</span>
+                      {contacto.esPrincipal ? (
+                        <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 text-[10px] text-muted-foreground px-1.5"
+                          onClick={() => handleSetPrincipal(index)}
+                        >
+                          <Star className="h-3 w-3 mr-0.5" />
+                          Principal
+                        </Button>
+                      )}
+                    </div>
+                    {contactos.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveContacto(index)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input
+                      value={contacto.nombre}
+                      onChange={e => handleContactoChange(index, "nombre", e.target.value)}
+                      placeholder="Nombre"
+                    />
+                    <Input
+                      value={contacto.telefono}
+                      onChange={e => handleContactoChange(index, "telefono", e.target.value)}
+                      placeholder="Teléfono"
+                    />
+                    <Input
+                      type="email"
+                      value={contacto.email}
+                      onChange={e => handleContactoChange(index, "email", e.target.value)}
+                      placeholder="Email"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             <DialogFooter>

@@ -67,6 +67,7 @@ const matriculaSchema = z.object({
   empresaRepresentanteLegal: z.string().optional(),
   empresaCargo: z.string().optional(),
   empresaNivelFormacion: z.string().optional(),
+  empresaContactoId: z.string().optional(),
   empresaContactoNombre: z.string().optional(),
   empresaContactoTelefono: z.string().optional(),
   areaTrabajo: z.string().optional(),

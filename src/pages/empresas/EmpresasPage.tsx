@@ -210,7 +210,24 @@ export default function EmpresasPage() {
       sortable: true,
       render: (e) => getArlLabel(e.arl),
     },
-    { key: "personaContacto", header: "Persona Contacto", sortable: true },
+    {
+      key: "personaContacto",
+      header: "Persona Contacto",
+      sortable: true,
+      render: (e) => {
+        const principal = e.contactos?.find(c => c.esPrincipal) || e.contactos?.[0];
+        const nombre = principal?.nombre || e.personaContacto;
+        const extras = (e.contactos?.length || 1) - 1;
+        return (
+          <div className="flex items-center gap-1.5">
+            <span>{nombre}</span>
+            {extras > 0 && (
+              <Badge variant="secondary" className="text-[10px] h-5 px-1.5">+{extras}</Badge>
+            )}
+          </div>
+        );
+      },
+    },
     { key: "telefonoContacto", header: "Teléfono Contacto" },
     {
       key: "emailContacto",

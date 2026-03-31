@@ -268,31 +268,34 @@ export default function EmpresaDetallePage() {
           </div>
         </div>
 
-        {/* Datos de Contacto */}
-        <div className="border rounded-lg p-4 shadow-sm space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Datos de Contacto
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            <EditableField
-              label="Persona de Contacto"
-              value={getValue("personaContacto")}
-              onChange={v => handleFieldChange("personaContacto", v)}
-              icon={User}
-            />
-            <EditableField
-              label="Teléfono Contacto"
-              value={getValue("telefonoContacto")}
-              onChange={v => handleFieldChange("telefonoContacto", v)}
-              icon={Phone}
-            />
-            <EditableField
-              label="Email Contacto"
-              value={getValue("emailContacto")}
-              onChange={v => handleFieldChange("emailContacto", v)}
-              icon={Mail}
-            />
+        {/* Personas de Contacto */}
+        <div className="border rounded-lg p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Personas de Contacto
+            </h3>
           </div>
+          {(empresa.contactos && empresa.contactos.length > 0 ? empresa.contactos : [
+            { id: 'legacy', nombre: empresa.personaContacto, telefono: empresa.telefonoContacto, email: empresa.emailContacto, esPrincipal: true }
+          ]).map((contacto, index) => (
+            <div key={contacto.id} className="border rounded-lg p-3 space-y-1">
+              <div className="flex items-center gap-2">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-sm font-medium">{contacto.nombre || "—"}</span>
+                {contacto.esPrincipal && (
+                  <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground pl-5">
+                {contacto.telefono && (
+                  <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{contacto.telefono}</span>
+                )}
+                {contacto.email && (
+                  <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{contacto.email}</span>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

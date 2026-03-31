@@ -98,6 +98,7 @@ export default function MatriculaFormPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [crearPersonaOpen, setCrearPersonaOpen] = useState(false);
+  const [crearEmpresaOpen, setCrearEmpresaOpen] = useState(false);
   const [showPersonaDetails, setShowPersonaDetails] = useState(false);
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [personaIsDirty, setPersonaIsDirty] = useState(false);

@@ -1048,6 +1048,7 @@ export default function MatriculaFormPage() {
                       </div>
                     </>
                   )}
+                </div>
               )}
             </CardContent>
           </Card>

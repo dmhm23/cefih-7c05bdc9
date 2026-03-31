@@ -176,6 +176,7 @@ export default function MatriculaFormPage() {
       form.setValue("empresaNombre", "");
       form.setValue("empresaNit", "");
       form.setValue("empresaRepresentanteLegal", "");
+      form.setValue("empresaContactoId", "");
       form.setValue("empresaContactoNombre", "");
       form.setValue("empresaContactoTelefono", "");
       form.setValue("sectorEconomico", "");

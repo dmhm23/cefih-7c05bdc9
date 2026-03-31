@@ -961,30 +961,83 @@ export default function MatriculaFormPage() {
                     <>
                       <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="empresaContactoNombre"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre de Contacto</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Nombre completo" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="empresaContactoTelefono"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono de Contacto</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="3001234567" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                        {(() => {
+                          const selectedEmpresaId = form.watch("empresaId");
+                          const selectedEmpresa = empresas.find(e => e.id === selectedEmpresaId);
+                          const contactosDisponibles = selectedEmpresa?.contactos || [];
+                          
+                          if (contactosDisponibles.length > 0) {
+                            const contactoOptions = contactosDisponibles.map(c => ({
+                              value: c.id,
+                              label: `${c.nombre}${c.esPrincipal ? ' (Principal)' : ''}`,
+                            }));
+                            return (
+                              <>
+                                <FormField
+                                  control={form.control}
+                                  name="empresaContactoId"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Persona de Contacto</FormLabel>
+                                      <FormControl>
+                                        <Combobox
+                                          options={contactoOptions}
+                                          value={field.value || ""}
+                                          onValueChange={(val) => {
+                                            field.onChange(val);
+                                            const contacto = contactosDisponibles.find(c => c.id === val);
+                                            if (contacto) {
+                                              form.setValue("empresaContactoNombre", contacto.nombre);
+                                              form.setValue("empresaContactoTelefono", contacto.telefono);
+                                            }
+                                          }}
+                                          placeholder="Seleccionar contacto..."
+                                          searchPlaceholder="Buscar contacto..."
+                                          emptyMessage="Sin contactos"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <div className="flex flex-col justify-center gap-1 pt-5">
+                                  {form.watch("empresaContactoNombre") && (
+                                    <>
+                                      <p className="text-xs text-muted-foreground">Teléfono</p>
+                                      <p className="text-sm font-medium">{form.watch("empresaContactoTelefono") || "—"}</p>
+                                    </>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          }
+                          
+                          return (
+                            <>
+                              <FormField
+                                control={form.control}
+                                name="empresaContactoNombre"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nombre de Contacto</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Nombre completo" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="empresaContactoTelefono"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Teléfono de Contacto</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="3001234567" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
                           )}
                         />
                       </div>

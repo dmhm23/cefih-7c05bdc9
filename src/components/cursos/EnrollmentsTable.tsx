@@ -273,7 +273,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       case "generado":
         return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-200 text-xs">Generado</Badge>;
       case "elegible":
-        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs">Elegible</Badge>;
+        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs">Listo para certificar</Badge>;
       case "revocado":
         return <Badge variant="destructive" className="text-xs">Revocado</Badge>;
       case "bloqueado":

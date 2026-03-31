@@ -23,7 +23,7 @@ const filterConfigs: FilterConfig[] = [
     label: "Estado",
     type: "select",
     options: [
-      { label: "Elegible", value: "elegible" },
+      { label: "Listo para certificar", value: "elegible" },
       { label: "Generado", value: "generado" },
       { label: "Bloqueado", value: "bloqueado" },
       { label: "Revocado", value: "revocado" },

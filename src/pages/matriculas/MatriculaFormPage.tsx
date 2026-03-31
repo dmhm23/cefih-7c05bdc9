@@ -67,6 +67,7 @@ const matriculaSchema = z.object({
   empresaRepresentanteLegal: z.string().optional(),
   empresaCargo: z.string().optional(),
   empresaNivelFormacion: z.string().optional(),
+  empresaContactoId: z.string().optional(),
   empresaContactoNombre: z.string().optional(),
   empresaContactoTelefono: z.string().optional(),
   areaTrabajo: z.string().optional(),
@@ -131,6 +132,7 @@ export default function MatriculaFormPage() {
       empresaRepresentanteLegal: "",
       empresaCargo: "",
       empresaNivelFormacion: "",
+      empresaContactoId: "",
       empresaContactoNombre: "",
       empresaContactoTelefono: "",
       areaTrabajo: "",
@@ -174,6 +176,7 @@ export default function MatriculaFormPage() {
       form.setValue("empresaNombre", "");
       form.setValue("empresaNit", "");
       form.setValue("empresaRepresentanteLegal", "");
+      form.setValue("empresaContactoId", "");
       form.setValue("empresaContactoNombre", "");
       form.setValue("empresaContactoTelefono", "");
       form.setValue("sectorEconomico", "");
@@ -868,8 +871,15 @@ export default function MatriculaFormPage() {
                                       form.setValue("sectorEconomico", emp.sectorEconomico);
                                       form.setValue("arl", emp.arl);
                                       const principal = emp.contactos?.find(c => c.esPrincipal) || emp.contactos?.[0];
-                                      form.setValue("empresaContactoNombre", principal?.nombre || emp.personaContacto);
-                                      form.setValue("empresaContactoTelefono", principal?.telefono || emp.telefonoContacto);
+                                      if (principal) {
+                                        form.setValue("empresaContactoId", principal.id);
+                                        form.setValue("empresaContactoNombre", principal.nombre);
+                                        form.setValue("empresaContactoTelefono", principal.telefono);
+                                      } else {
+                                        form.setValue("empresaContactoId", "");
+                                        form.setValue("empresaContactoNombre", emp.personaContacto || "");
+                                        form.setValue("empresaContactoTelefono", emp.telefonoContacto || "");
+                                      }
                                     }
                                   }}
                                   placeholder="Buscar empresa por nombre o NIT..."
@@ -954,32 +964,88 @@ export default function MatriculaFormPage() {
                     <>
                       <p className="text-sm font-medium text-muted-foreground pt-1">Persona de Contacto</p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="empresaContactoNombre"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nombre de Contacto</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="Nombre completo" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="empresaContactoTelefono"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Teléfono de Contacto</FormLabel>
-                              <FormControl>
-                                <Input {...field} placeholder="3001234567" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {(() => {
+                          const selectedEmpresaId = form.watch("empresaId");
+                          const selectedEmpresa = empresas.find(e => e.id === selectedEmpresaId);
+                          const contactosDisponibles = selectedEmpresa?.contactos || [];
+                          
+                          if (contactosDisponibles.length > 0) {
+                            const contactoOptions = contactosDisponibles.map(c => ({
+                              value: c.id,
+                              label: `${c.nombre}${c.esPrincipal ? ' (Principal)' : ''}`,
+                            }));
+                            return (
+                              <>
+                                <FormField
+                                  control={form.control}
+                                  name="empresaContactoId"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Persona de Contacto</FormLabel>
+                                      <FormControl>
+                                        <Combobox
+                                          options={contactoOptions}
+                                          value={field.value || ""}
+                                          onValueChange={(val) => {
+                                            field.onChange(val);
+                                            const contacto = contactosDisponibles.find(c => c.id === val);
+                                            if (contacto) {
+                                              form.setValue("empresaContactoNombre", contacto.nombre);
+                                              form.setValue("empresaContactoTelefono", contacto.telefono);
+                                            }
+                                          }}
+                                          placeholder="Seleccionar contacto..."
+                                          searchPlaceholder="Buscar contacto..."
+                                          emptyMessage="Sin contactos"
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <div className="flex flex-col justify-center gap-1 pt-5">
+                                  {form.watch("empresaContactoNombre") && (
+                                    <>
+                                      <p className="text-xs text-muted-foreground">Teléfono</p>
+                                      <p className="text-sm font-medium">{form.watch("empresaContactoTelefono") || "—"}</p>
+                                    </>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          }
+                          
+                          return (
+                            <>
+                              <FormField
+                                control={form.control}
+                                name="empresaContactoNombre"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nombre de Contacto</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Nombre completo" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="empresaContactoTelefono"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Teléfono de Contacto</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="3001234567" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </>
+                          );
+                        })()}
                       </div>
                     </>
                   )}
@@ -1109,8 +1175,15 @@ export default function MatriculaFormPage() {
           form.setValue("empresaRepresentanteLegal", empresa.representanteLegal);
           form.setValue("sectorEconomico", empresa.sectorEconomico);
           form.setValue("arl", empresa.arl);
-          form.setValue("empresaContactoNombre", empresa.personaContacto);
-          form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+          const principal = empresa.contactos?.find(c => c.esPrincipal) || empresa.contactos?.[0];
+          if (principal) {
+            form.setValue("empresaContactoId", principal.id);
+            form.setValue("empresaContactoNombre", principal.nombre);
+            form.setValue("empresaContactoTelefono", principal.telefono);
+          } else {
+            form.setValue("empresaContactoNombre", empresa.personaContacto);
+            form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+          }
         }}
       />
     </div>

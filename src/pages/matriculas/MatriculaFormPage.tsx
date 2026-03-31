@@ -887,11 +887,7 @@ export default function MatriculaFormPage() {
                           type="button"
                           variant="outline"
                           className="w-full"
-                          onClick={async () => {
-                            // Simple: prompt for empresa name via a toast placeholder
-                            // For now navigate to create empresa page in new tab
-                            window.open("/empresas/nueva", "_blank");
-                          }}
+                          onClick={() => setCrearEmpresaOpen(true)}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Crear empresa

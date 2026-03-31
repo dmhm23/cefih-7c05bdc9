@@ -95,7 +95,7 @@ export function asignarMatriculaACartera(params: {
 
   let responsable: ResponsablePago | undefined;
 
-  if (tipoVinculacion === 'empresa' && empresaNit) {
+  if ((tipoVinculacion === 'empresa' || tipoVinculacion === 'arl') && empresaNit) {
     // Find by NIT
     responsable = mockResponsables.find(r => r.nit === empresaNit);
     if (!responsable) {

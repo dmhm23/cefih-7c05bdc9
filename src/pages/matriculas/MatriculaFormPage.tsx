@@ -867,8 +867,9 @@ export default function MatriculaFormPage() {
                                       form.setValue("empresaRepresentanteLegal", emp.representanteLegal);
                                       form.setValue("sectorEconomico", emp.sectorEconomico);
                                       form.setValue("arl", emp.arl);
-                                      form.setValue("empresaContactoNombre", emp.personaContacto);
-                                      form.setValue("empresaContactoTelefono", emp.telefonoContacto);
+                                      const principal = emp.contactos?.find(c => c.esPrincipal) || emp.contactos?.[0];
+                                      form.setValue("empresaContactoNombre", principal?.nombre || emp.personaContacto);
+                                      form.setValue("empresaContactoTelefono", principal?.telefono || emp.telefonoContacto);
                                     }
                                   }}
                                   placeholder="Buscar empresa por nombre o NIT..."

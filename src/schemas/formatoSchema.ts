@@ -25,7 +25,6 @@ export const formatoConfigSchema = z.object({
   version: z.string(),
   categoria: z.enum(['formacion', 'evaluacion', 'asistencia', 'pta_ats', 'personalizado']),
   asignacionScope: z.enum(['todos', 'nivel_formacion']),
-  tipoCursoKeys: z.array(z.string()),
   nivelFormacionIds: z.array(z.string()),
   visibleEnMatricula: z.boolean(),
   visibleEnCurso: z.boolean(),

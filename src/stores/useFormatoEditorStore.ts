@@ -62,7 +62,6 @@ export const DEFAULT_CONFIG: FormatoConfig = {
   version: '001',
   categoria: 'personalizado',
   asignacionScope: 'todos',
-  tipoCursoKeys: [],
   nivelFormacionIds: [],
   visibleEnMatricula: true,
   visibleEnCurso: false,

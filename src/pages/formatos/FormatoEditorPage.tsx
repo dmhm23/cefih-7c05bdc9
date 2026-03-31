@@ -150,7 +150,6 @@ export default function FormatoEditorPage() {
       version: config.version,
       asignacionScope: config.asignacionScope,
       nivelFormacionIds: config.nivelFormacionIds,
-      tipoCursoKeys: config.tipoCursoKeys,
       visibleEnMatricula: config.visibleEnMatricula,
       visibleEnCurso: config.visibleEnCurso,
       visibleEnPortalEstudiante: config.visibleEnPortalEstudiante,

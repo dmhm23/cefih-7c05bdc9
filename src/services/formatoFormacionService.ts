@@ -273,7 +273,7 @@ let mockFormatos: FormatoFormacion[] = [
     version: '009',
     asignacionScope: 'nivel_formacion',
     nivelFormacionIds: ['nf1'],
-    tipoCursoKeys: [],
+    
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: true,

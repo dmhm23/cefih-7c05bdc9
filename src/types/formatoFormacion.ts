@@ -299,8 +299,7 @@ export interface FormatoFormacion {
   version: string;      // e.g. "021"
 
   asignacionScope: AsignacionScope;
-  nivelFormacionIds: string[];       // si scope = nivel_formacion
-  tipoCursoKeys: TipoFormacion[];    // si scope = tipo_curso
+  nivelFormacionIds: string[];       // IDs de niveles de formación cuando scope = nivel_formacion
 
   visibleEnMatricula: boolean;
   visibleEnCurso: boolean;

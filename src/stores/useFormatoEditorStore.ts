@@ -32,7 +32,6 @@ export interface FormatoConfig {
   version: string;
   categoria: CategoriaFormato;
   asignacionScope: AsignacionScope;
-  tipoCursoKeys: TipoFormacion[];
   nivelFormacionIds: string[];
   visibleEnMatricula: boolean;
   visibleEnCurso: boolean;

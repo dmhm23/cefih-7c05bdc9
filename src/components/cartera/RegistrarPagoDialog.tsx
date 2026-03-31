@@ -27,7 +27,8 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
   const { data: pagosExistentes = [] } = usePagosByFactura(factura.id);
 
   const [valorPago, setValorPago] = useState("");
-  const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia_bancaria");
+  const [metodoOtro, setMetodoOtro] = useState("");
   const [fechaPago, setFechaPago] = useState(() => todayLocalString());
   const [observaciones, setObservaciones] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -45,19 +46,32 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
       toast({ title: `El valor excede el saldo pendiente (${formatCurrency(saldoPendiente)})`, variant: "destructive" });
       return;
     }
+    if (!archivo) {
+      toast({ title: "Debe adjuntar el soporte de pago (comprobante)", variant: "destructive" });
+      return;
+    }
+    if (metodoPago === "otro" && !metodoOtro.trim()) {
+      toast({ title: "Especifique el método de pago", variant: "destructive" });
+      return;
+    }
+
+    const obsConMetodo = metodoPago === "otro"
+      ? [metodoOtro.trim(), observaciones].filter(Boolean).join(" — ")
+      : observaciones || undefined;
 
     await registrarPago.mutateAsync({
       facturaId: factura.id,
       fechaPago,
       valorPago: valor,
       metodoPago,
-      observaciones: observaciones || undefined,
-      soportePago: archivo ? URL.createObjectURL(archivo) : undefined,
+      observaciones: obsConMetodo,
+      soportePago: URL.createObjectURL(archivo),
     });
 
     toast({ title: "Pago registrado exitosamente" });
     onOpenChange(false);
     setValorPago("");
+    setMetodoOtro("");
     setObservaciones("");
     setArchivo(null);
   };
@@ -110,7 +124,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
 
           <div className="space-y-1.5">
             <Label>Método de Pago</Label>
-            <Select value={metodoPago} onValueChange={(v) => setMetodoPago(v as MetodoPago)}>
+            <Select value={metodoPago} onValueChange={(v) => { setMetodoPago(v as MetodoPago); if (v !== "otro") setMetodoOtro(""); }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -120,10 +134,18 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
                 ))}
               </SelectContent>
             </Select>
+            {metodoPago === "otro" && (
+              <Input
+                placeholder="Especifique el método de pago..."
+                value={metodoOtro}
+                onChange={e => setMetodoOtro(e.target.value)}
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="space-y-1.5">
-            <Label>Soporte de Pago (comprobante)</Label>
+            <Label>Soporte de Pago (comprobante) *</Label>
             <FileDropZone
               accept=".pdf,.png,.jpg,.jpeg"
               onFile={setArchivo}

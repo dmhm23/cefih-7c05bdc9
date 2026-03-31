@@ -1,30 +1,27 @@
 
 
-## Plan: Eliminar "duración en días" de niveles y recalcular días desde fechas del curso
+## Plan: Modal para crear empresa desde matrícula (sin salir del flujo)
 
-### Resumen
+### Problema
 
-- Eliminar el campo `duracionDias` del módulo de niveles de formación (formulario, detalle, listado, tipo)
-- Las horas de formación se parametrizan solo en niveles y no se modifican por fechas del curso
-- `duracionDias` en el curso se calcula automáticamente a partir de `fechaInicio` y `fechaFin` (ya ocurre parcialmente en `CourseInfoCard`)
-- El campo `horasTotales` del curso se pre-llena desde el nivel pero sigue siendo editable solo por admin, no por cambio de fechas
+El botón "Crear empresa" en el formulario de matrícula abre una nueva pestaña (`window.open("/empresas/nueva", "_blank")`), sacando al usuario del flujo.
+
+### Solución
+
+Crear un componente `CrearEmpresaModal` siguiendo el mismo patrón que `CrearPersonaModal`: un `Dialog` con el formulario de empresa embebido. Al guardar, se crea la empresa via `useCreateEmpresa` y se autocompletan los campos de empresa en el formulario de matrícula.
 
 ### Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/nivelFormacion.ts` | Eliminar `duracionDias` de `NivelFormacion` |
-| `src/pages/niveles/NivelFormPage.tsx` | Eliminar campo `duracionDias` del schema, formulario y payload. Ajustar validación a solo `duracionHoras > 0` |
-| `src/pages/niveles/NivelDetallePage.tsx` | Mostrar solo horas en la sección Duración |
-| `src/pages/niveles/NivelesPage.tsx` | Columna Duración muestra solo horas |
-| `src/data/mockData.ts` | Eliminar `duracionDias` de los mocks de niveles (si existe) |
-| `src/components/cursos/CourseInfoCard.tsx` | Hacer `Duración (días)` read-only y calculado desde fechas. `Horas Totales` no editable por cambio de fechas |
-| `src/pages/cursos/CursoFormPage.tsx` | Al crear curso, pre-llenar `horasTotales` desde el nivel seleccionado; calcular `duracionDias` desde fechas |
-| `src/components/cursos/CursosListView.tsx` | Sin cambios funcionales (ya muestra días del curso, que sigue existiendo) |
+| `src/components/matriculas/CrearEmpresaModal.tsx` | **Nuevo** — Modal con formulario de empresa (campos: nombre, NIT, representante legal, sector, ARL, dirección, teléfono, contacto, email). Usa `useCreateEmpresa`. Callback `onEmpresaCreated(empresa)` |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar `window.open` por apertura del modal. Añadir estado `crearEmpresaOpen`. En `onEmpresaCreated`, setear los campos `empresaId`, `empresaNombre`, `empresaNit`, etc. en el form |
 
-### Detalle técnico
+### Detalle del modal
 
-**Niveles** — `duracionDias` se elimina del tipo y del formulario. Solo queda `duracionHoras` como campo obligatorio.
-
-**Cursos** — `duracionDias` sigue existiendo en `Curso` pero se calcula automáticamente desde fechas (ya existe lógica en `handleFechaChange`). Se marca como no editable manualmente. `horasTotales` se hereda del nivel al seleccionar tipo de formación y no cambia al modificar fechas.
+- Campos obligatorios: Nombre, NIT
+- Campos opcionales: representante legal, sector económico, ARL, dirección, teléfono empresa, persona contacto, teléfono contacto, email contacto
+- Mismos selects (Combobox) para sector y ARL que usa `EmpresaFormPage`
+- Al crear exitosamente: cierra el modal, ejecuta `onEmpresaCreated(empresa)` que autocompleta los campos de empresa en el formulario de matrícula
+- Esquema de validación reutiliza la misma estructura del `EmpresaFormPage`
 

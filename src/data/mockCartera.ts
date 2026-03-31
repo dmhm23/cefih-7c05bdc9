@@ -236,30 +236,30 @@ export const mockFacturaMatriculas: FacturaMatricula[] = [
 // ============ REGISTROS DE PAGO ============
 export const mockPagos: RegistroPago[] = [
   // Constructora ABC
-  { id: 'pago1', facturaId: 'f1', fechaPago: '2024-02-18', valorPago: 350000, metodoPago: 'transferencia', observaciones: 'Pago m1 completo.' },
-  { id: 'pago5', facturaId: 'f1', fechaPago: '2024-03-02', valorPago: 350000, metodoPago: 'transferencia', observaciones: 'Pago m5 completo.' },
+  { id: 'pago1', facturaId: 'f1', fechaPago: '2024-02-18', valorPago: 350000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m1 completo.' },
+  { id: 'pago5', facturaId: 'f1', fechaPago: '2024-03-02', valorPago: 350000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m5 completo.' },
   { id: 'pago6', facturaId: 'f1', fechaPago: '2024-03-03', valorPago: 350000, metodoPago: 'consignacion', observaciones: 'Pago m6 completo.' },
-  { id: 'pago7', facturaId: 'f1', fechaPago: '2024-03-05', valorPago: 200000, metodoPago: 'transferencia', observaciones: 'Abono parcial m7.' },
+  { id: 'pago7', facturaId: 'f1', fechaPago: '2024-03-05', valorPago: 200000, metodoPago: 'transferencia_bancaria', observaciones: 'Abono parcial m7.' },
   // Infra del Norte
   { id: 'pago2', facturaId: 'f2', fechaPago: '2024-03-10', valorPago: 100000, metodoPago: 'consignacion', observaciones: 'Abono parcial m3.' },
-  { id: 'pago8', facturaId: 'f2', fechaPago: '2024-03-06', valorPago: 280000, metodoPago: 'transferencia', observaciones: 'Pago m11 completo.' },
+  { id: 'pago8', facturaId: 'f2', fechaPago: '2024-03-06', valorPago: 280000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m11 completo.' },
   // Ana Maria Garcia
   { id: 'pago3', facturaId: 'f3', fechaPago: '2024-02-16', valorPago: 350000, metodoPago: 'efectivo' },
   // Telecom Solutions
   { id: 'pago4', facturaId: 'f4', fechaPago: '2024-01-11', valorPago: 500000, metodoPago: 'consignacion', observaciones: 'Pago m4 completo.' },
   { id: 'pago9', facturaId: 'f4', fechaPago: '2024-03-07', valorPago: 280000, metodoPago: 'consignacion', observaciones: 'Pago m13 completo.' },
-  { id: 'pago10', facturaId: 'f4', fechaPago: '2024-03-08', valorPago: 150000, metodoPago: 'transferencia', observaciones: 'Abono parcial m14.' },
+  { id: 'pago10', facturaId: 'f4', fechaPago: '2024-03-08', valorPago: 150000, metodoPago: 'transferencia_bancaria', observaciones: 'Abono parcial m14.' },
   // Energía Solar
-  { id: 'pago11', facturaId: 'f5', fechaPago: '2024-03-04', valorPago: 400000, metodoPago: 'transferencia', observaciones: 'Pago m9 completo.' },
+  { id: 'pago11', facturaId: 'f5', fechaPago: '2024-03-04', valorPago: 400000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m9 completo.' },
   { id: 'pago12', facturaId: 'f5', fechaPago: '2024-03-10', valorPago: 250000, metodoPago: 'consignacion', observaciones: 'Pago m22 completo.' },
   // Minera Andina
-  { id: 'pago13', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'transferencia', observaciones: 'Pago m17 completo.' },
+  { id: 'pago13', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m17 completo.' },
   { id: 'pago16', facturaId: 'f6', fechaPago: '2024-03-08', valorPago: 300000, metodoPago: 'efectivo', observaciones: 'Pago m18 completo.' },
-  { id: 'pago17', facturaId: 'f6', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia', observaciones: 'Pago m20 completo.' },
+  { id: 'pago17', facturaId: 'f6', fechaPago: '2024-03-09', valorPago: 250000, metodoPago: 'transferencia_bancaria', observaciones: 'Pago m20 completo.' },
   { id: 'pago18', facturaId: 'f6', fechaPago: '2024-03-10', valorPago: 125000, metodoPago: 'consignacion', observaciones: 'Abono parcial m23.' },
   // Independientes
   { id: 'pago14', facturaId: 'f7', fechaPago: '2024-03-04', valorPago: 350000, metodoPago: 'efectivo' },
-  { id: 'pago15', facturaId: 'f8', fechaPago: '2024-03-07', valorPago: 280000, metodoPago: 'transferencia' },
+  { id: 'pago15', facturaId: 'f8', fechaPago: '2024-03-07', valorPago: 280000, metodoPago: 'transferencia_bancaria' },
 ];
 
 // ============ ACTIVIDADES DE CARTERA ============

@@ -3,7 +3,7 @@
 export type TipoResponsable = 'empresa' | 'independiente' | 'arl';
 export type EstadoGrupoCartera = 'sin_facturar' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
 export type EstadoFactura = 'por_pagar' | 'parcial' | 'pagada';
-export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
+export type MetodoPago = 'transferencia_bancaria' | 'efectivo' | 'consignacion' | 'nequi' | 'daviplata' | 'bre_b' | 'corresponsal_bancario' | 'otro';
 export type TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
 
 export interface ResponsablePago {
@@ -92,10 +92,14 @@ export const ESTADO_FACTURA_LABELS: Record<EstadoFactura, string> = {
 };
 
 export const METODO_PAGO_LABELS: Record<MetodoPago, string> = {
-  transferencia: 'Transferencia',
+  transferencia_bancaria: 'Transferencia Bancaria',
   efectivo: 'Efectivo',
   consignacion: 'Consignación',
-  tarjeta: 'Tarjeta',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+  bre_b: 'Bre-b',
+  corresponsal_bancario: 'Corresponsal Bancario',
+  otro: '+ Añadir opción',
 };
 
 export const TIPO_ACTIVIDAD_LABELS: Record<TipoActividadCartera, string> = {

@@ -30,7 +30,8 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
 
   const [fechaPago, setFechaPago] = useState("");
   const [valorPago, setValorPago] = useState("");
-  const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia_bancaria");
+  const [metodoOtro, setMetodoOtro] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
@@ -45,6 +46,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       setObservaciones(pago.observaciones || "");
       setSoporteUrl(pago.soportePago);
       setArchivo(null);
+      setMetodoOtro("");
     }
   }, [pago]);
 
@@ -53,8 +55,16 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }
+    if (metodoPago === "otro" && !metodoOtro.trim()) {
+      toast({ title: "Especifique el método de pago", variant: "destructive" });
+      return;
+    }
 
     const newSoporteUrl = archivo ? URL.createObjectURL(archivo) : soporteUrl;
+
+    const obsConMetodo = metodoPago === "otro"
+      ? [metodoOtro.trim(), observaciones].filter(Boolean).join(" — ")
+      : observaciones || undefined;
 
     await updatePago.mutateAsync({
       id: pago.id,
@@ -62,7 +72,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
         fechaPago,
         valorPago: parseFloat(valorPago),
         metodoPago,
-        observaciones: observaciones || undefined,
+        observaciones: obsConMetodo,
         soportePago: newSoporteUrl,
       },
     });
@@ -111,7 +121,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
 
             <div className="space-y-1.5">
               <Label>Método de Pago</Label>
-              <Select value={metodoPago} onValueChange={(v) => setMetodoPago(v as MetodoPago)}>
+              <Select value={metodoPago} onValueChange={(v) => { setMetodoPago(v as MetodoPago); if (v !== "otro") setMetodoOtro(""); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -121,11 +131,19 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              {metodoPago === "otro" && (
+                <Input
+                  placeholder="Especifique el método de pago..."
+                  value={metodoOtro}
+                  onChange={e => setMetodoOtro(e.target.value)}
+                  className="mt-2"
+                />
+              )}
             </div>
 
             {/* Soporte de pago */}
             <div className="space-y-1.5">
-              <Label>Soporte de Pago</Label>
+              <Label>Soporte de Pago *</Label>
               {!archivo && soporteUrl ? (
                 <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-muted/20 min-w-0 overflow-hidden">
                   <span className="text-sm flex-1 truncate min-w-0">Comprobante adjunto</span>

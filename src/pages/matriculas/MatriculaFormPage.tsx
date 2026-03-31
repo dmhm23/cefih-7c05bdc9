@@ -868,8 +868,15 @@ export default function MatriculaFormPage() {
                                       form.setValue("sectorEconomico", emp.sectorEconomico);
                                       form.setValue("arl", emp.arl);
                                       const principal = emp.contactos?.find(c => c.esPrincipal) || emp.contactos?.[0];
-                                      form.setValue("empresaContactoNombre", principal?.nombre || emp.personaContacto);
-                                      form.setValue("empresaContactoTelefono", principal?.telefono || emp.telefonoContacto);
+                                      if (principal) {
+                                        form.setValue("empresaContactoId", principal.id);
+                                        form.setValue("empresaContactoNombre", principal.nombre);
+                                        form.setValue("empresaContactoTelefono", principal.telefono);
+                                      } else {
+                                        form.setValue("empresaContactoId", "");
+                                        form.setValue("empresaContactoNombre", emp.personaContacto || "");
+                                        form.setValue("empresaContactoTelefono", emp.telefonoContacto || "");
+                                      }
                                     }
                                   }}
                                   placeholder="Buscar empresa por nombre o NIT..."

@@ -7,7 +7,7 @@ import type {
   AsignacionScope,
   EncabezadoConfig,
 } from '@/types/formatoFormacion';
-import type { TipoFormacion } from '@/types/curso';
+
 
 // ---------------------------------------------------------------------------
 // Row2 — 2-column layout container (not a field block)

@@ -1097,6 +1097,21 @@ export default function MatriculaFormPage() {
         onOpenChange={setCrearPersonaOpen}
         onPersonaCreated={handlePersonaCreated}
       />
+
+      <CrearEmpresaModal
+        open={crearEmpresaOpen}
+        onOpenChange={setCrearEmpresaOpen}
+        onEmpresaCreated={(empresa) => {
+          form.setValue("empresaId", empresa.id);
+          form.setValue("empresaNombre", empresa.nombreEmpresa);
+          form.setValue("empresaNit", empresa.nit);
+          form.setValue("empresaRepresentanteLegal", empresa.representanteLegal);
+          form.setValue("sectorEconomico", empresa.sectorEconomico);
+          form.setValue("arl", empresa.arl);
+          form.setValue("empresaContactoNombre", empresa.personaContacto);
+          form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
+        }}
+      />
     </div>
   );
 }

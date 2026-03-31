@@ -103,7 +103,6 @@ export default function FormatoEditorPage() {
         version: existing.version,
         categoria: existing.categoria,
         asignacionScope: existing.asignacionScope,
-        tipoCursoKeys: existing.tipoCursoKeys,
         nivelFormacionIds: existing.nivelFormacionIds,
         visibleEnMatricula: existing.visibleEnMatricula,
         visibleEnCurso: existing.visibleEnCurso,

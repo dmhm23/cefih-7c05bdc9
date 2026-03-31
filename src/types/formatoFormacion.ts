@@ -1,4 +1,4 @@
-// TipoFormacion import removed — tipoCursoKeys eliminated (unified with nivelFormacionIds)
+// Nota: tipoCursoKeys fue eliminado — unificado con nivelFormacionIds
 
 // ---------------------------------------------------------------------------
 // Bloque — unidad declarativa del constructor de formatos

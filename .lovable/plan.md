@@ -1,64 +1,36 @@
-## Plan: Actualizar métodos de pago y hacer soporte obligatorio
 
-### Cambios
 
-**1. Actualizar tipo y labels** — `src/types/cartera.ts`
+## Plan: Corregir tipo "ARL" en cartera
 
-Reemplazar:
+### Problema
 
-```typescript
-export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
-```
+En `src/services/carteraService.ts`, línea 98, la condición solo verifica `tipoVinculacion === 'empresa'`. Cuando el tipo es `'arl'`, cae al bloque `else` (línea 115) que crea el responsable como `'independiente'`.
 
-Por:
+### Solución
+
+Cambiar la condición en línea 98 para incluir `'arl'`:
 
 ```typescript
-export type MetodoPago = 'transferencia_bancaria' | 'efectivo' | 'consignacion' | 'nequi' | 'daviplata' | 'bre_b' | 'corresponsal_bancario' | '+ Añadir opción';
+// Antes
+if (tipoVinculacion === 'empresa' && empresaNit) {
+
+// Después  
+if ((tipoVinculacion === 'empresa' || tipoVinculacion === 'arl') && empresaNit) {
 ```
 
-Labels actualizados:
+Y ajustar la asignación del `tipo` en línea 106 para que use el `tipoVinculacion` real en vez de hardcodear `'empresa'`:
 
+```typescript
+// Antes
+tipo: 'empresa' as TipoResponsable,
 
-| Valor                    | Etiqueta               |
-| ------------------------ | ---------------------- |
-| `transferencia_bancaria` | Transferencia Bancaria |
-| `efectivo`               | Efectivo               |
-| `consignacion`           | Consignación           |
-| `nequi`                  | Nequi                  |
-| `daviplata`              | Daviplata              |
-| `bre_b`                  | Bre-b                  |
-| `corresponsal_bancario`  | Corresponsal Bancario  |
-| `anadir_opcion`          | Añadir opción          |
+// Después
+tipo: tipoVinculacion as TipoResponsable,
+```
 
+### Archivo afectado
 
-Se elimina `tarjeta`.
+| Archivo | Cambio |
+|---|---|
+| `src/services/carteraService.ts` | Incluir `'arl'` en la condición de agrupación y usar `tipoVinculacion` dinámico para el tipo del responsable |
 
-**2. Campo "Añadr opción" con input adicional** — `RegistrarPagoDialog.tsx` y `EditarPagoDialog.tsx`
-
-- Cuando se selecciona "Añadir opción", aparece un `Input` debajo para especificar el método
-- Este texto se guarda en `observaciones` o en un campo adicional en la descripción del pago
-
-**3. Soporte de pago obligatorio** — `RegistrarPagoDialog.tsx`
-
-- Validar que `archivo` no sea `null` antes de permitir el submit
-- Mostrar mensaje de error si no se adjunta comprobante
-- Cambiar label a "Soporte de Pago (comprobante) *"
-
-**4. Actualizar mocks** — `src/data/mockCartera.ts`
-
-- Cambiar `'transferencia'` → `'transferencia_bancaria'` en todos los pagos mock
-
-**5. Actualizar servicio** — `src/services/carteraService.ts`
-
-- Actualizar la referencia `metodoLabel` si existe, para usar los nuevos keys
-
-### Archivos afectados
-
-
-| Archivo                                          | Cambio                                     |
-| ------------------------------------------------ | ------------------------------------------ |
-| `src/types/cartera.ts`                           | Nuevo `MetodoPago` type + labels           |
-| `src/components/cartera/RegistrarPagoDialog.tsx` | Input "añadir opción", soporte obligatorio |
-| `src/components/cartera/EditarPagoDialog.tsx`    | Input "añadir opción", consistencia        |
-| `src/data/mockCartera.ts`                        | Migrar keys                                |
-| `src/services/carteraService.ts`                 | Actualizar labels internos                 |

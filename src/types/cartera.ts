@@ -92,10 +92,14 @@ export const ESTADO_FACTURA_LABELS: Record<EstadoFactura, string> = {
 };
 
 export const METODO_PAGO_LABELS: Record<MetodoPago, string> = {
-  transferencia: 'Transferencia',
+  transferencia_bancaria: 'Transferencia Bancaria',
   efectivo: 'Efectivo',
   consignacion: 'Consignación',
-  tarjeta: 'Tarjeta',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+  bre_b: 'Bre-b',
+  corresponsal_bancario: 'Corresponsal Bancario',
+  otro: '+ Añadir opción',
 };
 
 export const TIPO_ACTIVIDAD_LABELS: Record<TipoActividadCartera, string> = {

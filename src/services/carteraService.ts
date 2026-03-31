@@ -282,7 +282,7 @@ export const carteraService = {
       if (grupo) {
         recalcGrupo(grupo);
         // Auto-log activity
-        const metodoLabel = { transferencia: 'Transferencia', efectivo: 'Efectivo', consignacion: 'Consignación', tarjeta: 'Tarjeta' };
+        const metodoLabel = METODO_PAGO_LABELS;
         addSystemActivity(
           grupo.id,
           `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`,

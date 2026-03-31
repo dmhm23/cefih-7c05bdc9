@@ -219,7 +219,6 @@ let mockFormatos: FormatoFormacion[] = [
     version: '009',
     asignacionScope: 'todos',
     nivelFormacionIds: ['nf1', 'nf2', 'nf3', 'nf4', 'nf5'],
-    tipoCursoKeys: [],
     visibleEnMatricula: true,
     visibleEnCurso: false,
     visibleEnPortalEstudiante: false,

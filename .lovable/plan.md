@@ -1,45 +1,39 @@
 
 
-## Plan: Unificar `tipoCursoKeys` y `nivelFormacionIds` — eliminar redundancia
+## Plan: Soporte para múltiples personas de contacto en Empresas
 
-### Contexto
+### Resumen
 
-Como confirmamos, "tipo de curso" y "nivel de formación" son la misma entidad. El campo `tipoCursoKeys` es redundante con `nivelFormacionIds`. Actualmente el scope solo usa `nivelFormacionIds` (los mocks ya tienen `tipoCursoKeys: []` vacío), pero el campo sigue existiendo en tipos, store, schema y servicios, generando confusión.
+Reemplazar los tres campos planos (`personaContacto`, `telefonoContacto`, `emailContacto`) por un array `contactos` que permita agregar, editar y eliminar personas de contacto. Se mantiene el primer contacto como "principal" para compatibilidad con matrícula.
 
 ### Cambios
 
-**1. Eliminar `tipoCursoKeys` del tipo** — `src/types/formatoFormacion.ts`
-- Quitar `tipoCursoKeys: TipoFormacion[]` de `FormatoFormacion`
-- Actualizar comentario de `nivelFormacionIds` para que sea claro: "IDs de niveles de formación cuando scope = nivel_formacion"
-
-**2. Eliminar del store** — `src/stores/useFormatoEditorStore.ts`
-- Quitar `tipoCursoKeys` de `FormatoConfig` y del estado inicial
-
-**3. Eliminar del schema** — `src/schemas/formatoSchema.ts`
-- Quitar `tipoCursoKeys` de `formatoConfigSchema`
-
-**4. Eliminar del editor** — `src/pages/formatos/FormatoEditorPage.tsx`
-- Quitar referencias a `tipoCursoKeys` en la carga y guardado
-
-**5. Actualizar servicio** — `src/services/formatoFormacionService.ts`
-- Quitar `tipoCursoKeys` de los mocks
-- Actualizar filtrado en `getForMatricula` para usar solo `nivelFormacionIds`
-
-**6. Actualizar portal estudiante** — `src/services/portalEstudianteService.ts`
-- La línea que filtra por `f.tipoCursoKeys.includes(curso.tipoFormacion)` debe cambiar a `f.nivelFormacionIds.includes(nivelId)` (traduciendo `tipoFormacion` del curso al ID de nivel correspondiente)
-
-**7. Actualizar regla de negocio** — `Docs/REGLAS_NEGOCIO_v2.md`
-- RN-FMT-009: "Los formatos se asignan por alcance: `todos` (aplica a todos los niveles de formación) o `nivel_formacion` (solo a los niveles seleccionados via `nivelFormacionIds`). No existe un scope separado por 'tipo de curso' ya que ambos conceptos son equivalentes."
-
-### Archivos afectados
-
 | Archivo | Cambio |
 |---|---|
-| `src/types/formatoFormacion.ts` | Eliminar `tipoCursoKeys` |
-| `src/stores/useFormatoEditorStore.ts` | Eliminar `tipoCursoKeys` del tipo y defaults |
-| `src/schemas/formatoSchema.ts` | Eliminar `tipoCursoKeys` |
-| `src/pages/formatos/FormatoEditorPage.tsx` | Eliminar referencias |
-| `src/services/formatoFormacionService.ts` | Eliminar de mocks |
-| `src/services/portalEstudianteService.ts` | Migrar filtro a `nivelFormacionIds` |
-| `Docs/REGLAS_NEGOCIO_v2.md` | Actualizar RN-FMT-009 |
+| `src/types/empresa.ts` | Agregar tipo `ContactoEmpresa { id, nombre, telefono, email, esPrincipal }`. Agregar `contactos: ContactoEmpresa[]` a `Empresa`. Mantener campos legacy (`personaContacto`, etc.) como opcionales para compatibilidad |
+| `src/data/mockEmpresas.ts` | Agregar array `contactos` a cada empresa mock (migrando los valores actuales como contacto principal) |
+| `src/pages/empresas/EmpresaDetallePage.tsx` | Sección "Datos de Contacto": renderizar lista de contactos con botón "+ Agregar contacto". Cada contacto editable inline con opción de eliminar. Badge "Principal" en el primer contacto |
+| `src/pages/empresas/EmpresaFormPage.tsx` | Reemplazar campos fijos por sección dinámica de contactos con botón "Agregar otro contacto" |
+| `src/components/empresas/EmpresaDetailSheet.tsx` | Misma lógica: mostrar lista de contactos en vez de campos fijos |
+| `src/components/matriculas/CrearEmpresaModal.tsx` | Sección de contactos dinámica (inicia con uno, permite agregar más) |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Al seleccionar empresa, llenar `empresaContactoNombre/Telefono` con el contacto principal (`esPrincipal` o el primero del array) |
+| `src/pages/empresas/EmpresasPage.tsx` | Columna "Persona Contacto" muestra el contacto principal; si hay más, muestra badge "+N" |
+| `src/services/empresaService.ts` | Ajustar mock service para manejar el array de contactos |
+
+### Detalle de la interfaz
+
+**En formularios (crear/editar empresa):**
+- Se muestra un grupo de campos (nombre, teléfono, email) por cada contacto
+- Botón "Agregar contacto" al final de la lista
+- Botón de eliminar (X) en cada contacto excepto el primero (mínimo 1 contacto)
+- Checkbox o badge "Principal" para marcar cuál es el contacto que se usará por defecto en matrículas
+
+**En detalle de empresa:**
+- Cards o filas por cada contacto con sus datos
+- Botón "+ Agregar contacto" al final
+- Editable inline como el resto de campos
+
+**En matrícula:**
+- Al seleccionar empresa, se autocompleta con el contacto principal
+- Si hay múltiples contactos, se podría mostrar un selector para elegir cuál usar
 

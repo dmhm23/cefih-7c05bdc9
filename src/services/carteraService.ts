@@ -103,7 +103,7 @@ export function asignarMatriculaACartera(params: {
       const empresaDir = mockEmpresas.find(e => e.nit === empresaNit);
       responsable = {
         id: uuid(),
-        tipo: 'empresa' as TipoResponsable,
+        tipo: tipoVinculacion as TipoResponsable,
         nombre: empresaNombre || 'Empresa sin nombre',
         nit: empresaNit,
         empresaId: empresaDir?.id,

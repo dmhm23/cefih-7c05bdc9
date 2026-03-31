@@ -1,36 +1,18 @@
 
 
-## Plan: Corregir tipo "ARL" en cartera
+## Plan: Renombrar estado "elegible" → "Listo para certificar"
 
-### Problema
+### Cambio
 
-En `src/services/carteraService.ts`, línea 98, la condición solo verifica `tipoVinculacion === 'empresa'`. Cuando el tipo es `'arl'`, cae al bloque `else` (línea 115) que crea el responsable como `'independiente'`.
+El valor interno `'elegible'` se mantiene como key técnico. Solo se cambian las **etiquetas visibles** (labels y textos) a "Listo para certificar".
 
-### Solución
-
-Cambiar la condición en línea 98 para incluir `'arl'`:
-
-```typescript
-// Antes
-if (tipoVinculacion === 'empresa' && empresaNit) {
-
-// Después  
-if ((tipoVinculacion === 'empresa' || tipoVinculacion === 'arl') && empresaNit) {
-```
-
-Y ajustar la asignación del `tipo` en línea 106 para que use el `tipoVinculacion` real en vez de hardcodear `'empresa'`:
-
-```typescript
-// Antes
-tipo: 'empresa' as TipoResponsable,
-
-// Después
-tipo: tipoVinculacion as TipoResponsable,
-```
-
-### Archivo afectado
+### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/services/carteraService.ts` | Incluir `'arl'` en la condición de agrupación y usar `tipoVinculacion` dinámico para el tipo del responsable |
+| `src/components/cursos/EnrollmentsTable.tsx` | Badge label: `"Elegible"` → `"Listo para certificar"` |
+| `src/components/matriculas/CertificacionSection.tsx` | `ESTADO_CONFIG.elegible.label` → `"Listo para certificar"` |
+| `src/pages/certificacion/HistorialCertificadosPage.tsx` | Filter option label y badge: `"Elegible"` → `"Listo para certificar"` |
+
+No se modifica el tipo `EstadoCertificado` ni la lógica interna — solo las 3 etiquetas de UI.
 

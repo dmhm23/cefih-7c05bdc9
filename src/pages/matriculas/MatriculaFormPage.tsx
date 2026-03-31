@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useState, useEffect } from "react";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
+import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { Persona, PersonaFormData } from "@/types/persona";
 import { EditableField } from "@/components/shared/EditableField";

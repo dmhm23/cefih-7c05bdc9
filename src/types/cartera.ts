@@ -3,7 +3,7 @@
 export type TipoResponsable = 'empresa' | 'independiente' | 'arl';
 export type EstadoGrupoCartera = 'sin_facturar' | 'facturado' | 'abonado' | 'pagado' | 'vencido';
 export type EstadoFactura = 'por_pagar' | 'parcial' | 'pagada';
-export type MetodoPago = 'transferencia' | 'efectivo' | 'consignacion' | 'tarjeta';
+export type MetodoPago = 'transferencia_bancaria' | 'efectivo' | 'consignacion' | 'nequi' | 'daviplata' | 'bre_b' | 'corresponsal_bancario' | 'otro';
 export type TipoActividadCartera = 'llamada' | 'promesa_pago' | 'comentario' | 'sistema';
 
 export interface ResponsablePago {

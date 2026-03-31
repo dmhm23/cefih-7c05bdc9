@@ -7,7 +7,7 @@ import type {
   AsignacionScope,
   EncabezadoConfig,
 } from '@/types/formatoFormacion';
-import type { TipoFormacion } from '@/types/curso';
+
 
 // ---------------------------------------------------------------------------
 // Row2 — 2-column layout container (not a field block)
@@ -32,7 +32,6 @@ export interface FormatoConfig {
   version: string;
   categoria: CategoriaFormato;
   asignacionScope: AsignacionScope;
-  tipoCursoKeys: TipoFormacion[];
   nivelFormacionIds: string[];
   visibleEnMatricula: boolean;
   visibleEnCurso: boolean;
@@ -63,7 +62,6 @@ export const DEFAULT_CONFIG: FormatoConfig = {
   version: '001',
   categoria: 'personalizado',
   asignacionScope: 'todos',
-  tipoCursoKeys: [],
   nivelFormacionIds: [],
   visibleEnMatricula: true,
   visibleEnCurso: false,

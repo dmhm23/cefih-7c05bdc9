@@ -203,11 +203,11 @@ export const portalEstudianteService = {
     const persona = mockPersonas.find(p => p.id === matricula.personaId);
     if (!persona) return null;
 
-    // Buscar formato con bloques evaluation_quiz cuyo tipoCursoKeys incluya el tipo del curso
+    // Buscar formato con bloques evaluation_quiz cuyo nivelFormacionIds incluya el nivel del curso
     const allFormatos = await formatoFormacionService.getAll();
     const formato = allFormatos.find(f =>
       f.activo &&
-      f.tipoCursoKeys.includes(curso.tipoFormacion) &&
+      (f.asignacionScope === 'todos' || f.nivelFormacionIds.includes(curso.tipoFormacion)) &&
       f.bloques.some(bl => bl.type === 'evaluation_quiz')
     );
 

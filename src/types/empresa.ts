@@ -1,3 +1,11 @@
+export interface ContactoEmpresa {
+  id: string;
+  nombre: string;
+  telefono: string;
+  email: string;
+  esPrincipal: boolean;
+}
+
 export interface Empresa {
   id: string;
   nombreEmpresa: string;
@@ -7,8 +15,12 @@ export interface Empresa {
   arl: string;
   direccion: string;
   telefonoEmpresa: string;
+  contactos: ContactoEmpresa[];
+  /** @deprecated Use contactos[0] instead */
   personaContacto: string;
+  /** @deprecated Use contactos[0] instead */
   telefonoContacto: string;
+  /** @deprecated Use contactos[0] instead */
   emailContacto: string;
   activo: boolean;
   createdAt: string;

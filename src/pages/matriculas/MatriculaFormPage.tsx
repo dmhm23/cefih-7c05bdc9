@@ -1040,12 +1040,14 @@ export default function MatriculaFormPage() {
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
-                          )}
-                        />
+                                )}
+                              />
+                            </>
+                          );
+                        })()}
                       </div>
                     </>
                   )}
-                </div>
               )}
             </CardContent>
           </Card>

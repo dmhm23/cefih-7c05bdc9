@@ -12,6 +12,7 @@ import { RowActions, createViewAction, createEditAction } from "@/components/sha
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
 import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
@@ -52,6 +53,7 @@ export default function CursosListView() {
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     tipoFormacion: "todos",
+    entrenador: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -64,10 +66,16 @@ export default function CursosListView() {
   });
 
   const { data: cursos = [], isLoading } = useCursos();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
   }, [columnConfig]);
+
+  const entrenadorOptions = entrenadores.map(e => ({
+    value: e.id,
+    label: `${e.nombres} ${e.apellidos}`,
+  }));
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -81,6 +89,12 @@ export default function CursosListView() {
       label: "Nivel de Formación",
       type: "select",
       options: getNivelesAsOptions(),
+    },
+    {
+      key: "entrenador",
+      label: "Entrenador",
+      type: "select",
+      options: entrenadorOptions,
     },
   ];
 
@@ -101,8 +115,9 @@ export default function CursosListView() {
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
     const matchesNivel = filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion;
+    const matchesEntrenador = filters.entrenador === "todos" || c.entrenadorId === filters.entrenador;
 
-    return matchesSearch && matchesEstado && matchesNivel;
+    return matchesSearch && matchesEstado && matchesNivel && matchesEntrenador;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -110,7 +125,7 @@ export default function CursosListView() {
   };
 
   const handleClearFilters = () => {
-    setFilters({ estado: "todos", tipoFormacion: "todos" });
+    setFilters({ estado: "todos", tipoFormacion: "todos", entrenador: "todos" });
   };
 
   const selectedCurso = selectedIndex !== null ? filteredCursos[selectedIndex] : null;

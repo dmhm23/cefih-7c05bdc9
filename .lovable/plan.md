@@ -1,40 +1,39 @@
 
 
-## Plan: Cambiar Tarifas Especiales de "por curso" a "por nivel de formación"
+## Plan: Sincronizar métodos de pago de Cartera con Matrículas
 
-### Contexto
+### Problema
 
-Actualmente las tarifas se asocian a cursos individuales (`cursoId`, `cursoNombre`). Esto no tiene sentido de negocio: la tarifa negociada aplica al **tipo/nivel de formación** (ej. "Trabajador Autorizado"), no a un curso específico. Se debe migrar a `nivelFormacionId` + `nivelFormacionNombre`.
+Matrículas usa `FORMAS_PAGO` en `src/data/formOptions.ts` con opciones desactualizadas (transferencia, tarjeta, otro), mientras Cartera ya tiene los métodos correctos: transferencia bancaria, efectivo, consignación, nequi, daviplata, bre-b, corresponsal bancario y "+ Añadir opción".
 
 ### Cambios
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/empresa.ts` | Reemplazar `cursoId`/`cursoNombre` por `nivelFormacionId`/`nivelFormacionNombre` en `TarifaEmpresa` |
-| `src/data/mockEmpresas.ts` | Actualizar mocks con IDs de niveles de formación en vez de cursos |
-| `src/pages/empresas/EmpresaDetallePage.tsx` | Cambiar el Combobox de "cursos" a "niveles de formación" usando `useNivelesFormacion()`, renombrar estados y labels |
-| `src/services/empresaService.ts` | Actualizar imports (el servicio ya es genérico, solo ajustar tipos) |
-| `src/hooks/useEmpresas.ts` | Sin cambios (ya es genérico) |
+| `src/data/formOptions.ts` | Reemplazar `FORMAS_PAGO` con los mismos métodos de Cartera, incluyendo opción "+ Añadir opción" |
+| `src/types/matricula.ts` | Actualizar tipo `FormaPago` y `FORMA_PAGO_LABELS` para coincidir con `MetodoPago` de Cartera |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Añadir lógica de "+ Añadir opción" (input custom) como en Cartera |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Mismo tratamiento para edición en detalle |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Mismo tratamiento en el sheet lateral |
+| `src/data/mockData.ts` | Migrar valores `'transferencia'` → `'transferencia_bancaria'` en mocks |
 
 ### Detalle
 
-**Tipo** — `TarifaEmpresa`:
+**`FORMAS_PAGO`** nuevo:
 ```typescript
-// Antes
-cursoId: string;
-cursoNombre: string;
-
-// Después
-nivelFormacionId: string;
-nivelFormacionNombre: string;
+export const FORMAS_PAGO = [
+  { value: 'transferencia_bancaria', label: 'Transferencia Bancaria' },
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'consignacion', label: 'Consignación' },
+  { value: 'nequi', label: 'Nequi' },
+  { value: 'daviplata', label: 'Daviplata' },
+  { value: 'bre_b', label: 'Bre-b' },
+  { value: 'corresponsal_bancario', label: 'Corresponsal Bancario' },
+  { value: 'otro', label: '+ Añadir opción' },
+] as const;
 ```
 
-**Mock** — usar niveles existentes (`nf1`, `nf2`, etc.) con sus nombres.
+**Tipo `FormaPago`** actualizado para coincidir con los nuevos values. Se elimina `'tarjeta'`.
 
-**UI** — En `EmpresaDetallePage.tsx`:
-- Reemplazar `useCursos()` por `useNivelesFormacion()` para las opciones del Combobox
-- Renombrar estado `tarifaCursoId` → `tarifaNivelId`
-- Columna de tabla: "Curso" → "Nivel de Formación"
-- Label del dialog: "Curso" → "Nivel de Formación"
-- Placeholder: "Seleccionar nivel..." / "Buscar nivel..."
+**UI**: En los 3 archivos de matrículas donde se usa el selector de forma de pago, añadir la lógica de input custom cuando se selecciona `'otro'` (mismo patrón que en `RegistrarPagoDialog`).
 

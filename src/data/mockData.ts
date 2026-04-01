@@ -184,7 +184,7 @@ export const mockCursos: Curso[] = [
     tipoFormacion: 'nf3',
     numeroCurso: 'TA-2026-001',
     fechaInicio: '2026-03-17',
-    fechaFin: '2026-03-28',
+    fechaFin: '2026-04-30',
     duracionDias: 3,
     horasTotales: 24,
     entrenadorId: 'e1',
@@ -534,6 +534,7 @@ export const mockMatriculas: Matricula[] = [
     evaluacionCompletada: false, encuestaCompletada: false,
     cobroContactoNombre: 'Sandra Milena López', cobroContactoCelular: '3201234567',
     valorCupo: 350000, abono: 350000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-02',
+    portalEstudiante: { habilitado: true, documentos: [] },
     createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {

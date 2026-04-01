@@ -15,9 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useCursos } from "@/hooks/useCursos";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types/curso";
 
-// Trainer colors
+// Fallback trainer colors
 const TRAINER_COLORS = [
   { bg: "hsl(220 70% 55%)", bgLight: "hsl(220 70% 93%)", text: "hsl(220 70% 30%)", border: "hsl(220 70% 75%)" },
   { bg: "hsl(150 60% 42%)", bgLight: "hsl(150 60% 92%)", text: "hsl(150 60% 22%)", border: "hsl(150 60% 70%)" },
@@ -31,11 +32,25 @@ const TRAINER_COLORS = [
 
 type ViewMode = "month" | "week" | "day";
 
-function getTrainerColorMap(cursos: Curso[]) {
+function hexToColorSet(hex: string) {
+  // Convert hex to approximate HSL-like color variants
+  return {
+    bg: hex,
+    bgLight: hex + "20",
+    text: hex,
+    border: hex + "80",
+  };
+}
+
+function getTrainerColorMap(cursos: Curso[], personalColors: Record<string, string>) {
   const trainers = [...new Set(cursos.map((c) => c.entrenadorId))];
   const map: Record<string, typeof TRAINER_COLORS[0]> = {};
   trainers.forEach((id, i) => {
-    map[id] = TRAINER_COLORS[i % TRAINER_COLORS.length];
+    if (personalColors[id]) {
+      map[id] = hexToColorSet(personalColors[id]);
+    } else {
+      map[id] = TRAINER_COLORS[i % TRAINER_COLORS.length];
+    }
   });
   return map;
 }

@@ -543,6 +543,14 @@ export default function MatriculaDetallePage() {
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
               />
+              {getValue("sectorEconomico") === "otro_sector" && (
+                <EditableField
+                  label="Sector (especifique)"
+                  value={getValue("sectorEconomicoOtro")}
+                  onChange={(v) => handleFieldChange("sectorEconomicoOtro", v)}
+                  placeholder="Nombre del sector económico"
+                />
+              )}
               <EditableField
                 label="EPS"
                 value={getValue("eps")}

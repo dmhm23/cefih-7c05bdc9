@@ -769,6 +769,21 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
+                {form.watch("sectorEconomico") === "otro_sector" && (
+                  <FormField
+                    control={form.control}
+                    name="sectorEconomicoOtro"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Especifique el sector</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre del sector económico" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

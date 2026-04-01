@@ -64,6 +64,7 @@ export const SECTORES_ECONOMICOS = [
   { value: 'salud_investigacion', label: 'Salud e investigación' },
   { value: 'bienes_raices', label: 'Bienes raíces y administración de propiedades' },
   { value: 'energias_renovables', label: 'Energías renovables' },
+  { value: 'otro_sector', label: 'Otro (añadir opción)' },
 ] as const;
 
 // Lista de países con Colombia primero como sugerencia principal

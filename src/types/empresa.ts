@@ -32,8 +32,8 @@ export type EmpresaFormData = Omit<Empresa, 'id' | 'createdAt' | 'updatedAt'>;
 export interface TarifaEmpresa {
   id: string;
   empresaId: string;
-  cursoId: string;
-  cursoNombre: string;
+  nivelFormacionId: string;
+  nivelFormacionNombre: string;
   valor: number;
   createdAt: string;
   updatedAt: string;

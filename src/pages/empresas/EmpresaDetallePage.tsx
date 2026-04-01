@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useEmpresa, useUpdateEmpresa, useTarifasEmpresa, useCreateTarifa, useUpdateTarifa, useDeleteTarifa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
-import { useCursos } from "@/hooks/useCursos";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { EditableField } from "@/components/shared/EditableField";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";

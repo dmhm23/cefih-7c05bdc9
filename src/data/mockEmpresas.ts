@@ -258,8 +258,8 @@ export const mockTarifasEmpresa: TarifaEmpresa[] = [
   {
     id: 'tar-001',
     empresaId: 'emp-010',
-    cursoId: 'c1',
-    cursoNombre: 'Trabajador Autorizado - #TA-2026-001',
+    nivelFormacionId: 'nf1',
+    nivelFormacionNombre: 'Trabajador Autorizado',
     valor: 320000,
     createdAt: '2025-06-01T08:00:00Z',
     updatedAt: '2025-06-01T08:00:00Z',
@@ -267,8 +267,8 @@ export const mockTarifasEmpresa: TarifaEmpresa[] = [
   {
     id: 'tar-002',
     empresaId: 'emp-014',
-    cursoId: 'c5',
-    cursoNombre: 'Jefe de Área - #JA-2026-005',
+    nivelFormacionId: 'nf3',
+    nivelFormacionNombre: 'Jefe de Área',
     valor: 270000,
     createdAt: '2025-06-15T08:00:00Z',
     updatedAt: '2025-06-15T08:00:00Z',
@@ -276,8 +276,8 @@ export const mockTarifasEmpresa: TarifaEmpresa[] = [
   {
     id: 'tar-003',
     empresaId: 'emp-014',
-    cursoId: 'c6',
-    cursoNombre: 'Reentrenamiento - #RE-2026-006',
+    nivelFormacionId: 'nf4',
+    nivelFormacionNombre: 'Reentrenamiento',
     valor: 220000,
     createdAt: '2025-07-01T08:00:00Z',
     updatedAt: '2025-07-01T08:00:00Z',
@@ -285,8 +285,8 @@ export const mockTarifasEmpresa: TarifaEmpresa[] = [
   {
     id: 'tar-004',
     empresaId: 'emp-012',
-    cursoId: 'c2',
-    cursoNombre: 'Reentrenamiento - #RE-2026-002',
+    nivelFormacionId: 'nf4',
+    nivelFormacionNombre: 'Reentrenamiento',
     valor: 250000,
     createdAt: '2025-07-10T08:00:00Z',
     updatedAt: '2025-07-10T08:00:00Z',

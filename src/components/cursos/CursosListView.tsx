@@ -111,7 +111,7 @@ export default function CursosListView() {
   };
 
   const handleClearFilters = () => {
-    setFilters({ estado: "todos" });
+    setFilters({ estado: "todos", tipoFormacion: [] });
   };
 
   const selectedCurso = selectedIndex !== null ? filteredCursos[selectedIndex] : null;

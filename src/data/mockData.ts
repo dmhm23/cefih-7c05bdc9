@@ -184,7 +184,7 @@ export const mockCursos: Curso[] = [
     tipoFormacion: 'nf3',
     numeroCurso: 'TA-2026-001',
     fechaInicio: '2026-03-17',
-    fechaFin: '2026-03-28',
+    fechaFin: '2026-04-30',
     duracionDias: 3,
     horasTotales: 24,
     entrenadorId: 'e1',

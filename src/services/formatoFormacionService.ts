@@ -272,7 +272,7 @@ let mockFormatos: FormatoFormacion[] = [
     codigo: 'FIH04-019',
     version: '009',
     asignacionScope: 'nivel_formacion',
-    nivelFormacionIds: ['nf1'],
+    nivelFormacionIds: ['nf1', 'nf3'],
     
     visibleEnMatricula: true,
     visibleEnCurso: false,

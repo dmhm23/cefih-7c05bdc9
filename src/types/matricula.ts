@@ -162,12 +162,15 @@ export const ESTADO_MATRICULA_LABELS: Record<EstadoMatricula, string> = {
 };
 
 
-export const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
+export const FORMA_PAGO_LABELS: Record<string, string> = {
+  transferencia_bancaria: 'Transferencia Bancaria',
   efectivo: 'Efectivo',
-  transferencia: 'Transferencia',
   consignacion: 'Consignación',
-  tarjeta: 'Tarjeta',
-  otro: 'Otro',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+  bre_b: 'Bre-b',
+  corresponsal_bancario: 'Corresponsal Bancario',
+  otro: '+ Añadir opción',
 };
 
 export const NIVEL_PREVIO_LABELS: Record<NivelPrevio, string> = {

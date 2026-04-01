@@ -138,6 +138,7 @@ export default function MatriculaFormPage() {
       empresaContactoTelefono: "",
       areaTrabajo: "",
       sectorEconomico: "",
+      sectorEconomicoOtro: "",
       eps: "",
       epsOtra: "",
       arl: "",

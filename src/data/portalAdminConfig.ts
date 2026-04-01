@@ -11,10 +11,10 @@ export const portalDocumentosCatalogo: PortalDocumentoConfigAdmin[] = [
     dependeDe: [],
     orden: 1,
     habilitadoPorNivel: {
-      reentrenamiento: true,
-      jefe_area: true,
-      trabajador_autorizado: true,
-      coordinador_ta: true,
+      nf1: true,
+      nf2: true,
+      nf3: true,
+      nf5: true,
     },
   },
   {
@@ -25,10 +25,10 @@ export const portalDocumentosCatalogo: PortalDocumentoConfigAdmin[] = [
     dependeDe: ['info_aprendiz'],
     orden: 2,
     habilitadoPorNivel: {
-      reentrenamiento: true,
-      jefe_area: true,
-      trabajador_autorizado: true,
-      coordinador_ta: true,
+      nf1: true,
+      nf2: true,
+      nf3: true,
+      nf5: true,
     },
   },
 ];

@@ -154,6 +154,9 @@ export default function EmpresaDetallePage() {
   const handleCancel = () => {
     setFormData({});
     setIsDirty(false);
+    if (empresa) {
+      setContactos(empresa.contactos?.length ? [...empresa.contactos] : []);
+    }
   };
 
   const getValue = <K extends keyof Empresa>(field: K): Empresa[K] => {

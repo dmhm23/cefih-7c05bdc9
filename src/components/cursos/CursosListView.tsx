@@ -51,7 +51,7 @@ export default function CursosListView() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
-    tipoFormacion: [],
+    tipoFormacion: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);

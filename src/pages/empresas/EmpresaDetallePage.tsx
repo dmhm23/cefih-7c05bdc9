@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

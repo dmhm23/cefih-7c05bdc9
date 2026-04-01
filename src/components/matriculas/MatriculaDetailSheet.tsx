@@ -615,12 +615,21 @@ export function MatriculaDetailSheet({
               <EditableField
                 label="Forma de pago"
                 value={getValue("formaPago") || ""}
-                displayValue={getValue("formaPago") ? FORMA_PAGO_LABELS[getValue("formaPago")!] : undefined}
+                displayValue={getValue("formaPago") ? FORMA_PAGO_LABELS[getValue("formaPago")!] || getValue("formaPago") as string : undefined}
                 onChange={(v) => handleFieldChange("formaPago", v)}
                 type="select"
                 options={[...FORMAS_PAGO]}
                 icon={CreditCard}
               />
+            </div>
+            {getValue("formaPago") === "otro" && (
+              <EditableField
+                label="Método de pago personalizado"
+                value={(formData["formaPagoOtro"] as string) || ""}
+                onChange={(v) => handleFieldChange("formaPagoOtro", v)}
+                placeholder="Escriba el método de pago..."
+              />
+            )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <EditableField

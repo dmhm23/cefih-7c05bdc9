@@ -667,6 +667,14 @@ export default function MatriculaDetallePage() {
                 type="select"
                 options={[...FORMAS_PAGO]}
               />
+              {getValue("formaPago") === "otro" && (
+                <EditableField
+                  label="Método de pago personalizado"
+                  value={getValue("formaPago") === "otro" ? (formData["formaPagoOtro"] as string || "") : ""}
+                  onChange={(v) => handleFieldChange("formaPagoOtro", v)}
+                  placeholder="Escriba el método de pago..."
+                />
+              )}
               <div>
                 <p className="text-xs text-muted-foreground">Estado</p>
                 <StatusBadge status={matricula.pagado ? "pagado" : "sin_facturar"} />

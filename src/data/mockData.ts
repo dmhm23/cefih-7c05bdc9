@@ -370,7 +370,7 @@ export const mockMatriculas: Matricula[] = [
     ctaFactNumero: 'FAC-2024-001',
     ctaFactTitular: 'Constructora ABC S.A.S',
     fechaPago: '2024-02-18',
-    formaPago: 'transferencia',
+    formaPago: 'transferencia_bancaria',
     pagado: true,
     facturaNumero: 'FAC-2024-001',
     observaciones: 'Estudiante enviado por la empresa para formación inicial.',
@@ -533,7 +533,7 @@ export const mockMatriculas: Matricula[] = [
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: false, encuestaCompletada: false,
     cobroContactoNombre: 'Sandra Milena López', cobroContactoCelular: '3201234567',
-    valorCupo: 350000, abono: 350000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-02',
+    valorCupo: 350000, abono: 350000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-02',
     createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
@@ -591,7 +591,7 @@ export const mockMatriculas: Matricula[] = [
     ],
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: false, encuestaCompletada: false,
-    valorCupo: 400000, abono: 400000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-04',
+    valorCupo: 400000, abono: 400000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-04',
     createdAt: '2024-03-03T09:00:00Z', updatedAt: '2024-03-04T10:00:00Z',
   },
   {
@@ -624,7 +624,7 @@ export const mockMatriculas: Matricula[] = [
     ],
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: false, encuestaCompletada: false,
-    valorCupo: 280000, abono: 280000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-06',
+    valorCupo: 280000, abono: 280000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-06',
     createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-06T10:00:00Z',
   },
   {
@@ -688,7 +688,7 @@ export const mockMatriculas: Matricula[] = [
     ],
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: true, evaluacionPuntaje: 88, encuestaCompletada: true, encuestaRespuestas: ["muy_satisfecho", "satisfecho", "satisfecho", "muy_satisfecho", "si"],
-    valorCupo: 280000, abono: 280000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-07',
+    valorCupo: 280000, abono: 280000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-07',
     createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-08T16:00:00Z',
   },
   // --- c5: Jefe de Área (empresa: Minera Andina x2, independientes x2) ---
@@ -718,7 +718,7 @@ export const mockMatriculas: Matricula[] = [
     ],
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: false, encuestaCompletada: false,
-    valorCupo: 300000, abono: 300000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-08',
+    valorCupo: 300000, abono: 300000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-08',
     createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-08T10:00:00Z',
   },
   {
@@ -764,7 +764,7 @@ export const mockMatriculas: Matricula[] = [
     ],
     firmaCapturada: true, firmaBase64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
     evaluacionCompletada: false, encuestaCompletada: false,
-    valorCupo: 250000, abono: 250000, pagado: true, formaPago: 'transferencia', fechaPago: '2024-03-09',
+    valorCupo: 250000, abono: 250000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-09',
     createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-09T10:00:00Z',
   },
   {

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useEmpresa, useUpdateEmpresa, useTarifasEmpresa, useCreateTarifa, useUpdateTarifa, useDeleteTarifa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useCursos } from "@/hooks/useCursos";
 import { EditableField } from "@/components/shared/EditableField";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -48,6 +49,7 @@ export default function EmpresaDetallePage() {
   const updateEmpresa = useUpdateEmpresa();
   const { data: matriculas = [] } = useMatriculas();
   const { data: personas = [] } = usePersonas();
+  const { data: niveles = [] } = useNivelesFormacion();
   const { data: cursos = [] } = useCursos();
   const { data: tarifas = [] } = useTarifasEmpresa(id || "");
   const createTarifa = useCreateTarifa();
@@ -59,7 +61,7 @@ export default function EmpresaDetallePage() {
   const [contactos, setContactos] = useState<ContactoEmpresa[]>([]);
   const [tarifaDialogOpen, setTarifaDialogOpen] = useState(false);
   const [editingTarifaId, setEditingTarifaId] = useState<string | null>(null);
-  const [tarifaCursoId, setTarifaCursoId] = useState("");
+  const [tarifaNivelId, setTarifaNivelId] = useState("");
   const [tarifaValor, setTarifaValor] = useState("");
   const [deleteTarifaId, setDeleteTarifaId] = useState<string | null>(null);
 
@@ -168,42 +170,42 @@ export default function EmpresaDetallePage() {
     return options.find(o => o.value === value)?.label || value;
   };
 
-  const cursosOptions = cursos.map(c => ({ value: c.id, label: c.nombre }));
+  const nivelesOptions = (niveles || []).map(n => ({ value: n.id, label: n.nombreNivel }));
 
   const handleOpenTarifaDialog = (tarifaId?: string) => {
     if (tarifaId) {
       const tarifa = tarifas.find(t => t.id === tarifaId);
       if (tarifa) {
         setEditingTarifaId(tarifaId);
-        setTarifaCursoId(tarifa.cursoId);
+        setTarifaNivelId(tarifa.nivelFormacionId);
         setTarifaValor(tarifa.valor.toString());
       }
     } else {
       setEditingTarifaId(null);
-      setTarifaCursoId("");
+      setTarifaNivelId("");
       setTarifaValor("");
     }
     setTarifaDialogOpen(true);
   };
 
   const handleSaveTarifa = async () => {
-    if (!tarifaCursoId || !tarifaValor) {
+    if (!tarifaNivelId || !tarifaValor) {
       toast({ title: "Complete todos los campos", variant: "destructive" });
       return;
     }
-    const curso = cursos.find(c => c.id === tarifaCursoId);
+    const nivel = (niveles || []).find(n => n.id === tarifaNivelId);
     try {
       if (editingTarifaId) {
         await updateTarifa.mutateAsync({
           id: editingTarifaId,
-          data: { cursoId: tarifaCursoId, cursoNombre: curso?.nombre || "", valor: Number(tarifaValor) },
+          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombreNivel || "", valor: Number(tarifaValor) },
         });
         toast({ title: "Tarifa actualizada" });
       } else {
         await createTarifa.mutateAsync({
           empresaId: empresa.id,
-          cursoId: tarifaCursoId,
-          cursoNombre: curso?.nombre || "",
+          nivelFormacionId: tarifaNivelId,
+          nivelFormacionNombre: nivel?.nombreNivel || "",
           valor: Number(tarifaValor),
         });
         toast({ title: "Tarifa creada" });
@@ -462,7 +464,7 @@ export default function EmpresaDetallePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Curso</TableHead>
+                <TableHead>Nivel de Formación</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-[100px]">Acciones</TableHead>
               </TableRow>
@@ -470,7 +472,7 @@ export default function EmpresaDetallePage() {
             <TableBody>
               {tarifas.map(t => (
                 <TableRow key={t.id}>
-                  <TableCell>{t.cursoNombre}</TableCell>
+                  <TableCell>{t.nivelFormacionNombre}</TableCell>
                   <TableCell className="font-medium">
                     ${t.valor.toLocaleString("es-CO")}
                   </TableCell>
@@ -510,14 +512,14 @@ export default function EmpresaDetallePage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Curso</Label>
+              <Label>Nivel de Formación</Label>
               <Combobox
-                options={cursosOptions}
-                value={tarifaCursoId}
-                onValueChange={setTarifaCursoId}
-                placeholder="Seleccionar curso..."
-                searchPlaceholder="Buscar curso..."
-                emptyMessage="Curso no encontrado"
+                options={nivelesOptions}
+                value={tarifaNivelId}
+                onValueChange={setTarifaNivelId}
+                placeholder="Seleccionar nivel..."
+                searchPlaceholder="Buscar nivel..."
+                emptyMessage="Nivel no encontrado"
               />
             </div>
             <div className="space-y-2">

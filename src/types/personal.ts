@@ -28,6 +28,7 @@ export interface Personal {
   apellidos: string;
   cargoId: string;
   cargoNombre: string;
+  colorCalendario?: string;
   firmaBase64?: string;
   adjuntos: AdjuntoPersonal[];
   createdAt: string;
@@ -39,6 +40,7 @@ export interface PersonalFormData {
   apellidos: string;
   cargoId: string;
   cargoNombre: string;
+  colorCalendario?: string;
 }
 
 export const TIPOS_CARGO: { value: TipoCargo; label: string }[] = [

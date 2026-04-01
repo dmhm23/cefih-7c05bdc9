@@ -903,8 +903,8 @@ export const mockCargos: Cargo[] = [
 
 // ============ PERSONAL (STAFF) ============
 export const mockPersonalStaff: Personal[] = [
-  { id: 'e1', nombres: 'Carlos', apellidos: 'Entrenador', cargoId: 'cargo1', cargoNombre: 'Entrenador', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
-  { id: 'e2', nombres: 'Maria', apellidos: 'Instructora', cargoId: 'cargo1', cargoNombre: 'Entrenador', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'e1', nombres: 'Carlos', apellidos: 'Entrenador', cargoId: 'cargo1', cargoNombre: 'Entrenador', colorCalendario: '#3b82f6', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
+  { id: 'e2', nombres: 'Maria', apellidos: 'Instructora', cargoId: 'cargo1', cargoNombre: 'Entrenador', colorCalendario: '#22c55e', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
   { id: 'e3', nombres: 'Jorge', apellidos: 'Capacitador', cargoId: 'cargo1', cargoNombre: 'Entrenador', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
   { id: 's1', nombres: 'Roberto', apellidos: 'Supervisor', cargoId: 'cargo2', cargoNombre: 'Supervisor', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },
   { id: 's2', nombres: 'Diana', apellidos: 'Coordinadora', cargoId: 'cargo2', cargoNombre: 'Supervisor', adjuntos: [], createdAt: '2024-01-01T08:00:00Z', updatedAt: '2024-01-01T08:00:00Z' },

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2, Settings2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Settings2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,19 @@ import { useEffect } from "react";
 import { AdjuntoPersonal } from "@/types/personal";
 import { v4 as uuidv4 } from "uuid";
 
+const PRESET_COLORS = [
+  "#3b82f6", // blue
+  "#22c55e", // green
+  "#f97316", // orange
+  "#8b5cf6", // purple
+  "#ec4899", // pink
+  "#14b8a6", // teal
+  "#ef4444", // red
+  "#eab308", // yellow
+  "#06b6d4", // cyan
+  "#f43f5e", // rose
+];
+
 const personalSchema = z.object({
   nombres: z.string().min(2, "Ingrese el nombre"),
   apellidos: z.string().min(2, "Ingrese los apellidos"),
@@ -63,6 +76,7 @@ export default function PersonalFormPage() {
   const addAdjunto = useAddAdjunto();
   const deleteAdjunto = useDeleteAdjunto();
   const [cargosModalOpen, setCargosModalOpen] = useState(false);
+  const [colorCalendario, setColorCalendario] = useState<string>(PRESET_COLORS[0]);
 
   // Local state for creation mode
   const [tempFirma, setTempFirma] = useState<string | undefined>(undefined);
@@ -85,8 +99,16 @@ export default function PersonalFormPage() {
         apellidos: personal.apellidos,
         cargoId: personal.cargoId,
       });
+      if (personal.colorCalendario) {
+        setColorCalendario(personal.colorCalendario);
+      }
     }
   }, [personal, form]);
+
+  // Determine if selected cargo is 'entrenador' type
+  const selectedCargoId = form.watch("cargoId");
+  const selectedCargo = cargos.find((c) => c.id === selectedCargoId);
+  const isEntrenador = selectedCargo?.tipo === "entrenador";
 
   const handleCargoCreated = (cargoId: string) => {
     form.setValue("cargoId", cargoId);
@@ -161,6 +183,7 @@ export default function PersonalFormPage() {
         apellidos: data.apellidos,
         cargoId: data.cargoId,
         cargoNombre: cargo?.nombre || "",
+        ...(cargo?.tipo === "entrenador" ? { colorCalendario } : {}),
       };
 
       if (isEditing) {
@@ -288,6 +311,68 @@ export default function PersonalFormPage() {
                   </FormItem>
                 )}
               />
+
+              {/* Color selector for trainers */}
+              {isEntrenador && (
+                <div className="space-y-2">
+                  <FormLabel>Color del Calendario</FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Este color identificará al entrenador en el calendario de cursos
+                  </p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {PRESET_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className="h-8 w-8 rounded-full border-2 flex items-center justify-center transition-transform hover:scale-110"
+                        style={{
+                          backgroundColor: color,
+                          borderColor: colorCalendario === color ? "hsl(var(--foreground))" : "transparent",
+                        }}
+                        onClick={() => setColorCalendario(color)}
+                        title={color}
+                      >
+                        {colorCalendario === color && (
+                          <Check className="h-4 w-4 text-white drop-shadow-md" />
+                        )}
+                      </button>
+                    ))}
+                    <div className="flex items-center gap-2 ml-2">
+                      <label
+                        className="h-8 w-8 rounded-full border-2 border-dashed cursor-pointer flex items-center justify-center overflow-hidden"
+                        style={{
+                          borderColor: !PRESET_COLORS.includes(colorCalendario) ? "hsl(var(--foreground))" : "hsl(var(--border))",
+                          backgroundColor: !PRESET_COLORS.includes(colorCalendario) ? colorCalendario : undefined,
+                        }}
+                        title="Color personalizado"
+                      >
+                        <input
+                          type="color"
+                          value={colorCalendario}
+                          onChange={(e) => setColorCalendario(e.target.value)}
+                          className="sr-only"
+                        />
+                        {!PRESET_COLORS.includes(colorCalendario) && (
+                          <Check className="h-4 w-4 text-white drop-shadow-md" />
+                        )}
+                      </label>
+                      <span className="text-xs text-muted-foreground">Personalizado</span>
+                    </div>
+                  </div>
+                  {/* Preview */}
+                  <div
+                    className="mt-2 rounded-md px-3 py-2 text-xs font-medium inline-flex items-center gap-2"
+                    style={{
+                      backgroundColor: colorCalendario + "20",
+                      color: colorCalendario,
+                      borderLeft: `3px solid ${colorCalendario}`,
+                    }}
+                  >
+                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colorCalendario }} />
+                    Vista previa en calendario
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

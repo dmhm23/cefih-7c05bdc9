@@ -65,6 +65,11 @@ export default function EmpresaDetallePage() {
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
+    if (empresa) {
+      setContactos(empresa.contactos?.length ? [...empresa.contactos] : [
+        { id: uuid(), nombre: empresa.personaContacto || "", telefono: empresa.telefonoContacto || "", email: empresa.emailContacto || "", esPrincipal: true }
+      ]);
+    }
   }, [empresa?.id]);
 
   if (isLoading) {

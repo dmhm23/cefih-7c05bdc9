@@ -462,7 +462,7 @@ export default function EmpresaDetallePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Curso</TableHead>
+                <TableHead>Nivel de Formación</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead className="w-[100px]">Acciones</TableHead>
               </TableRow>

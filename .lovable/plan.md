@@ -1,29 +1,21 @@
 
 
-## Plan: Agregar filtro por nivel de formación en cursos
+## Plan: Cambiar filtro de nivel de formación a dropdown simple
 
 ### Cambio
 
-Añadir un segundo filtro tipo `multiselect` en el `FilterPopover` de `CursosListView` que permita filtrar cursos por nivel de formación. Usa `getNivelesAsOptions()` (ya existe) para obtener las opciones dinámicamente.
+En `src/components/cursos/CursosListView.tsx`, cambiar el filtro `tipoFormacion` de `multiselect` a `select` (igual que el de estado), y ajustar la lógica de filtrado para comparar un string en vez de un array.
+
+### Detalle
+
+1. En `filterConfigs`, cambiar `type: "multiselect"` → `type: "select"` para `tipoFormacion`
+2. Inicializar `filters.tipoFormacion` como `"todos"` en vez de `[]`
+3. Actualizar lógica de filtrado: `filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion`
+4. Actualizar `handleClearFilters` para resetear a `"todos"`
 
 ### Archivo afectado
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/cursos/CursosListView.tsx` | Agregar filtro `tipoFormacion` multiselect + lógica de filtrado |
-
-### Detalle
-
-1. Importar `getNivelesAsOptions` desde `@/utils/resolveNivelLabel`
-2. Agregar a `filterConfigs` un segundo filtro:
-   ```typescript
-   { key: "tipoFormacion", label: "Nivel de Formación", type: "multiselect", options: getNivelesAsOptions() }
-   ```
-3. Inicializar `filters` con `tipoFormacion: []`
-4. Agregar lógica en `filteredCursos`:
-   ```typescript
-   const matchesNivel = (filters.tipoFormacion as string[]).length === 0 
-     || (filters.tipoFormacion as string[]).includes(c.tipoFormacion);
-   ```
-5. Actualizar `handleClearFilters` para resetear `tipoFormacion: []`
+| `src/components/cursos/CursosListView.tsx` | Cambiar tipo de filtro y ajustar lógica |
 

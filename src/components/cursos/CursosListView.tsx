@@ -115,8 +115,9 @@ export default function CursosListView() {
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
     const matchesNivel = filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion;
+    const matchesEntrenador = filters.entrenador === "todos" || c.entrenadorId === filters.entrenador;
 
-    return matchesSearch && matchesEstado && matchesNivel;
+    return matchesSearch && matchesEstado && matchesNivel && matchesEntrenador;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {

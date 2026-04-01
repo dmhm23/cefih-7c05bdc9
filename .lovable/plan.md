@@ -1,39 +1,34 @@
 
 
-## Plan: Sincronizar métodos de pago de Cartera con Matrículas
+## Plan: Color de calendario personalizable para entrenadores
 
-### Problema
+### Contexto
 
-Matrículas usa `FORMAS_PAGO` en `src/data/formOptions.ts` con opciones desactualizadas (transferencia, tarjeta, otro), mientras Cartera ya tiene los métodos correctos: transferencia bancaria, efectivo, consignación, nequi, daviplata, bre-b, corresponsal bancario y "+ Añadir opción".
+Actualmente los colores del calendario se asignan automáticamente por índice (`TRAINER_COLORS[i % length]`) en `CursosCalendarioView.tsx` (línea 34-41). No hay relación entre el entrenador y su color preferido.
 
 ### Cambios
 
 | Archivo | Cambio |
 |---|---|
-| `src/data/formOptions.ts` | Reemplazar `FORMAS_PAGO` con los mismos métodos de Cartera, incluyendo opción "+ Añadir opción" |
-| `src/types/matricula.ts` | Actualizar tipo `FormaPago` y `FORMA_PAGO_LABELS` para coincidir con `MetodoPago` de Cartera |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Añadir lógica de "+ Añadir opción" (input custom) como en Cartera |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Mismo tratamiento para edición en detalle |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Mismo tratamiento en el sheet lateral |
-| `src/data/mockData.ts` | Migrar valores `'transferencia'` → `'transferencia_bancaria'` en mocks |
+| `src/types/personal.ts` | Agregar `colorCalendario?: string` a `Personal` y `PersonalFormData` |
+| `src/data/mockData.ts` | Agregar `colorCalendario` a los entrenadores mock |
+| `src/pages/personal/PersonalFormPage.tsx` | Agregar selector de color con opciones predefinidas + input de color custom, visible cuando el rol seleccionado es tipo `entrenador` |
+| `src/components/cursos/CursosCalendarioView.tsx` | En `getTrainerColorMap`, buscar el `colorCalendario` del personal y usarlo como color prioritario; si no tiene, usar el fallback por índice |
+| `src/services/personalService.ts` | Pasar `colorCalendario` en create/update (ya es genérico con spread, solo ajustar el tipo) |
 
 ### Detalle
 
-**`FORMAS_PAGO`** nuevo:
+**Tipo** — agregar a `Personal` y `PersonalFormData`:
 ```typescript
-export const FORMAS_PAGO = [
-  { value: 'transferencia_bancaria', label: 'Transferencia Bancaria' },
-  { value: 'efectivo', label: 'Efectivo' },
-  { value: 'consignacion', label: 'Consignación' },
-  { value: 'nequi', label: 'Nequi' },
-  { value: 'daviplata', label: 'Daviplata' },
-  { value: 'bre_b', label: 'Bre-b' },
-  { value: 'corresponsal_bancario', label: 'Corresponsal Bancario' },
-  { value: 'otro', label: '+ Añadir opción' },
-] as const;
+colorCalendario?: string; // hex color, ej: "#3b82f6"
 ```
 
-**Tipo `FormaPago`** actualizado para coincidir con los nuevos values. Se elimina `'tarjeta'`.
+**Colores predefinidos** — array de 8-10 colores visualmente distintos (los mismos del calendario actual, convertidos a hex) + un input `type="color"` para elegir uno personalizado.
 
-**UI**: En los 3 archivos de matrículas donde se usa el selector de forma de pago, añadir la lógica de input custom cuando se selecciona `'otro'` (mismo patrón que en `RegistrarPagoDialog`).
+**UI en formulario** — nueva sección condicional que aparece solo cuando el cargo seleccionado es de tipo `entrenador`. Muestra:
+- Grid de círculos de color clickeables (predefinidos)
+- Input color picker para valor personalizado
+- Preview del color seleccionado
+
+**Calendario** — modificar `getTrainerColorMap` para recibir la lista de personal y usar `colorCalendario` del perfil cuando exista, generando las variantes `bg`, `bgLight`, `text`, `border` desde el hex base.
 

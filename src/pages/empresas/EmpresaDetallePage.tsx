@@ -510,14 +510,14 @@ export default function EmpresaDetallePage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Curso</Label>
+              <Label>Nivel de Formación</Label>
               <Combobox
-                options={cursosOptions}
-                value={tarifaCursoId}
-                onValueChange={setTarifaCursoId}
-                placeholder="Seleccionar curso..."
-                searchPlaceholder="Buscar curso..."
-                emptyMessage="Curso no encontrado"
+                options={nivelesOptions}
+                value={tarifaNivelId}
+                onValueChange={setTarifaNivelId}
+                placeholder="Seleccionar nivel..."
+                searchPlaceholder="Buscar nivel..."
+                emptyMessage="Nivel no encontrado"
               />
             </div>
             <div className="space-y-2">

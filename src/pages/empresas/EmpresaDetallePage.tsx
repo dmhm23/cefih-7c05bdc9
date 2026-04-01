@@ -59,7 +59,7 @@ export default function EmpresaDetallePage() {
   const [contactos, setContactos] = useState<ContactoEmpresa[]>([]);
   const [tarifaDialogOpen, setTarifaDialogOpen] = useState(false);
   const [editingTarifaId, setEditingTarifaId] = useState<string | null>(null);
-  const [tarifaCursoId, setTarifaCursoId] = useState("");
+  const [tarifaNivelId, setTarifaNivelId] = useState("");
   const [tarifaValor, setTarifaValor] = useState("");
   const [deleteTarifaId, setDeleteTarifaId] = useState<string | null>(null);
 

@@ -198,7 +198,7 @@ export default function EmpresaDetallePage() {
       if (editingTarifaId) {
         await updateTarifa.mutateAsync({
           id: editingTarifaId,
-          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombre || "", valor: Number(tarifaValor) },
+          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombreNivel || "", valor: Number(tarifaValor) },
         });
         toast({ title: "Tarifa actualizada" });
       } else {

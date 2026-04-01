@@ -1,34 +1,26 @@
 
 
-## Plan: Color de calendario personalizable para entrenadores
+## Plan: Activar estudiante mock en el portal
 
-### Contexto
+### Problema
 
-Actualmente los colores del calendario se asignan automáticamente por índice (`TRAINER_COLORS[i % length]`) en `CursosCalendarioView.tsx` (línea 34-41). No hay relación entre el entrenador y su color preferido.
+Todos los cursos mock tienen `fechaFin` anterior a hoy (2026-04-01), por lo que el servicio `buscarMatriculaVigente` rechaza todos los accesos.
 
-### Cambios
+### Solución
+
+1. **Extender fecha del curso `c1`** en `src/data/mockData.ts`: cambiar `fechaFin` de `'2026-03-28'` a `'2026-04-30'` para que esté vigente.
+
+2. **Inicializar `portalEstudiante`** en la matrícula `m5` (personaId `p5`, cursoId `c1`) agregando directamente el objeto `portalEstudiante: { habilitado: true, documentos: [] }` para que el portal lo reconozca de inmediato.
+
+### Datos de acceso
+
+- **Cédula**: `1045678901`
+- **Nombre**: Diego Alejandro Castillo Vargas
+- **Curso**: Trabajador Autorizado - #TA-2026-001
+
+### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/personal.ts` | Agregar `colorCalendario?: string` a `Personal` y `PersonalFormData` |
-| `src/data/mockData.ts` | Agregar `colorCalendario` a los entrenadores mock |
-| `src/pages/personal/PersonalFormPage.tsx` | Agregar selector de color con opciones predefinidas + input de color custom, visible cuando el rol seleccionado es tipo `entrenador` |
-| `src/components/cursos/CursosCalendarioView.tsx` | En `getTrainerColorMap`, buscar el `colorCalendario` del personal y usarlo como color prioritario; si no tiene, usar el fallback por índice |
-| `src/services/personalService.ts` | Pasar `colorCalendario` en create/update (ya es genérico con spread, solo ajustar el tipo) |
-
-### Detalle
-
-**Tipo** — agregar a `Personal` y `PersonalFormData`:
-```typescript
-colorCalendario?: string; // hex color, ej: "#3b82f6"
-```
-
-**Colores predefinidos** — array de 8-10 colores visualmente distintos (los mismos del calendario actual, convertidos a hex) + un input `type="color"` para elegir uno personalizado.
-
-**UI en formulario** — nueva sección condicional que aparece solo cuando el cargo seleccionado es de tipo `entrenador`. Muestra:
-- Grid de círculos de color clickeables (predefinidos)
-- Input color picker para valor personalizado
-- Preview del color seleccionado
-
-**Calendario** — modificar `getTrainerColorMap` para recibir la lista de personal y usar `colorCalendario` del perfil cuando exista, generando las variantes `bg`, `bgLight`, `text`, `border` desde el hex base.
+| `src/data/mockData.ts` | Extender `fechaFin` de `c1` a `2026-04-30`; agregar `portalEstudiante` a matrícula `m5` |
 

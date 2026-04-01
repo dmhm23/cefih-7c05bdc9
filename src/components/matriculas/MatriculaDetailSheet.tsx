@@ -113,7 +113,7 @@ export function MatriculaDetailSheet({
 
   const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
   const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
-  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
+  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion || matricula?.empresaNivelFormacion);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
 

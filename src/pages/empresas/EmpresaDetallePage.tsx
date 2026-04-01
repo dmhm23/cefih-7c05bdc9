@@ -50,6 +50,7 @@ export default function EmpresaDetallePage() {
   const { data: matriculas = [] } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: niveles = [] } = useNivelesFormacion();
+  const { data: cursos = [] } = useCursos();
   const { data: tarifas = [] } = useTarifasEmpresa(id || "");
   const createTarifa = useCreateTarifa();
   const updateTarifa = useUpdateTarifa();

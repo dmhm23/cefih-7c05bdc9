@@ -12,6 +12,7 @@ import { RowActions, createViewAction, createEditAction } from "@/components/sha
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
 import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";

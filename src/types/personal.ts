@@ -40,6 +40,7 @@ export interface PersonalFormData {
   apellidos: string;
   cargoId: string;
   cargoNombre: string;
+  colorCalendario?: string;
 }
 
 export const TIPOS_CARGO: { value: TipoCargo; label: string }[] = [

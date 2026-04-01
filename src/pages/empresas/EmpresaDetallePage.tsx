@@ -205,7 +205,7 @@ export default function EmpresaDetallePage() {
         await createTarifa.mutateAsync({
           empresaId: empresa.id,
           nivelFormacionId: tarifaNivelId,
-          nivelFormacionNombre: nivel?.nombre || "",
+          nivelFormacionNombre: nivel?.nombreNivel || "",
           valor: Number(tarifaValor),
         });
         toast({ title: "Tarifa creada" });

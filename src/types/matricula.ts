@@ -8,11 +8,15 @@ export type EstadoMatricula =
   | 'cerrada';
 
 export type FormaPago = 
+  | 'transferencia_bancaria'
   | 'efectivo'
-  | 'transferencia'
   | 'consignacion'
-  | 'tarjeta'
-  | 'otro';
+  | 'nequi'
+  | 'daviplata'
+  | 'bre_b'
+  | 'corresponsal_bancario'
+  | 'otro'
+  | string;
 
 export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
 
@@ -158,12 +162,15 @@ export const ESTADO_MATRICULA_LABELS: Record<EstadoMatricula, string> = {
 };
 
 
-export const FORMA_PAGO_LABELS: Record<FormaPago, string> = {
+export const FORMA_PAGO_LABELS: Record<string, string> = {
+  transferencia_bancaria: 'Transferencia Bancaria',
   efectivo: 'Efectivo',
-  transferencia: 'Transferencia',
   consignacion: 'Consignación',
-  tarjeta: 'Tarjeta',
-  otro: 'Otro',
+  nequi: 'Nequi',
+  daviplata: 'Daviplata',
+  bre_b: 'Bre-b',
+  corresponsal_bancario: 'Corresponsal Bancario',
+  otro: '+ Añadir opción',
 };
 
 export const NIVEL_PREVIO_LABELS: Record<NivelPrevio, string> = {

@@ -150,11 +150,14 @@ export const NIVELES_FORMACION_EMPRESA = [
 ] as const;
 
 export const FORMAS_PAGO = [
+  { value: 'transferencia_bancaria', label: 'Transferencia Bancaria' },
   { value: 'efectivo', label: 'Efectivo' },
-  { value: 'transferencia', label: 'Transferencia' },
   { value: 'consignacion', label: 'Consignación' },
-  { value: 'tarjeta', label: 'Tarjeta' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'nequi', label: 'Nequi' },
+  { value: 'daviplata', label: 'Daviplata' },
+  { value: 'bre_b', label: 'Bre-b' },
+  { value: 'corresponsal_bancario', label: 'Corresponsal Bancario' },
+  { value: 'otro', label: '+ Añadir opción' },
 ] as const;
 
 // Tipos derivados para TypeScript

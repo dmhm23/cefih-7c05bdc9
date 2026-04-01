@@ -58,12 +58,22 @@ function getTrainerColorMap(cursos: Curso[], personalColors: Record<string, stri
 export default function CursosCalendarioView() {
   const navigate = useNavigate();
   const { data: cursos = [] } = useCursos();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo("entrenador");
 
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTrainers, setSelectedTrainers] = useState<string[]>([]);
 
-  const trainerColorMap = useMemo(() => getTrainerColorMap(cursos), [cursos]);
+  // Build a map of personalId -> colorCalendario from personal records
+  const personalColors = useMemo(() => {
+    const map: Record<string, string> = {};
+    entrenadores.forEach((p) => {
+      if (p.colorCalendario) map[p.id] = p.colorCalendario;
+    });
+    return map;
+  }, [entrenadores]);
+
+  const trainerColorMap = useMemo(() => getTrainerColorMap(cursos, personalColors), [cursos, personalColors]);
 
   const trainers = useMemo(() => {
     const map = new Map<string, string>();

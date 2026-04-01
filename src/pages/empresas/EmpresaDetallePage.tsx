@@ -170,7 +170,7 @@ export default function EmpresaDetallePage() {
     return options.find(o => o.value === value)?.label || value;
   };
 
-  const nivelesOptions = (niveles || []).map(n => ({ value: n.id, label: n.nombre }));
+  const nivelesOptions = (niveles || []).map(n => ({ value: n.id, label: n.nombreNivel }));
 
   const handleOpenTarifaDialog = (tarifaId?: string) => {
     if (tarifaId) {

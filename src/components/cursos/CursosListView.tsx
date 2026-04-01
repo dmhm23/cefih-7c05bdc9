@@ -100,8 +100,10 @@ export default function CursosListView() {
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
+    const nivelFilter = (filters.tipoFormacion as string[]) || [];
+    const matchesNivel = nivelFilter.length === 0 || nivelFilter.includes(c.tipoFormacion);
 
-    return matchesSearch && matchesEstado;
+    return matchesSearch && matchesEstado && matchesNivel;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {

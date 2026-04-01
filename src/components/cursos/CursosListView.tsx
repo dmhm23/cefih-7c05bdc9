@@ -51,7 +51,7 @@ export default function CursosListView() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
-    tipoFormacion: [],
+    tipoFormacion: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -79,7 +79,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       label: "Nivel de Formación",
-      type: "multiselect",
+      type: "select",
       options: getNivelesAsOptions(),
     },
   ];
@@ -100,8 +100,7 @@ export default function CursosListView() {
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
-    const nivelFilter = (filters.tipoFormacion as string[]) || [];
-    const matchesNivel = nivelFilter.length === 0 || nivelFilter.includes(c.tipoFormacion);
+    const matchesNivel = filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion;
 
     return matchesSearch && matchesEstado && matchesNivel;
   });
@@ -111,7 +110,7 @@ export default function CursosListView() {
   };
 
   const handleClearFilters = () => {
-    setFilters({ estado: "todos", tipoFormacion: [] });
+    setFilters({ estado: "todos", tipoFormacion: "todos" });
   };
 
   const selectedCurso = selectedIndex !== null ? filteredCursos[selectedIndex] : null;

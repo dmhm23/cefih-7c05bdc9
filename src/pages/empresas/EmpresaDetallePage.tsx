@@ -9,6 +9,7 @@ import { useEmpresa, useUpdateEmpresa, useTarifasEmpresa, useCreateTarifa, useUp
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { useCursos } from "@/hooks/useCursos";
 import { EditableField } from "@/components/shared/EditableField";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";

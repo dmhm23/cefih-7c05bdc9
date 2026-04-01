@@ -470,7 +470,7 @@ export default function EmpresaDetallePage() {
             <TableBody>
               {tarifas.map(t => (
                 <TableRow key={t.id}>
-                  <TableCell>{t.cursoNombre}</TableCell>
+                  <TableCell>{t.nivelFormacionNombre}</TableCell>
                   <TableCell className="font-medium">
                     ${t.valor.toLocaleString("es-CO")}
                   </TableCell>

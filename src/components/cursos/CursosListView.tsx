@@ -13,7 +13,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { Curso } from "@/types";
-import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -51,6 +51,7 @@ export default function CursosListView() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
+    tipoFormacion: [],
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -75,6 +76,12 @@ export default function CursosListView() {
       type: "select",
       options: ESTADO_OPTIONS,
     },
+    {
+      key: "tipoFormacion",
+      label: "Nivel de Formación",
+      type: "multiselect",
+      options: getNivelesAsOptions(),
+    },
   ];
 
   const activeFilterCount = Object.entries(filters).filter(([, value]) => {
@@ -93,8 +100,10 @@ export default function CursosListView() {
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
+    const nivelFilter = (filters.tipoFormacion as string[]) || [];
+    const matchesNivel = nivelFilter.length === 0 || nivelFilter.includes(c.tipoFormacion);
 
-    return matchesSearch && matchesEstado;
+    return matchesSearch && matchesEstado && matchesNivel;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -102,7 +111,7 @@ export default function CursosListView() {
   };
 
   const handleClearFilters = () => {
-    setFilters({ estado: "todos" });
+    setFilters({ estado: "todos", tipoFormacion: [] });
   };
 
   const selectedCurso = selectedIndex !== null ? filteredCursos[selectedIndex] : null;

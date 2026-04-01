@@ -28,6 +28,7 @@ export interface Personal {
   apellidos: string;
   cargoId: string;
   cargoNombre: string;
+  colorCalendario?: string;
   firmaBase64?: string;
   adjuntos: AdjuntoPersonal[];
   createdAt: string;

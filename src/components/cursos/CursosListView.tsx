@@ -66,10 +66,16 @@ export default function CursosListView() {
   });
 
   const { data: cursos = [], isLoading } = useCursos();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
   }, [columnConfig]);
+
+  const entrenadorOptions = entrenadores.map(e => ({
+    value: e.id,
+    label: `${e.nombres} ${e.apellidos}`,
+  }));
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -83,6 +89,12 @@ export default function CursosListView() {
       label: "Nivel de Formación",
       type: "select",
       options: getNivelesAsOptions(),
+    },
+    {
+      key: "entrenador",
+      label: "Entrenador",
+      type: "select",
+      options: entrenadorOptions,
     },
   ];
 

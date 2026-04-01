@@ -79,7 +79,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       label: "Nivel de Formación",
-      type: "multiselect",
+      type: "select",
       options: getNivelesAsOptions(),
     },
   ];

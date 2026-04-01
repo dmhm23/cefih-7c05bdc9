@@ -56,6 +56,7 @@ export default function EmpresaDetallePage() {
 
   const [formData, setFormData] = useState<Partial<EmpresaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [contactos, setContactos] = useState<ContactoEmpresa[]>([]);
   const [tarifaDialogOpen, setTarifaDialogOpen] = useState(false);
   const [editingTarifaId, setEditingTarifaId] = useState<string | null>(null);
   const [tarifaCursoId, setTarifaCursoId] = useState("");

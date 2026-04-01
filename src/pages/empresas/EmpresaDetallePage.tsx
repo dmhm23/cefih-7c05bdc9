@@ -168,42 +168,42 @@ export default function EmpresaDetallePage() {
     return options.find(o => o.value === value)?.label || value;
   };
 
-  const cursosOptions = cursos.map(c => ({ value: c.id, label: c.nombre }));
+  const nivelesOptions = (niveles || []).map(n => ({ value: n.id, label: n.nombre }));
 
   const handleOpenTarifaDialog = (tarifaId?: string) => {
     if (tarifaId) {
       const tarifa = tarifas.find(t => t.id === tarifaId);
       if (tarifa) {
         setEditingTarifaId(tarifaId);
-        setTarifaCursoId(tarifa.cursoId);
+        setTarifaNivelId(tarifa.nivelFormacionId);
         setTarifaValor(tarifa.valor.toString());
       }
     } else {
       setEditingTarifaId(null);
-      setTarifaCursoId("");
+      setTarifaNivelId("");
       setTarifaValor("");
     }
     setTarifaDialogOpen(true);
   };
 
   const handleSaveTarifa = async () => {
-    if (!tarifaCursoId || !tarifaValor) {
+    if (!tarifaNivelId || !tarifaValor) {
       toast({ title: "Complete todos los campos", variant: "destructive" });
       return;
     }
-    const curso = cursos.find(c => c.id === tarifaCursoId);
+    const nivel = (niveles || []).find(n => n.id === tarifaNivelId);
     try {
       if (editingTarifaId) {
         await updateTarifa.mutateAsync({
           id: editingTarifaId,
-          data: { cursoId: tarifaCursoId, cursoNombre: curso?.nombre || "", valor: Number(tarifaValor) },
+          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombre || "", valor: Number(tarifaValor) },
         });
         toast({ title: "Tarifa actualizada" });
       } else {
         await createTarifa.mutateAsync({
           empresaId: empresa.id,
-          cursoId: tarifaCursoId,
-          cursoNombre: curso?.nombre || "",
+          nivelFormacionId: tarifaNivelId,
+          nivelFormacionNombre: nivel?.nombre || "",
           valor: Number(tarifaValor),
         });
         toast({ title: "Tarifa creada" });

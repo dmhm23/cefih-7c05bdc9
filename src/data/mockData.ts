@@ -534,6 +534,7 @@ export const mockMatriculas: Matricula[] = [
     evaluacionCompletada: false, encuestaCompletada: false,
     cobroContactoNombre: 'Sandra Milena López', cobroContactoCelular: '3201234567',
     valorCupo: 350000, abono: 350000, pagado: true, formaPago: 'transferencia_bancaria', fechaPago: '2024-03-02',
+    portalEstudiante: { habilitado: true, documentos: [] },
     createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {

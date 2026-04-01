@@ -76,6 +76,12 @@ export default function CursosListView() {
       type: "select",
       options: ESTADO_OPTIONS,
     },
+    {
+      key: "tipoFormacion",
+      label: "Nivel de Formación",
+      type: "multiselect",
+      options: getNivelesAsOptions(),
+    },
   ];
 
   const activeFilterCount = Object.entries(filters).filter(([, value]) => {

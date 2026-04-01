@@ -132,7 +132,17 @@ export default function EmpresaDetallePage() {
 
   const handleSave = async () => {
     try {
-      await updateEmpresa.mutateAsync({ id: empresa.id, data: formData });
+      const principal = contactos.find(c => c.esPrincipal) || contactos[0];
+      await updateEmpresa.mutateAsync({
+        id: empresa.id,
+        data: {
+          ...formData,
+          contactos,
+          personaContacto: principal?.nombre || "",
+          telefonoContacto: principal?.telefono || "",
+          emailContacto: principal?.email || "",
+        }
+      });
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);

@@ -1,31 +1,40 @@
 
 
-## Plan: Añadir "Añadir opción" al selector de Sector Económico en Matrículas
+## Plan: Cambiar Tarifas Especiales de "por curso" a "por nivel de formación"
 
-### Enfoque
+### Contexto
 
-Replicar el patrón de Cartera: agregar una opción `"otro_sector"` al final del listado de sectores económicos. Al seleccionarla, se muestra un `Input` donde el usuario escribe el nombre del sector personalizado. El valor custom se guarda directamente como string en `sectorEconomico`.
+Actualmente las tarifas se asocian a cursos individuales (`cursoId`, `cursoNombre`). Esto no tiene sentido de negocio: la tarifa negociada aplica al **tipo/nivel de formación** (ej. "Trabajador Autorizado"), no a un curso específico. Se debe migrar a `nivelFormacionId` + `nivelFormacionNombre`.
 
 ### Cambios
 
 | Archivo | Cambio |
 |---|---|
-| `src/data/formOptions.ts` | Agregar `{ value: 'otro_sector', label: 'Otro (añadir opción)' }` al final de `SECTORES_ECONOMICOS` |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Agregar estado `sectorOtro`, mostrar Input cuando el valor sea `'otro_sector'`, guardar el valor custom en el submit |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Mismo tratamiento en la vista de edición de detalle: si el valor no está en `SECTORES_ECONOMICOS`, mostrarlo como texto; permitir "otro_sector" con input |
+| `src/types/empresa.ts` | Reemplazar `cursoId`/`cursoNombre` por `nivelFormacionId`/`nivelFormacionNombre` en `TarifaEmpresa` |
+| `src/data/mockEmpresas.ts` | Actualizar mocks con IDs de niveles de formación en vez de cursos |
+| `src/pages/empresas/EmpresaDetallePage.tsx` | Cambiar el Combobox de "cursos" a "niveles de formación" usando `useNivelesFormacion()`, renombrar estados y labels |
+| `src/services/empresaService.ts` | Actualizar imports (el servicio ya es genérico, solo ajustar tipos) |
+| `src/hooks/useEmpresas.ts` | Sin cambios (ya es genérico) |
 
-### Detalle de implementación
+### Detalle
 
-**`formOptions.ts`**: Agregar al final del array `SECTORES_ECONOMICOS`:
+**Tipo** — `TarifaEmpresa`:
 ```typescript
-{ value: 'otro_sector', label: 'Otro (añadir opción)' },
+// Antes
+cursoId: string;
+cursoNombre: string;
+
+// Después
+nivelFormacionId: string;
+nivelFormacionNombre: string;
 ```
 
-**`MatriculaFormPage.tsx`**:
-- Estado `sectorOtro` para el texto personalizado
-- Cuando `sectorEconomico === 'otro_sector'`, mostrar un `Input` debajo del Combobox
-- En el submit, si `sectorEconomico === 'otro_sector'`, usar `sectorOtro` como valor final
+**Mock** — usar niveles existentes (`nf1`, `nf2`, etc.) con sus nombres.
 
-**`MatriculaDetallePage.tsx`**:
-- En el `EditableField` de sector, añadir la opción "Otro" y manejar el input adicional si se selecciona
+**UI** — En `EmpresaDetallePage.tsx`:
+- Reemplazar `useCursos()` por `useNivelesFormacion()` para las opciones del Combobox
+- Renombrar estado `tarifaCursoId` → `tarifaNivelId`
+- Columna de tabla: "Curso" → "Nivel de Formación"
+- Label del dialog: "Curso" → "Nivel de Formación"
+- Placeholder: "Seleccionar nivel..." / "Buscar nivel..."
 

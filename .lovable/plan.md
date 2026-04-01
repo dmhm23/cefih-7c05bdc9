@@ -1,32 +1,29 @@
 
 
-## Plan: Habilitar edición de contactos en la vista detalle de empresa
+## Plan: Agregar filtro por nivel de formación en cursos
 
-### Problema
+### Cambio
 
-En `EmpresaDetallePage.tsx` (vista completa `/empresas/:id`), la sección "Personas de Contacto" (líneas 272-299) es de solo lectura: muestra los contactos pero no permite editarlos, eliminarlos ni agregar nuevos. En contraste, el `EmpresaDetailSheet` (panel lateral) sí permite todo esto.
-
-### Solución
-
-Replicar en `EmpresaDetallePage.tsx` la misma lógica de gestión de contactos que ya existe en `EmpresaDetailSheet.tsx`:
-
-1. Agregar estado local `contactos` con `useState<ContactoEmpresa[]>`
-2. Inicializar contactos desde `empresa.contactos` en el `useEffect` existente
-3. Agregar handlers: `handleContactoChange`, `handleAddContacto`, `handleRemoveContacto`, `handleSetPrincipal`
-4. Actualizar `handleSave` para incluir `contactos` y sincronizar los campos legacy (`personaContacto`, etc.)
-5. Actualizar `handleCancel` para resetear contactos
-6. Reemplazar la sección read-only por inputs editables con botones de agregar/eliminar/marcar principal
+Añadir un segundo filtro tipo `multiselect` en el `FilterPopover` de `CursosListView` que permita filtrar cursos por nivel de formación. Usa `getNivelesAsOptions()` (ya existe) para obtener las opciones dinámicamente.
 
 ### Archivo afectado
 
 | Archivo | Cambio |
 |---|---|
-| `src/pages/empresas/EmpresaDetallePage.tsx` | Agregar estado, handlers y UI editable para contactos (mismo patrón que `EmpresaDetailSheet`) |
+| `src/components/cursos/CursosListView.tsx` | Agregar filtro `tipoFormacion` multiselect + lógica de filtrado |
 
-### UI de la sección actualizada
+### Detalle
 
-- Cada contacto en una card con inputs para nombre, teléfono y email
-- Badge "Principal" o botón para marcar como principal
-- Botón eliminar (si hay más de 1 contacto)
-- Botón "+ Agregar contacto" al final
+1. Importar `getNivelesAsOptions` desde `@/utils/resolveNivelLabel`
+2. Agregar a `filterConfigs` un segundo filtro:
+   ```typescript
+   { key: "tipoFormacion", label: "Nivel de Formación", type: "multiselect", options: getNivelesAsOptions() }
+   ```
+3. Inicializar `filters` con `tipoFormacion: []`
+4. Agregar lógica en `filteredCursos`:
+   ```typescript
+   const matchesNivel = (filters.tipoFormacion as string[]).length === 0 
+     || (filters.tipoFormacion as string[]).includes(c.tipoFormacion);
+   ```
+5. Actualizar `handleClearFilters` para resetear `tipoFormacion: []`
 

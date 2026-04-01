@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,7 +13,8 @@ import { EditableField } from "@/components/shared/EditableField";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
-import { Empresa, EmpresaFormData } from "@/types/empresa";
+import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
+import { v4 as uuid } from "uuid";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { ESTADO_MATRICULA_LABELS } from "@/types/matricula";
 import { Combobox } from "@/components/ui/combobox";
@@ -55,6 +56,7 @@ export default function EmpresaDetallePage() {
 
   const [formData, setFormData] = useState<Partial<EmpresaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [contactos, setContactos] = useState<ContactoEmpresa[]>([]);
   const [tarifaDialogOpen, setTarifaDialogOpen] = useState(false);
   const [editingTarifaId, setEditingTarifaId] = useState<string | null>(null);
   const [tarifaCursoId, setTarifaCursoId] = useState("");
@@ -64,6 +66,11 @@ export default function EmpresaDetallePage() {
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
+    if (empresa) {
+      setContactos(empresa.contactos?.length ? [...empresa.contactos] : [
+        { id: uuid(), nombre: empresa.personaContacto || "", telefono: empresa.telefonoContacto || "", email: empresa.emailContacto || "", esPrincipal: true }
+      ]);
+    }
   }, [empresa?.id]);
 
   if (isLoading) {
@@ -98,9 +105,45 @@ export default function EmpresaDetallePage() {
     setIsDirty(true);
   };
 
+  const handleContactoChange = (index: number, field: keyof Omit<ContactoEmpresa, 'id' | 'esPrincipal'>, value: string) => {
+    setContactos(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+    setIsDirty(true);
+  };
+
+  const handleAddContacto = () => {
+    setContactos(prev => [...prev, { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: false }]);
+    setIsDirty(true);
+  };
+
+  const handleRemoveContacto = (index: number) => {
+    setContactos(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(c => c.esPrincipal)) {
+        updated[0].esPrincipal = true;
+      }
+      return updated;
+    });
+    setIsDirty(true);
+  };
+
+  const handleSetPrincipal = (index: number) => {
+    setContactos(prev => prev.map((c, i) => ({ ...c, esPrincipal: i === index })));
+    setIsDirty(true);
+  };
+
   const handleSave = async () => {
     try {
-      await updateEmpresa.mutateAsync({ id: empresa.id, data: formData });
+      const principal = contactos.find(c => c.esPrincipal) || contactos[0];
+      await updateEmpresa.mutateAsync({
+        id: empresa.id,
+        data: {
+          ...formData,
+          contactos,
+          personaContacto: principal?.nombre || "",
+          telefonoContacto: principal?.telefono || "",
+          emailContacto: principal?.email || "",
+        }
+      });
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);
@@ -112,6 +155,9 @@ export default function EmpresaDetallePage() {
   const handleCancel = () => {
     setFormData({});
     setIsDirty(false);
+    if (empresa) {
+      setContactos(empresa.contactos?.length ? [...empresa.contactos] : []);
+    }
   };
 
   const getValue = <K extends keyof Empresa>(field: K): Empresa[K] => {
@@ -275,27 +321,78 @@ export default function EmpresaDetallePage() {
               Personas de Contacto
             </h3>
           </div>
-          {(empresa.contactos && empresa.contactos.length > 0 ? empresa.contactos : [
-            { id: 'legacy', nombre: empresa.personaContacto, telefono: empresa.telefonoContacto, email: empresa.emailContacto, esPrincipal: true }
-          ]).map((contacto, index) => (
-            <div key={contacto.id} className="border rounded-lg p-3 space-y-1">
-              <div className="flex items-center gap-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-sm font-medium">{contacto.nombre || "—"}</span>
-                {contacto.esPrincipal && (
-                  <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+          {contactos.map((contacto, index) => (
+            <div key={contacto.id} className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Contacto {index + 1}</span>
+                  {contacto.esPrincipal ? (
+                    <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 text-[10px] text-muted-foreground px-1.5"
+                      onClick={() => handleSetPrincipal(index)}
+                    >
+                      <Star className="h-3 w-3 mr-0.5" />
+                      Principal
+                    </Button>
+                  )}
+                </div>
+                {contactos.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive hover:text-destructive"
+                    onClick={() => handleRemoveContacto(index)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pl-5">
-                {contacto.telefono && (
-                  <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{contacto.telefono}</span>
-                )}
-                {contacto.email && (
-                  <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{contacto.email}</span>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Nombre</label>
+                  <Input
+                    value={contacto.nombre}
+                    onChange={e => handleContactoChange(index, "nombre", e.target.value)}
+                    placeholder="Nombre completo"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Teléfono</label>
+                  <Input
+                    value={contacto.telefono}
+                    onChange={e => handleContactoChange(index, "telefono", e.target.value)}
+                    placeholder="3001234567"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <Input
+                    type="email"
+                    value={contacto.email}
+                    onChange={e => handleContactoChange(index, "email", e.target.value)}
+                    placeholder="contacto@empresa.com"
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleAddContacto}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Agregar contacto
+          </Button>
         </div>
       </div>
 

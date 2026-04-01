@@ -104,6 +104,32 @@ export default function EmpresaDetallePage() {
     setIsDirty(true);
   };
 
+  const handleContactoChange = (index: number, field: keyof Omit<ContactoEmpresa, 'id' | 'esPrincipal'>, value: string) => {
+    setContactos(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
+    setIsDirty(true);
+  };
+
+  const handleAddContacto = () => {
+    setContactos(prev => [...prev, { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: false }]);
+    setIsDirty(true);
+  };
+
+  const handleRemoveContacto = (index: number) => {
+    setContactos(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length > 0 && !updated.some(c => c.esPrincipal)) {
+        updated[0].esPrincipal = true;
+      }
+      return updated;
+    });
+    setIsDirty(true);
+  };
+
+  const handleSetPrincipal = (index: number) => {
+    setContactos(prev => prev.map((c, i) => ({ ...c, esPrincipal: i === index })));
+    setIsDirty(true);
+  };
+
   const handleSave = async () => {
     try {
       await updateEmpresa.mutateAsync({ id: empresa.id, data: formData });

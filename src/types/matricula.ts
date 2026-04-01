@@ -8,11 +8,15 @@ export type EstadoMatricula =
   | 'cerrada';
 
 export type FormaPago = 
+  | 'transferencia_bancaria'
   | 'efectivo'
-  | 'transferencia'
   | 'consignacion'
-  | 'tarjeta'
-  | 'otro';
+  | 'nequi'
+  | 'daviplata'
+  | 'bre_b'
+  | 'corresponsal_bancario'
+  | 'otro'
+  | string;
 
 export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
 

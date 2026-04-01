@@ -72,6 +72,7 @@ const matriculaSchema = z.object({
   empresaContactoTelefono: z.string().optional(),
   areaTrabajo: z.string().optional(),
   sectorEconomico: z.string().optional(),
+  sectorEconomicoOtro: z.string().optional(),
   eps: z.string().optional(),
   epsOtra: z.string().optional(),
   arl: z.string().optional(),
@@ -137,6 +138,7 @@ export default function MatriculaFormPage() {
       empresaContactoTelefono: "",
       areaTrabajo: "",
       sectorEconomico: "",
+      sectorEconomicoOtro: "",
       eps: "",
       epsOtra: "",
       arl: "",
@@ -285,7 +287,8 @@ export default function MatriculaFormPage() {
         empresaContactoNombre: data.empresaContactoNombre || undefined,
         empresaContactoTelefono: data.empresaContactoTelefono || undefined,
         areaTrabajo: data.areaTrabajo || undefined,
-        sectorEconomico: data.sectorEconomico || undefined,
+        sectorEconomico: data.sectorEconomico === 'otro_sector' ? 'otro_sector' : data.sectorEconomico || undefined,
+        sectorEconomicoOtro: data.sectorEconomico === 'otro_sector' ? data.sectorEconomicoOtro || undefined : undefined,
         eps: data.eps || undefined,
         epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
         arl: data.arl || undefined,
@@ -766,6 +769,21 @@ export default function MatriculaFormPage() {
                     </FormItem>
                   )}
                 />
+                {form.watch("sectorEconomico") === "otro_sector" && (
+                  <FormField
+                    control={form.control}
+                    name="sectorEconomicoOtro"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Especifique el sector</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nombre del sector económico" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

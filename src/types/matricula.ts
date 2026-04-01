@@ -80,6 +80,7 @@ export interface Matricula {
   empresaContactoTelefono?: string;
   areaTrabajo?: string;
   sectorEconomico?: string;
+  sectorEconomicoOtro?: string;
   eps?: string;
   epsOtra?: string;
   arl?: string;

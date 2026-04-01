@@ -321,27 +321,78 @@ export default function EmpresaDetallePage() {
               Personas de Contacto
             </h3>
           </div>
-          {(empresa.contactos && empresa.contactos.length > 0 ? empresa.contactos : [
-            { id: 'legacy', nombre: empresa.personaContacto, telefono: empresa.telefonoContacto, email: empresa.emailContacto, esPrincipal: true }
-          ]).map((contacto, index) => (
-            <div key={contacto.id} className="border rounded-lg p-3 space-y-1">
-              <div className="flex items-center gap-2">
-                <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-sm font-medium">{contacto.nombre || "—"}</span>
-                {contacto.esPrincipal && (
-                  <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+          {contactos.map((contacto, index) => (
+            <div key={contacto.id} className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">Contacto {index + 1}</span>
+                  {contacto.esPrincipal ? (
+                    <Badge variant="default" className="text-[10px] h-5">Principal</Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 text-[10px] text-muted-foreground px-1.5"
+                      onClick={() => handleSetPrincipal(index)}
+                    >
+                      <Star className="h-3 w-3 mr-0.5" />
+                      Principal
+                    </Button>
+                  )}
+                </div>
+                {contactos.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive hover:text-destructive"
+                    onClick={() => handleRemoveContacto(index)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 )}
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground pl-5">
-                {contacto.telefono && (
-                  <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{contacto.telefono}</span>
-                )}
-                {contacto.email && (
-                  <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{contacto.email}</span>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Nombre</label>
+                  <Input
+                    value={contacto.nombre}
+                    onChange={e => handleContactoChange(index, "nombre", e.target.value)}
+                    placeholder="Nombre completo"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Teléfono</label>
+                  <Input
+                    value={contacto.telefono}
+                    onChange={e => handleContactoChange(index, "telefono", e.target.value)}
+                    placeholder="3001234567"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <Input
+                    type="email"
+                    value={contacto.email}
+                    onChange={e => handleContactoChange(index, "email", e.target.value)}
+                    placeholder="contacto@empresa.com"
+                    className="h-8 text-sm"
+                  />
+                </div>
               </div>
             </div>
           ))}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleAddContacto}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Agregar contacto
+          </Button>
         </div>
       </div>
 

@@ -630,7 +630,6 @@ export function MatriculaDetailSheet({
                 placeholder="Escriba el método de pago..."
               />
             )}
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <EditableField
                 label="Fecha de pago"

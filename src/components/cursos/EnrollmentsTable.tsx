@@ -423,15 +423,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           <div className="flex items-center gap-1.5">
                             {certBadge(certInfo.estado, certInfo.motivos)}
                             {certInfo.estado === "elegible" && !readOnly && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Generar certificado"
                                 className="h-6 w-6"
                                 onClick={() => handleGenerarIndividual(m)}
-                                title="Generar certificado"
                               >
                                 <Award className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                             {certInfo.estado === "generado" && certInfo.cert && (
                               <Button

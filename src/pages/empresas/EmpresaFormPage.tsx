@@ -325,15 +325,14 @@ export default function EmpresaFormPage() {
                       )}
                     </div>
                     {contactos.length > 1 && (
-                      <Button
+                      <IconButton
                         type="button"
-                        variant="ghost"
-                        size="icon"
+                        tooltip="Eliminar contacto"
                         className="h-7 w-7 text-destructive hover:text-destructive"
                         onClick={() => handleRemoveContacto(index)}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </IconButton>
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

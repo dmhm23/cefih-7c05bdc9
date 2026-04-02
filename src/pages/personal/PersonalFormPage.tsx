@@ -298,15 +298,14 @@ export default function PersonalFormPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
+                      <IconButton
                         type="button"
+                        tooltip="Gestionar roles"
                         variant="outline"
-                        size="icon"
                         onClick={() => setCargosModalOpen(true)}
-                        title="Gestionar roles"
                       >
                         <Settings2 className="h-4 w-4" />
-                      </Button>
+                      </IconButton>
                     </div>
                     <FormMessage />
                   </FormItem>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Badge } from "@/components/ui/badge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -423,43 +424,37 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           <div className="flex items-center gap-1.5">
                             {certBadge(certInfo.estado, certInfo.motivos)}
                             {certInfo.estado === "elegible" && !readOnly && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Generar certificado"
                                 className="h-6 w-6"
                                 onClick={() => handleGenerarIndividual(m)}
-                                title="Generar certificado"
                               >
                                 <Award className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                             {certInfo.estado === "generado" && certInfo.cert && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Descargar PDF"
                                 className="h-6 w-6"
                                 onClick={() => handleDescargar(certInfo.cert!)}
-                                title="Descargar PDF"
                               >
                                 <Download className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                           </div>
                         </td>
                         <td className="py-2 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                            <IconButton
+                              tooltip="Ver matrícula"
                               className="h-7 w-7"
                               onClick={() => navigate(`/matriculas/${m.id}`, { state: { from: `/cursos/${curso.id}`, fromLabel: "Curso" } })}
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </Button>
+                            </IconButton>
                             {!readOnly && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Remover estudiante"
                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                 onClick={() => {
                                   setEstudianteAEliminar({
@@ -469,7 +464,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                                 }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                           </div>
                         </td>

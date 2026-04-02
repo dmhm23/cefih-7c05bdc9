@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Plus, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -149,9 +150,9 @@ export default function EmpresaFormPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/empresas")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/empresas")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-3xl font-bold">
             {isEditing ? "Editar Empresa" : "Nueva Empresa"}
@@ -324,15 +325,14 @@ export default function EmpresaFormPage() {
                       )}
                     </div>
                     {contactos.length > 1 && (
-                      <Button
+                      <IconButton
                         type="button"
-                        variant="ghost"
-                        size="icon"
+                        tooltip="Eliminar contacto"
                         className="h-7 w-7 text-destructive hover:text-destructive"
                         onClick={() => handleRemoveContacto(index)}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </IconButton>
                     )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

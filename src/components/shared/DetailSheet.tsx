@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import {
   Sheet,
   SheetContent,
@@ -90,47 +91,42 @@ export function DetailSheet({
 
           <div className="flex items-center gap-1">
             {/* Navigation */}
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              tooltip="Anterior"
               className="h-8 w-8"
               disabled={!canGoPrev}
               onClick={() => onNavigate('prev')}
             >
               <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            </IconButton>
+            <IconButton
+              tooltip="Siguiente"
               className="h-8 w-8"
               disabled={!canGoNext}
               onClick={() => onNavigate('next')}
             >
               <ChevronRight className="h-4 w-4" />
-            </Button>
+            </IconButton>
 
             {/* Full Screen */}
             {onFullScreen && (
-              <Button
-                variant="ghost"
-                size="icon"
+              <IconButton
+                tooltip="Pantalla completa"
                 className="h-8 w-8"
                 onClick={onFullScreen}
-                title="Abrir en pantalla completa"
               >
                 <Maximize2 className="h-4 w-4" />
-              </Button>
+              </IconButton>
             )}
 
             {/* Close */}
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              tooltip="Cerrar"
               className="h-8 w-8"
               onClick={() => onOpenChange(false)}
             >
               <X className="h-4 w-4" />
-            </Button>
+            </IconButton>
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Building2, User, Phone, Mail, MapPin, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -75,9 +76,9 @@ export default function GrupoCarteraDetallePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/cartera")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/cartera")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">{responsable?.nombre || "Grupo de Cartera"}</h1>
           <div className="flex items-center gap-2 mt-1">

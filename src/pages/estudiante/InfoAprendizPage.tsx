@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, FileText, Briefcase, HeartPulse, ShieldCheck, PenTool } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from "@/components/shared/IconButton";
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -135,9 +136,9 @@ export default function InfoAprendizPage() {
       <div className="mx-auto max-w-md px-4 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/estudiante/inicio')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <IconButton tooltip="Volver" className="shrink-0" onClick={() => navigate('/estudiante/inicio')}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
           <div className="flex-1">
             <h1 className="text-lg font-semibold">Información del Aprendiz</h1>
             <p className="text-xs text-muted-foreground">Revise sus datos y firme al final</p>

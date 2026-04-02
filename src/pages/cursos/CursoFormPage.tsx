@@ -6,6 +6,7 @@ import { z } from "zod";
 import { differenceInCalendarDays } from "date-fns";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateField } from "@/components/shared/DateField";
@@ -248,9 +249,9 @@ export default function CursoFormPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/cursos")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/cursos")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-2xl font-bold">Nuevo Curso</h1>
           <p className="text-sm text-muted-foreground">Crear un nuevo curso de formación</p>

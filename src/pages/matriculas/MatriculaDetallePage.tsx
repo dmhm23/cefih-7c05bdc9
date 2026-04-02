@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -374,9 +375,9 @@ export default function MatriculaDetallePage() {
     <div className="space-y-4">
       {/* Header compacto */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBackClick}>
+        <IconButton tooltip="Volver" onClick={handleBackClick}>
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </IconButton>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-semibold">Matrícula</h1>

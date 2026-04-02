@@ -3,6 +3,7 @@ import { FileDropZone } from "@/components/shared/FileDropZone";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { IconButton } from "@/components/shared/IconButton";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,9 +159,9 @@ export default function PlantillasPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => navigate(`/certificacion/plantillas/${p.id}/editar`)}>
+                  <IconButton tooltip="Editar plantilla" onClick={() => navigate(`/certificacion/plantillas/${p.id}/editar`)}>
                     <Pencil className="h-4 w-4" />
-                  </Button>
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

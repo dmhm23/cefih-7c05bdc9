@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Settings2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -226,9 +227,9 @@ export default function PersonalFormPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/gestion-personal")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/gestion-personal")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-2xl font-bold">
             {isEditing ? "Editar Perfil" : "Nuevo Perfil"}
@@ -297,15 +298,14 @@ export default function PersonalFormPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
+                      <IconButton
                         type="button"
+                        tooltip="Gestionar roles"
                         variant="outline"
-                        size="icon"
                         onClick={() => setCargosModalOpen(true)}
-                        title="Gestionar roles"
                       >
                         <Settings2 className="h-4 w-4" />
-                      </Button>
+                      </IconButton>
                     </div>
                     <FormMessage />
                   </FormItem>

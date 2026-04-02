@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/shared/IconButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, Pencil, Trash2, Plus } from 'lucide-react';
@@ -85,8 +86,8 @@ function SortableRow({
       </TableCell>
       <TableCell>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onEdit(doc)}><Pencil className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" onClick={() => onDelete(doc.key)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+          <IconButton tooltip="Editar" className="h-8 w-8" onClick={() => onEdit(doc)}><Pencil className="h-4 w-4" /></IconButton>
+          <IconButton tooltip="Eliminar" className="h-8 w-8" onClick={() => onDelete(doc.key)}><Trash2 className="h-4 w-4 text-destructive" /></IconButton>
         </div>
       </TableCell>
     </TableRow>

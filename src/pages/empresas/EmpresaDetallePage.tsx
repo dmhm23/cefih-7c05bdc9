@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -230,9 +231,9 @@ export default function EmpresaDetallePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
+        <IconButton tooltip="Volver" onClick={() => navigate(fromPath)}>
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </IconButton>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold">{getValue("nombreEmpresa")}</h1>
           <p className="text-sm text-muted-foreground">NIT: {getValue("nit")}</p>
@@ -344,14 +345,13 @@ export default function EmpresaDetallePage() {
                   )}
                 </div>
                 {contactos.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <IconButton
+                    tooltip="Eliminar contacto"
                     className="h-6 w-6 text-destructive hover:text-destructive"
                     onClick={() => handleRemoveContacto(index)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  </IconButton>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -478,12 +478,12 @@ export default function EmpresaDetallePage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenTarifaDialog(t.id)}>
+                      <IconButton tooltip="Editar tarifa" className="h-7 w-7" onClick={() => handleOpenTarifaDialog(t.id)}>
                         <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarifaId(t.id)}>
+                      </IconButton>
+                      <IconButton tooltip="Eliminar tarifa" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarifaId(t.id)}>
                         <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      </IconButton>
                     </div>
                   </TableCell>
                 </TableRow>

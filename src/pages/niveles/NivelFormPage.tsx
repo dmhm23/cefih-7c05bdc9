@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Plus, Trash2, Pencil, Hash, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -215,9 +216,9 @@ export default function NivelFormPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-2xl font-bold">{isEdit ? "Editar Nivel" : "Nuevo Nivel"}</h1>
           <p className="text-sm text-muted-foreground">
@@ -286,12 +287,12 @@ export default function NivelFormPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
+                          <IconButton tooltip="Editar campo" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
                             <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
+                          </IconButton>
+                          <IconButton tooltip="Eliminar campo" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          </IconButton>
                         </div>
                       </div>
                       <CampoPreview campo={campo} />
@@ -347,9 +348,9 @@ export default function NivelFormPage() {
                           checked={isActive}
                           onCheckedChange={() => toggleDocumento(doc.key)}
                         />
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeCustomDoc(doc.key)}>
+                        <IconButton type="button" tooltip="Eliminar documento" className="h-7 w-7" onClick={() => removeCustomDoc(doc.key)}>
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
+                        </IconButton>
                       </div>
                     </div>
                   );

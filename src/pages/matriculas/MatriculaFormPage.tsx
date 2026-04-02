@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info, HeartPulse, ShieldCheck, ChevronDown, ChevronUp, FileText, UserCircle, Globe, Droplet, GraduationCap, Mail, Phone, AlertCircle, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateField } from "@/components/shared/DateField";
@@ -447,9 +448,9 @@ export default function MatriculaFormPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBackClick}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={handleBackClick}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-2xl font-bold">Nueva Matrícula</h1>
           <p className="text-sm text-muted-foreground">Inscribir estudiante a un curso</p>

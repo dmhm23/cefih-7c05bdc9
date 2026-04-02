@@ -4,6 +4,7 @@ import { Save, ArrowLeft, Link2, FileText, Settings2 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -215,9 +216,9 @@ export default function PlantillaEditorPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/certificacion/plantillas')}>
+          <IconButton tooltip="Volver" onClick={() => navigate('/certificacion/plantillas')}>
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </IconButton>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

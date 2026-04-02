@@ -218,6 +218,7 @@ export default function MatriculaFormPage() {
   const handleNavConfirmDiscard = useCallback(() => {
     const path = pendingNavPath;
     setPendingNavPath(null);
+    skipNavGuardRef.current = true;
     if (path === '__back__') window.history.back();
     else if (path) navigate(path);
   }, [pendingNavPath, navigate]);

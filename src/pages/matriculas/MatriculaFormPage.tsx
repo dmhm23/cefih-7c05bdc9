@@ -216,10 +216,50 @@ export default function MatriculaFormPage() {
     }
     form.handleSubmit(async (data) => {
       try {
-        await onSubmitAndNavigate(data, path);
-      } catch { /* handled inside */ }
+        await createMatricula.mutateAsync({
+          personaId: data.personaId,
+          cursoId: data.cursoId || '',
+          empresaId: data.empresaId || undefined,
+          nivelPrevio: (data.nivelPrevio as any) || undefined,
+          centroFormacionPrevio: data.centroFormacionPrevio || undefined,
+          tipoVinculacion: (data.tipoVinculacion as any) || undefined,
+          empresaNombre: data.empresaNombre || undefined,
+          empresaNit: data.empresaNit || undefined,
+          empresaRepresentanteLegal: data.empresaRepresentanteLegal || undefined,
+          empresaCargo: data.empresaCargo || undefined,
+          empresaNivelFormacion: (data.empresaNivelFormacion as any) || undefined,
+          empresaContactoNombre: data.empresaContactoNombre || undefined,
+          empresaContactoTelefono: data.empresaContactoTelefono || undefined,
+          areaTrabajo: data.areaTrabajo || undefined,
+          sectorEconomico: data.sectorEconomico === 'otro_sector' ? 'otro_sector' : data.sectorEconomico || undefined,
+          sectorEconomicoOtro: data.sectorEconomico === 'otro_sector' ? data.sectorEconomicoOtro || undefined : undefined,
+          eps: data.eps || undefined,
+          epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
+          arl: data.arl || undefined,
+          arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+          consentimientoSalud: data.consentimientoSalud,
+          restriccionMedica: data.restriccionMedica,
+          restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
+          alergias: data.alergias,
+          alergiasDetalle: data.alergiasDetalle || undefined,
+          consumoMedicamentos: data.consumoMedicamentos,
+          consumoMedicamentosDetalle: data.consumoMedicamentosDetalle || undefined,
+          embarazo: data.embarazo || undefined,
+          nivelLectoescritura: data.nivelLectoescritura,
+          autorizacionDatos: data.autorizacionDatos,
+          firmaCapturada: false,
+          evaluacionCompletada: false,
+          encuestaCompletada: false,
+          pagado: false,
+        });
+        toast({ title: "Matrícula creada correctamente" });
+        if (path === '__back__') window.history.back();
+        else navigate(path || '/matriculas');
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message || "No se pudo crear la matrícula", variant: "destructive" });
+      }
     })();
-  }, [pendingNavPath, personaIsDirty, selectedPersona, personaFormData, form]);
+  }, [pendingNavPath, personaIsDirty, selectedPersona, personaFormData, form, createMatricula, updatePersona, toast, navigate]);
 
   const handleBackClick = () => {
     if (hasUnsavedData) {

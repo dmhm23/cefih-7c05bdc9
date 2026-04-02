@@ -173,6 +173,9 @@ export default function MatriculaFormPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedData]);
 
+  // Bypass flag so discard/save can navigate without being re-intercepted
+  const skipNavGuardRef = useRef(false);
+
   // Intercept programmatic navigation (sidebar uses navigate() which calls pushState)
   useEffect(() => {
     if (!hasUnsavedData) return;
@@ -181,6 +184,9 @@ export default function MatriculaFormPage() {
 
     const intercept = (orig: typeof window.history.pushState) =>
       function (this: History, data: unknown, unused: string, url?: string | URL | null) {
+        if (skipNavGuardRef.current) {
+          return orig.call(this, data, unused, url);
+        }
         if (url && typeof url === 'string' && url !== window.location.href) {
           setPendingNavPath(url);
           return;

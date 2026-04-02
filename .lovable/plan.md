@@ -1,36 +1,56 @@
 
 
-## Plan: Protección de navegación en formularios de matrícula
+## Plan: Interceptar navegación del sidebar en protección de matrículas
 
-### Contexto
+### Problema
 
-Actualmente no hay protección contra navegación accidental al crear o editar matrículas. El patrón ya existe en `FormatoEditorPage.tsx` (intercepta clics en links, popstate y beforeunload). Se adaptará ese patrón a ambas páginas de matrícula, con la diferencia de ofrecer **dos acciones**: "Guardar" y "Descartar" (en vez de solo "Salir sin guardar").
+El sidebar usa `navigate()` dentro de `<button onClick>`, no enlaces `<a href>`. El interceptor actual solo captura clics en `<a>` tags, por lo que la navegación desde el menú lateral no se intercepta.
+
+### Solución
+
+Reemplazar la estrategia de interceptación: en vez de escuchar clics en `<a>`, sobrescribir temporalmente `window.history.pushState` y `window.history.replaceState` para capturar cualquier navegación programática (incluyendo `navigate()` de React Router).
 
 ### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/shared/ConfirmDialog.tsx` | Agregar soporte para un tercer botón opcional (acción secundaria) para permitir "Guardar" + "Descartar" |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Detectar `isDirty` con `form.formState.isDirty \|\| personaIsDirty \|\| !!selectedPersona`, interceptar navegación, mostrar diálogo con opción de guardar o descartar |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Ya tiene `isDirty` y `isPersonaDirty`. Agregar interceptación de navegación y diálogo al intentar salir con cambios pendientes |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar interceptor de clics en `<a>` por interceptor de `pushState`/`replaceState` |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Mismo cambio |
 
-### Detalle
+### Detalle técnico
 
-**ConfirmDialog** — agregar props opcionales `secondaryAction` y `secondaryText` para renderizar un tercer botón (ej. "Guardar") junto al existente "Descartar".
+Eliminar el useEffect que escucha `click` en `<a>` tags. Reemplazar con un useEffect que:
 
-**MatriculaFormPage (nueva)**:
-- Calcular `hasUnsavedData` como: `form.formState.isDirty || personaIsDirty || !!selectedPersona` (si ya seleccionó persona o llenó campos, hay datos)
-- Estado `pendingNavPath` para la ruta pendiente
-- 3 useEffects (mismo patrón del editor de formatos):
-  1. `beforeunload` cuando `hasUnsavedData`
-  2. Interceptor de clics en enlaces internos
-  3. Interceptor de `popstate` (botón atrás)
-- Actualizar el botón "Volver" (ArrowLeft) para verificar dirty antes de navegar
-- Diálogo: "Guardar" ejecuta `form.handleSubmit(onSubmit)()` y luego navega; "Descartar" navega directamente
+1. Guarda referencia a `history.pushState` y `history.replaceState` originales
+2. Los sobrescribe con wrappers que, antes de ejecutar, verifican si hay cambios sin guardar
+3. Si hay cambios, bloquea la navegación y guarda la URL destino en `pendingNavPath`
+4. Si no hay cambios, ejecuta la función original normalmente
+5. En cleanup, restaura las funciones originales
 
-**MatriculaDetallePage (edición)**:
-- `isDirty || isPersonaDirty` ya existe
-- Mismos 3 useEffects de interceptación
-- Actualizar el botón "Volver" para verificar dirty
-- Diálogo: "Guardar" ejecuta `handleSave()`/`handleSavePersona()` y navega; "Descartar" descarta y navega
+```typescript
+useEffect(() => {
+  if (!hasUnsavedData) return;
+  const origPush = history.pushState.bind(history);
+  const origReplace = history.replaceState.bind(history);
+  
+  const intercept = (orig: typeof history.pushState) => 
+    function(this: History, data: any, unused: string, url?: string | URL | null) {
+      if (url && typeof url === 'string') {
+        setPendingNavPath(url);
+        return; // block
+      }
+      return orig.call(this, data, unused, url);
+    };
+  
+  history.pushState = intercept(origPush);
+  history.replaceState = intercept(origReplace);
+  
+  return () => {
+    history.pushState = origPush;
+    history.replaceState = origReplace;
+  };
+}, [hasUnsavedData]);
+```
+
+Los useEffects de `beforeunload` y `popstate` se mantienen sin cambios. El `handleNavConfirmDiscard` sigue usando `navigate(path)` que funcionará porque en ese momento ya se habrá restaurado o el store estará limpio.
 

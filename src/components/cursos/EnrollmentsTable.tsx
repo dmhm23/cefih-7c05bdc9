@@ -432,15 +432,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                               </IconButton>
                             )}
                             {certInfo.estado === "generado" && certInfo.cert && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Descargar PDF"
                                 className="h-6 w-6"
                                 onClick={() => handleDescargar(certInfo.cert!)}
-                                title="Descargar PDF"
                               >
                                 <Download className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                           </div>
                         </td>

@@ -26,9 +26,9 @@ export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTra
 
   return (
     <div className="flex items-start gap-3">
-      <Button variant="ghost" size="icon" className="mt-0.5" onClick={onBack}>
+      <IconButton tooltip="Volver" className="mt-0.5" onClick={onBack}>
         <ArrowLeft className="h-4 w-4" />
-      </Button>
+      </IconButton>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <h1 className="text-xl font-semibold">{title}</h1>

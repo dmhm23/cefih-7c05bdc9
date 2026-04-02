@@ -431,7 +431,7 @@ export default function MatriculaFormPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/matriculas")}>
+        <Button variant="ghost" size="icon" onClick={handleBackClick}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>

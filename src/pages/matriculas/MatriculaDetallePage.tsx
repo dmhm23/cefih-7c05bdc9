@@ -967,6 +967,19 @@ export default function MatriculaDetallePage() {
         matricula={matricula}
         curso={curso ?? null}
       />
+
+      <ConfirmDialog
+        open={pendingNavPath !== null}
+        onOpenChange={(open) => { if (!open) setPendingNavPath(null); }}
+        title="Cambios sin guardar"
+        description="Tienes cambios sin guardar en esta matrícula. ¿Qué deseas hacer?"
+        confirmText="Descartar"
+        cancelText="Seguir editando"
+        onConfirm={handleNavDiscard}
+        variant="destructive"
+        secondaryText="Guardar"
+        onSecondary={handleNavSave}
+      />
     </div>
   );
 }

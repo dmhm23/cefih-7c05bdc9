@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";
@@ -31,6 +31,7 @@ import { Label } from "@/components/ui/label";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
 import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
 import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
@@ -99,6 +100,84 @@ export default function MatriculaDetallePage() {
     setPersonaFormData({});
     setIsPersonaDirty(false);
   }, [matricula?.id]);
+
+  // --- Navigation protection ---
+  const hasUnsavedChanges = isDirty || isPersonaDirty;
+  const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavPath(href);
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handlePop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavPath('__back__');
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, [hasUnsavedChanges]);
+
+  const handleNavDiscard = useCallback(() => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    setFormData({});
+    setIsDirty(false);
+    setPersonaFormData({});
+    setIsPersonaDirty(false);
+    if (path === '__back__') window.history.back();
+    else if (path) navigate(path);
+  }, [pendingNavPath, navigate]);
+
+  const handleNavSave = useCallback(async () => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    try {
+      if (isDirty) {
+        await updateMatricula.mutateAsync({ id: matricula?.id || '', data: formData });
+        setFormData({});
+        setIsDirty(false);
+      }
+      if (isPersonaDirty && persona) {
+        await updatePersona.mutateAsync({ id: persona.id, data: personaFormData });
+        setPersonaFormData({});
+        setIsPersonaDirty(false);
+      }
+      toast({ title: "Cambios guardados correctamente" });
+      if (path === '__back__') window.history.back();
+      else if (path) navigate(path);
+    } catch {
+      toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  }, [pendingNavPath, isDirty, isPersonaDirty, formData, personaFormData, matricula, persona, updateMatricula, updatePersona, toast, navigate]);
+
+  const handleBackClick = () => {
+    if (hasUnsavedChanges) {
+      setPendingNavPath(fromPath);
+    } else {
+      navigate(fromPath);
+    }
+  };
 
   const handlePersonaFieldChange = (field: string, value: string) => {
     setPersonaFormData((prev) => ({ ...prev, [field]: value }));
@@ -286,7 +365,7 @@ export default function MatriculaDetallePage() {
     <div className="space-y-4">
       {/* Header compacto */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
+        <Button variant="ghost" size="icon" onClick={handleBackClick}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">
@@ -887,6 +966,19 @@ export default function MatriculaDetallePage() {
         persona={persona ?? null}
         matricula={matricula}
         curso={curso ?? null}
+      />
+
+      <ConfirmDialog
+        open={pendingNavPath !== null}
+        onOpenChange={(open) => { if (!open) setPendingNavPath(null); }}
+        title="Cambios sin guardar"
+        description="Tienes cambios sin guardar en esta matrícula. ¿Qué deseas hacer?"
+        confirmText="Descartar"
+        cancelText="Seguir editando"
+        onConfirm={handleNavDiscard}
+        variant="destructive"
+        secondaryText="Guardar"
+        onSecondary={handleNavSave}
       />
     </div>
   );

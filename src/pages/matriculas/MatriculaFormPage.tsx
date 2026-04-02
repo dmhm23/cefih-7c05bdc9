@@ -29,7 +29,8 @@ import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas
 import { useEmpresas, useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
 import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
@@ -159,6 +160,114 @@ export default function MatriculaFormPage() {
   const personaId = form.watch("personaId");
   const cursoId = form.watch("cursoId");
   const tipoVinculacion = form.watch("tipoVinculacion");
+
+  // --- Navigation protection ---
+  const hasUnsavedData = form.formState.isDirty || personaIsDirty || !!selectedPersona;
+  const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
+
+  // beforeunload
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedData]);
+
+  // Intercept internal link clicks
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavPath(href);
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [hasUnsavedData]);
+
+  // Intercept browser back/forward
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handlePop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavPath('__back__');
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, [hasUnsavedData]);
+
+  const handleNavConfirmDiscard = useCallback(() => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    if (path === '__back__') window.history.back();
+    else if (path) navigate(path);
+  }, [pendingNavPath, navigate]);
+
+  const handleNavConfirmSave = useCallback(async () => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    if (personaIsDirty && selectedPersona) {
+      try { await updatePersona.mutateAsync({ id: selectedPersona.id, data: personaFormData }); } catch { /* ignore */ }
+    }
+    form.handleSubmit(async (data) => {
+      try {
+        await createMatricula.mutateAsync({
+          personaId: data.personaId,
+          cursoId: data.cursoId || '',
+          empresaId: data.empresaId || undefined,
+          nivelPrevio: (data.nivelPrevio as any) || undefined,
+          centroFormacionPrevio: data.centroFormacionPrevio || undefined,
+          tipoVinculacion: (data.tipoVinculacion as any) || undefined,
+          empresaNombre: data.empresaNombre || undefined,
+          empresaNit: data.empresaNit || undefined,
+          empresaRepresentanteLegal: data.empresaRepresentanteLegal || undefined,
+          empresaCargo: data.empresaCargo || undefined,
+          empresaNivelFormacion: (data.empresaNivelFormacion as any) || undefined,
+          empresaContactoNombre: data.empresaContactoNombre || undefined,
+          empresaContactoTelefono: data.empresaContactoTelefono || undefined,
+          areaTrabajo: data.areaTrabajo || undefined,
+          sectorEconomico: data.sectorEconomico === 'otro_sector' ? 'otro_sector' : data.sectorEconomico || undefined,
+          sectorEconomicoOtro: data.sectorEconomico === 'otro_sector' ? data.sectorEconomicoOtro || undefined : undefined,
+          eps: data.eps || undefined,
+          epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
+          arl: data.arl || undefined,
+          arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+          consentimientoSalud: data.consentimientoSalud,
+          restriccionMedica: data.restriccionMedica,
+          restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
+          alergias: data.alergias,
+          alergiasDetalle: data.alergiasDetalle || undefined,
+          consumoMedicamentos: data.consumoMedicamentos,
+          consumoMedicamentosDetalle: data.consumoMedicamentosDetalle || undefined,
+          embarazo: data.embarazo || undefined,
+          nivelLectoescritura: data.nivelLectoescritura,
+          autorizacionDatos: data.autorizacionDatos,
+          firmaCapturada: false,
+          evaluacionCompletada: false,
+          encuestaCompletada: false,
+          pagado: false,
+        });
+        toast({ title: "Matrícula creada correctamente" });
+        if (path === '__back__') window.history.back();
+        else navigate(path || '/matriculas');
+      } catch (error: any) {
+        toast({ title: "Error", description: error.message || "No se pudo crear la matrícula", variant: "destructive" });
+      }
+    })();
+  }, [pendingNavPath, personaIsDirty, selectedPersona, personaFormData, form, createMatricula, updatePersona, toast, navigate]);
+
+  const handleBackClick = () => {
+    if (hasUnsavedData) {
+      setPendingNavPath('/matriculas');
+    } else {
+      navigate('/matriculas');
+    }
+  };
 
   const { data: historial } = useHistorialByPersona(personaId);
   const selectedCurso = cursos.find((c) => c.id === cursoId);
@@ -322,7 +431,7 @@ export default function MatriculaFormPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/matriculas")}>
+        <Button variant="ghost" size="icon" onClick={handleBackClick}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -1203,6 +1312,19 @@ export default function MatriculaFormPage() {
             form.setValue("empresaContactoTelefono", empresa.telefonoContacto);
           }
         }}
+      />
+
+      <ConfirmDialog
+        open={pendingNavPath !== null}
+        onOpenChange={(open) => { if (!open) setPendingNavPath(null); }}
+        title="Cambios sin guardar"
+        description="Tienes datos sin guardar en esta matrícula. ¿Qué deseas hacer?"
+        confirmText="Descartar"
+        cancelText="Seguir editando"
+        onConfirm={handleNavConfirmDiscard}
+        variant="destructive"
+        secondaryText="Guardar"
+        onSecondary={handleNavConfirmSave}
       />
     </div>
   );

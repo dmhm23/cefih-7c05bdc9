@@ -478,12 +478,12 @@ export default function EmpresaDetallePage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenTarifaDialog(t.id)}>
+                      <IconButton tooltip="Editar tarifa" className="h-7 w-7" onClick={() => handleOpenTarifaDialog(t.id)}>
                         <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarifaId(t.id)}>
+                      </IconButton>
+                      <IconButton tooltip="Eliminar tarifa" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarifaId(t.id)}>
                         <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      </IconButton>
                     </div>
                   </TableCell>
                 </TableRow>

@@ -348,9 +348,9 @@ export default function NivelFormPage() {
                           checked={isActive}
                           onCheckedChange={() => toggleDocumento(doc.key)}
                         />
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeCustomDoc(doc.key)}>
+                        <IconButton type="button" tooltip="Eliminar documento" className="h-7 w-7" onClick={() => removeCustomDoc(doc.key)}>
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
+                        </IconButton>
                       </div>
                     </div>
                   );

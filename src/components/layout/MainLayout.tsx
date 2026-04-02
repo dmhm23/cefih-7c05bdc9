@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { Separator } from "@/components/ui/separator";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import {
   Breadcrumb,
   BreadcrumbItem,

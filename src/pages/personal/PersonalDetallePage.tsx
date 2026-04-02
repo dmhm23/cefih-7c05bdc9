@@ -125,9 +125,9 @@ export default function PersonalDetallePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/gestion-personal")}>
+        <IconButton tooltip="Volver" onClick={() => navigate("/gestion-personal")}>
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </IconButton>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold">{getValue("nombres")} {getValue("apellidos")}</h1>
           <Badge variant="secondary">{getValue("cargoNombre")}</Badge>

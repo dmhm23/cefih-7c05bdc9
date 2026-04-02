@@ -116,9 +116,9 @@ export default function PersonaDetallePage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
+        <IconButton tooltip="Volver" onClick={() => navigate(fromPath)}>
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </IconButton>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold">{getValue("nombres")} {getValue("apellidos")}</h1>
           <p className="text-sm text-muted-foreground">{getValue("tipoDocumento")}: {getValue("numeroDocumento")}</p>

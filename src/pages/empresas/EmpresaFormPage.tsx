@@ -150,9 +150,9 @@ export default function EmpresaFormPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/empresas")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/empresas")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-3xl font-bold">
             {isEditing ? "Editar Empresa" : "Nueva Empresa"}

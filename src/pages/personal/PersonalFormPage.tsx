@@ -227,9 +227,9 @@ export default function PersonalFormPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/gestion-personal")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <IconButton tooltip="Volver" onClick={() => navigate("/gestion-personal")}>
+          <ArrowLeft className="h-4 w-4" />
+        </IconButton>
         <div>
           <h1 className="text-2xl font-bold">
             {isEditing ? "Editar Perfil" : "Nuevo Perfil"}

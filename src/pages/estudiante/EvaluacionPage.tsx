@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, XCircle, ClipboardList, Star, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/shared/IconButton';
-import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';

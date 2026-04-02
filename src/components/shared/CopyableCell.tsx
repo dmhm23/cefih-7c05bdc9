@@ -21,17 +21,23 @@ export function CopyableCell({ value, className }: CopyableCellProps) {
   return (
     <div className={cn("group/copy flex items-center gap-1", className)}>
       <span>{value}</span>
-      <button
-        onClick={handleCopy}
-        className="opacity-0 group-hover/copy:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
-        title="Copiar al portapapeles"
-      >
-      {copied ? (
-          <Check className="h-3.5 w-3.5 text-primary" />
-        ) : (
-          <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={handleCopy}
+            className="opacity-0 group-hover/copy:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-primary" />
+            ) : (
+              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>{copied ? "¡Copiado!" : "Copiar"}</p>
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

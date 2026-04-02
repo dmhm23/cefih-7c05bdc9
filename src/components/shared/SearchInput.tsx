@@ -60,14 +60,13 @@ export function SearchInput({
         className="pl-9 pr-9"
       />
       {internalValue && (
-        <Button
-          variant="ghost"
-          size="icon"
+        <IconButton
+          tooltip="Limpiar búsqueda"
           className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
           onClick={handleClear}
         >
           <X className="h-4 w-4" />
-        </Button>
+        </IconButton>
       )}
     </div>
   );

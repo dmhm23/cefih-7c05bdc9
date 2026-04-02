@@ -57,10 +57,10 @@ export function MainLayout({ children }: MainLayoutProps) {
 
           <div className="flex-1" />
 
-          <Button variant="ghost" size="icon" className="relative">
+          <IconButton tooltip="Notificaciones" className="relative">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 bg-primary rounded-full" />
-          </Button>
+          </IconButton>
 
           <div className="flex items-center gap-2 ml-2">
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">

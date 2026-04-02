@@ -52,20 +52,18 @@ export function RowActions({ actions, showOnHover = true }: RowActionsProps) {
       }`}
     >
       {actions.map((action) => (
-        <Button
+        <IconButton
           key={action.label}
-          variant="ghost"
-          size="icon"
+          tooltip={action.label}
           className="h-7 w-7"
           onClick={action.onClick}
-          title={action.label}
         >
           <action.icon
             className={`h-3.5 w-3.5 ${
               action.variant === "destructive" ? "text-destructive" : ""
             }`}
           />
-        </Button>
+        </IconButton>
       ))}
     </div>
   );

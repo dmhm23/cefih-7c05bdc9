@@ -29,7 +29,7 @@ import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas
 import { useEmpresas, useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
 import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";

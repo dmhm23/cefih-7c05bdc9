@@ -444,14 +444,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         </td>
                         <td className="py-2 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                            <IconButton
+                              tooltip="Ver matrícula"
                               className="h-7 w-7"
                               onClick={() => navigate(`/matriculas/${m.id}`, { state: { from: `/cursos/${curso.id}`, fromLabel: "Curso" } })}
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
-                            </Button>
+                            </IconButton>
                             {!readOnly && (
                               <Button
                                 variant="ghost"

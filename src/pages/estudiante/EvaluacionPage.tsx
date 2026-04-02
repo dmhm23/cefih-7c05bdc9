@@ -284,9 +284,9 @@ export default function EvaluacionPage() {
     <div className="min-h-screen bg-background p-4 max-w-md mx-auto space-y-5 pb-24">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/estudiante/inicio')}>
+        <IconButton tooltip="Volver" onClick={() => navigate('/estudiante/inicio')}>
           <ArrowLeft className="h-4 w-4" />
-        </Button>
+        </IconButton>
         <div>
           <h1 className="text-lg font-semibold">Evaluación{isRetry ? ' — Reintento' : ' y Encuesta'}</h1>
           <p className="text-xs text-muted-foreground">{formato.nombre}</p>

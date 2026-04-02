@@ -226,6 +226,7 @@ export default function MatriculaFormPage() {
   const handleNavConfirmSave = useCallback(async () => {
     const path = pendingNavPath;
     setPendingNavPath(null);
+    skipNavGuardRef.current = true;
     if (personaIsDirty && selectedPersona) {
       try { await updatePersona.mutateAsync({ id: selectedPersona.id, data: personaFormData }); } catch { /* ignore */ }
     }

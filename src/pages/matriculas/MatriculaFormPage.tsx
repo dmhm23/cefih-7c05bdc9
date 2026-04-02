@@ -29,7 +29,7 @@ import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas
 import { useEmpresas, useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CrearPersonaModal } from "@/components/matriculas/CrearPersonaModal";
 import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";
@@ -173,6 +173,9 @@ export default function MatriculaFormPage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedData]);
 
+  // Bypass flag so discard/save can navigate without being re-intercepted
+  const skipNavGuardRef = useRef(false);
+
   // Intercept programmatic navigation (sidebar uses navigate() which calls pushState)
   useEffect(() => {
     if (!hasUnsavedData) return;
@@ -181,6 +184,9 @@ export default function MatriculaFormPage() {
 
     const intercept = (orig: typeof window.history.pushState) =>
       function (this: History, data: unknown, unused: string, url?: string | URL | null) {
+        if (skipNavGuardRef.current) {
+          return orig.call(this, data, unused, url);
+        }
         if (url && typeof url === 'string' && url !== window.location.href) {
           setPendingNavPath(url);
           return;
@@ -212,6 +218,7 @@ export default function MatriculaFormPage() {
   const handleNavConfirmDiscard = useCallback(() => {
     const path = pendingNavPath;
     setPendingNavPath(null);
+    skipNavGuardRef.current = true;
     if (path === '__back__') window.history.back();
     else if (path) navigate(path);
   }, [pendingNavPath, navigate]);
@@ -219,6 +226,7 @@ export default function MatriculaFormPage() {
   const handleNavConfirmSave = useCallback(async () => {
     const path = pendingNavPath;
     setPendingNavPath(null);
+    skipNavGuardRef.current = true;
     if (personaIsDirty && selectedPersona) {
       try { await updatePersona.mutateAsync({ id: selectedPersona.id, data: personaFormData }); } catch { /* ignore */ }
     }

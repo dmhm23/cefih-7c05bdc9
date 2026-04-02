@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -18,6 +19,9 @@ interface ConfirmDialogProps {
   cancelText?: string;
   onConfirm: () => void;
   variant?: "default" | "destructive";
+  /** Optional secondary action button (e.g. "Guardar") */
+  secondaryText?: string;
+  onSecondary?: () => void;
 }
 
 export function ConfirmDialog({
@@ -29,6 +33,8 @@ export function ConfirmDialog({
   cancelText = "Cancelar",
   onConfirm,
   variant = "default",
+  secondaryText,
+  onSecondary,
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -39,6 +45,11 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+          {onSecondary && secondaryText && (
+            <Button variant="default" onClick={onSecondary}>
+              {secondaryText}
+            </Button>
+          )}
           <AlertDialogAction
             onClick={onConfirm}
             className={variant === "destructive" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}

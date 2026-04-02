@@ -161,6 +161,74 @@ export default function MatriculaFormPage() {
   const cursoId = form.watch("cursoId");
   const tipoVinculacion = form.watch("tipoVinculacion");
 
+  // --- Navigation protection ---
+  const hasUnsavedData = form.formState.isDirty || personaIsDirty || !!selectedPersona;
+  const [pendingNavPath, setPendingNavPath] = useState<string | null>(null);
+
+  // beforeunload
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedData]);
+
+  // Intercept internal link clicks
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handler = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavPath(href);
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [hasUnsavedData]);
+
+  // Intercept browser back/forward
+  useEffect(() => {
+    if (!hasUnsavedData) return;
+    const handlePop = () => {
+      window.history.pushState(null, '', window.location.href);
+      setPendingNavPath('__back__');
+    };
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
+  }, [hasUnsavedData]);
+
+  const handleNavConfirmDiscard = useCallback(() => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    if (path === '__back__') window.history.back();
+    else if (path) navigate(path);
+  }, [pendingNavPath, navigate]);
+
+  const handleNavConfirmSave = useCallback(async () => {
+    const path = pendingNavPath;
+    setPendingNavPath(null);
+    if (personaIsDirty && selectedPersona) {
+      try { await updatePersona.mutateAsync({ id: selectedPersona.id, data: personaFormData }); } catch { /* ignore */ }
+    }
+    form.handleSubmit(async (data) => {
+      try {
+        await onSubmitAndNavigate(data, path);
+      } catch { /* handled inside */ }
+    })();
+  }, [pendingNavPath, personaIsDirty, selectedPersona, personaFormData, form]);
+
+  const handleBackClick = () => {
+    if (hasUnsavedData) {
+      setPendingNavPath('/matriculas');
+    } else {
+      navigate('/matriculas');
+    }
+  };
+
   const { data: historial } = useHistorialByPersona(personaId);
   const selectedCurso = cursos.find((c) => c.id === cursoId);
   const cursosAbiertos = cursos.filter((c) => c.estado !== "cerrado");

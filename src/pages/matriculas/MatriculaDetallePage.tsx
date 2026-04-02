@@ -112,19 +112,28 @@ export default function MatriculaDetallePage() {
     return () => window.removeEventListener('beforeunload', handler);
   }, [hasUnsavedChanges]);
 
+  // Intercept programmatic navigation (sidebar uses navigate() which calls pushState)
   useEffect(() => {
     if (!hasUnsavedChanges) return;
-    const handler = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest('a[href]');
-      if (!anchor) return;
-      const href = anchor.getAttribute('href');
-      if (!href || href.startsWith('http') || href.startsWith('#')) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setPendingNavPath(href);
+    const origPush = window.history.pushState.bind(window.history);
+    const origReplace = window.history.replaceState.bind(window.history);
+
+    const intercept = (orig: typeof window.history.pushState) =>
+      function (this: History, data: unknown, unused: string, url?: string | URL | null) {
+        if (url && typeof url === 'string' && url !== window.location.href) {
+          setPendingNavPath(url);
+          return;
+        }
+        return orig.call(this, data, unused, url);
+      };
+
+    window.history.pushState = intercept(origPush);
+    window.history.replaceState = intercept(origReplace);
+
+    return () => {
+      window.history.pushState = origPush;
+      window.history.replaceState = origReplace;
     };
-    document.addEventListener('click', handler, true);
-    return () => document.removeEventListener('click', handler, true);
   }, [hasUnsavedChanges]);
 
   useEffect(() => {

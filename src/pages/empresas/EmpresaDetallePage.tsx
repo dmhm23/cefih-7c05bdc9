@@ -345,14 +345,13 @@ export default function EmpresaDetallePage() {
                   )}
                 </div>
                 {contactos.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <IconButton
+                    tooltip="Eliminar contacto"
                     className="h-6 w-6 text-destructive hover:text-destructive"
                     onClick={() => handleRemoveContacto(index)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  </IconButton>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

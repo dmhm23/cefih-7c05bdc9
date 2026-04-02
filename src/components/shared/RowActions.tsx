@@ -1,5 +1,6 @@
 import { Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { useMatriculasByPersona } from "@/hooks/useMatriculas";

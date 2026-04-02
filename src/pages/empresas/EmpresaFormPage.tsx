@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Plus, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";

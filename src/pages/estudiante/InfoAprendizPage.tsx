@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, FileText, Briefcase, HeartPulse, ShieldCheck, PenTool } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { IconButton } from "@/components/shared/IconButton";
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';

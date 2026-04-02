@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, UserCog, PenTool, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { usePersonal, useUpdatePersonal, useCargos, useUpdateFirma, useDeleteFirma, useAddAdjunto, useDeleteAdjunto } from "@/hooks/usePersonal";

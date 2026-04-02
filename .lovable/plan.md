@@ -1,34 +1,36 @@
 
 
-## Plan: Corregir carga automática de formatos en matrículas sin curso asignado
+## Plan: Protección de navegación en formularios de matrícula
 
-### Problema
+### Contexto
 
-La consulta de formatos usa `curso?.tipoFormacion` como clave para obtener los formatos aplicables. Cuando una matrícula se crea sin curso asignado (ahora es opcional), `curso` es `null` y `useFormatosMatricula(undefined)` no ejecuta la query — por lo que no aparece ningún formato.
-
-### Solución
-
-Usar el nivel de formación disponible, priorizando el del curso si existe, pero cayendo al `empresaNivelFormacion` de la propia matrícula como fallback.
+Actualmente no hay protección contra navegación accidental al crear o editar matrículas. El patrón ya existe en `FormatoEditorPage.tsx` (intercepta clics en links, popstate y beforeunload). Se adaptará ese patrón a ambas páginas de matrícula, con la diferencia de ofrecer **dos acciones**: "Guardar" y "Descartar" (en vez de solo "Salir sin guardar").
 
 ### Archivos afectados
 
 | Archivo | Cambio |
 |---|---|
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Cambiar `useFormatosMatricula(curso?.tipoFormacion)` → `useFormatosMatricula(curso?.tipoFormacion \|\| matricula?.empresaNivelFormacion)` |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Mismo cambio: `useFormatosMatricula(curso?.tipoFormacion \|\| matricula?.empresaNivelFormacion)` |
+| `src/components/shared/ConfirmDialog.tsx` | Agregar soporte para un tercer botón opcional (acción secundaria) para permitir "Guardar" + "Descartar" |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Detectar `isDirty` con `form.formState.isDirty \|\| personaIsDirty \|\| !!selectedPersona`, interceptar navegación, mostrar diálogo con opción de guardar o descartar |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Ya tiene `isDirty` y `isPersonaDirty`. Agregar interceptación de navegación y diálogo al intentar salir con cambios pendientes |
 
-### Detalle técnico
+### Detalle
 
-Línea ~86 en `MatriculaDetallePage.tsx`:
-```typescript
-// Antes
-const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion);
+**ConfirmDialog** — agregar props opcionales `secondaryAction` y `secondaryText` para renderizar un tercer botón (ej. "Guardar") junto al existente "Descartar".
 
-// Después
-const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion || matricula?.empresaNivelFormacion);
-```
+**MatriculaFormPage (nueva)**:
+- Calcular `hasUnsavedData` como: `form.formState.isDirty || personaIsDirty || !!selectedPersona` (si ya seleccionó persona o llenó campos, hay datos)
+- Estado `pendingNavPath` para la ruta pendiente
+- 3 useEffects (mismo patrón del editor de formatos):
+  1. `beforeunload` cuando `hasUnsavedData`
+  2. Interceptor de clics en enlaces internos
+  3. Interceptor de `popstate` (botón atrás)
+- Actualizar el botón "Volver" (ArrowLeft) para verificar dirty antes de navegar
+- Diálogo: "Guardar" ejecuta `form.handleSubmit(onSubmit)()` y luego navega; "Descartar" navega directamente
 
-Mismo patrón en `MatriculaDetailSheet.tsx` (línea ~116).
-
-Esto garantiza que los formatos se resuelvan tanto cuando hay curso asignado como cuando solo se definió el nivel de formación en la matrícula.
+**MatriculaDetallePage (edición)**:
+- `isDirty || isPersonaDirty` ya existe
+- Mismos 3 useEffects de interceptación
+- Actualizar el botón "Volver" para verificar dirty
+- Diálogo: "Guardar" ejecuta `handleSave()`/`handleSavePersona()` y navega; "Descartar" descarta y navega
 

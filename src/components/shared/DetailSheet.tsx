@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/IconButton";
 import {
   Sheet,
   SheetContent,

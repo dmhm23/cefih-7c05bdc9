@@ -4,6 +4,7 @@ import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
+import { Badge } from "@/components/ui/badge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

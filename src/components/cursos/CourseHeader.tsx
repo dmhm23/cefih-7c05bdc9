@@ -1,6 +1,7 @@
 import { ArrowLeft, Lock, MoreVertical, FileText, Download, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,

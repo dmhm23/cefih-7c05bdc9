@@ -45,9 +45,9 @@ export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTra
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-9 w-9">
+            <IconButton tooltip="Más opciones" variant="outline" className="h-9 w-9">
               <MoreVertical className="h-4 w-4" />
-            </Button>
+            </IconButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onDownloadCsvMinTrabajo}>

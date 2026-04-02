@@ -452,9 +452,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                               <ExternalLink className="h-3.5 w-3.5" />
                             </IconButton>
                             {!readOnly && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
+                              <IconButton
+                                tooltip="Remover estudiante"
                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                 onClick={() => {
                                   setEstudianteAEliminar({
@@ -464,7 +463,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                                 }}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              </IconButton>
                             )}
                           </div>
                         </td>

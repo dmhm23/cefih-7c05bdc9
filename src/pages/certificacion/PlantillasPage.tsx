@@ -158,9 +158,9 @@ export default function PlantillasPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => navigate(`/certificacion/plantillas/${p.id}/editar`)}>
+                  <IconButton tooltip="Editar plantilla" onClick={() => navigate(`/certificacion/plantillas/${p.id}/editar`)}>
                     <Pencil className="h-4 w-4" />
-                  </Button>
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

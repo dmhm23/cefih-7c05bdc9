@@ -287,12 +287,12 @@ export default function NivelFormPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
+                          <IconButton tooltip="Editar campo" className="h-7 w-7" onClick={() => handleEditCampo(campo)}>
                             <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
+                          </IconButton>
+                          <IconButton tooltip="Eliminar campo" className="h-7 w-7" onClick={() => handleRemoveCampo(campo.id)}>
                             <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
+                          </IconButton>
                         </div>
                       </div>
                       <CampoPreview campo={campo} />

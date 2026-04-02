@@ -365,7 +365,7 @@ export default function MatriculaDetallePage() {
     <div className="space-y-4">
       {/* Header compacto */}
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(fromPath)}>
+        <Button variant="ghost" size="icon" onClick={handleBackClick}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1 min-w-0">

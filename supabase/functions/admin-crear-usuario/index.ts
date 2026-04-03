@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -25,7 +24,6 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Client with user's JWT to check role
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -40,24 +38,24 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.user.id;
-
-    // Check admin role using service role client (bypasses RLS)
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { data: perfil, error: perfilError } = await supabaseAdmin
+
+    // Check superadmin role
+    const { data: perfil } = await supabaseAdmin
       .from("perfiles")
-      .select("rol")
+      .select("rol_id, roles!inner(nombre)")
       .eq("id", userId)
       .single();
 
-    if (perfilError || perfil?.rol !== "admin") {
+    const rolNombre = (perfil as any)?.roles?.nombre;
+    if (rolNombre !== "superadministrador") {
       return new Response(
-        JSON.stringify({ error: "No tienes permisos de administrador" }),
+        JSON.stringify({ error: "No tienes permisos de superadministrador" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Parse body
-    const { email, password, nombres } = await req.json();
+    const { email, password, nombres, rol_id } = await req.json();
     if (!email || !password) {
       return new Response(
         JSON.stringify({ error: "Email y contraseña son obligatorios" }),
@@ -65,12 +63,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create user with service role
+    // Validate rol_id exists if provided
+    const targetRolId = rol_id || "a0000000-0000-0000-0000-000000000002"; // default: administrador
+    const { data: rolCheck } = await supabaseAdmin
+      .from("roles")
+      .select("id")
+      .eq("id", targetRolId)
+      .single();
+
+    if (!rolCheck) {
+      return new Response(
+        JSON.stringify({ error: "El rol especificado no existe" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { nombres: nombres || "" },
+      user_metadata: { nombres: nombres || "", rol_id: targetRolId },
     });
 
     if (createError) {
@@ -80,11 +92,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update nombres in perfiles if provided (trigger creates with default)
-    if (nombres && newUser.user) {
+    // Update perfil with correct rol_id and nombres
+    if (newUser.user) {
+      const updates: any = { rol_id: targetRolId };
+      if (nombres) updates.nombres = nombres;
       await supabaseAdmin
         .from("perfiles")
-        .update({ nombres })
+        .update(updates)
         .eq("id", newUser.user.id);
     }
 
@@ -94,7 +108,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.8  
-> Última actualización: 25 de Marzo 2026  
+> Versión: 1.9  
+> Última actualización: 3 de Abril 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---
@@ -22,6 +22,7 @@
 10. [Módulo de Certificación](#10-módulo-de-certificación)
 11. [Módulo de Cartera](#11-módulo-de-cartera)
 12. [Dashboard](#12-dashboard)
+12b. [Autenticación y Autorización](#12b-autenticación-y-autorización)
 13. [Componentes Compartidos](#13-componentes-compartidos)
 14. [Capa de Servicios y Datos](#14-capa-de-servicios-y-datos)
 15. [Hooks (React Query)](#15-hooks-react-query)
@@ -40,7 +41,7 @@ SAFA es un sistema de gestión integral para centros de formación y entrenamien
 
 ### 1.2 Alcance Funcional
 
-El sistema abarca nueve módulos principales:
+El sistema abarca diez módulos principales:
 
 | Módulo | Función Principal |
 |--------|-------------------|
@@ -53,6 +54,7 @@ El sistema abarca nueve módulos principales:
 | **Portal Estudiante (Público)** | Interfaz mobile-first para que estudiantes completen documentos de formación |
 | **Certificación** | Gestión de plantillas SVG, tipos de certificado, generación y emisión de certificados, excepciones |
 | **Cartera** | Facturación, seguimiento de pagos, control de saldos y gestión de cobros por responsable de pago |
+| **Autenticación y Administración** | Login real con Email/Password, gestión de usuarios, roles (`global`, `admin`) y panel administrativo |
 
 Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 
@@ -73,19 +75,38 @@ Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 | Iconos | Lucide React |
 | Componentes UI | Radix UI (via shadcn/ui) |
 | Firma Digital | react-signature-canvas |
+| Backend | Lovable Cloud (Supabase) — Auth, PostgreSQL, Edge Functions |
+| Autenticación | Supabase Auth (Email/Password) |
 
-### 2.2 Patrón de Arquitectura: Backend Emulado
+### 2.2 Patrón de Arquitectura: Híbrida (Backend Real + Servicios Mock)
 
-El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
+El sistema utiliza una arquitectura **híbrida**. La autenticación y la gestión de perfiles/roles operan contra un backend real (Lovable Cloud / Supabase), mientras que los módulos de negocio (personas, matrículas, cursos, etc.) aún operan con servicios mock en memoria, pendientes de migración a base de datos.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
+│               CAPA DE AUTENTICACIÓN (REAL)                │
+│  Supabase Auth (Email/Password)                          │
+│  AuthContext → session, user, perfil, loading, signOut   │
+│  AuthGuard (sesión) · AdminGuard (sesión + rol admin)    │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│              CAPA DE BACKEND REAL (Lovable Cloud)         │
+│  PostgreSQL: public.perfiles (id, email, nombres, rol)   │
+│  Trigger: on_auth_user_created → auto-insert perfil      │
+│  RLS: get_my_rol() SECURITY DEFINER                      │
+│  Edge Functions:                                         │
+│    ├── admin-crear-usuario (validación JWT + rol admin)   │
+│    └── bootstrap-admin (uso único, inicialización)       │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
 │                    CAPA DE PRESENTACIÓN                   │
 │  Pages → Components → Hooks (React Query)                │
 └──────────────────────┬──────────────────────────────────┘
                        │ mutateAsync / queryFn
 ┌──────────────────────▼──────────────────────────────────┐
-│                   CAPA DE SERVICIOS                       │
+│              CAPA DE SERVICIOS (MOCK — en migración)      │
 │  personaService · matriculaService · cursoService        │
 │  comentarioService · documentoService · driveService     │
 │  nivelFormacionService · personalService                 │
@@ -94,17 +115,18 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalInitService · formatoFormacionService             │
 │  certificadoService · plantillaService                   │
 │  tipoCertificadoService · excepcionCertificadoService    │
-│  carteraService                                          │
+│  carteraService · empresaService                         │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
 └──────────────────────┬──────────────────────────────────┘
                        │ CRUD sobre arrays
 ┌──────────────────────▼──────────────────────────────────┐
-│                   CAPA DE DATOS                           │
+│                   CAPA DE DATOS (MOCK)                    │
 │  mockData.ts (arrays en memoria)                         │
 │  mockCertificados.ts (plantillas, tipos, certificados)   │
 │  mockCartera.ts (responsables, grupos, facturas, pagos)  │
+│  mockEmpresas.ts (empresas)                              │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
@@ -116,19 +138,23 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 ```
 
 **Características clave:**
-- Todas las operaciones son **asíncronas** con `delay()` artificial (500-1500ms) para simular latencia real.
-- Los servicios operan sobre **arrays mutables** en memoria (`mockData.ts`).
+- La **autenticación es real** vía Lovable Cloud (Supabase Auth). Los perfiles de usuario se almacenan en PostgreSQL (`public.perfiles`).
+- Los módulos de negocio operan con servicios mock **asíncronos** con `delay()` artificial (500-1500ms) para simular latencia real.
+- Los servicios mock operan sobre **arrays mutables** en memoria (`mockData.ts`).
 - Cada operación de escritura genera automáticamente un **log de auditoría**.
 - La clase `ApiError` simula errores HTTP con códigos de estado y códigos de error personalizados.
+- El cliente de Supabase (`src/integrations/supabase/client.ts`) es **auto-generado** y no debe editarse manualmente.
 
 ### 2.3 Estructura de Directorios
 
 ```
 src/
 ├── components/
+│   ├── guards/          # AuthGuard, AdminGuard (protección de rutas)
 │   ├── layout/          # MainLayout, AppSidebar
 │   ├── certificacion/   # Componentes de certificación (PlantillaTestDialog, PlantillaVersionHistory)
 │   ├── cursos/          # Componentes específicos de cursos
+│   ├── empresas/        # Componentes específicos de empresas
 │   ├── estudiante/      # Componentes del portal estudiante (QuizReviewCard)
 │   ├── formatos/        # Editor y preview de formatos de formación
 │   ├── matriculas/      # Componentes específicos de matrículas
@@ -140,17 +166,26 @@ src/
 │   ├── shared/          # Componentes reutilizables
 │   └── ui/              # shadcn/ui base components
 ├── contexts/
+│   ├── AuthContext.tsx              # Contexto de autenticación global (session, user, perfil, signOut)
 │   └── PortalEstudianteContext.tsx  # Sesión del portal estudiante
 ├── data/
 │   ├── mockData.ts      # Datos iniciales en memoria
 │   ├── mockCertificados.ts  # Datos mock de certificación
+│   ├── mockCartera.ts   # Datos mock de cartera
+│   ├── mockEmpresas.ts  # Datos mock de empresas
 │   ├── formOptions.ts   # Catálogos para selectores
 │   ├── portalAdminConfig.ts  # Catálogo de documentos del portal
 │   └── portalEstudianteConfig.ts  # Configuración del portal público
 ├── hooks/               # Custom hooks (React Query)
+├── integrations/
+│   └── supabase/
+│       ├── client.ts    # Cliente Supabase (auto-generado, NO editar)
+│       └── types.ts     # Tipos de la BD (auto-generado, NO editar)
 ├── pages/               # Páginas por módulo
+│   ├── admin/           # AdminLoginPage, AdminDashboardPage
 │   ├── certificacion/   # Páginas de certificación
 │   ├── cursos/
+│   ├── empresas/        # Páginas de empresas
 │   ├── estudiante/      # Páginas del portal público (AccesoEstudiante, PanelDocumentos, etc.)
 │   ├── formatos/
 │   ├── matriculas/
@@ -161,6 +196,13 @@ src/
 ├── services/            # Capa de servicios (API emulada)
 ├── types/               # Definiciones TypeScript
 └── utils/               # Utilidades (CSV, resolvers, generador de certificados)
+
+supabase/
+├── config.toml          # Configuración del proyecto Supabase
+├── functions/
+│   ├── admin-crear-usuario/index.ts  # Edge Function: creación de usuarios por admin
+│   └── bootstrap-admin/index.ts      # Edge Function: inicialización del primer admin (uso único)
+└── migrations/          # Migraciones SQL (auto-gestionadas)
 ```
 
 ### 2.4 Enrutamiento
@@ -196,11 +238,21 @@ src/
 | `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
 | `/cartera` | `CarteraPage` | Bandeja de grupos de cartera |
 | `/cartera/:id` | `GrupoCarteraDetallePage` | Detalle de grupo: facturas, pagos, seguimiento |
+| `/empresas` | `EmpresasPage` | Listado de empresas |
+| `/empresas/nueva` | `EmpresaFormPage` | Crear empresa |
+| `/empresas/:id` | `EmpresaDetallePage` | Detalle de empresa |
+| `/empresas/:id/editar` | `EmpresaFormPage` | Editar empresa |
+| `/admin` | `AdminLoginPage` | Login administrativo (verificación de rol admin) |
+| `/admin/dashboard` | `AdminDashboardPage` | Panel de administración — creación de usuarios (protegido por `AdminGuard`) |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
 
-Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`. El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
+**Protección de rutas:**
+- Las rutas de la aplicación principal (`/dashboard`, `/personas`, `/matriculas`, etc.) se envuelven en `AuthGuard` + `MainLayout`. `AuthGuard` verifica que exista una sesión activa; si no, redirige a `/`.
+- Las rutas de administración (`/admin/dashboard`) se envuelven en `AdminGuard`, que verifica sesión activa + `perfil.rol === 'admin'`; si no cumple, redirige a `/admin`.
+- Las rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`.
+- El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
 
 ---
 
@@ -1521,6 +1573,134 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 
 ---
 
+## 12b. Autenticación y Autorización
+
+### 12b.1 Proveedor de Autenticación
+
+El sistema utiliza **Lovable Cloud** (Supabase Auth) con el método **Email/Password**. No se utiliza auto-confirmación de correo para usuarios regulares; los usuarios son creados por un administrador con confirmación automática vía Edge Function.
+
+### 12b.2 Tabla `public.perfiles`
+
+Refleja los usuarios de autenticación en el esquema público para gestionar roles y datos adicionales.
+
+```typescript
+interface Perfil {
+  id: string;          // UUID, PK, FK → auth.users(id) ON DELETE CASCADE
+  email: string;       // Unique
+  nombres: string | null;
+  rol: string;         // Default: 'global'
+  created_at: string;  // Timestamptz
+}
+```
+
+**Roles disponibles:**
+
+| Rol | Descripción | Acceso |
+|-----|-------------|--------|
+| `global` | Usuario operador estándar | Todas las rutas protegidas de la app principal |
+| `admin` | Administrador del sistema | Panel administrativo (`/admin/dashboard`) + creación de usuarios |
+
+### 12b.3 Trigger `on_auth_user_created`
+
+Trigger `AFTER INSERT` en `auth.users` que ejecuta la función `handle_new_user()` (SECURITY DEFINER). Cada vez que se crea un usuario en Supabase Auth, se inserta automáticamente una fila en `public.perfiles` con:
+- `id` del usuario
+- `email` del usuario
+- `nombres` desde `raw_user_meta_data.nombres` (si existe)
+- `rol` por defecto: `'global'`
+
+### 12b.4 Función `get_my_rol()`
+
+Función SQL `SECURITY DEFINER` que consulta el rol del usuario autenticado sin generar recursión en las políticas RLS:
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_my_rol()
+RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$ SELECT rol FROM public.perfiles WHERE id = auth.uid() $$;
+```
+
+### 12b.5 Políticas RLS
+
+| Operación | Política | Regla |
+|-----------|----------|-------|
+| `SELECT` | Usuarios leen su propio perfil | `id = auth.uid() OR get_my_rol() = 'admin'` |
+| `INSERT` | Insert bloqueado para cliente | `false` (solo el trigger/service role puede insertar) |
+| `UPDATE` | Update bloqueado | `false` (solo service role puede actualizar) |
+| `DELETE` | Delete bloqueado | `false` |
+
+### 12b.6 AuthContext
+
+**Archivo:** `src/contexts/AuthContext.tsx`
+
+Provider que envuelve toda la aplicación dentro de `<BrowserRouter>`. Escucha `onAuthStateChange` de Supabase y expone:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `session` | `Session \| null` | Sesión activa de Supabase |
+| `user` | `User \| null` | Usuario autenticado |
+| `perfil` | `Perfil \| null` | Datos del perfil desde `public.perfiles` (incluye rol) |
+| `loading` | `boolean` | `true` mientras se verifica la sesión inicial |
+| `signOut` | `() => Promise<void>` | Cierra sesión y limpia estado |
+
+**Hook:** `useAuth()` — acceso al contexto desde cualquier componente.
+
+### 12b.7 Guards de Ruta
+
+| Guard | Archivo | Verificación | Redirección |
+|-------|---------|-------------|-------------|
+| `AuthGuard` | `src/components/guards/AuthGuard.tsx` | Sesión activa (`session !== null`) | `/` |
+| `AdminGuard` | `src/components/guards/AdminGuard.tsx` | Sesión activa + `perfil.rol === 'admin'` | `/admin` |
+| `PortalGuard` | `src/pages/estudiante/PortalGuard.tsx` | Sesión del portal estudiante | `/estudiante` |
+
+Mientras `loading === true`, los guards muestran un spinner centrado.
+
+### 12b.8 Edge Functions
+
+#### `admin-crear-usuario`
+
+**Archivo:** `supabase/functions/admin-crear-usuario/index.ts`
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Ruta** | `POST /functions/v1/admin-crear-usuario` |
+| **Payload** | `{ email: string, password: string, nombres?: string }` |
+| **Autorización** | Valida JWT del usuario autenticado, consulta perfil para verificar `rol = 'admin'`. Retorna `403` si no es admin. |
+| **Ejecución** | Usa `SUPABASE_SERVICE_ROLE_KEY` para crear usuario con `supabase.auth.admin.createUser({ email, password, email_confirm: true })` |
+| **Post-creación** | Si se proporcionó `nombres`, actualiza el campo en `public.perfiles` |
+| **Respuesta** | `200` con `{ id, message }` o `400/403/500` con `{ error }` |
+
+#### `bootstrap-admin`
+
+**Archivo:** `supabase/functions/bootstrap-admin/index.ts`
+
+Edge Function de **uso único** para crear el primer usuario administrador del sistema. Crea el usuario con `email_confirm: true` y actualiza su rol a `'admin'` en `public.perfiles`.
+
+### 12b.9 Flujo de Login
+
+```
+Login Principal (/)
+  └── Email + Password → supabase.auth.signInWithPassword()
+      ├── Éxito → Redirigir a /dashboard
+      └── Error → Toast "Correo o contraseña inválidos"
+
+Login Admin (/admin)
+  └── Email + Password → supabase.auth.signInWithPassword()
+      ├── Éxito → Consultar perfil
+      │     ├── rol === 'admin' → Redirigir a /admin/dashboard
+      │     └── rol !== 'admin' → signOut() + Toast "No tienes permisos de administrador"
+      └── Error → Toast "Correo o contraseña inválidos"
+```
+
+### 12b.10 Panel de Administración (`/admin/dashboard`)
+
+Página protegida por `AdminGuard`. Funcionalidad actual (v1):
+- Header con título "Panel de Administración" y botón de cerrar sesión
+- Formulario de creación de usuarios con campos: Nombres, Email, Contraseña
+- Botón "Crear Usuario Global" que invoca la Edge Function `admin-crear-usuario`
+- Toast de confirmación/error, limpieza de formulario tras éxito
+
+---
+
 ## 13. Componentes Compartidos
 
 ### 13.1 DataTable
@@ -2047,7 +2227,11 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 │                  │                    │                     │
 │ nombreNivel      │                    │ entidadTipo         │ ← persona | matricula | curso |
 │ duracionHoras    │                    │                     │   comentario | nivel_formacion |
-│ documentosReq    │                    │                     │   personal | cargo
+│ documentosReq    │                    │                     │   personal | cargo | certificado |
+│                  │                    │                     │   plantilla_certificado |
+│                  │                    │                     │   excepcion_certificado | empresa |
+│                  │                    │                     │   formato_formacion | tarifa_empresa |
+│                  │                    │                     │   factura | pago | grupo_cartera
 │ camposAdicionales│                    │ entidadId           │
 │ observaciones    │                    │ accion              │ ← crear | editar | eliminar
 └──────────────────┘                    │ camposModificados   │
@@ -2159,7 +2343,7 @@ Definidos en `src/data/formOptions.ts`:
 ```typescript
 interface AuditLog {
   id: string;
-  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo';
+  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo' | 'certificado' | 'plantilla_certificado' | 'excepcion_certificado' | 'empresa' | 'formato_formacion' | 'tarifa_empresa' | 'factura' | 'pago' | 'grupo_cartera';
   entidadId: string;
   accion: 'crear' | 'editar' | 'eliminar';
   camposModificados?: string[];           // Solo en ediciones
@@ -2524,6 +2708,41 @@ Nuevo módulo completo para gestión de facturación, pagos y seguimiento de car
 
 **Archivos modificados:**
 - `src/components/cursos/CursosCalendarioView.tsx`
+
+---
+
+### v1.9 — 3 de Abril 2026
+
+#### Autenticación Real con Lovable Cloud
+
+Migración del login simulado (credenciales demo hardcodeadas) a autenticación real con Supabase Auth (Email/Password). Implementación completa del flujo de autenticación, sistema de roles y panel de administración.
+
+**Backend (Lovable Cloud):**
+- **Tabla `public.perfiles`**: Tabla en PostgreSQL vinculada a `auth.users` con campos `id`, `email`, `nombres`, `rol` (default: `'global'`), `created_at`. RLS habilitado con políticas restrictivas.
+- **Trigger `on_auth_user_created`**: Inserta automáticamente perfil con rol `'global'` al crear un usuario en Supabase Auth.
+- **Función `get_my_rol()`**: SECURITY DEFINER para consultar rol del usuario sin recursión RLS.
+- **Políticas RLS**: SELECT (propio perfil o admin), INSERT/UPDATE/DELETE bloqueados para cliente.
+- **Edge Function `admin-crear-usuario`**: Valida JWT + rol admin, crea usuario con service role key, actualiza nombres. Endpoint: `POST /functions/v1/admin-crear-usuario`.
+- **Edge Function `bootstrap-admin`**: Uso único para provisionar el primer usuario administrador del sistema.
+
+**Frontend:**
+- **`AuthContext`** (`src/contexts/AuthContext.tsx`): Provider que escucha `onAuthStateChange`, expone `session`, `user`, `perfil` (con rol), `loading`, `signOut`. Hook `useAuth()`.
+- **`AuthGuard`** (`src/components/guards/AuthGuard.tsx`): Verifica sesión activa, redirige a `/` si no hay.
+- **`AdminGuard`** (`src/components/guards/AdminGuard.tsx`): Verifica sesión + rol admin, redirige a `/admin` si no cumple.
+- **`LoginForm`** (`src/components/LoginForm.tsx`): Eliminadas credenciales demo. Conectado a `supabase.auth.signInWithPassword`. Manejo de errores con toast.
+- **`AdminLoginPage`** (`src/pages/admin/AdminLoginPage.tsx`): Login con verificación de rol post-autenticación. Cierra sesión si no es admin.
+- **`AdminDashboardPage`** (`src/pages/admin/AdminDashboardPage.tsx`): Panel con formulario de creación de usuarios globales vía Edge Function.
+- **`App.tsx`**: Envuelto en `AuthProvider`. Rutas protegidas con `AuthGuard` (app principal) y `AdminGuard` (admin). Nuevas rutas `/admin` y `/admin/dashboard`.
+
+**Archivos creados:**
+- `src/contexts/AuthContext.tsx`
+- `src/components/guards/AuthGuard.tsx`, `src/components/guards/AdminGuard.tsx`
+- `src/pages/admin/AdminLoginPage.tsx`, `src/pages/admin/AdminDashboardPage.tsx`
+- `supabase/functions/admin-crear-usuario/index.ts`, `supabase/functions/bootstrap-admin/index.ts`
+
+**Archivos modificados:**
+- `src/components/LoginForm.tsx` — Conectado a Supabase Auth real
+- `src/App.tsx` — AuthProvider + guards + rutas admin
 
 ---
 

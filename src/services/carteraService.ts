@@ -373,8 +373,7 @@ export const carteraService = {
     }
     if (data.archivoFactura !== undefined) factura.archivoFactura = data.archivoFactura;
     recalcFactura(factura);
-
-    // Sync linked matrículas
+    addCarteraAuditLog('editar', 'factura', id, undefined, data as unknown as Record<string, unknown>, Object.keys(data));
     if (factura.matriculaIds?.length) {
       factura.matriculaIds.forEach(mId => {
         const mat = mockMatriculas.find(m => m.id === mId);

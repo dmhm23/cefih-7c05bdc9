@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import AuthGuard from "@/components/guards/AuthGuard";
+import AdminGuard from "@/components/guards/AdminGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -58,6 +61,9 @@ import EmpresasPage from "./pages/empresas/EmpresasPage";
 import EmpresaFormPage from "./pages/empresas/EmpresaFormPage";
 import EmpresaDetallePage from "./pages/empresas/EmpresaDetallePage";
 
+// Admin
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -68,9 +74,11 @@ import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
 
 const queryClient = new QueryClient();
 
-// Wrapper component for pages that need the main layout
+// Wrapper component for pages that need the main layout + auth
 const WithLayout = ({ children }: { children: React.ReactNode }) => (
-  <MainLayout>{children}</MainLayout>
+  <AuthGuard>
+    <MainLayout>{children}</MainLayout>
+  </AuthGuard>
 );
 
 const App = () => (
@@ -79,73 +87,78 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Index />} />
+        <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Index />} />
 
-          {/* Protected routes with layout */}
-          <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />
-          
-          {/* Módulo A - Personas */}
-          <Route path="/personas" element={<WithLayout><PersonasPage /></WithLayout>} />
-          <Route path="/personas/nuevo" element={<WithLayout><PersonaFormPage /></WithLayout>} />
-          <Route path="/personas/:id" element={<WithLayout><PersonaDetallePage /></WithLayout>} />
-          <Route path="/personas/:id/editar" element={<WithLayout><PersonaFormPage /></WithLayout>} />
+            {/* Admin routes */}
+            <Route path="/admin" element={<AdminLoginPage />} />
+            <Route path="/admin/dashboard" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
 
-          {/* Módulo J - Empresas */}
-          <Route path="/empresas" element={<WithLayout><EmpresasPage /></WithLayout>} />
-          <Route path="/empresas/nueva" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
-          <Route path="/empresas/:id" element={<WithLayout><EmpresaDetallePage /></WithLayout>} />
-          <Route path="/empresas/:id/editar" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
-          
-          {/* Módulo B - Matrículas */}
-          <Route path="/matriculas" element={<WithLayout><MatriculasPage /></WithLayout>} />
-          <Route path="/matriculas/nueva" element={<WithLayout><MatriculaFormPage /></WithLayout>} />
-          <Route path="/matriculas/:id" element={<WithLayout><MatriculaDetallePage /></WithLayout>} />
+            {/* Protected routes with layout */}
+            <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />
+            
+            {/* Módulo A - Personas */}
+            <Route path="/personas" element={<WithLayout><PersonasPage /></WithLayout>} />
+            <Route path="/personas/nuevo" element={<WithLayout><PersonaFormPage /></WithLayout>} />
+            <Route path="/personas/:id" element={<WithLayout><PersonaDetallePage /></WithLayout>} />
+            <Route path="/personas/:id/editar" element={<WithLayout><PersonaFormPage /></WithLayout>} />
 
-          {/* Módulo I - Cartera */}
-          <Route path="/cartera" element={<WithLayout><CarteraPage /></WithLayout>} />
-          <Route path="/cartera/:id" element={<WithLayout><GrupoCarteraDetallePage /></WithLayout>} />
-          
-          {/* Módulo C - Cursos */}
-          <Route path="/cursos" element={<WithLayout><CursosPage /></WithLayout>} />
-          <Route path="/cursos/nuevo" element={<WithLayout><CursoFormPage /></WithLayout>} />
-          <Route path="/cursos/:id" element={<WithLayout><CursoDetallePage /></WithLayout>} />
+            {/* Módulo J - Empresas */}
+            <Route path="/empresas" element={<WithLayout><EmpresasPage /></WithLayout>} />
+            <Route path="/empresas/nueva" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
+            <Route path="/empresas/:id" element={<WithLayout><EmpresaDetallePage /></WithLayout>} />
+            <Route path="/empresas/:id/editar" element={<WithLayout><EmpresaFormPage /></WithLayout>} />
+            
+            {/* Módulo B - Matrículas */}
+            <Route path="/matriculas" element={<WithLayout><MatriculasPage /></WithLayout>} />
+            <Route path="/matriculas/nueva" element={<WithLayout><MatriculaFormPage /></WithLayout>} />
+            <Route path="/matriculas/:id" element={<WithLayout><MatriculaDetallePage /></WithLayout>} />
 
-          {/* Módulo D - Niveles de Formación */}
-          <Route path="/niveles" element={<WithLayout><NivelesPage /></WithLayout>} />
-          <Route path="/niveles/nuevo" element={<WithLayout><NivelFormPage /></WithLayout>} />
-          <Route path="/niveles/:id" element={<WithLayout><NivelDetallePage /></WithLayout>} />
-          <Route path="/niveles/:id/editar" element={<WithLayout><NivelFormPage /></WithLayout>} />
+            {/* Módulo I - Cartera */}
+            <Route path="/cartera" element={<WithLayout><CarteraPage /></WithLayout>} />
+            <Route path="/cartera/:id" element={<WithLayout><GrupoCarteraDetallePage /></WithLayout>} />
+            
+            {/* Módulo C - Cursos */}
+            <Route path="/cursos" element={<WithLayout><CursosPage /></WithLayout>} />
+            <Route path="/cursos/nuevo" element={<WithLayout><CursoFormPage /></WithLayout>} />
+            <Route path="/cursos/:id" element={<WithLayout><CursoDetallePage /></WithLayout>} />
 
-          {/* Módulo E - Gestión de Personal */}
-          <Route path="/gestion-personal" element={<WithLayout><GestionPersonalPage /></WithLayout>} />
-          <Route path="/gestion-personal/nuevo" element={<WithLayout><PersonalFormPage /></WithLayout>} />
-          <Route path="/gestion-personal/:id" element={<WithLayout><PersonalDetallePage /></WithLayout>} />
-          <Route path="/gestion-personal/:id/editar" element={<WithLayout><PersonalFormPage /></WithLayout>} />
+            {/* Módulo D - Niveles de Formación */}
+            <Route path="/niveles" element={<WithLayout><NivelesPage /></WithLayout>} />
+            <Route path="/niveles/nuevo" element={<WithLayout><NivelFormPage /></WithLayout>} />
+            <Route path="/niveles/:id" element={<WithLayout><NivelDetallePage /></WithLayout>} />
+            <Route path="/niveles/:id/editar" element={<WithLayout><NivelFormPage /></WithLayout>} />
 
-          {/* Módulo F - Gestión de Formatos */}
-          <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
-          <Route path="/gestion-formatos/nuevo" element={<FormatoEditorPage />} />
-          <Route path="/gestion-formatos/:id/editar" element={<FormatoEditorPage />} />
+            {/* Módulo E - Gestión de Personal */}
+            <Route path="/gestion-personal" element={<WithLayout><GestionPersonalPage /></WithLayout>} />
+            <Route path="/gestion-personal/nuevo" element={<WithLayout><PersonalFormPage /></WithLayout>} />
+            <Route path="/gestion-personal/:id" element={<WithLayout><PersonalDetallePage /></WithLayout>} />
+            <Route path="/gestion-personal/:id/editar" element={<WithLayout><PersonalFormPage /></WithLayout>} />
 
-          {/* Módulo G - Portal Estudiante Admin */}
-          <Route path="/portal-estudiante" element={<WithLayout><PortalAdminPage /></WithLayout>} />
+            {/* Módulo F - Gestión de Formatos */}
+            <Route path="/gestion-formatos" element={<WithLayout><FormatosPage /></WithLayout>} />
+            <Route path="/gestion-formatos/nuevo" element={<AuthGuard><FormatoEditorPage /></AuthGuard>} />
+            <Route path="/gestion-formatos/:id/editar" element={<AuthGuard><FormatoEditorPage /></AuthGuard>} />
 
-          {/* Módulo H - Certificación */}
-          <Route path="/certificacion/historial" element={<WithLayout><HistorialCertificadosPage /></WithLayout>} />
-          <Route path="/certificacion/plantillas" element={<WithLayout><PlantillasPage /></WithLayout>} />
-          <Route path="/certificacion/plantillas/:id/editar" element={<PlantillaEditorPage />} />
-          
+            {/* Módulo G - Portal Estudiante Admin */}
+            <Route path="/portal-estudiante" element={<WithLayout><PortalAdminPage /></WithLayout>} />
 
-          {/* Portal Estudiante (público, mobile-first) */}
-          <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />
-          <Route path="/estudiante/inicio" element={<PortalEstudianteProvider><PortalGuard><PanelDocumentosPage /></PortalGuard></PortalEstudianteProvider>} />
-          <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><DocumentoRendererPage /></PortalGuard></PortalEstudianteProvider>} />
+            {/* Módulo H - Certificación */}
+            <Route path="/certificacion/historial" element={<WithLayout><HistorialCertificadosPage /></WithLayout>} />
+            <Route path="/certificacion/plantillas" element={<WithLayout><PlantillasPage /></WithLayout>} />
+            <Route path="/certificacion/plantillas/:id/editar" element={<AuthGuard><PlantillaEditorPage /></AuthGuard>} />
 
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            {/* Portal Estudiante (público, mobile-first) */}
+            <Route path="/estudiante" element={<PortalEstudianteProvider><AccesoEstudiantePage /></PortalEstudianteProvider>} />
+            <Route path="/estudiante/inicio" element={<PortalEstudianteProvider><PortalGuard><PanelDocumentosPage /></PortalGuard></PortalEstudianteProvider>} />
+            <Route path="/estudiante/documentos/:documentoKey" element={<PortalEstudianteProvider><PortalGuard><DocumentoRendererPage /></PortalGuard></PortalEstudianteProvider>} />
+
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -455,6 +455,15 @@ export const formatoFormacionService = {
   delete: async (id: string): Promise<void> => {
     const idx = mockFormatos.findIndex(f => f.id === id);
     if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: id,
+      accion: 'eliminar',
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     mockFormatos.splice(idx, 1);
     return simulateApiCall(undefined as unknown as void);
   },

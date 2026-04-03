@@ -95,7 +95,7 @@ const AdminLoginPage = () => {
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input id="admin-password" type={showPassword ? "text" : "password"} placeholder="••••••••"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  className="pl-12 pr-12 h-12 bg-muted/50 border-border/50 focus:border-destructive focus:ring-2 focus:ring-destructive/20 transition-all duration-200" />
+                  className="pl-12 pr-12 h-12 bg-muted/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}

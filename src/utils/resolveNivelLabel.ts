@@ -14,19 +14,19 @@ const LEGACY_LABELS: Record<string, string> = {
 async function loadNiveles(): Promise<{ id: string; nombre: string }[]> {
   if (_cache) return _cache;
   if (_cachePromise) return _cachePromise;
-  _cachePromise = supabase
-    .from("niveles_formacion")
-    .select("id, nombre")
-    .is("deleted_at", null)
-    .order("nombre")
-    .then(({ data, error }) => {
-      if (error) {
-        console.error("Error loading niveles_formacion:", error);
-        return [];
-      }
-      _cache = (data || []).map((r) => ({ id: r.id, nombre: r.nombre }));
-      return _cache;
-    });
+  _cachePromise = (async () => {
+    const { data, error } = await supabase
+      .from("niveles_formacion")
+      .select("id, nombre")
+      .is("deleted_at", null)
+      .order("nombre");
+    if (error) {
+      console.error("Error loading niveles_formacion:", error);
+      return [];
+    }
+    _cache = (data || []).map((r) => ({ id: r.id, nombre: r.nombre }));
+    return _cache;
+  })();
   return _cachePromise;
 }
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { TodoItem, loadTodos, saveTodos, loadHistory, saveHistory } from "@/data/mockDashboard";
+import { TodoItem, loadTodos, saveTodos, loadHistory, saveHistory } from "@/data/dashboardData";
 import {
   DndContext,
   closestCenter,

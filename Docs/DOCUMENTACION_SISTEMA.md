@@ -1573,6 +1573,134 @@ Entrada directa en sidebar: **Cartera** (`/cartera`). Detalle por grupo: `/carte
 
 ---
 
+## 12b. Autenticación y Autorización
+
+### 12b.1 Proveedor de Autenticación
+
+El sistema utiliza **Lovable Cloud** (Supabase Auth) con el método **Email/Password**. No se utiliza auto-confirmación de correo para usuarios regulares; los usuarios son creados por un administrador con confirmación automática vía Edge Function.
+
+### 12b.2 Tabla `public.perfiles`
+
+Refleja los usuarios de autenticación en el esquema público para gestionar roles y datos adicionales.
+
+```typescript
+interface Perfil {
+  id: string;          // UUID, PK, FK → auth.users(id) ON DELETE CASCADE
+  email: string;       // Unique
+  nombres: string | null;
+  rol: string;         // Default: 'global'
+  created_at: string;  // Timestamptz
+}
+```
+
+**Roles disponibles:**
+
+| Rol | Descripción | Acceso |
+|-----|-------------|--------|
+| `global` | Usuario operador estándar | Todas las rutas protegidas de la app principal |
+| `admin` | Administrador del sistema | Panel administrativo (`/admin/dashboard`) + creación de usuarios |
+
+### 12b.3 Trigger `on_auth_user_created`
+
+Trigger `AFTER INSERT` en `auth.users` que ejecuta la función `handle_new_user()` (SECURITY DEFINER). Cada vez que se crea un usuario en Supabase Auth, se inserta automáticamente una fila en `public.perfiles` con:
+- `id` del usuario
+- `email` del usuario
+- `nombres` desde `raw_user_meta_data.nombres` (si existe)
+- `rol` por defecto: `'global'`
+
+### 12b.4 Función `get_my_rol()`
+
+Función SQL `SECURITY DEFINER` que consulta el rol del usuario autenticado sin generar recursión en las políticas RLS:
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_my_rol()
+RETURNS TEXT LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public
+AS $$ SELECT rol FROM public.perfiles WHERE id = auth.uid() $$;
+```
+
+### 12b.5 Políticas RLS
+
+| Operación | Política | Regla |
+|-----------|----------|-------|
+| `SELECT` | Usuarios leen su propio perfil | `id = auth.uid() OR get_my_rol() = 'admin'` |
+| `INSERT` | Insert bloqueado para cliente | `false` (solo el trigger/service role puede insertar) |
+| `UPDATE` | Update bloqueado | `false` (solo service role puede actualizar) |
+| `DELETE` | Delete bloqueado | `false` |
+
+### 12b.6 AuthContext
+
+**Archivo:** `src/contexts/AuthContext.tsx`
+
+Provider que envuelve toda la aplicación dentro de `<BrowserRouter>`. Escucha `onAuthStateChange` de Supabase y expone:
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `session` | `Session \| null` | Sesión activa de Supabase |
+| `user` | `User \| null` | Usuario autenticado |
+| `perfil` | `Perfil \| null` | Datos del perfil desde `public.perfiles` (incluye rol) |
+| `loading` | `boolean` | `true` mientras se verifica la sesión inicial |
+| `signOut` | `() => Promise<void>` | Cierra sesión y limpia estado |
+
+**Hook:** `useAuth()` — acceso al contexto desde cualquier componente.
+
+### 12b.7 Guards de Ruta
+
+| Guard | Archivo | Verificación | Redirección |
+|-------|---------|-------------|-------------|
+| `AuthGuard` | `src/components/guards/AuthGuard.tsx` | Sesión activa (`session !== null`) | `/` |
+| `AdminGuard` | `src/components/guards/AdminGuard.tsx` | Sesión activa + `perfil.rol === 'admin'` | `/admin` |
+| `PortalGuard` | `src/pages/estudiante/PortalGuard.tsx` | Sesión del portal estudiante | `/estudiante` |
+
+Mientras `loading === true`, los guards muestran un spinner centrado.
+
+### 12b.8 Edge Functions
+
+#### `admin-crear-usuario`
+
+**Archivo:** `supabase/functions/admin-crear-usuario/index.ts`
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Ruta** | `POST /functions/v1/admin-crear-usuario` |
+| **Payload** | `{ email: string, password: string, nombres?: string }` |
+| **Autorización** | Valida JWT del usuario autenticado, consulta perfil para verificar `rol = 'admin'`. Retorna `403` si no es admin. |
+| **Ejecución** | Usa `SUPABASE_SERVICE_ROLE_KEY` para crear usuario con `supabase.auth.admin.createUser({ email, password, email_confirm: true })` |
+| **Post-creación** | Si se proporcionó `nombres`, actualiza el campo en `public.perfiles` |
+| **Respuesta** | `200` con `{ id, message }` o `400/403/500` con `{ error }` |
+
+#### `bootstrap-admin`
+
+**Archivo:** `supabase/functions/bootstrap-admin/index.ts`
+
+Edge Function de **uso único** para crear el primer usuario administrador del sistema. Crea el usuario con `email_confirm: true` y actualiza su rol a `'admin'` en `public.perfiles`.
+
+### 12b.9 Flujo de Login
+
+```
+Login Principal (/)
+  └── Email + Password → supabase.auth.signInWithPassword()
+      ├── Éxito → Redirigir a /dashboard
+      └── Error → Toast "Correo o contraseña inválidos"
+
+Login Admin (/admin)
+  └── Email + Password → supabase.auth.signInWithPassword()
+      ├── Éxito → Consultar perfil
+      │     ├── rol === 'admin' → Redirigir a /admin/dashboard
+      │     └── rol !== 'admin' → signOut() + Toast "No tienes permisos de administrador"
+      └── Error → Toast "Correo o contraseña inválidos"
+```
+
+### 12b.10 Panel de Administración (`/admin/dashboard`)
+
+Página protegida por `AdminGuard`. Funcionalidad actual (v1):
+- Header con título "Panel de Administración" y botón de cerrar sesión
+- Formulario de creación de usuarios con campos: Nombres, Email, Contraseña
+- Botón "Crear Usuario Global" que invoca la Edge Function `admin-crear-usuario`
+- Toast de confirmación/error, limpieza de formulario tras éxito
+
+---
+
 ## 13. Componentes Compartidos
 
 ### 13.1 DataTable

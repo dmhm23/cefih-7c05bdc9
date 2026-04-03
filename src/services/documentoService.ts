@@ -56,7 +56,7 @@ export async function crearDocumentosMatricula(
 
   const rows = requisitos.map(r => ({
     matricula_id: matriculaId,
-    tipo: r.tipo,
+    tipo: r.tipo as any,
     nombre: r.nombre,
     estado: 'pendiente' as const,
     opcional: r.opcional || false,

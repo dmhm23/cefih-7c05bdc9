@@ -1,42 +1,35 @@
-# Plan: Corregir persistencia de País/RH y título de matrículas en perfil persona
 
-## Diagnóstico
 
-### Problema 1: País de nacimiento y Grupo sanguíneo no se guardan
+# Plan: Implementar eliminación real de matrículas
 
-La tabla `personas` en la base de datos **no tiene** las columnas `pais_nacimiento` ni `rh`. El formulario las captura y el servicio `personaService.ts` las ignora silenciosamente (hardcodea `paisNacimiento: ''` y `rh: ''` en `mapPersonaRow`, y `mapPersonaToDb` no las incluye). Se necesita una migración para agregar estas columnas.
+## Problema
 
-### Problema 2: Matrícula aparece sin título en el perfil de persona
-
-El campo `empresa_nivel_formacion` en la tabla `matriculas` ahora almacena un **UUID** del nivel de formación (ej: `349b6196-bacc-40cc-b903-111ebf10a810`), pero el código de visualización usa `NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion]`, que es un diccionario de enums antiguos (`jefe_area`, `trabajador_autorizado`, etc.). El UUID no coincide con ninguna clave del diccionario, por lo que devuelve `undefined` y se muestra vacío.
+La acción "Eliminar" en la tabla de matrículas (bulk action y posiblemente individual) solo muestra un toast con texto "(pendiente)" — nunca ejecuta la eliminación. Es un placeholder.
 
 ## Solución
 
-### Paso 1: Migración SQL — Agregar columnas `pais_nacimiento` y `rh`
+### 1. Agregar acción de eliminar individual en RowActions
 
-```sql
-ALTER TABLE public.personas ADD COLUMN pais_nacimiento text DEFAULT NULL;
-ALTER TABLE public.personas ADD COLUMN rh text DEFAULT NULL;
-```
+En `MatriculasPage.tsx`, agregar una acción de eliminación por fila en el `RowActions` (línea 407), usando un diálogo de confirmación antes de ejecutar.
 
-### Paso 2: Actualizar `personaService.ts`
+### 2. Implementar eliminación real en bulk action
 
-- En `mapPersonaRow`: leer `row.pais_nacimiento` y `row.rh` en lugar de hardcodear `''`
-- En `mapPersonaToDb`: agregar mapeo de `paisNacimiento` → `pais_nacimiento` y `rh` → `rh`
+Reemplazar el toast placeholder (línea 225) por lógica que:
+- Muestre un `ConfirmDialog` pidiendo confirmación
+- Llame a `deleteMatricula` del hook `useDeleteMatricula` para cada ID seleccionado
+- Limpie la selección tras completar
 
-### Paso 3: Resolver nombre del nivel de formación en matrículas
+### 3. Estado y diálogo de confirmación
 
-En `PersonaDetallePage.tsx` y `PersonaDetailSheet.tsx`, reemplazar el uso de `NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion]` por una resolución dinámica usando `resolveNivelLabel(m.empresaNivelFormacion)` (que ya consulta la tabla `niveles_formacion` con cache). Revisar que sucede en `niveles_formacion` . No traer  diccionario legacy.
+Agregar estado local para controlar el diálogo de confirmación (`idsToDelete`, `showDeleteConfirm`). Usar el componente `ConfirmDialog` existente en `src/components/shared/ConfirmDialog.tsx`.
+
+### 4. Verificar RLS
+
+La tabla `matriculas` tiene política `Admin gestiona matriculas` con `ALL` para superadministrador/administrador — ya cubre DELETE. Pero el servicio usa soft-delete (`deleted_at` + `activo: false`), no DELETE real, así que la política de UPDATE es suficiente.
 
 ## Archivos afectados
 
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/matriculas/MatriculasPage.tsx` | Reemplazar placeholder por eliminación real con confirmación, agregar acción individual de eliminar |
 
-| Paso | Archivo                                          | Cambio                                              |
-| ---- | ------------------------------------------------ | --------------------------------------------------- |
-| 1    | 1 migración SQL                                  | Agregar `pais_nacimiento` y `rh` a `personas`       |
-| 2    | `src/services/personaService.ts`                 | Mapear las 2 columnas nuevas en lectura y escritura |
-| 3    | `src/pages/personas/PersonaDetallePage.tsx`      | Usar `resolveNivelLabel` para título de matrícula   |
-| 3    | `src/components/personas/PersonaDetailSheet.tsx` | Usar `resolveNivelLabel` para título de matrícula   |
-
-
-**Total: 1 migración, 3 archivos editados**

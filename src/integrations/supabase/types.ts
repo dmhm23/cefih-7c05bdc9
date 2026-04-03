@@ -89,6 +89,120 @@ export type Database = {
         }
         Relationships: []
       }
+      cursos: {
+        Row: {
+          activo: boolean
+          capacidad_maxima: number
+          created_at: string
+          deleted_at: string | null
+          entrenador_id: string | null
+          estado: Database["public"]["Enums"]["estado_curso"]
+          fecha_fin: string | null
+          fecha_inicio: string | null
+          id: string
+          lugar: string | null
+          nivel_formacion_id: string | null
+          nombre: string
+          observaciones: string | null
+          supervisor_id: string | null
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          capacidad_maxima?: number
+          created_at?: string
+          deleted_at?: string | null
+          entrenador_id?: string | null
+          estado?: Database["public"]["Enums"]["estado_curso"]
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          lugar?: string | null
+          nivel_formacion_id?: string | null
+          nombre?: string
+          observaciones?: string | null
+          supervisor_id?: string | null
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          capacidad_maxima?: number
+          created_at?: string
+          deleted_at?: string | null
+          entrenador_id?: string | null
+          estado?: Database["public"]["Enums"]["estado_curso"]
+          fecha_fin?: string | null
+          fecha_inicio?: string | null
+          id?: string
+          lugar?: string | null
+          nivel_formacion_id?: string | null
+          nombre?: string
+          observaciones?: string | null
+          supervisor_id?: string | null
+          tipo_formacion?: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cursos_entrenador_id_fkey"
+            columns: ["entrenador_id"]
+            isOneToOne: false
+            referencedRelation: "personal"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cursos_nivel_formacion_id_fkey"
+            columns: ["nivel_formacion_id"]
+            isOneToOne: false
+            referencedRelation: "niveles_formacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cursos_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "personal"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cursos_fechas_mintrabajo: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curso_id: string
+          fecha: string
+          id: string
+          motivo: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curso_id: string
+          fecha: string
+          id?: string
+          motivo?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curso_id?: string
+          fecha?: string
+          id?: string
+          motivo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cursos_fechas_mintrabajo_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           activo: boolean

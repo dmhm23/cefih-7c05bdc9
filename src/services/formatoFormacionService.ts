@@ -100,7 +100,7 @@ export const formatoFormacionService = {
 
     const { data: inserted, error } = await supabase
       .from('formatos_formacion')
-      .insert(row)
+      .insert(row as any)
       .select()
       .single();
 

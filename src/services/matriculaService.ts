@@ -126,7 +126,7 @@ export const matriculaService = {
 
     const { data: inserted, error } = await supabase
       .from('matriculas')
-      .insert(row)
+      .insert(row as any)
       .select()
       .single();
 

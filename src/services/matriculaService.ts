@@ -27,6 +27,19 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   delete row.created_at;
   delete row.updated_at;
   delete row.id;
+  delete row.empresa_contacto_id; // not a DB column
+
+  // Sanitize empty strings to null for UUID columns
+  const uuidFields = ['curso_id', 'empresa_id', 'persona_id'];
+  for (const f of uuidFields) {
+    if (row[f] === '') row[f] = null;
+  }
+
+  // Strip undefined values
+  for (const key of Object.keys(row)) {
+    if (row[key] === undefined) delete row[key];
+  }
+
   // JSONB fields should stay as-is (camelToSnake skips them)
   return row;
 }

@@ -1907,6 +1907,7 @@ export type Database = {
         | "doctorado"
         | "ninguno"
         | "otro"
+        | "analfabeta"
       nivel_previo: "trabajador_autorizado" | "avanzado"
       scope_formato: "nivel_formacion" | "tipo_curso"
       seccion_comentario: "cartera" | "observaciones" | "curso_observaciones"
@@ -2172,6 +2173,7 @@ export const Constants = {
         "doctorado",
         "ninguno",
         "otro",
+        "analfabeta",
       ],
       nivel_previo: ["trabajador_autorizado", "avanzado"],
       scope_formato: ["nivel_formacion", "tipo_curso"],

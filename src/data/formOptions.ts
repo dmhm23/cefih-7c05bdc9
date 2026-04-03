@@ -15,16 +15,17 @@ export const GENEROS = [
 ] as const;
 
 export const NIVELES_EDUCATIVOS = [
+  { value: 'ninguno', label: 'Ninguno' },
   { value: 'analfabeta', label: 'Analfabeta' },
   { value: 'primaria', label: 'Primaria' },
   { value: 'secundaria', label: 'Secundaria' },
-  { value: 'bachiller', label: 'Bachiller' },
   { value: 'tecnico', label: 'Técnico' },
   { value: 'tecnologo', label: 'Tecnólogo' },
-  { value: 'universitario', label: 'Universitario' },
+  { value: 'profesional', label: 'Universitario' },
   { value: 'especializacion', label: 'Especialización' },
   { value: 'maestria', label: 'Maestría' },
   { value: 'doctorado', label: 'Doctorado' },
+  { value: 'otro', label: 'Otro' },
 ] as const;
 
 export const GRUPOS_SANGUINEOS = [

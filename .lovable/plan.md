@@ -1,119 +1,96 @@
 
 
-# Plan de Implementación Backend — FASE 4 y FASE 5
+# Plan de Implementación Backend — FASE 6: Analíticas, Comentarios y Auditoría
 
 ## Estado Actual
-- **DB existente:** `perfiles`, `empresas`, `tarifas_empresa`, `cargos`, `personal`, `personal_adjuntos`, `niveles_formacion`, `personas`, `cursos`, `cursos_fechas_mintrabajo`, `matriculas`, `documentos_matricula`, `formatos_formacion`, `versiones_formato`, `formato_respuestas`, `audit_logs`
-- **ENUMs con valores incorrectos (necesitan recrearse):**
-  - `estado_factura`: tiene `pendiente, parcial, pagada` — necesita `por_pagar, parcial, pagada`
-  - `estado_grupo_cartera`: tiene `pendiente, parcial, pagado, vencido, anulado` — necesita `sin_facturar, facturado, abonado, pagado, vencido`
-  - `tipo_actividad_cartera`: tiene `nota, llamada, correo, sistema` — necesita `llamada, promesa_pago, comentario, sistema`
-- **ENUMs faltantes:** `tipo_responsable`, `tipo_doc_portal`, `estado_doc_portal`
-- **ENUMs existentes OK:** `estado_certificado`, `estado_excepcion_certificado`, `seccion_comentario`, `metodo_pago`
-- **Servicios mock a migrar:** `carteraService.ts`, `certificadoService.ts`, `plantillaService.ts`, `excepcionCertificadoService.ts`, `portalEstudianteService.ts`, `portalAdminService.ts`, `portalMonitoreoService.ts`
+
+- **Tabla `comentarios`:** No existe. El servicio `comentarioService.ts` usa datos mock (`mockComentarios`).
+- **Dashboard:** Calcula métricas en el frontend desde datos ya cargados (matrículas, cursos, grupos). Los generadores de gráficos en `mockDashboard.ts` usan datos hardcoded para volumen de matrículas e ingresos.
+- **Auditoría:** La función `audit_log_trigger_fn()` existe y funciona. Los triggers están aplicados en tablas F3-F5 pero **faltan** en 7 tablas de F1-F2: `personas`, `empresas`, `tarifas_empresa`, `cursos`, `niveles_formacion`, `personal`, `cargos`.
+- **ENUM `tipo_entidad_audit`:** Ya tiene los 20 valores necesarios (incluye `comentario`).
 
 ---
 
-## Paso 1 — Migración: Corregir ENUMs + crear faltantes
+## Paso 1 — Migración: Tabla `comentarios` + auditoría faltante
 
-- Recrear 3 ENUMs con valores correctos (DROP + CREATE, no hay tablas usandolos aún):
-  - `estado_factura` → `por_pagar, parcial, pagada`
-  - `estado_grupo_cartera` → `sin_facturar, facturado, abonado, pagado, vencido`
-  - `tipo_actividad_cartera` → `llamada, promesa_pago, comentario, sistema`
-- Crear 3 ENUMs nuevos:
-  - `tipo_responsable` (`empresa`, `independiente`, `arl`)
-  - `tipo_doc_portal` (`firma_autorizacion`, `evaluacion`, `formulario`, `solo_lectura`)
-  - `estado_doc_portal` (`bloqueado`, `pendiente`, `completado`)
-- Agregar valores faltantes a `tipo_entidad_audit`: `plantilla_certificado`, `excepcion_certificado`, `responsable_pago`, `actividad_cartera`
+### Tabla `comentarios`
+- `id`, `entidad_tipo TEXT`, `entidad_id UUID`, `seccion seccion_comentario`, `texto TEXT`, `usuario_id UUID`, `usuario_nombre TEXT`, `editado_en TIMESTAMPTZ`, `created_at`
+- Indice compuesto en `(entidad_tipo, entidad_id)`
+- RLS: SELECT autenticados, ALL admin/global
+- Trigger de auditoría: `audit_log_trigger_fn('comentario')`
 
----
+### Triggers de auditoría faltantes (7 tablas)
+Aplicar `audit_log_trigger_fn` en:
+- `personas` → `'persona'`
+- `empresas` → `'empresa'`
+- `tarifas_empresa` → `'tarifa_empresa'`
+- `cursos` → `'curso'`
+- `niveles_formacion` → `'nivel_formacion'`
+- `personal` → `'personal'`
+- `cargos` → `'cargo'`
 
-## Paso 2 — Migración: Módulo de Cartera (7 tablas + triggers)
-
-### Tablas
-- `responsables_pago`: tipo, nombre, nit, empresa_id (FK opcional), contacto, dirección
-- `grupos_cartera`: responsable_pago_id (FK RESTRICT), estado, total_valor, total_abonos, saldo
-- `grupo_cartera_matriculas`: PK compuesto (grupo_cartera_id, matricula_id)
-- `facturas`: grupo_cartera_id (FK RESTRICT), numero_factura, fechas, total, estado, archivo
-- `factura_matriculas`: PK compuesto con valor_asignado
-- `pagos`: factura_id (FK CASCADE), fecha, valor, metodo_pago, soporte
-- `actividades_cartera`: grupo_cartera_id (FK CASCADE), tipo, descripción, fecha
-
-### Funciones y triggers
-1. `recalcular_grupo_cartera(p_grupo_id)` — Recalcula totales/estado del grupo
-2. `recalcular_estado_factura()` — Trigger AFTER en pagos → recalcula factura + grupo
-3. `sync_factura_a_matriculas()` — Trigger AFTER en facturas → sincroniza datos en matrículas
-4. `on_delete_factura()` — Trigger BEFORE DELETE → limpia matrículas + recalcula grupo
-5. `registrar_actividad_sistema_factura/pago()` — Auto-registra actividades de sistema
-
-### RLS + triggers de auditoría en todas las tablas
-
-**Reglas cubiertas:** RN-CAR-001 a RN-CAR-019
+**Reglas cubiertas:** RN-COM-001 a RN-COM-003, INC-008, RN-AUD-001 a RN-AUD-004
 
 ---
 
-## Paso 3 — Migración: Módulo de Certificación (4 tablas)
+## Paso 2 — Migración: Funciones SQL del Dashboard
 
-- `plantillas_certificado`: SVG, token_mappings, reglas JSONB, versionado, soft-delete
-- `plantilla_certificado_versiones`: snapshots SVG por versión
-- `certificados`: matricula_id (FK RESTRICT), código único, snapshot inmutable, revocación
-- `excepciones_certificado`: matricula_id (FK CASCADE), tipo, motivo, estado, resolución
+### `get_dashboard_stats()`
+Retorna JSONB con:
+- `totalPersonas`, `totalMatriculas`, `matriculasActivas`, `cursosAbiertos`, `cursosEnProgreso`
+- `certificadosEmitidos`, `ingresosMes`, `carteraPendiente`
+- `matriculasIncompletas` (matrículas con documentos pendientes)
+- `cursosSinCerrar` (en_progreso con fecha_fin pasada)
+- `facturadoPagado` (suma abonos de grupos pagados)
 
-### RLS + triggers de auditoría
-
-**Reglas cubiertas:** RN-CER-001 a RN-CER-006
-
----
-
-## Paso 4 — Migración: Portal del Estudiante (2 tablas + 2 funciones)
-
-- `portal_config_documentos`: key UNIQUE, tipo, dependencias, orden, habilitado_por_nivel JSONB
-- `documentos_portal`: matricula_id + documento_key UNIQUE, estado, firma, puntaje, intentos JSONB
-
-### Funciones SQL
-1. `login_portal_estudiante(p_cedula)` — Busca matrícula vigente con portal habilitado
-2. `get_documentos_portal(p_matricula_id)` — Retorna documentos con evaluación de dependencias
-
-### RLS en ambas tablas
-
-**Reglas cubiertas:** RN-POR-001 a RN-POR-008
+### `get_dashboard_charts_data(p_periodo TEXT)`
+Retorna JSONB con:
+- `matriculasPorEstado`: conteo agrupado
+- `cursosPorEstado`: conteo agrupado
+- `ingresosPorMes`: pagos agrupados por mes (últimos 12 meses)
+- `matriculasPorMes`: matrículas creadas por mes
+- `distribucionTipoFormacion`: conteo por tipo de formación desde cursos
 
 ---
 
-## Paso 5 — Reescritura: `carteraService.ts`
+## Paso 3 — Reescritura: `comentarioService.ts`
 
-- Reemplazar mock por queries Supabase a las 7 tablas
-- `asignarMatriculaACartera()`: buscar/crear responsable + grupo + vincular matrícula
-- Recálculos delegados a triggers (sin lógica en frontend)
-- Eliminar dependencias de `mockCartera`, `mockData`, `mockEmpresas`
-
----
-
-## Paso 6 — Reescritura: Servicios de certificación
-
-- `plantillaService.ts`: CRUD + versionado contra `plantillas_certificado`
-- `certificadoService.ts`: CRUD + generación con snapshot contra `certificados`
-- `excepcionCertificadoService.ts`: CRUD contra `excepciones_certificado`
-- Storage: bucket `certificados` para SVG/PDF
+- Reemplazar mock por queries Supabase a tabla `comentarios`
+- `getByEntidadSeccion()`: SELECT con filtro `entidad_id` + `seccion`, ORDER BY `created_at DESC`
+- `create()`: INSERT con `usuario_id` de auth y nombre del perfil
+- `update()`: UPDATE `texto` + `editado_en = now()`
+- `delete()`: DELETE real (sin soft-delete para comentarios)
+- Eliminar dependencia de `mockComentarios` y `mockAuditLogs`
 
 ---
 
-## Paso 7 — Reescritura: Servicios del portal
+## Paso 4 — Reescritura: `mockDashboard.ts` → Dashboard con RPCs
 
-- `portalEstudianteService.ts`: RPC `login_portal_estudiante` + `get_documentos_portal`
-- `portalAdminService.ts`: CRUD `portal_config_documentos`
-- `portalMonitoreoService.ts`: queries con joins para tabla de monitoreo
+- Reemplazar funciones de cálculo (`calcTotalFacturadoPagado`, `calcCarteraPorCobrar`, etc.) por llamada a RPC `get_dashboard_stats()`
+- Reemplazar generadores hardcoded (`generateVolumenMatriculas`, `generateIngresosTiempo`) por RPC `get_dashboard_charts_data()`
+- Actualizar `Dashboard.tsx` para usar las nuevas funciones
+- Mantener el TodoWidget (localStorage) sin cambios
+- Mantener `generateDistribucionNivel` como fallback frontend
 
 ---
+
+## Archivos afectados
+
+| Paso | Migraciones | Servicios | Páginas |
+|------|------------|-----------|---------|
+| 1 | 1 migración SQL | — | — |
+| 2 | 1 migración SQL | — | — |
+| 3 | — | `comentarioService.ts` | — |
+| 4 | — | `mockDashboard.ts` | `Dashboard.tsx` |
+
+**Total: 2 migraciones SQL, 1 servicio reescrito, 1 módulo de dashboard migrado, 1 página actualizada.**
 
 ## Orden de dependencias
 
 ```text
-Paso 1: Corregir/crear ENUMs
-  ├── Paso 2: Cartera → Paso 5: carteraService.ts
-  ├── Paso 3: Certificación → Paso 6: certificadoService + plantillaService + excepcionService
-  └── Paso 4: Portal → Paso 7: portalEstudianteService + portalAdminService + monitoreoService
+Paso 1: comentarios + audit triggers faltantes
+Paso 2: funciones SQL dashboard (independiente de paso 1)
+Paso 3: comentarioService.ts (depende de paso 1)
+Paso 4: Dashboard RPCs (depende de paso 2)
 ```
-
-**Total: 4 migraciones SQL, 7 servicios reescritos, ~4 tipos ajustados. Los hooks no cambian.**
 

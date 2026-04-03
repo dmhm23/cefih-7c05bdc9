@@ -220,13 +220,30 @@ export default function MatriculasPage() {
     setSelectedIndex(index);
   };
 
+  const handleDeleteConfirm = async () => {
+    try {
+      for (const id of idsToDelete) {
+        await deleteMatricula.mutateAsync(id);
+      }
+      toast({ title: `${idsToDelete.length} matrícula(s) eliminada(s)` });
+      setSelectedIds([]);
+      setSelectedIndex(null);
+    } catch {
+      toast({ title: "Error al eliminar", variant: "destructive" });
+    } finally {
+      setIdsToDelete([]);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
       icon: Trash2,
       variant: "destructive",
       onClick: (ids) => {
-        toast({ title: `Eliminar ${ids.length} matrículas (pendiente)` });
+        setIdsToDelete(ids);
+        setShowDeleteConfirm(true);
       },
     },
     {

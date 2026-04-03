@@ -1,157 +1,125 @@
 
-
-# Plan de Implementación Backend — FASE 1 y FASE 2
+# Plan de Implementación Backend — FASE 3
 
 ## Estado Actual
-
-- **Base de datos:** Solo existe la tabla `perfiles` con RLS, trigger y función `get_my_rol()`
-- **Frontend:** Todos los servicios (empresas, personal, personas, cursos, niveles) operan con datos mock en memoria
-- **Patrón de hooks:** React Query (`useQuery`/`useMutation`) apuntando a servicios mock
-- **Edge Functions:** Solo `admin-crear-usuario` y `bootstrap-admin`
-
-## Estrategia de Implementación
-
-La migración se divide en **6 pasos secuenciales**. Cada paso crea tablas/funciones en la base de datos y luego reescribe el servicio frontend correspondiente para usar Supabase en lugar de datos mock. Los hooks React Query **no se modifican** — solo cambia la implementación interna de los servicios.
+- **DB existente:** `perfiles`, `empresas`, `tarifas_empresa`, `cargos`, `personal`, `personal_adjuntos`, `niveles_formacion`, `personas`, `cursos`, `cursos_fechas_mintrabajo`, `audit_logs`
+- **ENUMs existentes:** `estado_matricula`, `tipo_vinculacion`, `metodo_pago`, `estado_documento_matricula`, `tipo_documento_matricula`, `estado_formato`, `categoria_formato`, `scope_formato`, y todos los demás de Fase 1/2
+- **ENUMs faltantes:** `nivel_previo`, `motor_render`, `estado_formato_respuesta`
+- **Servicios mock a migrar:** `matriculaService.ts`, `documentoService.ts`, `formatoFormacionService.ts`, `driveService.ts`
 
 ---
 
-## Paso 1 — Infraestructura Transversal (Migración SQL)
+## Paso 1 — Migración: Tabla `matriculas` + triggers
 
-Crear en una sola migración:
-- **Función `update_updated_at()`** — trigger reutilizable para timestamps automáticos
-- **Tabla `audit_logs`** con ENUMs `tipo_entidad_audit` y `tipo_accion_audit`
-- **Función genérica `audit_log_trigger_fn()`** — trigger AFTER INSERT/UPDATE/DELETE que registra cambios automáticamente
-- **Todos los ENUMs de T-007** (25 tipos): `tipo_documento_identidad`, `genero`, `nivel_educativo`, `estado_curso`, `tipo_formacion`, `estado_matricula`, `tipo_vinculacion`, `tipo_cargo`, `metodo_pago`, etc.
-- **Storage buckets:** `firmas`, `documentos-matricula`, `adjuntos-personal`, `facturas`, `certificados` con políticas RLS
+### SQL
+- Crear ENUMs faltantes: `nivel_previo` (`trabajador_autorizado`, `avanzado`), `motor_render` (`bloques`, `plantilla_html`), `estado_formato_respuesta` (`pendiente`, `completado`, `firmado`)
+- Tabla `matriculas` con 40+ columnas (schema completo del spec lineas 785-869):
+  - FKs: `persona_id → personas(id) ON DELETE RESTRICT`, `curso_id → cursos(id) ON DELETE RESTRICT` (nullable), `empresa_id → empresas(id) ON DELETE RESTRICT`
+  - Campos de vinculacion laboral (snapshot), salud, evaluaciones (JSONB), cartera, portal (JSONB)
+  - UNIQUE(`persona_id`, `curso_id`) WHERE `curso_id IS NOT NULL` — evita duplicados
+  - Indices en persona_id, curso_id, empresa_id, estado
+- 3 triggers:
+  1. **`snapshot_empresa_matricula()`** — BEFORE INSERT/UPDATE OF empresa_id: copia nombre, nit, representante desde empresas
+  2. **`sync_fechas_curso_matricula()`** — BEFORE INSERT/UPDATE OF curso_id: copia fecha_inicio, fecha_fin desde cursos
+  3. **`calcular_pagado_matricula()`** — BEFORE INSERT/UPDATE OF valor_cupo, abono: calcula `pagado = abono >= valor_cupo`
+- Triggers estándar: `update_updated_at`, `audit_log_trigger_fn('matricula')`
+- RLS: SELECT autenticados (deleted_at IS NULL), ALL para admin/global
 
-**Reglas de negocio cubiertas:** T-001 a T-009, INC-009 (unificación MetodoPago), INC-007 (TipoFormacion estricto), RN-AUD-001/004
-
----
-
-## Paso 2 — FASE 1A: Empresas y Tarifas (Migración + Servicio)
-
-### Migración SQL
-- Tabla `empresas` con UNIQUE en `nit`, campo `activo`, soft-delete, índices GIN para búsqueda
-- Tabla `tarifas_empresa` con UNIQUE(`empresa_id`, `nivel_formacion_id`), ON DELETE RESTRICT
-- Función `check_empresa_references()` — trigger que impide soft-delete si hay matrículas/tarifas
-- Función `get_empresa_estudiantes_count()` — cuenta matrículas por empresa
-- RLS: SELECT para autenticados (filtered by `deleted_at IS NULL`), ALL para admin/global
-- Triggers: `update_updated_at`, `audit_log_trigger_fn`
-
-### Reescritura Frontend
-- **`src/services/empresaService.ts`**: Reemplazar todos los mock por `supabase.from('empresas')` y `supabase.from('tarifas_empresa')`
-- **`src/types/empresa.ts`**: Adaptar tipos para mapear snake_case ↔ camelCase (o usar un mapper)
-- Los hooks `useEmpresas`, `useEmpresa`, `useCreateEmpresa`, etc. **no cambian** — siguen llamando a `empresaService`
-
-**Reglas cubiertas:** RN-EMP-001 a RN-EMP-013, INC-005, INC-006, INC-010
+**Reglas cubiertas:** RN-MAT-001 a RN-MAT-010, RN-MAT-014 a RN-MAT-022
 
 ---
 
-## Paso 3 — FASE 1B: Personal y Cargos (Migración + Servicio)
+## Paso 2 — Migración: Tabla `documentos_matricula`
 
-### Migración SQL
-- Tabla `cargos` con ENUM `tipo_cargo`, soft-delete
-- Tabla `personal` con FK a `cargos` (ON DELETE RESTRICT), campo `firma`
-- Tabla `personal_adjuntos` con `storage_path` apuntando a bucket `adjuntos-personal`
-- Función `validar_asignacion_personal_curso()` — previene asignar entrenador sin cargo correcto
-- RLS: SELECT para autenticados, ALL para admin/global
-- Triggers: `update_updated_at`, `audit_log_trigger_fn`
+### SQL
+- Tabla `documentos_matricula`: id, matricula_id (FK CASCADE), tipo (`tipo_documento_matricula`), nombre, estado (`estado_documento_matricula`), storage_path, fecha_carga, fecha_documento, fecha_inicio_cobertura, opcional, archivo_nombre, archivo_tamano, created_at
+- RLS: SELECT autenticados, ALL admin/global
+- Trigger audit
 
-### Reescritura Frontend
-- **`src/services/personalService.ts`**: Reemplazar mock por Supabase queries + Storage API para adjuntos
-- **`src/types/personal.ts`**: Ajustar tipos si es necesario
-
-**Reglas cubiertas:** RN-PNL-001 a RN-PNL-006
+**Reglas cubiertas:** RN-MAT-011 a RN-MAT-013
 
 ---
 
-## Paso 4 — FASE 1C: Niveles de Formación (Migración + Servicio)
+## Paso 3 — Migración: Tablas `formatos_formacion`, `versiones_formato`, `formato_respuestas`
 
-### Migración SQL
-- Tabla `niveles_formacion` con `campos_adicionales` JSONB, `config_codigo_estudiante` JSONB, `documentos_requeridos` TEXT[]
-- RLS: SELECT para autenticados, ALL para admin/global
-- Triggers: `update_updated_at`, `audit_log_trigger_fn`
+### SQL
+- Tabla `formatos_formacion`: 25+ columnas (nombre, codigo, categoria, motor `motor_render`, estado, visible_en_matricula, asignacion_scope `scope_formato`, niveles_asignados UUID[], tipos_curso_asignados `tipo_formacion[]`, html_template, css_template, bloques JSONB, legacy_component_id, encabezado_config JSONB, firmas, plantilla_base_id, deleted_at, etc.)
+- Tabla `versiones_formato`: id, formato_id (FK CASCADE), html_snapshot, css_snapshot, creador, created_at
+- Tabla `formato_respuestas`: id, matricula_id (FK CASCADE), formato_id (FK RESTRICT), estado `estado_formato_respuesta`, respuestas JSONB, firma_base64, firma_fecha, UNIQUE(matricula_id, formato_id)
+- RPC `duplicar_formato(formato_id)` — copia formato con nombre "Copia de ...", estado borrador
+- Función `get_formatos_for_matricula(matricula_id)` — resuelve formatos visibles por tipo/nivel
+- RLS, triggers audit, update_updated_at en las 3 tablas
 
-### Reescritura Frontend
-- **`src/services/nivelFormacionService.ts`**: Reemplazar mock por Supabase
-- **`src/types/nivelFormacion.ts`**: Mapear campos (`nombreNivel` → `nombre`, etc.)
-
-**Reglas cubiertas:** RN-NF-001 a RN-NF-006
-
----
-
-## Paso 5 — FASE 2A: Personas (Migración + Servicio)
-
-### Migración SQL
-- Tabla `personas` con ENUMs (`tipo_documento_identidad`, `genero`, `nivel_educativo`), UNIQUE en `numero_documento`
-- Trigger `validar_contacto_emergencia()` — valida nombre y teléfono obligatorios en JSONB
-- Trigger `check_persona_references()` — impide soft-delete si tiene matrículas activas
-- Índice GIN para búsqueda por nombre
-- RLS: SELECT para autenticados, ALL para admin/global
-
-### Reescritura Frontend
-- **`src/services/personaService.ts`**: Reemplazar mock por Supabase, incluyendo firma vía Storage
-- **`src/types/persona.ts`**: Ajustar tipos
-
-**Reglas cubiertas:** RN-PER-001 a RN-PER-009, INC-004
+**Reglas cubiertas:** RN-FMT-001 a RN-FMT-033
 
 ---
 
-## Paso 6 — FASE 2B: Cursos (Migración + Servicio)
+## Paso 4 — Seed: 4 formatos legacy precargados
 
-### Migración SQL
-- Tabla `cursos` con FKs a `niveles_formacion`, `personal` (entrenador/supervisor), ENUM `estado_curso` y `tipo_formacion`
-- Tabla `cursos_fechas_mintrabajo` con FK CASCADE a cursos
-- Trigger `autogenerar_nombre_curso()` — concatena tipo + número
-- Trigger `validar_asignacion_personal_curso()` — ya creado en paso 3, se asigna aquí
-- RLS y triggers de auditoría
-
-### Reescritura Frontend
-- **`src/services/cursoService.ts`**: Reemplazar mock por Supabase, joins con personal/nivel
-- **`src/types/curso.ts`**: Eliminar `| string` de `TipoFormacion`, mapear campos
-
-### Edge Function (nuevo)
-- **`exportar-csv-mintrabajo`**: Genera CSV con 15 columnas consolidando datos de persona + matrícula + curso para cursos cerrados
-
-**Reglas cubiertas:** RN-CUR-001 a RN-CUR-011, INC-007
+- INSERT de los 4 formatos legacy existentes en mock (`info_aprendiz`, `registro_asistencia`, `participacion_pta_ats`, `evaluacion_reentrenamiento`) con sus bloques JSONB completos
+- Esto preserva la funcionalidad actual tras la migración
 
 ---
 
-## Orden de Dependencias
+## Paso 5 — Reescritura: `matriculaService.ts`
 
+- Reemplazar mock por `supabase.from('matriculas')` + `supabase.from('documentos_matricula')`
+- Operaciones: getAll, getById (con join a documentos), getByPersona, getByCurso, getByEstado, getHistorialByPersona, create, update, cambiarEstado, delete (soft-delete)
+- `capturarFirma` → update campo firma_base64 + upload a bucket `firmas`
+- `registrarPago` → update campos de cartera en matrícula
+- Eliminar dependencia de `mockMatriculas`, `mockCursos`, `mockPersonas`
+
+---
+
+## Paso 6 — Reescritura: `documentoService.ts` + `driveService.ts`
+
+- `documentoService.ts`: Reemplazar funciones mock por queries a `documentos_matricula` + `niveles_formacion.documentos_requeridos`
+- `driveService.ts`: Reemplazar URLs ficticias por `supabase.storage.from('documentos-matricula').upload()`
+- Sincronización on-demand: al consultar matrícula, comparar documentos existentes vs requisitos del nivel y agregar faltantes
+
+---
+
+## Paso 7 — Reescritura: `formatoFormacionService.ts`
+
+- Reemplazar mock completo por `supabase.from('formatos_formacion')`, `.from('versiones_formato')`, `.from('formato_respuestas')`
+- Operaciones: getAll, getById, create, update, toggleActivo, duplicate (via RPC), archive (soft-delete), delete, search
+- Versiones: saveVersion (INSERT snapshot), getVersiones, restoreVersion
+- getForMatricula: llamar RPC `get_formatos_for_matricula`
+- getPlantillasBase: query directa o datos estáticos en frontend (las plantillas base son templates UI, no datos de negocio)
+
+---
+
+## Archivos afectados
+
+| Paso | Migraciones | Servicios | Tipos |
+|------|------------|-----------|-------|
+| 1 | 1 migración (matriculas + triggers) | — | — |
+| 2 | 1 migración (documentos_matricula) | — | — |
+| 3 | 1 migración (formatos + versiones + respuestas + RPCs) | — | — |
+| 4 | 1 migración (seed datos legacy) | — | — |
+| 5 | — | `matriculaService.ts` | `matricula.ts` (ajustar tipos) |
+| 6 | — | `documentoService.ts`, `driveService.ts` | — |
+| 7 | — | `formatoFormacionService.ts` | `formatoFormacion.ts` (ajustar AsignacionScope) |
+
+**Total: 4 migraciones, 4 servicios reescritos, 2 archivos de tipos ajustados. Los hooks no cambian.**
+
+## Dependencias
 ```text
-Paso 1: ENUMs + audit_logs + Storage + funciones utilitarias
+Paso 1: matriculas (depende de personas, cursos, empresas — ya existen)
   │
-  ├── Paso 2: empresas + tarifas_empresa
+  ├── Paso 2: documentos_matricula (depende de matriculas)
   │
-  ├── Paso 3: cargos + personal + personal_adjuntos
-  │
-  └── Paso 4: niveles_formacion
-        │
-        ├── Paso 5: personas (sin dependencia directa, pero se necesita para cursos)
-        │
-        └── Paso 6: cursos + cursos_fechas_mintrabajo
-                     (depende de: niveles_formacion, personal)
+  └── Paso 3: formatos + versiones + respuestas (depende de matriculas)
+       │
+       └── Paso 4: seed formatos legacy
+            │
+            ├── Paso 5: matriculaService.ts
+            ├── Paso 6: documentoService.ts + driveService.ts
+            └── Paso 7: formatoFormacionService.ts
 ```
 
-## Archivos Afectados por Paso
-
-| Paso | Migraciones SQL | Servicios Frontend | Tipos Frontend | Hooks |
-|------|----------------|-------------------|----------------|-------|
-| 1 | 1 migración grande | `api.ts` (agregar helper Supabase) | — | — |
-| 2 | 1 migración | `empresaService.ts` | `empresa.ts` | Sin cambios |
-| 3 | 1 migración | `personalService.ts` | `personal.ts` | Sin cambios |
-| 4 | 1 migración | `nivelFormacionService.ts` | `nivelFormacion.ts` | Sin cambios |
-| 5 | 1 migración | `personaService.ts` | `persona.ts` | Sin cambios |
-| 6 | 1 migración + 1 Edge Function | `cursoService.ts` | `curso.ts` | Sin cambios |
-
-**Total: 6 migraciones SQL, 1 Edge Function, 5 servicios reescritos, 5 archivos de tipos ajustados**
-
-## Consideraciones Importantes
-
-1. **Mapeo snake_case ↔ camelCase**: Se creará una utilidad helper en `api.ts` para transformar automáticamente las respuestas de Supabase (snake_case) al formato camelCase que espera el frontend
-2. **Los datos mock existentes se pierden**: Al migrar a base de datos real, los datos de `mockData.ts`, `mockEmpresas.ts`, etc. dejan de usarse. Se pueden crear seeds opcionales
-3. **El archivo `types.ts` de Supabase se regenera automáticamente** tras cada migración — no se edita manualmente
-4. **Cada paso es desplegable de forma independiente** — se puede validar en producción antes de continuar al siguiente
-5. **RLS garantiza seguridad** — todas las tablas requieren autenticación; los roles admin/global tienen acceso de escritura
-
+## Notas
+- Los hooks React Query (`useMatriculas`, `useFormatos`, etc.) no se modifican
+- El tipo `AsignacionScope` del frontend incluye `'todos'` pero el ENUM DB usa `scope_formato` con `'nivel_formacion' | 'tipo_curso'`. El servicio mapeará `'todos'` como registros sin filtro de niveles/tipos
+- Las plantillas base se mantienen como datos estáticos en el frontend (son templates UI preconstruidos, no datos de negocio persistidos)
+- El campo `portal_estudiante` JSONB en matrículas se dejará como está para ser migrado en FASE 5

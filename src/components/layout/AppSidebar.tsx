@@ -54,9 +54,11 @@ export function AppSidebar() {
     return (modulo: string) => verSet.has(modulo);
   }, [perfil, permisos]);
 
-  const visibleMenuItems = menuItems.filter((item) => canView(item.modulo));
-  const visibleDirectorio = directorioItems.filter((item) => canView(item.modulo));
-  const visibleCertificacion = certificacionItems.filter((item) => canView(item.modulo));
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  const visibleMenuItems = isAdminRoute ? [] : menuItems.filter((item) => canView(item.modulo));
+  const visibleDirectorio = isAdminRoute ? [] : directorioItems.filter((item) => canView(item.modulo));
+  const visibleCertificacion = isAdminRoute ? [] : certificacionItems.filter((item) => canView(item.modulo));
 
   const isDirectorioActive = location.pathname.startsWith("/personas") || location.pathname.startsWith("/empresas");
   const isCertificacionActive = location.pathname.startsWith("/certificacion");

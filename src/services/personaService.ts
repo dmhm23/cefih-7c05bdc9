@@ -39,9 +39,9 @@ function mapPersonaRow(row: any): Persona {
     nombres: row.nombres,
     apellidos: row.apellidos,
     genero: (GENERO_DB_TO_FE[row.genero] || 'M') as any,
-    paisNacimiento: '',
+    paisNacimiento: row.pais_nacimiento || '',
     fechaNacimiento: row.fecha_nacimiento || '',
-    rh: '',
+    rh: row.rh || '',
     nivelEducativo: row.nivel_educativo || 'primaria',
     email: row.email || '',
     telefono: row.telefono || '',
@@ -65,6 +65,8 @@ function mapPersonaToDb(data: Partial<PersonaFormData>): Record<string, any> {
   if (data.email !== undefined) result.email = data.email;
   if (data.telefono !== undefined) result.telefono = data.telefono;
   if (data.contactoEmergencia !== undefined) result.contacto_emergencia = data.contactoEmergencia;
+  if (data.paisNacimiento !== undefined) result.pais_nacimiento = data.paisNacimiento || null;
+  if (data.rh !== undefined) result.rh = data.rh || null;
   return result;
 }
 

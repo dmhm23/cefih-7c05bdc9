@@ -435,6 +435,7 @@ export default function MatriculaFormPage() {
         pagado: false,
       });
       toast({ title: "Matrícula creada correctamente" });
+      skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {
       toast({

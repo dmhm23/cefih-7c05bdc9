@@ -322,6 +322,159 @@ export type Database = {
         }
         Relationships: []
       }
+      formato_respuestas: {
+        Row: {
+          answers: Json
+          completado_at: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id: string
+          id: string
+          matricula_id: string
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          completado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id: string
+          id?: string
+          matricula_id: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          completado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id?: string
+          id?: string
+          matricula_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formato_respuestas_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formato_respuestas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formatos_formacion: {
+        Row: {
+          activo: boolean
+          asignacion_scope: Database["public"]["Enums"]["scope_formato"]
+          bloques: Json
+          categoria: Database["public"]["Enums"]["categoria_formato"]
+          codigo: string
+          created_at: string
+          css_template: string | null
+          deleted_at: string | null
+          descripcion: string
+          document_meta: Json | null
+          encabezado_config: Json | null
+          es_automatico: boolean
+          estado: Database["public"]["Enums"]["estado_formato"]
+          html_template: string | null
+          id: string
+          legacy_component_id: string | null
+          modo_diligenciamiento: string
+          motor_render: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados: string[] | null
+          nombre: string
+          plantilla_base_id: string | null
+          requiere_firma_aprendiz: boolean
+          requiere_firma_entrenador: boolean
+          requiere_firma_supervisor: boolean
+          tipos_curso: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados: string[] | null
+          updated_at: string
+          usa_encabezado_institucional: boolean
+          version: string
+          visible_en_curso: boolean
+          visible_en_matricula: boolean
+          visible_en_portal_estudiante: boolean
+        }
+        Insert: {
+          activo?: boolean
+          asignacion_scope?: Database["public"]["Enums"]["scope_formato"]
+          bloques?: Json
+          categoria?: Database["public"]["Enums"]["categoria_formato"]
+          codigo?: string
+          created_at?: string
+          css_template?: string | null
+          deleted_at?: string | null
+          descripcion?: string
+          document_meta?: Json | null
+          encabezado_config?: Json | null
+          es_automatico?: boolean
+          estado?: Database["public"]["Enums"]["estado_formato"]
+          html_template?: string | null
+          id?: string
+          legacy_component_id?: string | null
+          modo_diligenciamiento?: string
+          motor_render?: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados?: string[] | null
+          nombre: string
+          plantilla_base_id?: string | null
+          requiere_firma_aprendiz?: boolean
+          requiere_firma_entrenador?: boolean
+          requiere_firma_supervisor?: boolean
+          tipos_curso?: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados?: string[] | null
+          updated_at?: string
+          usa_encabezado_institucional?: boolean
+          version?: string
+          visible_en_curso?: boolean
+          visible_en_matricula?: boolean
+          visible_en_portal_estudiante?: boolean
+        }
+        Update: {
+          activo?: boolean
+          asignacion_scope?: Database["public"]["Enums"]["scope_formato"]
+          bloques?: Json
+          categoria?: Database["public"]["Enums"]["categoria_formato"]
+          codigo?: string
+          created_at?: string
+          css_template?: string | null
+          deleted_at?: string | null
+          descripcion?: string
+          document_meta?: Json | null
+          encabezado_config?: Json | null
+          es_automatico?: boolean
+          estado?: Database["public"]["Enums"]["estado_formato"]
+          html_template?: string | null
+          id?: string
+          legacy_component_id?: string | null
+          modo_diligenciamiento?: string
+          motor_render?: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados?: string[] | null
+          nombre?: string
+          plantilla_base_id?: string | null
+          requiere_firma_aprendiz?: boolean
+          requiere_firma_entrenador?: boolean
+          requiere_firma_supervisor?: boolean
+          tipos_curso?: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados?: string[] | null
+          updated_at?: string
+          usa_encabezado_institucional?: boolean
+          version?: string
+          visible_en_curso?: boolean
+          visible_en_matricula?: boolean
+          visible_en_portal_estudiante?: boolean
+        }
+        Relationships: []
+      }
       matriculas: {
         Row: {
           abono: number
@@ -820,11 +973,93 @@ export type Database = {
           },
         ]
       }
+      versiones_formato: {
+        Row: {
+          creado_por: string | null
+          created_at: string
+          css_template: string | null
+          formato_id: string
+          html_template: string
+          id: string
+          version: number
+        }
+        Insert: {
+          creado_por?: string | null
+          created_at?: string
+          css_template?: string | null
+          formato_id: string
+          html_template?: string
+          id?: string
+          version?: number
+        }
+        Update: {
+          creado_por?: string | null
+          created_at?: string
+          css_template?: string | null
+          formato_id?: string
+          html_template?: string
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "versiones_formato_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_formatos_for_matricula: {
+        Args: { _matricula_id: string }
+        Returns: {
+          activo: boolean
+          asignacion_scope: Database["public"]["Enums"]["scope_formato"]
+          bloques: Json
+          categoria: Database["public"]["Enums"]["categoria_formato"]
+          codigo: string
+          created_at: string
+          css_template: string | null
+          deleted_at: string | null
+          descripcion: string
+          document_meta: Json | null
+          encabezado_config: Json | null
+          es_automatico: boolean
+          estado: Database["public"]["Enums"]["estado_formato"]
+          html_template: string | null
+          id: string
+          legacy_component_id: string | null
+          modo_diligenciamiento: string
+          motor_render: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados: string[] | null
+          nombre: string
+          plantilla_base_id: string | null
+          requiere_firma_aprendiz: boolean
+          requiere_firma_entrenador: boolean
+          requiere_firma_supervisor: boolean
+          tipos_curso: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados: string[] | null
+          updated_at: string
+          usa_encabezado_institucional: boolean
+          version: string
+          visible_en_curso: boolean
+          visible_en_matricula: boolean
+          visible_en_portal_estudiante: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "formatos_formacion"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_my_rol: { Args: never; Returns: string }
     }
     Enums: {

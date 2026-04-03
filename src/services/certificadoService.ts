@@ -73,12 +73,12 @@ export const certificadoService = {
         plantilla_id: data.plantillaId,
         codigo: data.codigo,
         estado: data.estado,
-        snapshot_datos: data.snapshotDatos,
+        snapshot_datos: data.snapshotDatos as any,
         svg_final: data.svgFinal,
         version: data.version,
         fecha_generacion: data.fechaGeneracion,
         autorizado_excepcional: data.autorizadoExcepcional ?? false,
-      })
+      } as any)
       .select()
       .single();
     if (error) throw error;

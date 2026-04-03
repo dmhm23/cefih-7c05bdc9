@@ -39,7 +39,7 @@ export const comentarioService = {
       creadoEn: new Date().toISOString(),
     };
     mockComentarios.push(nuevo);
-    addAuditLog('crear', nuevo.id, undefined, { texto: nuevo.texto, seccion: nuevo.seccion, matriculaId: nuevo.matriculaId });
+    addAuditLog('crear', nuevo.id, undefined, { texto: nuevo.texto, seccion: nuevo.seccion, entidadId: nuevo.entidadId });
     return simulateApiCall(nuevo, 200);
   },
 

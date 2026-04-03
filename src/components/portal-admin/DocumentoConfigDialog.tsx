@@ -40,6 +40,8 @@ interface Props {
 export function DocumentoConfigDialog({ open, onOpenChange, documento, existingKeys, allDocumentos, onSave }: Props) {
   const isEdit = !!documento;
   const { data: formatos, isLoading: loadingFormatos } = useFormatos();
+  const { data: nivelesData } = useNivelesFormacion();
+  const NIVELES = (nivelesData || []).map((n) => n.id) as unknown as TipoFormacion[];
 
   const [selectedFormatoId, setSelectedFormatoId] = useState('');
   const [nombre, setNombre] = useState(documento?.nombre || '');

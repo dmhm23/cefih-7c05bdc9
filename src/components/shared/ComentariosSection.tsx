@@ -11,15 +11,15 @@ import { SeccionComentario } from "@/types/comentario";
 import { useToast } from "@/hooks/use-toast";
 
 interface ComentariosSectionProps {
-  matriculaId: string;
+  entidadId: string;
   seccion: SeccionComentario;
   titulo?: string;
 }
 
 const VISIBLE_COUNT = 3;
 
-export function ComentariosSection({ matriculaId, seccion, titulo = "Comentarios" }: ComentariosSectionProps) {
-  const { data: comentarios = [], isLoading } = useComentarios(matriculaId, seccion);
+export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" }: ComentariosSectionProps) {
+  const { data: comentarios = [], isLoading } = useComentarios(entidadId, seccion);
   const createComentario = useCreateComentario();
   const updateComentario = useUpdateComentario();
   const deleteComentario = useDeleteComentario();

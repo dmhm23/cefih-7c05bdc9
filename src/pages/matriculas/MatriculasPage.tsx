@@ -20,8 +20,8 @@ import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { mockGruposCartera } from "@/data/mockCartera";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 

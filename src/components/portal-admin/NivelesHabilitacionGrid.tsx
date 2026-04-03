@@ -2,8 +2,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { TipoFormacion } from '@/types/curso';
-import { mockNivelesFormacion } from '@/data/mockData';
-import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
+import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Props {
   documentos: PortalDocumentoConfigAdmin[];
@@ -12,8 +12,13 @@ interface Props {
 
 export function NivelesHabilitacionGrid({ documentos, onToggle }: Props) {
   const sorted = [...documentos].sort((a, b) => a.orden - b.orden);
+  const { data: nivelesData, isLoading } = useNivelesFormacion();
 
-  const niveles = mockNivelesFormacion.map((n) => n.id) as unknown as TipoFormacion[];
+  const niveles = (nivelesData || []).map((n) => n.id) as unknown as TipoFormacion[];
+
+  if (isLoading) {
+    return <Skeleton className="h-32 w-full" />;
+  }
 
   return (
     <div className="rounded-md border overflow-x-auto">
@@ -21,8 +26,8 @@ export function NivelesHabilitacionGrid({ documentos, onToggle }: Props) {
         <TableHeader>
           <TableRow>
             <TableHead className="min-w-[180px]">Documento</TableHead>
-            {niveles.map(n => (
-              <TableHead key={n} className="text-center min-w-[120px]">{resolveNivelCursoLabel(n)}</TableHead>
+            {(nivelesData || []).map(n => (
+              <TableHead key={n.id} className="text-center min-w-[120px]">{n.nombreNivel}</TableHead>
             ))}
           </TableRow>
         </TableHeader>

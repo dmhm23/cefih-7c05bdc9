@@ -8,10 +8,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { TipoFormacion } from '@/types/curso';
-import { mockNivelesFormacion } from '@/data/mockData';
-import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { TipoDocPortal } from '@/types/portalEstudiante';
 import { useFormatos } from '@/hooks/useFormatosFormacion';
+import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
 
 const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'firma_autorizacion', label: 'Firma / Autorización' },
@@ -19,8 +18,6 @@ const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'formulario', label: 'Formulario' },
   { value: 'solo_lectura', label: 'Solo lectura' },
 ];
-
-const NIVELES = mockNivelesFormacion.map((n) => n.id) as unknown as TipoFormacion[];
 
 function categoriaToPorTipo(categoria: string): TipoDocPortal {
   switch (categoria) {

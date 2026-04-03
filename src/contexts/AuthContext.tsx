@@ -19,6 +19,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   perfil: Perfil | null;
+  permisos: PermisoItem[];
   loading: boolean;
   signOut: () => Promise<void>;
 }

@@ -797,7 +797,7 @@ export default function MatriculaDetallePage() {
           {/* Observaciones - Sistema de comentarios */}
           <div className="border rounded-lg p-4 shadow-sm">
             <ComentariosSection
-              matriculaId={matricula.id}
+              entidadId={matricula.id}
               seccion="observaciones"
               titulo="Observaciones"
             />

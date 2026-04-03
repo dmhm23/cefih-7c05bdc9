@@ -675,7 +675,7 @@ export function MatriculaDetailSheet({
         {/* Observaciones */}
         <DetailSection title="Observaciones">
           <ComentariosSection
-            matriculaId={matricula.id}
+            entidadId={matricula.id}
             seccion="observaciones"
             titulo="Observaciones"
           />

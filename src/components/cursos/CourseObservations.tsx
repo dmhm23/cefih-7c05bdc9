@@ -15,7 +15,7 @@ export function CourseObservations({ cursoId }: CourseObservationsProps) {
       </CardHeader>
       <CardContent>
         <ComentariosSection
-          matriculaId={cursoId}
+          entidadId={cursoId}
           seccion="curso_observaciones"
           titulo="Observaciones"
         />

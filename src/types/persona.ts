@@ -6,16 +6,17 @@ export type Genero = 'M' | 'F' | 'O';
 
 // Niveles educativos
 export type NivelEducativo = 
+  | 'ninguno'
   | 'analfabeta'
   | 'primaria' 
   | 'secundaria' 
-  | 'bachiller' 
   | 'tecnico' 
   | 'tecnologo' 
-  | 'universitario' 
+  | 'profesional' 
   | 'especializacion' 
   | 'maestria' 
-  | 'doctorado';
+  | 'doctorado'
+  | 'otro';
 
 export interface ContactoEmergencia {
   nombre: string;

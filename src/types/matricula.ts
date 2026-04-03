@@ -19,8 +19,7 @@ export type NivelFormacionEmpresa =
   | 'jefe_area' 
   | 'trabajador_autorizado' 
   | 'reentrenamiento' 
-  | 'coordinador_ta'
-  | string;
+  | 'coordinador_ta';
 
 export type TipoDocumento = 
   | 'cedula' 

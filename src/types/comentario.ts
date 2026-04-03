@@ -2,8 +2,8 @@ export type SeccionComentario = 'cartera' | 'observaciones' | 'curso_observacion
 
 export interface Comentario {
   id: string;
-  /** Generic entity ID — works for matriculaId or cursoId */
-  matriculaId: string;
+  /** Generic entity ID — works for matrícula, curso, or any entity */
+  entidadId: string;
   seccion: SeccionComentario;
   texto: string;
   usuarioId: string;

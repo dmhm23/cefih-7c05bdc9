@@ -1,6 +1,6 @@
 export type EstadoCurso = 'abierto' | 'en_progreso' | 'cerrado';
 
-export type TipoFormacion = 'jefe_area' | 'trabajador_autorizado' | 'reentrenamiento' | 'coordinador_ta' | string;
+export type TipoFormacion = 'jefe_area' | 'trabajador_autorizado' | 'reentrenamiento' | 'coordinador_ta';
 
 export interface FechaAdicionalMinTrabajo {
   id: string;

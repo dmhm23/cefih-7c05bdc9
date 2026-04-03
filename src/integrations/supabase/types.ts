@@ -1496,6 +1496,7 @@ export type Database = {
           created_at: string
           depende_de: string[]
           descripcion: string
+          formato_id: string | null
           habilitado_por_nivel: Json
           icono: string
           id: string
@@ -1511,6 +1512,7 @@ export type Database = {
           created_at?: string
           depende_de?: string[]
           descripcion?: string
+          formato_id?: string | null
           habilitado_por_nivel?: Json
           icono?: string
           id?: string
@@ -1526,6 +1528,7 @@ export type Database = {
           created_at?: string
           depende_de?: string[]
           descripcion?: string
+          formato_id?: string | null
           habilitado_por_nivel?: Json
           icono?: string
           id?: string
@@ -1536,7 +1539,15 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "portal_config_documentos_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       responsables_pago: {
         Row: {

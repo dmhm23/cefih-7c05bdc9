@@ -46,6 +46,7 @@ export const portalAdminService = {
       habilitado_por_nivel: doc.habilitadoPorNivel,
       obligatorio: true,
       activo: true,
+      formato_id: doc.key, // key now stores the formato UUID
     };
 
     if (existing) {

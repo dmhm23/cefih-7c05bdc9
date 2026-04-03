@@ -14,13 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      perfiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          nombres: string | null
+          rol: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          nombres?: string | null
+          rol?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          nombres?: string | null
+          rol?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_rol: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

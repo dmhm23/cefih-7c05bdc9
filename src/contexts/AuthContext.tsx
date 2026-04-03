@@ -28,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   perfil: null,
+  permisos: [],
   loading: true,
   signOut: async () => {},
 });

@@ -85,6 +85,7 @@ export default function MatriculasPage() {
   const { data: matriculas = [], isLoading } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
+  const deleteMatricula = useDeleteMatricula();
 
   // Load cartera status from DB
   const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});

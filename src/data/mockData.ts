@@ -868,7 +868,7 @@ export const mockAuditLogs: AuditLog[] = [
 export const mockComentarios: Comentario[] = [
   {
     id: 'com1',
-    matriculaId: 'm1',
+    entidadId: 'm1',
     seccion: 'cartera',
     texto: 'Se realizó seguimiento telefónico. El estudiante confirma pago para la próxima semana.',
     usuarioId: 'admin1',
@@ -877,7 +877,7 @@ export const mockComentarios: Comentario[] = [
   },
   {
     id: 'com2',
-    matriculaId: 'm1',
+    entidadId: 'm1',
     seccion: 'cartera',
     texto: 'Pago recibido por transferencia bancaria. Comprobante verificado.',
     usuarioId: 'admin1',
@@ -886,7 +886,7 @@ export const mockComentarios: Comentario[] = [
   },
   {
     id: 'com3',
-    matriculaId: 'm1',
+    entidadId: 'm1',
     seccion: 'observaciones',
     texto: 'Estudiante enviado por la empresa para formación inicial. Documentación en proceso.',
     usuarioId: 'admin1',

@@ -14,7 +14,7 @@ export function useCreateComentario() {
   return useMutation({
     mutationFn: comentarioService.create,
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['comentarios', data.matriculaId, data.seccion] });
+      qc.invalidateQueries({ queryKey: ['comentarios', data.entidadId, data.seccion] });
     },
   });
 }

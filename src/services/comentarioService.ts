@@ -57,7 +57,7 @@ export const comentarioService = {
     if (idx === -1) throw new Error('Comentario no encontrado');
     const eliminado = mockComentarios[idx];
     mockComentarios.splice(idx, 1);
-    addAuditLog('eliminar', id, { texto: eliminado.texto, seccion: eliminado.seccion, matriculaId: eliminado.matriculaId });
+    addAuditLog('eliminar', id, { texto: eliminado.texto, seccion: eliminado.seccion, entidadId: eliminado.entidadId });
     return simulateApiCall(undefined, 200);
   },
 };

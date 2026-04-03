@@ -37,7 +37,7 @@ export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" 
     if (!texto) return;
     try {
       await createComentario.mutateAsync({
-        matriculaId,
+        entidadId,
         seccion,
         texto,
         usuarioId: "admin1",

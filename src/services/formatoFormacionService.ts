@@ -337,6 +337,15 @@ export const formatoFormacionService = {
       updatedAt: new Date().toISOString(),
     };
     mockFormatos.push(nuevo);
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: nuevo.id,
+      accion: 'crear',
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     return simulateApiCall(nuevo);
   },
 

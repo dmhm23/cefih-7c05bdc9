@@ -1,116 +1,117 @@
-import { v4 as uuid } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 import { NivelFormacion, NivelFormacionFormData } from '@/types/nivelFormacion';
-import { mockNivelesFormacion, mockCursos, mockAuditLogs } from '@/data/mockData';
-import { delay, ApiError } from './api';
+import { ApiError, handleSupabaseError } from './api';
+
+function mapNivelRow(row: any): NivelFormacion {
+  return {
+    id: row.id,
+    nombreNivel: row.nombre,
+    duracionHoras: row.duracion_horas,
+    documentosRequeridos: row.documentos_requeridos || [],
+    camposAdicionales: row.campos_adicionales || [],
+    configuracionCodigoEstudiante: row.config_codigo_estudiante || undefined,
+    observaciones: row.descripcion,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapNivelToDb(data: Partial<NivelFormacionFormData>): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (data.nombreNivel !== undefined) result.nombre = data.nombreNivel;
+  if (data.duracionHoras !== undefined) result.duracion_horas = data.duracionHoras;
+  if (data.documentosRequeridos !== undefined) result.documentos_requeridos = data.documentosRequeridos;
+  if (data.camposAdicionales !== undefined) result.campos_adicionales = data.camposAdicionales;
+  if (data.configuracionCodigoEstudiante !== undefined) result.config_codigo_estudiante = data.configuracionCodigoEstudiante;
+  if (data.observaciones !== undefined) result.descripcion = data.observaciones;
+  return result;
+}
 
 export const nivelFormacionService = {
   async getAll(): Promise<NivelFormacion[]> {
-    await delay(600);
-    return [...mockNivelesFormacion];
+    const { data, error } = await supabase
+      .from('niveles_formacion')
+      .select('*')
+      .is('deleted_at', null)
+      .order('nombre');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapNivelRow);
   },
 
   async getById(id: string): Promise<NivelFormacion | null> {
-    await delay(400);
-    return mockNivelesFormacion.find(n => n.id === id) || null;
+    const { data, error } = await supabase
+      .from('niveles_formacion')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    return data ? mapNivelRow(data) : null;
   },
 
   async search(query: string): Promise<NivelFormacion[]> {
-    await delay(400);
-    const q = query.toLowerCase();
-    return mockNivelesFormacion.filter(n =>
-      n.nombreNivel.toLowerCase().includes(q)
-    );
+    const { data, error } = await supabase
+      .from('niveles_formacion')
+      .select('*')
+      .is('deleted_at', null)
+      .ilike('nombre', `%${query}%`)
+      .order('nombre');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapNivelRow);
   },
 
   async create(data: NivelFormacionFormData): Promise<NivelFormacion> {
-    await delay(800);
+    const dbData = mapNivelToDb(data);
+    // tipo_formacion is required by DB — default to formacion_inicial
+    dbData.tipo_formacion = 'formacion_inicial';
 
-    const now = new Date().toISOString();
-    const nuevo: NivelFormacion = {
-      ...data,
-      id: uuid(),
-      createdAt: now,
-      updatedAt: now,
-    };
+    const { data: row, error } = await supabase
+      .from('niveles_formacion')
+      .insert(dbData)
+      .select()
+      .single();
 
-    mockNivelesFormacion.push(nuevo);
-
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'nivel_formacion',
-      entidadId: nuevo.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return nuevo;
+    if (error) handleSupabaseError(error);
+    return mapNivelRow(row);
   },
 
   async update(id: string, data: Partial<NivelFormacionFormData>): Promise<NivelFormacion> {
-    await delay(600);
+    const dbData = mapNivelToDb(data);
+    const { data: row, error } = await supabase
+      .from('niveles_formacion')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    const index = mockNivelesFormacion.findIndex(n => n.id === id);
-    if (index === -1) {
-      throw new ApiError('Nivel de formación no encontrado', 404, 'NOT_FOUND');
-    }
-
-    const now = new Date().toISOString();
-    const valorAnterior = { ...mockNivelesFormacion[index] };
-
-    mockNivelesFormacion[index] = {
-      ...mockNivelesFormacion[index],
-      ...data,
-      updatedAt: now,
-    };
-
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'nivel_formacion',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      valorAnterior,
-      valorNuevo: data,
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockNivelesFormacion[index];
+    if (error) handleSupabaseError(error);
+    return mapNivelRow(row);
   },
 
   async delete(id: string): Promise<void> {
-    await delay(600);
+    // Check if has cursos
+    const { data: cursos } = await supabase
+      .from('cursos')
+      .select('id')
+      .eq('nivel_formacion_id', id)
+      .is('deleted_at', null)
+      .limit(1);
 
-    const index = mockNivelesFormacion.findIndex(n => n.id === id);
-    if (index === -1) {
-      throw new ApiError('Nivel de formación no encontrado', 404, 'NOT_FOUND');
-    }
-
-    // INC-005: Verificar integridad referencial
-    const cursosVinculados = mockCursos.filter(c => c.tipoFormacion === id);
-    if (cursosVinculados.length > 0) {
+    if (cursos && cursos.length > 0) {
       throw new ApiError(
-        `No se puede eliminar el nivel de formación. Tiene ${cursosVinculados.length} curso(s) vinculado(s).`,
+        'No se puede eliminar el nivel de formación. Tiene cursos vinculados.',
         400,
         'TIENE_CURSOS'
       );
     }
 
-    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from('niveles_formacion')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'nivel_formacion',
-      entidadId: id,
-      accion: 'eliminar',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    mockNivelesFormacion.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 };

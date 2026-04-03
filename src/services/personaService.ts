@@ -1,145 +1,155 @@
-import { v4 as uuid } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 import { Persona, PersonaFormData } from '@/types/persona';
-import { mockPersonas, mockMatriculas, mockAuditLogs } from '@/data/mockData';
-import { delay, ApiError } from './api';
+import { ApiError, handleSupabaseError } from './api';
+
+// Map DB enum values to frontend display values
+const TIPO_DOC_DB_TO_FE: Record<string, string> = {
+  cedula_ciudadania: 'CC',
+  cedula_extranjeria: 'CE',
+  pasaporte: 'PA',
+  tarjeta_identidad: 'PE',
+  pep: 'PP',
+};
+
+const TIPO_DOC_FE_TO_DB: Record<string, string> = {
+  CC: 'cedula_ciudadania',
+  CE: 'cedula_extranjeria',
+  PA: 'pasaporte',
+  PE: 'tarjeta_identidad',
+  PP: 'pep',
+};
+
+const GENERO_DB_TO_FE: Record<string, string> = {
+  masculino: 'M',
+  femenino: 'F',
+  otro: 'O',
+};
+
+const GENERO_FE_TO_DB: Record<string, string> = {
+  M: 'masculino',
+  F: 'femenino',
+  O: 'otro',
+};
+
+function mapPersonaRow(row: any): Persona {
+  return {
+    id: row.id,
+    tipoDocumento: (TIPO_DOC_DB_TO_FE[row.tipo_documento] || 'CC') as any,
+    numeroDocumento: row.numero_documento,
+    nombres: row.nombres,
+    apellidos: row.apellidos,
+    genero: (GENERO_DB_TO_FE[row.genero] || 'M') as any,
+    paisNacimiento: '',
+    fechaNacimiento: row.fecha_nacimiento || '',
+    rh: '',
+    nivelEducativo: row.nivel_educativo || 'primaria',
+    email: row.email || '',
+    telefono: row.telefono || '',
+    contactoEmergencia: row.contacto_emergencia || { nombre: '', telefono: '', parentesco: '' },
+    firma: row.firma_storage_path || undefined,
+    firmaFecha: undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapPersonaToDb(data: Partial<PersonaFormData>): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (data.tipoDocumento !== undefined) result.tipo_documento = TIPO_DOC_FE_TO_DB[data.tipoDocumento] || 'cedula_ciudadania';
+  if (data.numeroDocumento !== undefined) result.numero_documento = data.numeroDocumento;
+  if (data.nombres !== undefined) result.nombres = data.nombres;
+  if (data.apellidos !== undefined) result.apellidos = data.apellidos;
+  if (data.genero !== undefined) result.genero = GENERO_FE_TO_DB[data.genero] || 'masculino';
+  if (data.fechaNacimiento !== undefined) result.fecha_nacimiento = data.fechaNacimiento || null;
+  if (data.nivelEducativo !== undefined) result.nivel_educativo = data.nivelEducativo || null;
+  if (data.email !== undefined) result.email = data.email;
+  if (data.telefono !== undefined) result.telefono = data.telefono;
+  if (data.contactoEmergencia !== undefined) result.contacto_emergencia = data.contactoEmergencia;
+  return result;
+}
 
 export const personaService = {
   async getAll(): Promise<Persona[]> {
-    await delay(800);
-    return [...mockPersonas];
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .is('deleted_at', null)
+      .order('nombres');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapPersonaRow);
   },
 
   async getById(id: string): Promise<Persona | null> {
-    await delay(500);
-    return mockPersonas.find(p => p.id === id) || null;
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    return data ? mapPersonaRow(data) : null;
   },
 
   async getByDocumento(numeroDocumento: string): Promise<Persona | null> {
-    await delay(500);
-    return mockPersonas.find(p => p.numeroDocumento === numeroDocumento) || null;
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .eq('numero_documento', numeroDocumento)
+      .is('deleted_at', null)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    return data ? mapPersonaRow(data) : null;
   },
 
   async search(query: string): Promise<Persona[]> {
-    await delay(600);
-    const lowerQuery = query.toLowerCase();
-    return mockPersonas.filter(p => 
-      p.numeroDocumento.includes(query) ||
-      p.nombres.toLowerCase().includes(lowerQuery) ||
-      p.apellidos.toLowerCase().includes(lowerQuery) ||
-      p.email.toLowerCase().includes(lowerQuery)
-    );
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .is('deleted_at', null)
+      .or(`numero_documento.ilike.%${query}%,nombres.ilike.%${query}%,apellidos.ilike.%${query}%,email.ilike.%${query}%`)
+      .order('nombres');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapPersonaRow);
   },
 
   async create(data: PersonaFormData): Promise<Persona> {
-    await delay(1000);
-    
-    // Validar unicidad de documento
-    const exists = mockPersonas.find(p => p.numeroDocumento === data.numeroDocumento);
-    if (exists) {
-      throw new ApiError('Ya existe una persona con este documento', 400, 'DOCUMENTO_DUPLICADO');
+    const dbData = mapPersonaToDb(data);
+    const { data: row, error } = await supabase
+      .from('personas')
+      .insert(dbData)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe una persona con este documento', 400, 'DOCUMENTO_DUPLICADO');
+      handleSupabaseError(error);
     }
-
-    // INC-004: Validar contacto de emergencia
-    if (!data.contactoEmergencia?.nombre || !data.contactoEmergencia?.telefono) {
-      throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
-    }
-
-    const now = new Date().toISOString();
-    const newPersona: Persona = {
-      ...data,
-      id: uuid(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    
-    mockPersonas.push(newPersona);
-
-    // Log de auditoría
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'persona',
-      entidadId: newPersona.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return newPersona;
+    return mapPersonaRow(row);
   },
 
   async update(id: string, data: Partial<PersonaFormData>): Promise<Persona> {
-    await delay(800);
-    
-    const index = mockPersonas.findIndex(p => p.id === id);
-    if (index === -1) {
-      throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
-    }
+    const dbData = mapPersonaToDb(data);
+    const { data: row, error } = await supabase
+      .from('personas')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    // INC-004: Validar contacto de emergencia si se actualiza
-    if (data.contactoEmergencia) {
-      if (!data.contactoEmergencia.nombre || !data.contactoEmergencia.telefono) {
-        throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
-      }
-    }
-
-    const now = new Date().toISOString();
-    const valorAnterior = { ...mockPersonas[index] };
-    
-    mockPersonas[index] = {
-      ...mockPersonas[index],
-      ...data,
-      updatedAt: now,
-    };
-
-    // Log de auditoría
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'persona',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      valorAnterior,
-      valorNuevo: data,
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockPersonas[index];
+    if (error) handleSupabaseError(error);
+    return mapPersonaRow(row);
   },
 
   async delete(id: string): Promise<void> {
-    await delay(600);
-    
-    const index = mockPersonas.findIndex(p => p.id === id);
-    if (index === -1) {
-      throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
-    }
+    // Soft delete
+    const { error } = await supabase
+      .from('personas')
+      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .eq('id', id);
 
-    // INC-005: Verificar integridad referencial
-    const matriculasVinculadas = mockMatriculas.filter(m => m.personaId === id);
-    if (matriculasVinculadas.length > 0) {
-      throw new ApiError(
-        `No se puede eliminar la persona. Tiene ${matriculasVinculadas.length} matrícula(s) vinculada(s).`,
-        400,
-        'TIENE_MATRICULAS'
-      );
-    }
-
-    const now = new Date().toISOString();
-    
-    // Log de auditoría antes de eliminar
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'persona',
-      entidadId: id,
-      accion: 'eliminar',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    mockPersonas.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 };

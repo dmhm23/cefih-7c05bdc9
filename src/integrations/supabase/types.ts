@@ -203,6 +203,62 @@ export type Database = {
           },
         ]
       }
+      documentos_matricula: {
+        Row: {
+          archivo_nombre: string | null
+          archivo_tamano: number | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga: string | null
+          fecha_documento: string | null
+          fecha_inicio_cobertura: string | null
+          id: string
+          matricula_id: string
+          nombre: string
+          opcional: boolean
+          storage_path: string | null
+          tipo: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Insert: {
+          archivo_nombre?: string | null
+          archivo_tamano?: number | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga?: string | null
+          fecha_documento?: string | null
+          fecha_inicio_cobertura?: string | null
+          id?: string
+          matricula_id: string
+          nombre: string
+          opcional?: boolean
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Update: {
+          archivo_nombre?: string | null
+          archivo_tamano?: number | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga?: string | null
+          fecha_documento?: string | null
+          fecha_inicio_cobertura?: string | null
+          id?: string
+          matricula_id?: string
+          nombre?: string
+          opcional?: boolean
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_matricula_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           activo: boolean
@@ -265,6 +321,385 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      formato_respuestas: {
+        Row: {
+          answers: Json
+          completado_at: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id: string
+          id: string
+          matricula_id: string
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          completado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id: string
+          id?: string
+          matricula_id: string
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          completado_at?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
+          formato_id?: string
+          id?: string
+          matricula_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formato_respuestas_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "formato_respuestas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formatos_formacion: {
+        Row: {
+          activo: boolean
+          asignacion_scope: Database["public"]["Enums"]["scope_formato"]
+          bloques: Json
+          categoria: Database["public"]["Enums"]["categoria_formato"]
+          codigo: string
+          created_at: string
+          css_template: string | null
+          deleted_at: string | null
+          descripcion: string
+          document_meta: Json | null
+          encabezado_config: Json | null
+          es_automatico: boolean
+          estado: Database["public"]["Enums"]["estado_formato"]
+          html_template: string | null
+          id: string
+          legacy_component_id: string | null
+          modo_diligenciamiento: string
+          motor_render: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados: string[] | null
+          nombre: string
+          plantilla_base_id: string | null
+          requiere_firma_aprendiz: boolean
+          requiere_firma_entrenador: boolean
+          requiere_firma_supervisor: boolean
+          tipos_curso: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados: string[] | null
+          updated_at: string
+          usa_encabezado_institucional: boolean
+          version: string
+          visible_en_curso: boolean
+          visible_en_matricula: boolean
+          visible_en_portal_estudiante: boolean
+        }
+        Insert: {
+          activo?: boolean
+          asignacion_scope?: Database["public"]["Enums"]["scope_formato"]
+          bloques?: Json
+          categoria?: Database["public"]["Enums"]["categoria_formato"]
+          codigo?: string
+          created_at?: string
+          css_template?: string | null
+          deleted_at?: string | null
+          descripcion?: string
+          document_meta?: Json | null
+          encabezado_config?: Json | null
+          es_automatico?: boolean
+          estado?: Database["public"]["Enums"]["estado_formato"]
+          html_template?: string | null
+          id?: string
+          legacy_component_id?: string | null
+          modo_diligenciamiento?: string
+          motor_render?: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados?: string[] | null
+          nombre: string
+          plantilla_base_id?: string | null
+          requiere_firma_aprendiz?: boolean
+          requiere_firma_entrenador?: boolean
+          requiere_firma_supervisor?: boolean
+          tipos_curso?: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados?: string[] | null
+          updated_at?: string
+          usa_encabezado_institucional?: boolean
+          version?: string
+          visible_en_curso?: boolean
+          visible_en_matricula?: boolean
+          visible_en_portal_estudiante?: boolean
+        }
+        Update: {
+          activo?: boolean
+          asignacion_scope?: Database["public"]["Enums"]["scope_formato"]
+          bloques?: Json
+          categoria?: Database["public"]["Enums"]["categoria_formato"]
+          codigo?: string
+          created_at?: string
+          css_template?: string | null
+          deleted_at?: string | null
+          descripcion?: string
+          document_meta?: Json | null
+          encabezado_config?: Json | null
+          es_automatico?: boolean
+          estado?: Database["public"]["Enums"]["estado_formato"]
+          html_template?: string | null
+          id?: string
+          legacy_component_id?: string | null
+          modo_diligenciamiento?: string
+          motor_render?: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados?: string[] | null
+          nombre?: string
+          plantilla_base_id?: string | null
+          requiere_firma_aprendiz?: boolean
+          requiere_firma_entrenador?: boolean
+          requiere_firma_supervisor?: boolean
+          tipos_curso?: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados?: string[] | null
+          updated_at?: string
+          usa_encabezado_institucional?: boolean
+          version?: string
+          visible_en_curso?: boolean
+          visible_en_matricula?: boolean
+          visible_en_portal_estudiante?: boolean
+        }
+        Relationships: []
+      }
+      matriculas: {
+        Row: {
+          abono: number
+          activo: boolean
+          alergias: boolean
+          alergias_detalle: string | null
+          area_trabajo: string | null
+          arl: string | null
+          arl_otra: string | null
+          autoevaluacion_respuestas: Json | null
+          autorizacion_datos: boolean
+          centro_formacion_previo: string | null
+          cobro_contacto_celular: string | null
+          cobro_contacto_nombre: string | null
+          consentimiento_salud: boolean
+          consumo_medicamentos: boolean
+          consumo_medicamentos_detalle: string | null
+          created_at: string
+          cta_fact_numero: string | null
+          cta_fact_titular: string | null
+          curso_id: string | null
+          deleted_at: string | null
+          embarazo: boolean | null
+          empresa_cargo: string | null
+          empresa_contacto_nombre: string | null
+          empresa_contacto_telefono: string | null
+          empresa_id: string | null
+          empresa_nit: string | null
+          empresa_nivel_formacion: string | null
+          empresa_nombre: string | null
+          empresa_representante_legal: string | null
+          encuesta_completada: boolean
+          encuesta_respuestas: Json | null
+          eps: string | null
+          eps_otra: string | null
+          estado: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas: Json | null
+          evaluacion_completada: boolean
+          evaluacion_puntaje: number | null
+          evaluacion_respuestas: Json | null
+          factura_numero: string | null
+          fecha_certificacion_previa: string | null
+          fecha_entrega_certificado: string | null
+          fecha_facturacion: string | null
+          fecha_fin: string | null
+          fecha_generacion_certificado: string | null
+          fecha_inicio: string | null
+          fecha_pago: string | null
+          firma_capturada: boolean
+          firma_storage_path: string | null
+          forma_pago: Database["public"]["Enums"]["metodo_pago"] | null
+          id: string
+          nivel_lectoescritura: boolean
+          nivel_previo: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones: string | null
+          pagado: boolean
+          persona_id: string
+          portal_estudiante: Json | null
+          restriccion_medica: boolean
+          restriccion_medica_detalle: string | null
+          sector_economico: string | null
+          sector_economico_otro: string | null
+          tipo_vinculacion:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at: string
+          valor_cupo: number
+        }
+        Insert: {
+          abono?: number
+          activo?: boolean
+          alergias?: boolean
+          alergias_detalle?: string | null
+          area_trabajo?: string | null
+          arl?: string | null
+          arl_otra?: string | null
+          autoevaluacion_respuestas?: Json | null
+          autorizacion_datos?: boolean
+          centro_formacion_previo?: string | null
+          cobro_contacto_celular?: string | null
+          cobro_contacto_nombre?: string | null
+          consentimiento_salud?: boolean
+          consumo_medicamentos?: boolean
+          consumo_medicamentos_detalle?: string | null
+          created_at?: string
+          cta_fact_numero?: string | null
+          cta_fact_titular?: string | null
+          curso_id?: string | null
+          deleted_at?: string | null
+          embarazo?: boolean | null
+          empresa_cargo?: string | null
+          empresa_contacto_nombre?: string | null
+          empresa_contacto_telefono?: string | null
+          empresa_id?: string | null
+          empresa_nit?: string | null
+          empresa_nivel_formacion?: string | null
+          empresa_nombre?: string | null
+          empresa_representante_legal?: string | null
+          encuesta_completada?: boolean
+          encuesta_respuestas?: Json | null
+          eps?: string | null
+          eps_otra?: string | null
+          estado?: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas?: Json | null
+          evaluacion_completada?: boolean
+          evaluacion_puntaje?: number | null
+          evaluacion_respuestas?: Json | null
+          factura_numero?: string | null
+          fecha_certificacion_previa?: string | null
+          fecha_entrega_certificado?: string | null
+          fecha_facturacion?: string | null
+          fecha_fin?: string | null
+          fecha_generacion_certificado?: string | null
+          fecha_inicio?: string | null
+          fecha_pago?: string | null
+          firma_capturada?: boolean
+          firma_storage_path?: string | null
+          forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
+          id?: string
+          nivel_lectoescritura?: boolean
+          nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones?: string | null
+          pagado?: boolean
+          persona_id: string
+          portal_estudiante?: Json | null
+          restriccion_medica?: boolean
+          restriccion_medica_detalle?: string | null
+          sector_economico?: string | null
+          sector_economico_otro?: string | null
+          tipo_vinculacion?:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at?: string
+          valor_cupo?: number
+        }
+        Update: {
+          abono?: number
+          activo?: boolean
+          alergias?: boolean
+          alergias_detalle?: string | null
+          area_trabajo?: string | null
+          arl?: string | null
+          arl_otra?: string | null
+          autoevaluacion_respuestas?: Json | null
+          autorizacion_datos?: boolean
+          centro_formacion_previo?: string | null
+          cobro_contacto_celular?: string | null
+          cobro_contacto_nombre?: string | null
+          consentimiento_salud?: boolean
+          consumo_medicamentos?: boolean
+          consumo_medicamentos_detalle?: string | null
+          created_at?: string
+          cta_fact_numero?: string | null
+          cta_fact_titular?: string | null
+          curso_id?: string | null
+          deleted_at?: string | null
+          embarazo?: boolean | null
+          empresa_cargo?: string | null
+          empresa_contacto_nombre?: string | null
+          empresa_contacto_telefono?: string | null
+          empresa_id?: string | null
+          empresa_nit?: string | null
+          empresa_nivel_formacion?: string | null
+          empresa_nombre?: string | null
+          empresa_representante_legal?: string | null
+          encuesta_completada?: boolean
+          encuesta_respuestas?: Json | null
+          eps?: string | null
+          eps_otra?: string | null
+          estado?: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas?: Json | null
+          evaluacion_completada?: boolean
+          evaluacion_puntaje?: number | null
+          evaluacion_respuestas?: Json | null
+          factura_numero?: string | null
+          fecha_certificacion_previa?: string | null
+          fecha_entrega_certificado?: string | null
+          fecha_facturacion?: string | null
+          fecha_fin?: string | null
+          fecha_generacion_certificado?: string | null
+          fecha_inicio?: string | null
+          fecha_pago?: string | null
+          firma_capturada?: boolean
+          firma_storage_path?: string | null
+          forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
+          id?: string
+          nivel_lectoescritura?: boolean
+          nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones?: string | null
+          pagado?: boolean
+          persona_id?: string
+          portal_estudiante?: Json | null
+          restriccion_medica?: boolean
+          restriccion_medica_detalle?: string | null
+          sector_economico?: string | null
+          sector_economico_otro?: string | null
+          tipo_vinculacion?:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at?: string
+          valor_cupo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matriculas_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       niveles_formacion: {
         Row: {
@@ -538,11 +973,93 @@ export type Database = {
           },
         ]
       }
+      versiones_formato: {
+        Row: {
+          creado_por: string | null
+          created_at: string
+          css_template: string | null
+          formato_id: string
+          html_template: string
+          id: string
+          version: number
+        }
+        Insert: {
+          creado_por?: string | null
+          created_at?: string
+          css_template?: string | null
+          formato_id: string
+          html_template?: string
+          id?: string
+          version?: number
+        }
+        Update: {
+          creado_por?: string | null
+          created_at?: string
+          css_template?: string | null
+          formato_id?: string
+          html_template?: string
+          id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "versiones_formato_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_formatos_for_matricula: {
+        Args: { _matricula_id: string }
+        Returns: {
+          activo: boolean
+          asignacion_scope: Database["public"]["Enums"]["scope_formato"]
+          bloques: Json
+          categoria: Database["public"]["Enums"]["categoria_formato"]
+          codigo: string
+          created_at: string
+          css_template: string | null
+          deleted_at: string | null
+          descripcion: string
+          document_meta: Json | null
+          encabezado_config: Json | null
+          es_automatico: boolean
+          estado: Database["public"]["Enums"]["estado_formato"]
+          html_template: string | null
+          id: string
+          legacy_component_id: string | null
+          modo_diligenciamiento: string
+          motor_render: Database["public"]["Enums"]["motor_render"]
+          niveles_asignados: string[] | null
+          nombre: string
+          plantilla_base_id: string | null
+          requiere_firma_aprendiz: boolean
+          requiere_firma_entrenador: boolean
+          requiere_firma_supervisor: boolean
+          tipos_curso: Database["public"]["Enums"]["tipo_formacion"][] | null
+          tokens_usados: string[] | null
+          updated_at: string
+          usa_encabezado_institucional: boolean
+          version: string
+          visible_en_curso: boolean
+          visible_en_matricula: boolean
+          visible_en_portal_estudiante: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "formatos_formacion"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_my_rol: { Args: never; Returns: string }
     }
     Enums: {
@@ -569,6 +1086,7 @@ export type Database = {
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
       estado_factura: "pendiente" | "parcial" | "pagada"
       estado_formato: "borrador" | "activo" | "archivado"
+      estado_formato_respuesta: "pendiente" | "completado" | "firmado"
       estado_grupo_cartera:
         | "pendiente"
         | "parcial"
@@ -591,6 +1109,7 @@ export type Database = {
         | "bre_b"
         | "corresponsal_bancario"
         | "otro"
+      motor_render: "bloques" | "plantilla_html"
       nivel_educativo:
         | "primaria"
         | "secundaria"
@@ -602,6 +1121,7 @@ export type Database = {
         | "doctorado"
         | "ninguno"
         | "otro"
+      nivel_previo: "trabajador_autorizado" | "avanzado"
       scope_formato: "nivel_formacion" | "tipo_curso"
       seccion_comentario: "cartera" | "observaciones" | "curso_observaciones"
       sector_economico:
@@ -811,6 +1331,7 @@ export const Constants = {
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
       estado_factura: ["pendiente", "parcial", "pagada"],
       estado_formato: ["borrador", "activo", "archivado"],
+      estado_formato_respuesta: ["pendiente", "completado", "firmado"],
       estado_grupo_cartera: [
         "pendiente",
         "parcial",
@@ -836,6 +1357,7 @@ export const Constants = {
         "corresponsal_bancario",
         "otro",
       ],
+      motor_render: ["bloques", "plantilla_html"],
       nivel_educativo: [
         "primaria",
         "secundaria",
@@ -848,6 +1370,7 @@ export const Constants = {
         "ninguno",
         "otro",
       ],
+      nivel_previo: ["trabajador_autorizado", "avanzado"],
       scope_formato: ["nivel_formacion", "tipo_curso"],
       seccion_comentario: ["cartera", "observaciones", "curso_observaciones"],
       sector_economico: [

@@ -152,6 +152,51 @@ export type Database = {
         }
         Relationships: []
       }
+      niveles_formacion: {
+        Row: {
+          activo: boolean
+          campos_adicionales: Json | null
+          config_codigo_estudiante: Json | null
+          created_at: string
+          deleted_at: string | null
+          descripcion: string | null
+          documentos_requeridos: string[] | null
+          duracion_horas: number
+          id: string
+          nombre: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          campos_adicionales?: Json | null
+          config_codigo_estudiante?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          descripcion?: string | null
+          documentos_requeridos?: string[] | null
+          duracion_horas?: number
+          id?: string
+          nombre: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          campos_adicionales?: Json | null
+          config_codigo_estudiante?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          descripcion?: string | null
+          documentos_requeridos?: string[] | null
+          duracion_horas?: number
+          id?: string
+          nombre?: string
+          tipo_formacion?: Database["public"]["Enums"]["tipo_formacion"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       perfiles: {
         Row: {
           created_at: string | null
@@ -299,6 +344,13 @@ export type Database = {
           valor?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tarifas_nivel_formacion"
+            columns: ["nivel_formacion_id"]
+            isOneToOne: false
+            referencedRelation: "niveles_formacion"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tarifas_empresa_empresa_id_fkey"
             columns: ["empresa_id"]

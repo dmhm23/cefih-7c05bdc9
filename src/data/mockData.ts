@@ -18,7 +18,7 @@ export const mockPersonas: Persona[] = [
     paisNacimiento: 'CO',
     fechaNacimiento: '1985-06-15',
     rh: 'O+',
-    nivelEducativo: 'universitario',
+    nivelEducativo: 'profesional',
     email: 'juan.rodriguez@email.com',
     telefono: '3001234567',
     contactoEmergencia: {
@@ -60,7 +60,7 @@ export const mockPersonas: Persona[] = [
     paisNacimiento: 'CO',
     fechaNacimiento: '1988-11-08',
     rh: 'B-',
-    nivelEducativo: 'bachiller',
+    nivelEducativo: 'secundaria',
     email: 'pedro.martinez@email.com',
     telefono: '3203334455',
     contactoEmergencia: {
@@ -98,11 +98,11 @@ export const mockPersonas: Persona[] = [
     contactoEmergencia: { nombre: 'Martha Vargas', telefono: '3109998877', parentesco: 'Madre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'universitario', email: 'camila.rios@email.com', telefono: '3156667788',
+    id: 'p6', tipoDocumento: 'CC', numeroDocumento: '1098765432', nombres: 'Camila Andrea', apellidos: 'Rios Salazar', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1993-08-25', rh: 'A-', nivelEducativo: 'profesional', email: 'camila.rios@email.com', telefono: '3156667788',
     contactoEmergencia: { nombre: 'Jorge Rios', telefono: '3204445566', parentesco: 'Padre' }, createdAt: '2024-03-01T08:00:00Z', updatedAt: '2024-03-01T08:00:00Z',
   },
   {
-    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'bachiller', email: 'oscar.bernal@email.com', telefono: '3212345678',
+    id: 'p7', tipoDocumento: 'CC', numeroDocumento: '1023456789', nombres: 'Oscar Fernando', apellidos: 'Bernal Quintero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1987-01-18', rh: 'B+', nivelEducativo: 'secundaria', email: 'oscar.bernal@email.com', telefono: '3212345678',
     contactoEmergencia: { nombre: 'Gloria Quintero', telefono: '3101234567', parentesco: 'Madre' }, createdAt: '2024-03-02T08:00:00Z', updatedAt: '2024-03-02T08:00:00Z',
   },
   {
@@ -114,11 +114,11 @@ export const mockPersonas: Persona[] = [
     contactoEmergencia: { nombre: 'Luz Díaz', telefono: '3115554433', parentesco: 'Esposa' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'universitario', email: 'maria.ospina@email.com', telefono: '3143216789',
+    id: 'p10', tipoDocumento: 'CE', numeroDocumento: '2233445566', nombres: 'María Valentina', apellidos: 'Ospina Cruz', genero: 'F', paisNacimiento: 'EC', fechaNacimiento: '1994-02-14', rh: 'AB-', nivelEducativo: 'profesional', email: 'maria.ospina@email.com', telefono: '3143216789',
     contactoEmergencia: { nombre: 'Eduardo Ospina', telefono: '3208765432', parentesco: 'Padre' }, createdAt: '2024-03-03T08:00:00Z', updatedAt: '2024-03-03T08:00:00Z',
   },
   {
-    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'bachiller', email: 'santiago.guzman@email.com', telefono: '3225556677',
+    id: 'p11', tipoDocumento: 'CC', numeroDocumento: '1067890123', nombres: 'Santiago', apellidos: 'Guzmán Peña', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1990-09-08', rh: 'O+', nivelEducativo: 'secundaria', email: 'santiago.guzman@email.com', telefono: '3225556677',
     contactoEmergencia: { nombre: 'Rosa Peña', telefono: '3117778899', parentesco: 'Madre' }, createdAt: '2024-03-04T08:00:00Z', updatedAt: '2024-03-04T08:00:00Z',
   },
   {
@@ -130,7 +130,7 @@ export const mockPersonas: Persona[] = [
     contactoEmergencia: { nombre: 'Carmen Soto', telefono: '3128765432', parentesco: 'Esposa' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
-    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'universitario', email: 'daniela.mejia@email.com', telefono: '3191234567',
+    id: 'p14', tipoDocumento: 'CC', numeroDocumento: '1090123456', nombres: 'Daniela', apellidos: 'Mejía Ortiz', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1997-05-09', rh: 'O+', nivelEducativo: 'profesional', email: 'daniela.mejia@email.com', telefono: '3191234567',
     contactoEmergencia: { nombre: 'Patricia Ortiz', telefono: '3202345678', parentesco: 'Madre' }, createdAt: '2024-03-05T08:00:00Z', updatedAt: '2024-03-05T08:00:00Z',
   },
   {
@@ -142,7 +142,7 @@ export const mockPersonas: Persona[] = [
     contactoEmergencia: { nombre: 'Fernando Suárez', telefono: '3054567890', parentesco: 'Hermano' }, createdAt: '2024-03-06T08:00:00Z', updatedAt: '2024-03-06T08:00:00Z',
   },
   {
-    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'bachiller', email: 'roberto.jimenez@email.com', telefono: '3237654321',
+    id: 'p17', tipoDocumento: 'PA', numeroDocumento: '3344556677', nombres: 'Roberto', apellidos: 'Jiménez Luna', genero: 'M', paisNacimiento: 'PE', fechaNacimiento: '1988-08-22', rh: 'O-', nivelEducativo: 'secundaria', email: 'roberto.jimenez@email.com', telefono: '3237654321',
     contactoEmergencia: { nombre: 'Ana Luna', telefono: '3108765432', parentesco: 'Madre' }, createdAt: '2024-03-07T08:00:00Z', updatedAt: '2024-03-07T08:00:00Z',
   },
   {
@@ -154,11 +154,11 @@ export const mockPersonas: Persona[] = [
     contactoEmergencia: { nombre: 'Sandra Acosta', telefono: '3117890123', parentesco: 'Esposa' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'universitario', email: 'viviana.molina@email.com', telefono: '3187890123',
+    id: 'p20', tipoDocumento: 'CC', numeroDocumento: '1076543210', nombres: 'Viviana', apellidos: 'Molina Zapata', genero: 'F', paisNacimiento: 'CO', fechaNacimiento: '1991-09-05', rh: 'O+', nivelEducativo: 'profesional', email: 'viviana.molina@email.com', telefono: '3187890123',
     contactoEmergencia: { nombre: 'Ricardo Molina', telefono: '3058901234', parentesco: 'Hermano' }, createdAt: '2024-03-08T08:00:00Z', updatedAt: '2024-03-08T08:00:00Z',
   },
   {
-    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'bachiller', email: 'hernan.aguilar@email.com', telefono: '3228901234',
+    id: 'p21', tipoDocumento: 'CC', numeroDocumento: '1087654321', nombres: 'Hernán', apellidos: 'Aguilar Romero', genero: 'M', paisNacimiento: 'CO', fechaNacimiento: '1983-05-28', rh: 'B-', nivelEducativo: 'secundaria', email: 'hernan.aguilar@email.com', telefono: '3228901234',
     contactoEmergencia: { nombre: 'Marta Romero', telefono: '3109012345', parentesco: 'Madre' }, createdAt: '2024-03-09T08:00:00Z', updatedAt: '2024-03-09T08:00:00Z',
   },
   {

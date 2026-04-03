@@ -2343,7 +2343,7 @@ Definidos en `src/data/formOptions.ts`:
 ```typescript
 interface AuditLog {
   id: string;
-  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo';
+  entidadTipo: 'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo' | 'certificado' | 'plantilla_certificado' | 'excepcion_certificado' | 'empresa' | 'formato_formacion' | 'tarifa_empresa' | 'factura' | 'pago' | 'grupo_cartera';
   entidadId: string;
   accion: 'crear' | 'editar' | 'eliminar';
   camposModificados?: string[];           // Solo en ediciones

@@ -94,7 +94,7 @@ const App = () => (
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLoginPage />} />
-            <Route path="/admin/dashboard" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
+            <Route path="/admin/dashboard" element={<AdminGuard><MainLayout><AdminDashboardPage /></MainLayout></AdminGuard>} />
 
             {/* Protected routes with layout */}
             <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />

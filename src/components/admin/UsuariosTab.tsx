@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { UserPlus, Users, RefreshCw } from "lucide-react";
+import { UserPlus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRoles } from "@/hooks/useRoles";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 
 export default function UsuariosTab() {
   const { toast } = useToast();
@@ -62,11 +61,8 @@ export default function UsuariosTab() {
   return (
     <div className="space-y-8">
       {/* Create user form */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border p-6 max-w-lg">
-        <div className="flex items-center gap-3 mb-5">
-          <UserPlus className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Crear Usuario</h2>
-        </div>
+      <div className="bg-card border border-border rounded-lg p-6 max-w-lg">
+        <h2 className="text-base font-semibold text-foreground mb-4">Crear Usuario</h2>
 
         <form onSubmit={handleCreateUser} className="space-y-4">
           <div className="space-y-2">
@@ -111,26 +107,25 @@ export default function UsuariosTab() {
 
       {/* Users list */}
       <div>
-        <div className="flex items-center gap-3 mb-4">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Usuarios del Sistema</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-foreground">Usuarios del Sistema</h2>
           <Button variant="ghost" size="sm" onClick={() => usuariosQuery.refetch()}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
 
-        <div className="border border-border rounded-xl overflow-hidden">
+        <div className="border border-border rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/50">
-                <th className="text-left p-3 font-medium">Email</th>
-                <th className="text-left p-3 font-medium">Nombres</th>
-                <th className="text-left p-3 font-medium w-52">Rol</th>
+                <th className="text-left p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Email</th>
+                <th className="text-left p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Nombres</th>
+                <th className="text-left p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground w-52">Rol</th>
               </tr>
             </thead>
             <tbody>
               {usuarios.map((u) => (
-                <tr key={u.id} className="border-t border-border/50 hover:bg-muted/30">
+                <tr key={u.id} className="border-t border-border/50 bg-card hover:bg-muted/30">
                   <td className="p-3">{u.email}</td>
                   <td className="p-3">{u.nombres || "—"}</td>
                   <td className="p-3">

@@ -56,14 +56,14 @@ const AdminLoginPage = () => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-destructive/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-destructive mb-4 shadow-lg shadow-destructive/20">
-            <Shield className="w-8 h-8 text-destructive-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
+            <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             Acceso Administrativo
@@ -80,10 +80,10 @@ const AdminLoginPage = () => {
                 Correo electrónico
               </label>
               <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-destructive" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input id="admin-email" type="email" placeholder="admin@email.com" value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="pl-12 h-12 bg-muted/50 border-border/50 focus:border-destructive focus:ring-2 focus:ring-destructive/20 transition-all duration-200" />
+                  className="pl-12 h-12 bg-muted/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" />
               </div>
             </div>
 
@@ -92,10 +92,10 @@ const AdminLoginPage = () => {
                 Contraseña
               </label>
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-destructive" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors group-focus-within:text-primary" />
                 <Input id="admin-password" type={showPassword ? "text" : "password"} placeholder="••••••••"
                   value={password} onChange={e => setPassword(e.target.value)}
-                  className="pl-12 pr-12 h-12 bg-muted/50 border-border/50 focus:border-destructive focus:ring-2 focus:ring-destructive/20 transition-all duration-200" />
+                  className="pl-12 pr-12 h-12 bg-muted/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -105,12 +105,12 @@ const AdminLoginPage = () => {
 
             <Button type="submit"
               className={cn("w-full h-12 text-base font-medium rounded-xl",
-                "bg-destructive hover:bg-destructive/90",
-                "shadow-lg shadow-destructive/25 hover:shadow-xl hover:shadow-destructive/30",
+                "bg-primary hover:bg-primary/90",
+                "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
                 "transition-all duration-300 hover:-translate-y-0.5", "group")}
               disabled={isLoading}>
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               ) : (
                 <>
                   Acceder al Panel

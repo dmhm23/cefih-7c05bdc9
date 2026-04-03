@@ -17,8 +17,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { usePermission } from "@/hooks/usePermission";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMemo } from "react";
 
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
@@ -41,21 +41,22 @@ const certificacionItems = [
   { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage, modulo: "certificacion" },
 ];
 
-function useCanView(modulo: string) {
-  return usePermission(modulo, "ver");
-}
-
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
-  const { signOut } = useAuth();
+  const { signOut, perfil, permisos } = useAuth();
   const isCollapsed = state === "collapsed";
 
-  // Filter menu items by permission
-  const visibleMenuItems = menuItems.filter((item) => useCanView(item.modulo));
-  const visibleDirectorio = directorioItems.filter((item) => useCanView(item.modulo));
-  const visibleCertificacion = certificacionItems.filter((item) => useCanView(item.modulo));
+  const canView = useMemo(() => {
+    if (perfil?.rol_nombre === "superadministrador") return (_: string) => true;
+    const verSet = new Set(permisos.filter((p) => p.accion === "ver").map((p) => p.modulo));
+    return (modulo: string) => verSet.has(modulo);
+  }, [perfil, permisos]);
+
+  const visibleMenuItems = menuItems.filter((item) => canView(item.modulo));
+  const visibleDirectorio = directorioItems.filter((item) => canView(item.modulo));
+  const visibleCertificacion = certificacionItems.filter((item) => canView(item.modulo));
 
   const isDirectorioActive = location.pathname.startsWith("/personas") || location.pathname.startsWith("/empresas");
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
@@ -108,15 +109,11 @@ export function AppSidebar() {
                 );
               })}
 
-              {/* Directorio - Collapsible */}
               {visibleDirectorio.length > 0 && (
                 <Collapsible defaultOpen={isDirectorioActive} className="group/collapsible-dir">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip="Directorio"
-                        isActive={isDirectorioActive}
-                      >
+                      <SidebarMenuButton tooltip="Directorio" isActive={isDirectorioActive}>
                         <Users className="h-4 w-4" />
                         <span>Directorio</span>
                         <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-dir:rotate-180" />
@@ -125,14 +122,10 @@ export function AppSidebar() {
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {visibleDirectorio.map((sub) => {
-                          const isSubActive = location.pathname === sub.url ||
-                            location.pathname.startsWith(sub.url + "/");
+                          const isSubActive = location.pathname === sub.url || location.pathname.startsWith(sub.url + "/");
                           return (
                             <SidebarMenuSubItem key={sub.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={isSubActive}
-                              >
+                              <SidebarMenuSubButton asChild isActive={isSubActive}>
                                 <button onClick={() => navigate(sub.url)} className="w-full">
                                   <sub.icon className="h-3.5 w-3.5" />
                                   <span>{sub.title}</span>
@@ -147,15 +140,11 @@ export function AppSidebar() {
                 </Collapsible>
               )}
 
-              {/* Certificación - Collapsible */}
               {visibleCertificacion.length > 0 && (
                 <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip="Certificación"
-                        isActive={isCertificacionActive}
-                      >
+                      <SidebarMenuButton tooltip="Certificación" isActive={isCertificacionActive}>
                         <Award className="h-4 w-4" />
                         <span>Certificación</span>
                         <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -167,10 +156,7 @@ export function AppSidebar() {
                           const isSubActive = location.pathname === sub.url;
                           return (
                             <SidebarMenuSubItem key={sub.title}>
-                              <SidebarMenuSubButton
-                                asChild
-                                isActive={isSubActive}
-                              >
+                              <SidebarMenuSubButton asChild isActive={isSubActive}>
                                 <button onClick={() => navigate(sub.url)} className="w-full">
                                   <sub.icon className="h-3.5 w-3.5" />
                                   <span>{sub.title}</span>

@@ -83,6 +83,23 @@ export default function MatriculasPage() {
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
 
+  // Load cartera status from DB
+  const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("grupo_cartera_matriculas")
+        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)");
+      if (data) {
+        const map: Record<string, EstadoGrupoCartera> = {};
+        for (const row of data as any[]) {
+          map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
+        }
+        setCarteraMap(map);
+      }
+    })();
+  }, [matriculas]);
+
   // Persist column config
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));

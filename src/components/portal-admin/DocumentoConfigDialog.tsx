@@ -198,15 +198,18 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
               <div className="space-y-1.5">
                 <Label>Habilitado por nivel</Label>
                 <div className="space-y-2">
-                  {NIVELES.map(nivel => (
-                    <label key={nivel} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={habilitadoPorNivel[nivel]}
-                        onCheckedChange={() => toggleNivel(nivel)}
-                      />
-                      {resolveNivelCursoLabel(nivel)}
-                    </label>
-                  ))}
+                  {NIVELES.map(nivel => {
+                    const nivelInfo = (nivelesData || []).find(n => n.id === nivel);
+                    return (
+                      <label key={nivel} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={habilitadoPorNivel[nivel]}
+                          onCheckedChange={() => toggleNivel(nivel)}
+                        />
+                        {nivelInfo?.nombreNivel || nivel}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </>

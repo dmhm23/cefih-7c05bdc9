@@ -226,6 +226,42 @@ export type Database = {
           },
         ]
       }
+      comentarios: {
+        Row: {
+          created_at: string
+          editado_en: string | null
+          entidad_id: string
+          entidad_tipo: string
+          id: string
+          seccion: Database["public"]["Enums"]["seccion_comentario"]
+          texto: string
+          usuario_id: string | null
+          usuario_nombre: string
+        }
+        Insert: {
+          created_at?: string
+          editado_en?: string | null
+          entidad_id: string
+          entidad_tipo: string
+          id?: string
+          seccion: Database["public"]["Enums"]["seccion_comentario"]
+          texto: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+        }
+        Update: {
+          created_at?: string
+          editado_en?: string | null
+          entidad_id?: string
+          entidad_tipo?: string
+          id?: string
+          seccion?: Database["public"]["Enums"]["seccion_comentario"]
+          texto?: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+        }
+        Relationships: []
+      }
       cursos: {
         Row: {
           activo: boolean

@@ -203,6 +203,62 @@ export type Database = {
           },
         ]
       }
+      documentos_matricula: {
+        Row: {
+          archivo_nombre: string | null
+          archivo_tamano: number | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga: string | null
+          fecha_documento: string | null
+          fecha_inicio_cobertura: string | null
+          id: string
+          matricula_id: string
+          nombre: string
+          opcional: boolean
+          storage_path: string | null
+          tipo: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Insert: {
+          archivo_nombre?: string | null
+          archivo_tamano?: number | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga?: string | null
+          fecha_documento?: string | null
+          fecha_inicio_cobertura?: string | null
+          id?: string
+          matricula_id: string
+          nombre: string
+          opcional?: boolean
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Update: {
+          archivo_nombre?: string | null
+          archivo_tamano?: number | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_documento_matricula"]
+          fecha_carga?: string | null
+          fecha_documento?: string | null
+          fecha_inicio_cobertura?: string | null
+          id?: string
+          matricula_id?: string
+          nombre?: string
+          opcional?: boolean
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_matricula_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           activo: boolean

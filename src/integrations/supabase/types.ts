@@ -56,6 +56,69 @@ export type Database = {
         }
         Relationships: []
       }
+      empresas: {
+        Row: {
+          activo: boolean
+          arl: Database["public"]["Enums"]["arl_enum"] | null
+          ciudad: string | null
+          created_at: string
+          deleted_at: string | null
+          departamento: string | null
+          direccion: string | null
+          email_contacto: string
+          id: string
+          nit: string
+          nombre_empresa: string
+          observaciones: string | null
+          persona_contacto: string
+          sector_economico:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          telefono_contacto: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          ciudad?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          departamento?: string | null
+          direccion?: string | null
+          email_contacto?: string
+          id?: string
+          nit: string
+          nombre_empresa: string
+          observaciones?: string | null
+          persona_contacto?: string
+          sector_economico?:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          telefono_contacto?: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          ciudad?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          departamento?: string | null
+          direccion?: string | null
+          email_contacto?: string
+          id?: string
+          nit?: string
+          nombre_empresa?: string
+          observaciones?: string | null
+          persona_contacto?: string
+          sector_economico?:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          telefono_contacto?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       perfiles: {
         Row: {
           created_at: string | null
@@ -79,6 +142,44 @@ export type Database = {
           rol?: string
         }
         Relationships: []
+      }
+      tarifas_empresa: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          nivel_formacion_id: string
+          observaciones: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nivel_formacion_id: string
+          observaciones?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nivel_formacion_id?: string
+          observaciones?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarifas_empresa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

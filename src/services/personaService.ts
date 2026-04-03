@@ -65,6 +65,8 @@ function mapPersonaToDb(data: Partial<PersonaFormData>): Record<string, any> {
   if (data.email !== undefined) result.email = data.email;
   if (data.telefono !== undefined) result.telefono = data.telefono;
   if (data.contactoEmergencia !== undefined) result.contacto_emergencia = data.contactoEmergencia;
+  if (data.paisNacimiento !== undefined) result.pais_nacimiento = data.paisNacimiento || null;
+  if (data.rh !== undefined) result.rh = data.rh || null;
   return result;
 }
 

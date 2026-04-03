@@ -287,7 +287,7 @@ export default function PersonaDetallePage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium capitalize">
-                      {m.empresaNivelFormacion ? NIVEL_FORMACION_EMPRESA_LABELS[m.empresaNivelFormacion] : 'Sin nivel'}
+                      {m.empresaNivelFormacion ? resolveNivelFormacionLabel(m.empresaNivelFormacion) : 'Sin nivel'}
                     </span>
                     <StatusBadge status={m.estado} />
                   </div>

@@ -110,7 +110,7 @@ export const cursoService = {
     const { data, error } = await supabase
       .from('cursos')
       .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
-      .eq('estado', dbEstado)
+      .eq('estado', dbEstado as any)
       .is('deleted_at', null);
 
     if (error) handleSupabaseError(error);

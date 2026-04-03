@@ -134,12 +134,12 @@ export const empresaService = {
   async createTarifa(data: TarifaEmpresaFormData): Promise<TarifaEmpresa> {
     await delay(800);
 
-    // INC-006: Validar unicidad empresa+curso
+    // INC-006: Validar unicidad empresa+nivelFormacion
     const duplicate = mockTarifasEmpresa.find(
-      t => t.empresaId === data.empresaId && t.cursoId === data.cursoId
+      t => t.empresaId === data.empresaId && t.nivelFormacionId === data.nivelFormacionId
     );
     if (duplicate) {
-      throw new ApiError('Ya existe una tarifa para esta combinación de empresa y curso', 400, 'TARIFA_DUPLICADA');
+      throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
     }
 
     const now = new Date().toISOString();

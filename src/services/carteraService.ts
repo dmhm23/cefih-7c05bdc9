@@ -435,6 +435,7 @@ export const carteraService = {
       const pi = mockPagos.findIndex(p => p.id === pid);
       if (pi !== -1) mockPagos.splice(pi, 1);
     });
+    addCarteraAuditLog('eliminar', 'factura', id);
     mockFacturas.splice(idx, 1);
     // Recalc grupo
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);

@@ -10,7 +10,7 @@ import {
   TipoResponsable,
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
-import { mockMatriculas } from '@/data/mockData';
+import { mockMatriculas, mockAuditLogs } from '@/data/mockData';
 import { mockEmpresas } from '@/data/mockEmpresas';
 import {
   mockResponsables,
@@ -20,6 +20,28 @@ import {
   mockActividades,
 } from '@/data/mockCartera';
 import { delay } from './api';
+
+function addCarteraAuditLog(
+  accion: 'crear' | 'editar' | 'eliminar',
+  entidadTipo: 'factura' | 'pago' | 'grupo_cartera',
+  entidadId: string,
+  valorAnterior?: Record<string, unknown>,
+  valorNuevo?: Record<string, unknown>,
+  camposModificados?: string[]
+) {
+  mockAuditLogs.push({
+    id: uuid(),
+    entidadTipo,
+    entidadId,
+    accion,
+    camposModificados,
+    valorAnterior,
+    valorNuevo,
+    usuarioId: 'current_user',
+    usuarioNombre: 'Usuario Actual',
+    timestamp: new Date().toISOString(),
+  });
+}
 
 // ─── helpers ──────────────────────────────────────────────
 function recalcGrupo(grupo: GrupoCartera) {
@@ -221,8 +243,7 @@ export const carteraService = {
       matriculaIds: data.matriculaIds,
     };
     mockFacturas.push(factura);
-
-    // Sync linked matrículas
+    addCarteraAuditLog('crear', 'factura', factura.id, undefined, { numeroFactura: data.numeroFactura, total: data.total });
     if (data.matriculaIds.length > 0) {
       data.matriculaIds.forEach(mId => {
         const mat = mockMatriculas.find(m => m.id === mId);
@@ -272,6 +293,7 @@ export const carteraService = {
     await delay(600);
     const pago: RegistroPago = { id: uuid(), ...data };
     mockPagos.push(pago);
+    addCarteraAuditLog('crear', 'pago', pago.id, undefined, { valorPago: data.valorPago, metodoPago: data.metodoPago });
 
     // Recalc factura
     const factura = mockFacturas.find(f => f.id === data.facturaId);
@@ -351,8 +373,7 @@ export const carteraService = {
     }
     if (data.archivoFactura !== undefined) factura.archivoFactura = data.archivoFactura;
     recalcFactura(factura);
-
-    // Sync linked matrículas
+    addCarteraAuditLog('editar', 'factura', id, undefined, data as unknown as Record<string, unknown>, Object.keys(data));
     if (factura.matriculaIds?.length) {
       factura.matriculaIds.forEach(mId => {
         const mat = mockMatriculas.find(m => m.id === mId);
@@ -414,6 +435,7 @@ export const carteraService = {
       const pi = mockPagos.findIndex(p => p.id === pid);
       if (pi !== -1) mockPagos.splice(pi, 1);
     });
+    addCarteraAuditLog('eliminar', 'factura', id);
     mockFacturas.splice(idx, 1);
     // Recalc grupo
     const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
@@ -429,6 +451,7 @@ export const carteraService = {
     const idx = mockPagos.findIndex(p => p.id === id);
     if (idx === -1) return;
     const pago = mockPagos[idx];
+    addCarteraAuditLog('eliminar', 'pago', id);
     mockPagos.splice(idx, 1);
     // Recalc factura & grupo
     const factura = mockFacturas.find(f => f.id === pago.facturaId);

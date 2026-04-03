@@ -1,4 +1,5 @@
 import { PortalEstudianteData } from './portalEstudiante';
+import { MetodoPago } from './cartera';
 
 export type EstadoMatricula = 
   | 'creada' 
@@ -7,16 +8,8 @@ export type EstadoMatricula =
   | 'certificada' 
   | 'cerrada';
 
-export type FormaPago = 
-  | 'transferencia_bancaria'
-  | 'efectivo'
-  | 'consignacion'
-  | 'nequi'
-  | 'daviplata'
-  | 'bre_b'
-  | 'corresponsal_bancario'
-  | 'otro'
-  | string;
+/** @deprecated Use MetodoPago from cartera. Kept as alias for compatibility. */
+export type FormaPago = MetodoPago;
 
 export type NivelPrevio = 'trabajador_autorizado' | 'avanzado';
 

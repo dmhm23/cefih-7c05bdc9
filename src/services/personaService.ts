@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { Persona, PersonaFormData } from '@/types/persona';
-import { mockPersonas, mockAuditLogs } from '@/data/mockData';
+import { mockPersonas, mockMatriculas, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 
 export const personaService = {
@@ -39,6 +39,11 @@ export const personaService = {
       throw new ApiError('Ya existe una persona con este documento', 400, 'DOCUMENTO_DUPLICADO');
     }
 
+    // INC-004: Validar contacto de emergencia
+    if (!data.contactoEmergencia?.nombre || !data.contactoEmergencia?.telefono) {
+      throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
+    }
+
     const now = new Date().toISOString();
     const newPersona: Persona = {
       ...data,
@@ -69,6 +74,13 @@ export const personaService = {
     const index = mockPersonas.findIndex(p => p.id === id);
     if (index === -1) {
       throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
+    }
+
+    // INC-004: Validar contacto de emergencia si se actualiza
+    if (data.contactoEmergencia) {
+      if (!data.contactoEmergencia.nombre || !data.contactoEmergencia.telefono) {
+        throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
+      }
     }
 
     const now = new Date().toISOString();
@@ -103,6 +115,16 @@ export const personaService = {
     const index = mockPersonas.findIndex(p => p.id === id);
     if (index === -1) {
       throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
+    }
+
+    // INC-005: Verificar integridad referencial
+    const matriculasVinculadas = mockMatriculas.filter(m => m.personaId === id);
+    if (matriculasVinculadas.length > 0) {
+      throw new ApiError(
+        `No se puede eliminar la persona. Tiene ${matriculasVinculadas.length} matrícula(s) vinculada(s).`,
+        400,
+        'TIENE_MATRICULAS'
+      );
     }
 
     const now = new Date().toISOString();

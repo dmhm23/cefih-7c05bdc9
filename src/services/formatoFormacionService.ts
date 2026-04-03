@@ -1,6 +1,7 @@
 import { FormatoFormacion, FormatoFormacionFormData, Bloque, FormatoVersion, PlantillaBase } from '@/types/formatoFormacion';
 import { simulateApiCall } from './api';
 import { v4 as uuidv4 } from 'uuid';
+import { mockAuditLogs } from '@/data/mockData';
 
 // ---------------------------------------------------------------------------
 // Helpers para construir bloques
@@ -336,6 +337,15 @@ export const formatoFormacionService = {
       updatedAt: new Date().toISOString(),
     };
     mockFormatos.push(nuevo);
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: nuevo.id,
+      accion: 'crear',
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     return simulateApiCall(nuevo);
   },
 
@@ -343,6 +353,16 @@ export const formatoFormacionService = {
     const idx = mockFormatos.findIndex(f => f.id === id);
     if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
     mockFormatos[idx] = { ...mockFormatos[idx], ...data, updatedAt: new Date().toISOString() };
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: id,
+      accion: 'editar',
+      camposModificados: Object.keys(data),
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     return simulateApiCall(mockFormatos[idx]);
   },
 
@@ -435,6 +455,15 @@ export const formatoFormacionService = {
   delete: async (id: string): Promise<void> => {
     const idx = mockFormatos.findIndex(f => f.id === id);
     if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: id,
+      accion: 'eliminar',
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     mockFormatos.splice(idx, 1);
     return simulateApiCall(undefined as unknown as void);
   },

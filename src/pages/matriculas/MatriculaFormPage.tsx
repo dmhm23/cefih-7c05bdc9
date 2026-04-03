@@ -995,7 +995,7 @@ export default function MatriculaFormPage() {
                         control={form.control}
                         name="empresaId"
                         render={({ field }) => {
-                          const empresaOptions = empresas.map(e => ({
+                          const empresaOptions = empresas.filter(e => e.activo !== false).map(e => ({
                             value: e.id,
                             label: `${e.nombreEmpresa} — ${e.nit}`,
                           }));

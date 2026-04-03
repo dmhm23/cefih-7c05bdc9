@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { comentarioService } from '@/services/comentarioService';
 import { SeccionComentario } from '@/types/comentario';
 
-export function useComentarios(matriculaId: string, seccion: SeccionComentario) {
+export function useComentarios(entidadId: string, seccion: SeccionComentario) {
   return useQuery({
-    queryKey: ['comentarios', matriculaId, seccion],
-    queryFn: () => comentarioService.getByMatriculaSeccion(matriculaId, seccion),
+    queryKey: ['comentarios', entidadId, seccion],
+    queryFn: () => comentarioService.getByEntidadSeccion(entidadId, seccion),
   });
 }
 
@@ -14,7 +14,7 @@ export function useCreateComentario() {
   return useMutation({
     mutationFn: comentarioService.create,
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['comentarios', data.matriculaId, data.seccion] });
+      qc.invalidateQueries({ queryKey: ['comentarios', data.entidadId, data.seccion] });
     },
   });
 }

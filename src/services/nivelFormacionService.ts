@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { NivelFormacion, NivelFormacionFormData } from '@/types/nivelFormacion';
-import { mockNivelesFormacion, mockAuditLogs } from '@/data/mockData';
+import { mockNivelesFormacion, mockCursos, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 
 export const nivelFormacionService = {
@@ -87,6 +87,16 @@ export const nivelFormacionService = {
     const index = mockNivelesFormacion.findIndex(n => n.id === id);
     if (index === -1) {
       throw new ApiError('Nivel de formación no encontrado', 404, 'NOT_FOUND');
+    }
+
+    // INC-005: Verificar integridad referencial
+    const cursosVinculados = mockCursos.filter(c => c.tipoFormacion === id);
+    if (cursosVinculados.length > 0) {
+      throw new ApiError(
+        `No se puede eliminar el nivel de formación. Tiene ${cursosVinculados.length} curso(s) vinculado(s).`,
+        400,
+        'TIENE_CURSOS'
+      );
     }
 
     const now = new Date().toISOString();

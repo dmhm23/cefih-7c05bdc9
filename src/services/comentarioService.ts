@@ -25,9 +25,9 @@ function addAuditLog(
 }
 
 export const comentarioService = {
-  async getByMatriculaSeccion(matriculaId: string, seccion: SeccionComentario): Promise<Comentario[]> {
+  async getByEntidadSeccion(entidadId: string, seccion: SeccionComentario): Promise<Comentario[]> {
     const filtered = mockComentarios.filter(
-      (c) => c.matriculaId === matriculaId && c.seccion === seccion
+      (c) => c.entidadId === entidadId && c.seccion === seccion
     );
     return simulateApiCall(filtered.sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime()), 200);
   },
@@ -39,7 +39,7 @@ export const comentarioService = {
       creadoEn: new Date().toISOString(),
     };
     mockComentarios.push(nuevo);
-    addAuditLog('crear', nuevo.id, undefined, { texto: nuevo.texto, seccion: nuevo.seccion, matriculaId: nuevo.matriculaId });
+    addAuditLog('crear', nuevo.id, undefined, { texto: nuevo.texto, seccion: nuevo.seccion, entidadId: nuevo.entidadId });
     return simulateApiCall(nuevo, 200);
   },
 
@@ -57,7 +57,7 @@ export const comentarioService = {
     if (idx === -1) throw new Error('Comentario no encontrado');
     const eliminado = mockComentarios[idx];
     mockComentarios.splice(idx, 1);
-    addAuditLog('eliminar', id, { texto: eliminado.texto, seccion: eliminado.seccion, matriculaId: eliminado.matriculaId });
+    addAuditLog('eliminar', id, { texto: eliminado.texto, seccion: eliminado.seccion, entidadId: eliminado.entidadId });
     return simulateApiCall(undefined, 200);
   },
 };

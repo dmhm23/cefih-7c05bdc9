@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Download, Filter } from "lucide-react";
+import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
@@ -8,11 +8,12 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector";
-import { RowActions, createViewAction } from "@/components/shared/RowActions";
+import { RowActions, createViewAction, createDeleteAction } from "@/components/shared/RowActions";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
-import { useMatriculas } from "@/hooks/useMatriculas";
+import { useMatriculas, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula } from "@/types";
@@ -65,6 +66,8 @@ export default function MatriculasPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
     estadoCartera: "todos",
@@ -82,6 +85,7 @@ export default function MatriculasPage() {
   const { data: matriculas = [], isLoading } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
+  const deleteMatricula = useDeleteMatricula();
 
   // Load cartera status from DB
   const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});
@@ -216,13 +220,30 @@ export default function MatriculasPage() {
     setSelectedIndex(index);
   };
 
+  const handleDeleteConfirm = async () => {
+    try {
+      for (const id of idsToDelete) {
+        await deleteMatricula.mutateAsync(id);
+      }
+      toast({ title: `${idsToDelete.length} matrícula(s) eliminada(s)` });
+      setSelectedIds([]);
+      setSelectedIndex(null);
+    } catch {
+      toast({ title: "Error al eliminar", variant: "destructive" });
+    } finally {
+      setIdsToDelete([]);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
       icon: Trash2,
       variant: "destructive",
       onClick: (ids) => {
-        toast({ title: `Eliminar ${ids.length} matrículas (pendiente)` });
+        setIdsToDelete(ids);
+        setShowDeleteConfirm(true);
       },
     },
     {
@@ -406,6 +427,10 @@ export default function MatriculasPage() {
           showOnHover
           actions={[
             createViewAction(() => navigate(`/matriculas/${m.id}`)),
+            createDeleteAction(() => {
+              setIdsToDelete([m.id]);
+              setShowDeleteConfirm(true);
+            }),
           ]}
         />
       ),
@@ -484,6 +509,16 @@ export default function MatriculasPage() {
         currentIndex={selectedIndex ?? 0}
         totalCount={filteredMatriculas.length}
         onNavigate={handleNavigate}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Eliminar matrícula(s)"
+        description={`¿Estás seguro de eliminar ${idsToDelete.length} matrícula(s)? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
       />
     </div>
   );

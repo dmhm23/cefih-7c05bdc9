@@ -1356,6 +1356,8 @@ export type Database = {
           nombres: string
           numero_documento: string
           observaciones: string | null
+          pais_nacimiento: string | null
+          rh: string | null
           telefono: string
           tipo_documento: Database["public"]["Enums"]["tipo_documento_identidad"]
           updated_at: string
@@ -1377,6 +1379,8 @@ export type Database = {
           nombres: string
           numero_documento: string
           observaciones?: string | null
+          pais_nacimiento?: string | null
+          rh?: string | null
           telefono?: string
           tipo_documento?: Database["public"]["Enums"]["tipo_documento_identidad"]
           updated_at?: string
@@ -1398,6 +1402,8 @@ export type Database = {
           nombres?: string
           numero_documento?: string
           observaciones?: string | null
+          pais_nacimiento?: string | null
+          rh?: string | null
           telefono?: string
           tipo_documento?: Database["public"]["Enums"]["tipo_documento_identidad"]
           updated_at?: string

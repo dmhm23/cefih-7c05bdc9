@@ -2227,7 +2227,11 @@ ApiError             // Error con statusCode y code (ej: 404, 'NOT_FOUND')
 │                  │                    │                     │
 │ nombreNivel      │                    │ entidadTipo         │ ← persona | matricula | curso |
 │ duracionHoras    │                    │                     │   comentario | nivel_formacion |
-│ documentosReq    │                    │                     │   personal | cargo
+│ documentosReq    │                    │                     │   personal | cargo | certificado |
+│                  │                    │                     │   plantilla_certificado |
+│                  │                    │                     │   excepcion_certificado | empresa |
+│                  │                    │                     │   formato_formacion | tarifa_empresa |
+│                  │                    │                     │   factura | pago | grupo_cartera
 │ camposAdicionales│                    │ entidadId           │
 │ observaciones    │                    │ accion              │ ← crear | editar | eliminar
 └──────────────────┘                    │ camposModificados   │

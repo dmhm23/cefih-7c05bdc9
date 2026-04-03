@@ -13,7 +13,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
-import { useMatriculas } from "@/hooks/useMatriculas";
+import { useMatriculas, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { Matricula } from "@/types";

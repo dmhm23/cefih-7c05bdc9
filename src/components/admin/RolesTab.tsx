@@ -136,7 +136,7 @@ export default function RolesTab() {
       {/* Roles grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {roles.map((rol) => (
-          <div key={rol.id} className="bg-card border border-border rounded-xl p-5 space-y-3">
+          <div key={rol.id} className="bg-card border border-border rounded-lg p-5 space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
                 {rol.es_sistema ? (

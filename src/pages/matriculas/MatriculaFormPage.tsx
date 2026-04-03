@@ -399,7 +399,7 @@ export default function MatriculaFormPage() {
     try {
       await createMatricula.mutateAsync({
         personaId: data.personaId,
-        cursoId: data.cursoId || '',
+        cursoId: data.cursoId || undefined,
         empresaId: data.empresaId || undefined,
         nivelPrevio: (data.nivelPrevio as any) || undefined,
         centroFormacionPrevio: data.centroFormacionPrevio || undefined,

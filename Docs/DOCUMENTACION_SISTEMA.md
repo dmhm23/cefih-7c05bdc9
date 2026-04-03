@@ -2,8 +2,8 @@
 
 **Sistema de Administración para Centros de Formación en Trabajo Seguro en Alturas**
 
-> Versión: 1.8  
-> Última actualización: 25 de Marzo 2026  
+> Versión: 1.9  
+> Última actualización: 3 de Abril 2026  
 > Marco normativo: Resolución 4272 de 2021 (Colombia)
 
 ---

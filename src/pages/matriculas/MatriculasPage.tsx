@@ -121,10 +121,7 @@ export default function MatriculasPage() {
   };
 
   const getEstadoCartera = (matricula: Matricula): EstadoGrupoCartera => {
-    const grupo = mockGruposCartera.find((g) =>
-      g.matriculaIds.includes(matricula.id)
-    );
-    return grupo?.estado ?? "sin_facturar";
+    return carteraMap[matricula.id] ?? "sin_facturar";
   };
 
   const filterConfigs: FilterConfig[] = [

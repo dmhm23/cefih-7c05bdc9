@@ -1,176 +1,157 @@
 
 
-## Plan: Actualizar Especificación de Requerimientos Backend a v2.0
+# Plan de Implementación Backend — FASE 1 y FASE 2
 
-### Resumen
+## Estado Actual
 
-Actualizar `Docs/Especificación_de_Requerimientos_de_Software_Backend_v1.md` para cubrir el 100% de las 190+ reglas de negocio del documento v3, reflejar el estado actual de implementacion (autenticacion ya implementada), y agregar detalles tecnicos faltantes (schemas SQL, validaciones, triggers, Edge Functions).
+- **Base de datos:** Solo existe la tabla `perfiles` con RLS, trigger y función `get_my_rol()`
+- **Frontend:** Todos los servicios (empresas, personal, personas, cursos, niveles) operan con datos mock en memoria
+- **Patrón de hooks:** React Query (`useQuery`/`useMutation`) apuntando a servicios mock
+- **Edge Functions:** Solo `admin-crear-usuario` y `bootstrap-admin`
 
----
+## Estrategia de Implementación
 
-### Cambios principales
-
-#### 1. Metadata y Estado de Implementacion
-- Version: v4.0 → **v5.0**
-- Agregar seccion de estado por fase: indicar que la autenticacion (perfiles, RLS, Edge Functions `admin-crear-usuario` y `bootstrap-admin`) ya esta implementada
-- Agregar referencia cruzada a `reglas_de_negocio_validadas_v3.md`
-
-#### 2. Consideraciones Transversales — Agregar items faltantes
-- **T-003 (Unificacion MetodoPago):** Resolver INC-009. El backend debe usar un unico ENUM con los 8 metodos: `transferencia_bancaria`, `efectivo`, `consignacion`, `nequi`, `daviplata`, `bre_b`, `corresponsal_bancario`, `otro`. Eliminar el enum reducido de Cartera (`transferencia`, `efectivo`, `consignacion`, `tarjeta`)
-- **T-006 (Supabase Storage):** Definir buckets: `firmas`, `documentos-matricula`, `adjuntos-personal`, `facturas`. Politicas RLS por bucket
-- **T-007 (Catalogos como ENUMs o tablas):** Definir estrategia para: sectores economicos (RN-EMP-004), ARLs (RN-EMP-005), tipos documento persona (RN-PER-002), generos (RN-PER-003), niveles educativos (RN-PER-004)
-
-#### 3. Nueva seccion: FASE 0 — Autenticacion y Administracion (YA IMPLEMENTADA)
-Documentar lo existente como referencia:
-- Tabla `perfiles` (schema actual)
-- Trigger `on_auth_user_created`
-- Funcion `get_my_rol()` SECURITY DEFINER
-- Politicas RLS implementadas
-- Edge Functions: `admin-crear-usuario`, `bootstrap-admin`
-- Marcar como **COMPLETADA**
-
-#### 4. FASE 1 — Expandir con reglas faltantes
-
-**Empresas:**
-- Agregar campo `activo` (booleano, default true) — RN-EMP-003
-- Constraint UNIQUE en `nit` — RN-EMP-002
-- Filtrar empresas inactivas en autocomplete (resolver INC-010)
-- Agregar seccion "Estudiantes Enviados": vista SQL que cuenta matriculas por empresa — RN-EMP-011, RN-EMP-012
-- Integridad referencial: ON DELETE RESTRICT si tiene matriculas, tarifas o responsables_cartera — RN-EMP-013
-
-**Tarifas:**
-- Corregir modelo: UNIQUE(empresa_id, **nivel_formacion_id**) segun spec original, pero RN-EMP-007 dice `curso_id`. Alinear: usar `nivel_formacion_id` como FK y `curso_nombre` como campo desnormalizado — RN-EMP-009
-- Agregar constraint UNIQUE explícito — resolver INC-006
-
-**Personal:**
-- Detallar tipos de cargo como ENUM: `entrenador`, `supervisor`, `administrativo`, `instructor`, `otro` — RN-PNL-001
-- Validacion: entrenador de curso solo si cargo = `entrenador` o `instructor` — RN-PNL-005
-- Validacion: supervisor de curso solo si cargo = `supervisor` — RN-PNL-006
-- Tabla `personal_adjuntos`: nombre, tipo_mime, tamano, fecha_carga, storage_path — RN-PNL-004
-
-**Niveles de formacion:**
-- Detallar schema de `campos_adicionales` JSONB con los 12 tipos soportados — RN-NF-003
-- Documentar alcance de campos: `solo_nivel` vs `todos_los_niveles` — RN-NF-004
-- Detallar schema de configuracion de codigo estudiante — RN-NF-005, RN-NF-006
-- Catálogo fijo de 6 documentos requeridos como ENUM — RN-NF-002
-
-#### 5. FASE 2 — Expandir con reglas faltantes
-
-**Personas:**
-- ENUMs: tipo_documento (5 valores RN-PER-002), genero (3 valores RN-PER-003), nivel_educativo (10 valores RN-PER-004)
-- Validacion trigger en contacto_emergencia: nombre y telefono obligatorios — RN-PER-005, resolver INC-004
-- Firma digital: campo `firma` (TEXT/Base64 o storage_path) + `firma_fecha` — RN-PER-006
-- Datos de direccion NO van en persona, solo en matricula — RN-PER-007
-
-**Cursos:**
-- Tipos de formacion como ENUM estricto (4 valores, sin `| string`) — RN-CUR-003, resolver INC-007
-- Autogeneracion de nombre: trigger o funcion — RN-CUR-004
-- Tabla `cursos_fechas_mintrabajo`: id, curso_id, fecha, motivo, created_by, created_at — RN-CUR-006
-- Detallar las 15 columnas del CSV MinTrabajo con ARL como ultima — RN-CUR-007
-- Validacion de asignacion de personal por tipo de cargo — RN-CUR-008 via RN-PNL-005/006
-- Acciones masivas: generar certificados y eliminar estudiantes — RN-CUR-010
-
-#### 6. FASE 3 — Expandir significativamente
-
-**Matriculas:**
-- Detallar schema SQL completo con todos los campos del tipo TypeScript (30+ columnas)
-- Curso opcional (cursoId nullable) — RN-MAT-005
-- Snapshot de empresa como trigger BEFORE INSERT — RN-MAT-007
-- Consentimiento de salud: 6 campos booleanos + detalles — RN-MAT-009
-- Estados como ENUM: `creada`, `pendiente`, `completa`, `certificada`, `cerrada` — RN-MAT-001
-- Tipos vinculacion ENUM: `empresa`, `independiente`, `arl` — RN-MAT-002
-- Sincronizacion de documentos con nivel via trigger o Edge Function — RN-MAT-013
-- Auto-init portal estudiante al crear con curso — RN-MAT-021
-- Auto-asignacion a cartera al crear — RN-MAT-022
-- Evaluacion reentrenamiento: 15 preguntas, umbral 70% — RN-MAT-015
-
-**Documentos matricula:**
-- Tipos como ENUM (8 valores) — RN-MAT-012
-- Estados: `pendiente`, `cargado` — RN-MAT-011
-- Campo `opcional` booleano
-
-**Formatos (expansion mayor):**
-- Motor dual: `bloques` (legacy) y `plantilla_html` — RN-FMT-001/002
-- 4 formatos legacy identificados por `legacy_component_id` — RN-FMT-003
-- Estados: `borrador`, `activo`, `archivado` — RN-FMT-004
-- Categorias ENUM: `formacion`, `evaluacion`, `asistencia`, `pta_ats`, `personalizado` — RN-FMT-008
-- Asignacion por scope: `nivel_formacion` o `tipo_curso` — RN-FMT-009
-- Mapeo nivel→tipo para filtrado — RN-FMT-010
-- Resolucion con fallback a `empresaNivelFormacion` — RN-FMT-011
-- Sincronizacion en tiempo real (sin snapshot) — RN-FMT-012
-- 36 tokens en 6 categorias — RN-FMT-014
-- Edge Function `resolve-formato-context` — RN-FMT-015/017
-- Versionado: tabla `versiones_formato` — RN-FMT-020/021/022
-- Plantillas base preconstruidas — RN-FMT-023/024
-- Encabezado institucional configurable — RN-FMT-025
-- Firmas requeridas por formato — RN-FMT-026
-- Duplicacion con reglas — RN-FMT-027
-- Motor bloques: 18 tipos detallados — RN-FMT-028
-- Respuestas: tabla `formato_respuestas` con estados — RN-FMT-033
-
-#### 7. FASE 4 — Expandir Cartera y Certificacion
-
-**Cartera:**
-- MetodoPago unificado (8 valores) — resolver INC-009
-- Estados grupo ENUM: 5 valores — RN-CAR-002
-- Estados factura ENUM: 3 valores — RN-CAR-003
-- Recalculo de estado como funcion SQL, no solo en consulta — RN-CAR-011/012
-- Sincronizacion bidireccional factura↔matricula — RN-CAR-013/014
-- Eliminar factura cascadea pagos — RN-CAR-015
-- Actividades de cartera: tabla con 4 tipos — RN-CAR-016
-- Actividades automaticas del sistema — RN-CAR-017
-- Navegacion a empresa desde cartera — RN-CAR-019
-
-**Certificacion:**
-- Estados ENUM: `elegible`, `generado`, `bloqueado`, `revocado` — RN-CER-001
-- Snapshot JSON + SVG renderizado — RN-CER-002
-- Reglas por tipo de certificado — RN-CER-004
-- Excepciones: estados `pendiente`, `aprobada`, `rechazada` — RN-CER-005
-- Revocacion con registro de quien, motivo, fecha — RN-CER-006
-
-#### 8. FASE 5 — Expandir Portal
-
-- Acceso por cedula con validacion de vigencia (fechaFin >= hoy) — RN-POR-003
-- Dependencias entre documentos — RN-POR-005
-- Orden configurable — RN-POR-006
-- Habilitacion por nivel de formacion — RN-POR-007
-- Multiples intentos por documento — RN-POR-008
-
-#### 9. FASE 6 — Expandir Comentarios y Dashboard
-
-**Comentarios:**
-- Renombrar `matriculaId` a `entidad_id` + agregar `entidad_tipo` — resolver INC-008
-- Secciones: `cartera`, `observaciones`, `curso_observaciones` — RN-COM-001
-
-**Auditoria:**
-- Expandir TipoEntidad con las 6 entidades faltantes — RN-AUD-004, resolver INC-001
-- Total: 16 tipos de entidad auditables
-
-#### 10. Nueva seccion: Resolucion de Deuda Tecnica
-Tabla que mapea cada INC-00X a la solucion propuesta en el backend:
-
-| ID | Problema | Solucion Backend |
-|----|----------|-----------------|
-| INC-001 | Auditoria incompleta | Expandir ENUM TipoEntidad a 16 valores |
-| INC-004 | Contacto emergencia sin validar | Trigger de validacion en personas |
-| INC-005 | Sin integridad referencial | ON DELETE RESTRICT en FKs criticas |
-| INC-006 | Tarifas sin unicidad | UNIQUE constraint empresa+nivel |
-| INC-007 | TipoFormacion abierto | ENUM estricto de 4 valores |
-| INC-008 | matriculaId generico | Renombrar a entidad_id + entidad_tipo |
-| INC-009 | MetodoPago divergente | ENUM unificado de 8 valores |
-| INC-010 | Empresas inactivas en autocomplete | WHERE activo = true en queries |
+La migración se divide en **6 pasos secuenciales**. Cada paso crea tablas/funciones en la base de datos y luego reescribe el servicio frontend correspondiente para usar Supabase en lugar de datos mock. Los hooks React Query **no se modifican** — solo cambia la implementación interna de los servicios.
 
 ---
 
-### Archivo afectado
+## Paso 1 — Infraestructura Transversal (Migración SQL)
 
-| Archivo | Accion |
-|---|---|
-| `Docs/Especificación_de_Requerimientos_de_Software_Backend_v1.md` | Reescritura mayor (~3x contenido original) |
+Crear en una sola migración:
+- **Función `update_updated_at()`** — trigger reutilizable para timestamps automáticos
+- **Tabla `audit_logs`** con ENUMs `tipo_entidad_audit` y `tipo_accion_audit`
+- **Función genérica `audit_log_trigger_fn()`** — trigger AFTER INSERT/UPDATE/DELETE que registra cambios automáticamente
+- **Todos los ENUMs de T-007** (25 tipos): `tipo_documento_identidad`, `genero`, `nivel_educativo`, `estado_curso`, `tipo_formacion`, `estado_matricula`, `tipo_vinculacion`, `tipo_cargo`, `metodo_pago`, etc.
+- **Storage buckets:** `firmas`, `documentos-matricula`, `adjuntos-personal`, `facturas`, `certificados` con políticas RLS
 
-### Notas
-- Se preserva la estructura por fases pero se expande cada una con schemas SQL detallados, ENUMs, triggers, y Edge Functions
-- Se agrega FASE 0 para autenticacion ya implementada
-- Se mapea cada regla RN-XXX-NNN a su implementacion backend correspondiente
-- Se resuelven las 10 inconsistencias activas del documento v3
+**Reglas de negocio cubiertas:** T-001 a T-009, INC-009 (unificación MetodoPago), INC-007 (TipoFormacion estricto), RN-AUD-001/004
+
+---
+
+## Paso 2 — FASE 1A: Empresas y Tarifas (Migración + Servicio)
+
+### Migración SQL
+- Tabla `empresas` con UNIQUE en `nit`, campo `activo`, soft-delete, índices GIN para búsqueda
+- Tabla `tarifas_empresa` con UNIQUE(`empresa_id`, `nivel_formacion_id`), ON DELETE RESTRICT
+- Función `check_empresa_references()` — trigger que impide soft-delete si hay matrículas/tarifas
+- Función `get_empresa_estudiantes_count()` — cuenta matrículas por empresa
+- RLS: SELECT para autenticados (filtered by `deleted_at IS NULL`), ALL para admin/global
+- Triggers: `update_updated_at`, `audit_log_trigger_fn`
+
+### Reescritura Frontend
+- **`src/services/empresaService.ts`**: Reemplazar todos los mock por `supabase.from('empresas')` y `supabase.from('tarifas_empresa')`
+- **`src/types/empresa.ts`**: Adaptar tipos para mapear snake_case ↔ camelCase (o usar un mapper)
+- Los hooks `useEmpresas`, `useEmpresa`, `useCreateEmpresa`, etc. **no cambian** — siguen llamando a `empresaService`
+
+**Reglas cubiertas:** RN-EMP-001 a RN-EMP-013, INC-005, INC-006, INC-010
+
+---
+
+## Paso 3 — FASE 1B: Personal y Cargos (Migración + Servicio)
+
+### Migración SQL
+- Tabla `cargos` con ENUM `tipo_cargo`, soft-delete
+- Tabla `personal` con FK a `cargos` (ON DELETE RESTRICT), campo `firma`
+- Tabla `personal_adjuntos` con `storage_path` apuntando a bucket `adjuntos-personal`
+- Función `validar_asignacion_personal_curso()` — previene asignar entrenador sin cargo correcto
+- RLS: SELECT para autenticados, ALL para admin/global
+- Triggers: `update_updated_at`, `audit_log_trigger_fn`
+
+### Reescritura Frontend
+- **`src/services/personalService.ts`**: Reemplazar mock por Supabase queries + Storage API para adjuntos
+- **`src/types/personal.ts`**: Ajustar tipos si es necesario
+
+**Reglas cubiertas:** RN-PNL-001 a RN-PNL-006
+
+---
+
+## Paso 4 — FASE 1C: Niveles de Formación (Migración + Servicio)
+
+### Migración SQL
+- Tabla `niveles_formacion` con `campos_adicionales` JSONB, `config_codigo_estudiante` JSONB, `documentos_requeridos` TEXT[]
+- RLS: SELECT para autenticados, ALL para admin/global
+- Triggers: `update_updated_at`, `audit_log_trigger_fn`
+
+### Reescritura Frontend
+- **`src/services/nivelFormacionService.ts`**: Reemplazar mock por Supabase
+- **`src/types/nivelFormacion.ts`**: Mapear campos (`nombreNivel` → `nombre`, etc.)
+
+**Reglas cubiertas:** RN-NF-001 a RN-NF-006
+
+---
+
+## Paso 5 — FASE 2A: Personas (Migración + Servicio)
+
+### Migración SQL
+- Tabla `personas` con ENUMs (`tipo_documento_identidad`, `genero`, `nivel_educativo`), UNIQUE en `numero_documento`
+- Trigger `validar_contacto_emergencia()` — valida nombre y teléfono obligatorios en JSONB
+- Trigger `check_persona_references()` — impide soft-delete si tiene matrículas activas
+- Índice GIN para búsqueda por nombre
+- RLS: SELECT para autenticados, ALL para admin/global
+
+### Reescritura Frontend
+- **`src/services/personaService.ts`**: Reemplazar mock por Supabase, incluyendo firma vía Storage
+- **`src/types/persona.ts`**: Ajustar tipos
+
+**Reglas cubiertas:** RN-PER-001 a RN-PER-009, INC-004
+
+---
+
+## Paso 6 — FASE 2B: Cursos (Migración + Servicio)
+
+### Migración SQL
+- Tabla `cursos` con FKs a `niveles_formacion`, `personal` (entrenador/supervisor), ENUM `estado_curso` y `tipo_formacion`
+- Tabla `cursos_fechas_mintrabajo` con FK CASCADE a cursos
+- Trigger `autogenerar_nombre_curso()` — concatena tipo + número
+- Trigger `validar_asignacion_personal_curso()` — ya creado en paso 3, se asigna aquí
+- RLS y triggers de auditoría
+
+### Reescritura Frontend
+- **`src/services/cursoService.ts`**: Reemplazar mock por Supabase, joins con personal/nivel
+- **`src/types/curso.ts`**: Eliminar `| string` de `TipoFormacion`, mapear campos
+
+### Edge Function (nuevo)
+- **`exportar-csv-mintrabajo`**: Genera CSV con 15 columnas consolidando datos de persona + matrícula + curso para cursos cerrados
+
+**Reglas cubiertas:** RN-CUR-001 a RN-CUR-011, INC-007
+
+---
+
+## Orden de Dependencias
+
+```text
+Paso 1: ENUMs + audit_logs + Storage + funciones utilitarias
+  │
+  ├── Paso 2: empresas + tarifas_empresa
+  │
+  ├── Paso 3: cargos + personal + personal_adjuntos
+  │
+  └── Paso 4: niveles_formacion
+        │
+        ├── Paso 5: personas (sin dependencia directa, pero se necesita para cursos)
+        │
+        └── Paso 6: cursos + cursos_fechas_mintrabajo
+                     (depende de: niveles_formacion, personal)
+```
+
+## Archivos Afectados por Paso
+
+| Paso | Migraciones SQL | Servicios Frontend | Tipos Frontend | Hooks |
+|------|----------------|-------------------|----------------|-------|
+| 1 | 1 migración grande | `api.ts` (agregar helper Supabase) | — | — |
+| 2 | 1 migración | `empresaService.ts` | `empresa.ts` | Sin cambios |
+| 3 | 1 migración | `personalService.ts` | `personal.ts` | Sin cambios |
+| 4 | 1 migración | `nivelFormacionService.ts` | `nivelFormacion.ts` | Sin cambios |
+| 5 | 1 migración | `personaService.ts` | `persona.ts` | Sin cambios |
+| 6 | 1 migración + 1 Edge Function | `cursoService.ts` | `curso.ts` | Sin cambios |
+
+**Total: 6 migraciones SQL, 1 Edge Function, 5 servicios reescritos, 5 archivos de tipos ajustados**
+
+## Consideraciones Importantes
+
+1. **Mapeo snake_case ↔ camelCase**: Se creará una utilidad helper en `api.ts` para transformar automáticamente las respuestas de Supabase (snake_case) al formato camelCase que espera el frontend
+2. **Los datos mock existentes se pierden**: Al migrar a base de datos real, los datos de `mockData.ts`, `mockEmpresas.ts`, etc. dejan de usarse. Se pueden crear seeds opcionales
+3. **El archivo `types.ts` de Supabase se regenera automáticamente** tras cada migración — no se edita manualmente
+4. **Cada paso es desplegable de forma independiente** — se puede validar en producción antes de continuar al siguiente
+5. **RLS garantiza seguridad** — todas las tablas requieren autenticación; los roles admin/global tienen acceso de escritura
 

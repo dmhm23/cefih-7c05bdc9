@@ -1,101 +1,176 @@
 
 
-## Plan: Actualizar DOCUMENTACION_SISTEMA.md a v1.9
+## Plan: Actualizar Especificación de Requerimientos Backend a v2.0
 
 ### Resumen
 
-Actualizar el documento tecnico para reflejar la implementacion de autenticacion real con Lovable Cloud, el sistema de perfiles/roles, Edge Functions, guards de ruta, y el panel de administracion. Se mantiene la estructura original del documento y se expanden las secciones relevantes.
+Actualizar `Docs/Especificación_de_Requerimientos_de_Software_Backend_v1.md` para cubrir el 100% de las 190+ reglas de negocio del documento v3, reflejar el estado actual de implementacion (autenticacion ya implementada), y agregar detalles tecnicos faltantes (schemas SQL, validaciones, triggers, Edge Functions).
 
 ---
 
-### Cambios por seccion
+### Cambios principales
 
-#### 1. Metadata (lineas 1-8)
-- Version: 1.8 → **1.9**
-- Fecha: 25 de Marzo 2026 → **3 de Abril 2026**
+#### 1. Metadata y Estado de Implementacion
+- Version: v4.0 → **v5.0**
+- Agregar seccion de estado por fase: indicar que la autenticacion (perfiles, RLS, Edge Functions `admin-crear-usuario` y `bootstrap-admin`) ya esta implementada
+- Agregar referencia cruzada a `reglas_de_negocio_validadas_v3.md`
 
-#### 2. Seccion 1.2 — Alcance Funcional
-- Agregar fila en la tabla de modulos: **Autenticacion y Administracion** — Login real, gestion de usuarios, roles y panel admin.
+#### 2. Consideraciones Transversales — Agregar items faltantes
+- **T-003 (Unificacion MetodoPago):** Resolver INC-009. El backend debe usar un unico ENUM con los 8 metodos: `transferencia_bancaria`, `efectivo`, `consignacion`, `nequi`, `daviplata`, `bre_b`, `corresponsal_bancario`, `otro`. Eliminar el enum reducido de Cartera (`transferencia`, `efectivo`, `consignacion`, `tarjeta`)
+- **T-006 (Supabase Storage):** Definir buckets: `firmas`, `documentos-matricula`, `adjuntos-personal`, `facturas`. Politicas RLS por bucket
+- **T-007 (Catalogos como ENUMs o tablas):** Definir estrategia para: sectores economicos (RN-EMP-004), ARLs (RN-EMP-005), tipos documento persona (RN-PER-002), generos (RN-PER-003), niveles educativos (RN-PER-004)
 
-#### 3. Seccion 2.1 — Stack Tecnologico
-- Agregar fila: **Backend** | Lovable Cloud (Supabase) — Auth, PostgreSQL, Edge Functions
-- Agregar fila: **Autenticacion** | Supabase Auth (Email/Password)
+#### 3. Nueva seccion: FASE 0 — Autenticacion y Administracion (YA IMPLEMENTADA)
+Documentar lo existente como referencia:
+- Tabla `perfiles` (schema actual)
+- Trigger `on_auth_user_created`
+- Funcion `get_my_rol()` SECURITY DEFINER
+- Politicas RLS implementadas
+- Edge Functions: `admin-crear-usuario`, `bootstrap-admin`
+- Marcar como **COMPLETADA**
 
-#### 4. Seccion 2.2 — Patron de Arquitectura
-- Renombrar de "Backend Emulado" a **"Arquitectura Hibrida: Backend Real + Servicios Mock"**
-- Actualizar el diagrama ASCII para mostrar:
-  - Capa de Autenticacion (Supabase Auth) como capa real
-  - Tabla `perfiles` en PostgreSQL
-  - Edge Functions (`admin-crear-usuario`, `bootstrap-admin`)
-  - Capa de servicios mock (sin cambios, aun operativa para datos de negocio)
-- Agregar nota explicativa: la autenticacion es real via Lovable Cloud; los modulos de negocio (personas, matriculas, cursos, etc.) aun operan con servicios mock en memoria, pendientes de migracion a base de datos.
+#### 4. FASE 1 — Expandir con reglas faltantes
 
-#### 5. Seccion 2.3 — Estructura de Directorios
-- Agregar entradas:
-  - `src/contexts/AuthContext.tsx` — Contexto de autenticacion global
-  - `src/components/guards/` — AuthGuard, AdminGuard
-  - `src/pages/admin/` — AdminLoginPage, AdminDashboardPage
-  - `supabase/functions/` — Edge Functions (admin-crear-usuario, bootstrap-admin)
-  - `supabase/migrations/` — Migraciones SQL
+**Empresas:**
+- Agregar campo `activo` (booleano, default true) — RN-EMP-003
+- Constraint UNIQUE en `nit` — RN-EMP-002
+- Filtrar empresas inactivas en autocomplete (resolver INC-010)
+- Agregar seccion "Estudiantes Enviados": vista SQL que cuenta matriculas por empresa — RN-EMP-011, RN-EMP-012
+- Integridad referencial: ON DELETE RESTRICT si tiene matriculas, tarifas o responsables_cartera — RN-EMP-013
 
-#### 6. Seccion 2.4 — Enrutamiento
-- Agregar rutas a la tabla:
-  - `/admin` | `AdminLoginPage` | Login administrativo
-  - `/admin/dashboard` | `AdminDashboardPage` | Panel de administracion (protegido por AdminGuard)
-- Actualizar nota de proteccion de rutas: mencionar `AuthGuard` y `AdminGuard`
+**Tarifas:**
+- Corregir modelo: UNIQUE(empresa_id, **nivel_formacion_id**) segun spec original, pero RN-EMP-007 dice `curso_id`. Alinear: usar `nivel_formacion_id` como FK y `curso_nombre` como campo desnormalizado — RN-EMP-009
+- Agregar constraint UNIQUE explícito — resolver INC-006
 
-#### 7. Nueva seccion (insertar despues de seccion 2 o como nueva seccion numerada)
+**Personal:**
+- Detallar tipos de cargo como ENUM: `entrenador`, `supervisor`, `administrativo`, `instructor`, `otro` — RN-PNL-001
+- Validacion: entrenador de curso solo si cargo = `entrenador` o `instructor` — RN-PNL-005
+- Validacion: supervisor de curso solo si cargo = `supervisor` — RN-PNL-006
+- Tabla `personal_adjuntos`: nombre, tipo_mime, tamano, fecha_carga, storage_path — RN-PNL-004
 
-**Seccion: Autenticacion y Autorizacion**
+**Niveles de formacion:**
+- Detallar schema de `campos_adicionales` JSONB con los 12 tipos soportados — RN-NF-003
+- Documentar alcance de campos: `solo_nivel` vs `todos_los_niveles` — RN-NF-004
+- Detallar schema de configuracion de codigo estudiante — RN-NF-005, RN-NF-006
+- Catálogo fijo de 6 documentos requeridos como ENUM — RN-NF-002
 
-Contenido:
-- **Proveedores**: Email/Password via Lovable Cloud
-- **Tabla `perfiles`**: Esquema (id UUID PK → auth.users, email, nombres, rol, created_at)
-- **Roles**: `global` (por defecto), `admin` (acceso al panel de administracion)
-- **Trigger `on_auth_user_created`**: Crea perfil automaticamente con rol `global` al registrar usuario
-- **Funcion `get_my_rol()`**: SECURITY DEFINER para consultar rol sin recursion RLS
-- **Politicas RLS**:
-  - SELECT: admin ve todo, usuario ve solo su perfil
-  - INSERT/UPDATE/DELETE: bloqueado para cliente (solo service role/trigger)
-- **AuthContext**: Provider que escucha `onAuthStateChange`, expone session, user, perfil (con rol), loading, signOut
-- **Guards**:
-  - `AuthGuard`: Verifica sesion activa, redirige a `/` si no existe
-  - `AdminGuard`: Verifica sesion + rol admin, redirige a `/admin` si no cumple
-- **Edge Functions**:
-  - `admin-crear-usuario`: Valida JWT + rol admin, crea usuario con service role, actualiza nombres
-  - `bootstrap-admin`: Funcion de uso unico para crear primer usuario admin
-- **Login principal** (`/`): `LoginForm.tsx` conectado a `supabase.auth.signInWithPassword`
-- **Login admin** (`/admin`): Verifica rol post-login, cierra sesion si no es admin
-- **Panel admin** (`/admin/dashboard`): Formulario de creacion de usuarios globales via Edge Function
+#### 5. FASE 2 — Expandir con reglas faltantes
 
-#### 8. Seccion 14.1 — Servicios
-- Agregar subseccion: **Supabase Client** (`src/integrations/supabase/client.ts`) — cliente auto-generado, no editar manualmente
+**Personas:**
+- ENUMs: tipo_documento (5 valores RN-PER-002), genero (3 valores RN-PER-003), nivel_educativo (10 valores RN-PER-004)
+- Validacion trigger en contacto_emergencia: nombre y telefono obligatorios — RN-PER-005, resolver INC-004
+- Firma digital: campo `firma` (TEXT/Base64 o storage_path) + `firma_fecha` — RN-PER-006
+- Datos de direccion NO van en persona, solo en matricula — RN-PER-007
 
-#### 9. Seccion 18 — Auditoria
-- Actualizar el tipo `TipoEntidad` para incluir todos los tipos actuales del codigo: `'persona' | 'matricula' | 'curso' | 'comentario' | 'nivel_formacion' | 'personal' | 'cargo' | 'certificado' | 'plantilla_certificado' | 'excepcion_certificado' | 'empresa' | 'formato_formacion' | 'tarifa_empresa' | 'factura' | 'pago' | 'grupo_cartera'`
+**Cursos:**
+- Tipos de formacion como ENUM estricto (4 valores, sin `| string`) — RN-CUR-003, resolver INC-007
+- Autogeneracion de nombre: trigger o funcion — RN-CUR-004
+- Tabla `cursos_fechas_mintrabajo`: id, curso_id, fecha, motivo, created_by, created_at — RN-CUR-006
+- Detallar las 15 columnas del CSV MinTrabajo con ARL como ultima — RN-CUR-007
+- Validacion de asignacion de personal por tipo de cargo — RN-CUR-008 via RN-PNL-005/006
+- Acciones masivas: generar certificados y eliminar estudiantes — RN-CUR-010
 
-#### 10. Seccion 19 — Historial de Cambios
-- Agregar entrada **v1.9 — 3 de Abril 2026**:
-  - **Autenticacion real con Lovable Cloud**: Migracion de login simulado a Supabase Auth real con Email/Password
-  - **Tabla `perfiles`**: Tabla en PostgreSQL con trigger automatico, RLS y funcion SECURITY DEFINER
-  - **Sistema de roles**: `global` (operador) y `admin` (administrador)
-  - **Edge Functions**: `admin-crear-usuario` (creacion de usuarios por admin) y `bootstrap-admin` (inicializacion)
-  - **AuthContext + Guards**: Contexto global de sesion con `AuthGuard` y `AdminGuard`
-  - **Panel de Administracion**: Login admin (`/admin`) y dashboard de creacion de usuarios (`/admin/dashboard`)
-  - **LoginForm adaptado**: Eliminadas credenciales demo, conectado a autenticacion real
-  - Archivos creados y modificados
+#### 6. FASE 3 — Expandir significativamente
+
+**Matriculas:**
+- Detallar schema SQL completo con todos los campos del tipo TypeScript (30+ columnas)
+- Curso opcional (cursoId nullable) — RN-MAT-005
+- Snapshot de empresa como trigger BEFORE INSERT — RN-MAT-007
+- Consentimiento de salud: 6 campos booleanos + detalles — RN-MAT-009
+- Estados como ENUM: `creada`, `pendiente`, `completa`, `certificada`, `cerrada` — RN-MAT-001
+- Tipos vinculacion ENUM: `empresa`, `independiente`, `arl` — RN-MAT-002
+- Sincronizacion de documentos con nivel via trigger o Edge Function — RN-MAT-013
+- Auto-init portal estudiante al crear con curso — RN-MAT-021
+- Auto-asignacion a cartera al crear — RN-MAT-022
+- Evaluacion reentrenamiento: 15 preguntas, umbral 70% — RN-MAT-015
+
+**Documentos matricula:**
+- Tipos como ENUM (8 valores) — RN-MAT-012
+- Estados: `pendiente`, `cargado` — RN-MAT-011
+- Campo `opcional` booleano
+
+**Formatos (expansion mayor):**
+- Motor dual: `bloques` (legacy) y `plantilla_html` — RN-FMT-001/002
+- 4 formatos legacy identificados por `legacy_component_id` — RN-FMT-003
+- Estados: `borrador`, `activo`, `archivado` — RN-FMT-004
+- Categorias ENUM: `formacion`, `evaluacion`, `asistencia`, `pta_ats`, `personalizado` — RN-FMT-008
+- Asignacion por scope: `nivel_formacion` o `tipo_curso` — RN-FMT-009
+- Mapeo nivel→tipo para filtrado — RN-FMT-010
+- Resolucion con fallback a `empresaNivelFormacion` — RN-FMT-011
+- Sincronizacion en tiempo real (sin snapshot) — RN-FMT-012
+- 36 tokens en 6 categorias — RN-FMT-014
+- Edge Function `resolve-formato-context` — RN-FMT-015/017
+- Versionado: tabla `versiones_formato` — RN-FMT-020/021/022
+- Plantillas base preconstruidas — RN-FMT-023/024
+- Encabezado institucional configurable — RN-FMT-025
+- Firmas requeridas por formato — RN-FMT-026
+- Duplicacion con reglas — RN-FMT-027
+- Motor bloques: 18 tipos detallados — RN-FMT-028
+- Respuestas: tabla `formato_respuestas` con estados — RN-FMT-033
+
+#### 7. FASE 4 — Expandir Cartera y Certificacion
+
+**Cartera:**
+- MetodoPago unificado (8 valores) — resolver INC-009
+- Estados grupo ENUM: 5 valores — RN-CAR-002
+- Estados factura ENUM: 3 valores — RN-CAR-003
+- Recalculo de estado como funcion SQL, no solo en consulta — RN-CAR-011/012
+- Sincronizacion bidireccional factura↔matricula — RN-CAR-013/014
+- Eliminar factura cascadea pagos — RN-CAR-015
+- Actividades de cartera: tabla con 4 tipos — RN-CAR-016
+- Actividades automaticas del sistema — RN-CAR-017
+- Navegacion a empresa desde cartera — RN-CAR-019
+
+**Certificacion:**
+- Estados ENUM: `elegible`, `generado`, `bloqueado`, `revocado` — RN-CER-001
+- Snapshot JSON + SVG renderizado — RN-CER-002
+- Reglas por tipo de certificado — RN-CER-004
+- Excepciones: estados `pendiente`, `aprobada`, `rechazada` — RN-CER-005
+- Revocacion con registro de quien, motivo, fecha — RN-CER-006
+
+#### 8. FASE 5 — Expandir Portal
+
+- Acceso por cedula con validacion de vigencia (fechaFin >= hoy) — RN-POR-003
+- Dependencias entre documentos — RN-POR-005
+- Orden configurable — RN-POR-006
+- Habilitacion por nivel de formacion — RN-POR-007
+- Multiples intentos por documento — RN-POR-008
+
+#### 9. FASE 6 — Expandir Comentarios y Dashboard
+
+**Comentarios:**
+- Renombrar `matriculaId` a `entidad_id` + agregar `entidad_tipo` — resolver INC-008
+- Secciones: `cartera`, `observaciones`, `curso_observaciones` — RN-COM-001
+
+**Auditoria:**
+- Expandir TipoEntidad con las 6 entidades faltantes — RN-AUD-004, resolver INC-001
+- Total: 16 tipos de entidad auditables
+
+#### 10. Nueva seccion: Resolucion de Deuda Tecnica
+Tabla que mapea cada INC-00X a la solucion propuesta en el backend:
+
+| ID | Problema | Solucion Backend |
+|----|----------|-----------------|
+| INC-001 | Auditoria incompleta | Expandir ENUM TipoEntidad a 16 valores |
+| INC-004 | Contacto emergencia sin validar | Trigger de validacion en personas |
+| INC-005 | Sin integridad referencial | ON DELETE RESTRICT en FKs criticas |
+| INC-006 | Tarifas sin unicidad | UNIQUE constraint empresa+nivel |
+| INC-007 | TipoFormacion abierto | ENUM estricto de 4 valores |
+| INC-008 | matriculaId generico | Renombrar a entidad_id + entidad_tipo |
+| INC-009 | MetodoPago divergente | ENUM unificado de 8 valores |
+| INC-010 | Empresas inactivas en autocomplete | WHERE activo = true en queries |
 
 ---
 
-### Archivos afectados
+### Archivo afectado
 
 | Archivo | Accion |
 |---|---|
-| `Docs/DOCUMENTACION_SISTEMA.md` | Modificar (actualizar ~10 secciones) |
+| `Docs/Especificación_de_Requerimientos_de_Software_Backend_v1.md` | Reescritura mayor (~3x contenido original) |
 
 ### Notas
-- Se preserva toda la estructura y numeracion original del documento
-- No se eliminan secciones existentes, solo se expanden y actualizan
-- Los modulos de negocio siguen documentados como servicios mock (sin cambios en esas secciones)
-- La nueva seccion de autenticacion se integra logicamente con el patron arquitectonico existente
+- Se preserva la estructura por fases pero se expande cada una con schemas SQL detallados, ENUMs, triggers, y Edge Functions
+- Se agrega FASE 0 para autenticacion ya implementada
+- Se mapea cada regla RN-XXX-NNN a su implementacion backend correspondiente
+- Se resuelven las 10 inconsistencias activas del documento v3
 

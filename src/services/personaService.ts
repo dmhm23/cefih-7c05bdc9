@@ -76,6 +76,13 @@ export const personaService = {
       throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
     }
 
+    // INC-004: Validar contacto de emergencia si se actualiza
+    if (data.contactoEmergencia) {
+      if (!data.contactoEmergencia.nombre || !data.contactoEmergencia.telefono) {
+        throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
+      }
+    }
+
     const now = new Date().toISOString();
     const valorAnterior = { ...mockPersonas[index] };
     

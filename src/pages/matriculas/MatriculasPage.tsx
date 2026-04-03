@@ -427,6 +427,10 @@ export default function MatriculasPage() {
           showOnHover
           actions={[
             createViewAction(() => navigate(`/matriculas/${m.id}`)),
+            createDeleteAction(() => {
+              setIdsToDelete([m.id]);
+              setShowDeleteConfirm(true);
+            }),
           ]}
         />
       ),

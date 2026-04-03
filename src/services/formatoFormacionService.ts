@@ -353,6 +353,16 @@ export const formatoFormacionService = {
     const idx = mockFormatos.findIndex(f => f.id === id);
     if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
     mockFormatos[idx] = { ...mockFormatos[idx], ...data, updatedAt: new Date().toISOString() };
+    mockAuditLogs.push({
+      id: uuidv4(),
+      entidadTipo: 'formato_formacion',
+      entidadId: id,
+      accion: 'editar',
+      camposModificados: Object.keys(data),
+      usuarioId: 'current_user',
+      usuarioNombre: 'Usuario Actual',
+      timestamp: new Date().toISOString(),
+    });
     return simulateApiCall(mockFormatos[idx]);
   },
 

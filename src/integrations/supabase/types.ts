@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      actividades_cartera: {
+        Row: {
+          created_at: string
+          descripcion: string
+          factura_id: string | null
+          fecha: string
+          grupo_cartera_id: string
+          id: string
+          tipo: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario: string | null
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string
+          factura_id?: string | null
+          fecha?: string
+          grupo_cartera_id: string
+          id?: string
+          tipo: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario?: string | null
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string
+          factura_id?: string | null
+          fecha?: string
+          grupo_cartera_id?: string
+          id?: string
+          tipo?: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actividades_cartera_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actividades_cartera_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           accion: Database["public"]["Enums"]["tipo_accion_audit"]
@@ -322,6 +370,89 @@ export type Database = {
         }
         Relationships: []
       }
+      factura_matriculas: {
+        Row: {
+          factura_id: string
+          matricula_id: string
+          valor_asignado: number
+        }
+        Insert: {
+          factura_id: string
+          matricula_id: string
+          valor_asignado?: number
+        }
+        Update: {
+          factura_id?: string
+          matricula_id?: string
+          valor_asignado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factura_matriculas_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factura_matriculas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facturas: {
+        Row: {
+          archivo_factura: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision: string
+          fecha_vencimiento: string | null
+          grupo_cartera_id: string
+          id: string
+          numero_factura: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          archivo_factura?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision?: string
+          fecha_vencimiento?: string | null
+          grupo_cartera_id: string
+          id?: string
+          numero_factura?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          archivo_factura?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision?: string
+          fecha_vencimiento?: string | null
+          grupo_cartera_id?: string
+          id?: string
+          numero_factura?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facturas_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formato_respuestas: {
         Row: {
           answers: Json
@@ -474,6 +605,83 @@ export type Database = {
           visible_en_portal_estudiante?: boolean
         }
         Relationships: []
+      }
+      grupo_cartera_matriculas: {
+        Row: {
+          created_at: string
+          grupo_cartera_id: string
+          matricula_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo_cartera_id: string
+          matricula_id: string
+        }
+        Update: {
+          created_at?: string
+          grupo_cartera_id?: string
+          matricula_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_cartera_matriculas_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupo_cartera_matriculas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupos_cartera: {
+        Row: {
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id: string
+          observaciones: string | null
+          responsable_pago_id: string
+          saldo: number
+          total_abonos: number
+          total_valor: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id?: string
+          observaciones?: string | null
+          responsable_pago_id: string
+          saldo?: number
+          total_abonos?: number
+          total_valor?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id?: string
+          observaciones?: string | null
+          responsable_pago_id?: string
+          saldo?: number
+          total_abonos?: number
+          total_valor?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_cartera_responsable_pago_id_fkey"
+            columns: ["responsable_pago_id"]
+            isOneToOne: false
+            referencedRelation: "responsables_pago"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       matriculas: {
         Row: {
@@ -746,6 +954,50 @@ export type Database = {
         }
         Relationships: []
       }
+      pagos: {
+        Row: {
+          created_at: string
+          factura_id: string
+          fecha_pago: string
+          id: string
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"]
+          observaciones: string | null
+          soporte_pago: string | null
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string
+          factura_id: string
+          fecha_pago?: string
+          id?: string
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"]
+          observaciones?: string | null
+          soporte_pago?: string | null
+          updated_at?: string
+          valor_pago: number
+        }
+        Update: {
+          created_at?: string
+          factura_id?: string
+          fecha_pago?: string
+          id?: string
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"]
+          observaciones?: string | null
+          soporte_pago?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfiles: {
         Row: {
           created_at: string | null
@@ -928,6 +1180,65 @@ export type Database = {
         }
         Relationships: []
       }
+      responsables_pago: {
+        Row: {
+          activo: boolean
+          contacto_email: string | null
+          contacto_nombre: string | null
+          contacto_telefono: string | null
+          created_at: string
+          deleted_at: string | null
+          direccion_facturacion: string | null
+          empresa_id: string | null
+          id: string
+          nit: string
+          nombre: string
+          observaciones: string | null
+          tipo: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          direccion_facturacion?: string | null
+          empresa_id?: string | null
+          id?: string
+          nit?: string
+          nombre: string
+          observaciones?: string | null
+          tipo: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          direccion_facturacion?: string | null
+          empresa_id?: string | null
+          id?: string
+          nit?: string
+          nombre?: string
+          observaciones?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsables_pago_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarifas_empresa: {
         Row: {
           created_at: string
@@ -1061,6 +1372,10 @@ export type Database = {
         }
       }
       get_my_rol: { Args: never; Returns: string }
+      recalcular_grupo_cartera: {
+        Args: { p_grupo_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       arl_enum:

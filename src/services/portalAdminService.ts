@@ -1,63 +1,129 @@
+import { supabase } from '@/integrations/supabase/client';
 import { PortalConfigGlobal, PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { TipoFormacion } from '@/types/curso';
-import { portalDocumentosCatalogo, portalActivoPorDefecto, setPortalActivoPorDefecto } from '@/data/portalAdminConfig';
-import { delay } from './api';
+
+function mapDocConfig(row: any): PortalDocumentoConfigAdmin {
+  return {
+    key: row.key,
+    nombre: row.label,
+    tipo: row.tipo,
+    requiereFirma: row.tipo === 'firma_autorizacion',
+    dependeDe: row.depende_de || [],
+    orden: row.orden,
+    habilitadoPorNivel: row.habilitado_por_nivel || {},
+  };
+}
 
 export const portalAdminService = {
   async getConfigGlobal(): Promise<PortalConfigGlobal> {
-    await delay(300);
+    const { data, error } = await supabase
+      .from('portal_config_documentos')
+      .select('*')
+      .eq('activo', true)
+      .order('orden');
+    if (error) throw error;
+
     return {
-      portalActivoPorDefecto,
-      documentos: [...portalDocumentosCatalogo].sort((a, b) => a.orden - b.orden),
+      portalActivoPorDefecto: true, // Managed at matrícula level via portal_estudiante JSONB
+      documentos: (data || []).map(mapDocConfig),
     };
   },
 
   async saveDocumentoConfig(doc: PortalDocumentoConfigAdmin): Promise<PortalDocumentoConfigAdmin> {
-    await delay(400);
-    const idx = portalDocumentosCatalogo.findIndex(d => d.key === doc.key);
-    if (idx >= 0) {
-      portalDocumentosCatalogo[idx] = { ...doc };
+    const { data: existing } = await supabase
+      .from('portal_config_documentos')
+      .select('id')
+      .eq('key', doc.key)
+      .maybeSingle();
+
+    const upsertData = {
+      key: doc.key,
+      label: doc.nombre,
+      tipo: doc.tipo,
+      descripcion: '',
+      orden: doc.orden,
+      depende_de: doc.dependeDe,
+      habilitado_por_nivel: doc.habilitadoPorNivel,
+      obligatorio: true,
+      activo: true,
+    };
+
+    if (existing) {
+      const { error } = await supabase
+        .from('portal_config_documentos')
+        .update(upsertData)
+        .eq('key', doc.key);
+      if (error) throw error;
     } else {
-      portalDocumentosCatalogo.push({ ...doc });
+      const { error } = await supabase
+        .from('portal_config_documentos')
+        .insert(upsertData);
+      if (error) throw error;
     }
+
     return doc;
   },
 
   async deleteDocumentoConfig(key: string): Promise<void> {
-    await delay(400);
-    const idx = portalDocumentosCatalogo.findIndex(d => d.key === key);
-    if (idx >= 0) {
-      portalDocumentosCatalogo.splice(idx, 1);
-      // Remove from dependencies
-      portalDocumentosCatalogo.forEach(d => {
-        d.dependeDe = d.dependeDe.filter(k => k !== key);
-      });
+    const { error } = await supabase
+      .from('portal_config_documentos')
+      .delete()
+      .eq('key', key);
+    if (error) throw error;
+
+    // Remove from dependencies of other docs
+    const { data: others } = await supabase
+      .from('portal_config_documentos')
+      .select('key, depende_de')
+      .contains('depende_de', [key]);
+
+    if (others && others.length > 0) {
+      for (const other of others) {
+        const newDeps = (other.depende_de || []).filter((d: string) => d !== key);
+        await supabase
+          .from('portal_config_documentos')
+          .update({ depende_de: newDeps })
+          .eq('key', other.key);
+      }
     }
   },
 
   async togglePortalGlobal(activo: boolean): Promise<boolean> {
-    await delay(300);
-    setPortalActivoPorDefecto(activo);
+    // This is now handled at matrícula level, no-op at global
     return activo;
   },
 
   async updateOrdenDocumentos(keys: string[]): Promise<void> {
-    await delay(300);
-    keys.forEach((key, i) => {
-      const doc = portalDocumentosCatalogo.find(d => d.key === key);
-      if (doc) doc.orden = i + 1;
-    });
+    for (let i = 0; i < keys.length; i++) {
+      await supabase
+        .from('portal_config_documentos')
+        .update({ orden: i + 1 })
+        .eq('key', keys[i]);
+    }
   },
 
   async updateDependencias(key: string, dependeDe: string[]): Promise<void> {
-    await delay(300);
-    const doc = portalDocumentosCatalogo.find(d => d.key === key);
-    if (doc) doc.dependeDe = dependeDe;
+    const { error } = await supabase
+      .from('portal_config_documentos')
+      .update({ depende_de: dependeDe })
+      .eq('key', key);
+    if (error) throw error;
   },
 
   async updateHabilitacionNivel(key: string, nivel: TipoFormacion, activo: boolean): Promise<void> {
-    await delay(200);
-    const doc = portalDocumentosCatalogo.find(d => d.key === key);
-    if (doc) doc.habilitadoPorNivel[nivel] = activo;
+    // Get current config
+    const { data: current, error: getErr } = await supabase
+      .from('portal_config_documentos')
+      .select('habilitado_por_nivel')
+      .eq('key', key)
+      .single();
+    if (getErr) throw getErr;
+
+    const habilitado = { ...(current.habilitado_por_nivel as Record<string, boolean>), [nivel]: activo };
+    const { error } = await supabase
+      .from('portal_config_documentos')
+      .update({ habilitado_por_nivel: habilitado })
+      .eq('key', key);
+    if (error) throw error;
   },
 };

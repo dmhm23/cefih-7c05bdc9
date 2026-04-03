@@ -1,8 +1,7 @@
-import { mockMatriculas, mockPersonas, mockCursos } from '@/data/mockData';
-import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
+import { supabase } from '@/integrations/supabase/client';
 import { TipoFormacion } from '@/types/curso';
-import { resolveNivelCursoLabel, getNivelesAsOptions } from '@/utils/resolveNivelLabel';
 import { EstadoDocPortal } from '@/types/portalEstudiante';
+import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 
 export interface MonitoreoDocEstado {
   key: string;
@@ -35,59 +34,91 @@ export interface MonitoreoFiltros {
 }
 
 export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<MonitoreoRow[]> {
-  await new Promise((r) => setTimeout(r, 200));
+  // Get all matriculas with persona and curso joins
+  let query = supabase
+    .from('matriculas')
+    .select('id, persona_id, curso_id, portal_estudiante, personas(id, nombres, apellidos, numero_documento), cursos(id, nombre, tipo_formacion, fecha_inicio, fecha_fin)')
+    .is('deleted_at', null)
+    .eq('activo', true);
 
-  let rows: MonitoreoRow[] = mockMatriculas.map((mat) => {
-    const persona = mockPersonas.find((p) => p.id === mat.personaId);
-    const curso = mockCursos.find((c) => c.id === mat.cursoId);
+  if (filtros?.cursoId && filtros.cursoId !== 'todos') {
+    query = query.eq('curso_id', filtros.cursoId);
+  }
+
+  const { data: matriculas, error: mErr } = await query;
+  if (mErr) throw mErr;
+
+  // Get portal config
+  const { data: configDocs } = await supabase
+    .from('portal_config_documentos')
+    .select('*')
+    .eq('activo', true)
+    .order('orden');
+
+  // Get all documentos_portal for the matricula IDs
+  const matIds = (matriculas || []).map((m: any) => m.id);
+  let portalDocs: any[] = [];
+  if (matIds.length > 0) {
+    const { data } = await supabase
+      .from('documentos_portal')
+      .select('*')
+      .in('matricula_id', matIds);
+    portalDocs = data || [];
+  }
+
+  let rows: MonitoreoRow[] = (matriculas || []).map((mat: any) => {
+    const persona = mat.personas as any;
+    const curso = mat.cursos as any;
     if (!persona || !curso) return null;
 
-    const docsHabilitados = portalDocumentosCatalogo.filter(
-      (d) => d.habilitadoPorNivel[curso.tipoFormacion]
-    );
+    const tipoFormacion = curso.tipo_formacion as TipoFormacion;
 
-    const documentosEstado: MonitoreoDocEstado[] = docsHabilitados.map((docConfig) => {
-      const portalDoc = mat.portalEstudiante?.documentos.find((d) => d.key === docConfig.key);
+    // Filter config by nivel
+    const docsHabilitados = (configDocs || []).filter((d: any) => {
+      const hab = d.habilitado_por_nivel || {};
+      return hab[tipoFormacion] === true;
+    });
+
+    const matPortalDocs = portalDocs.filter(d => d.matricula_id === mat.id);
+
+    const documentosEstado: MonitoreoDocEstado[] = docsHabilitados.map((docConfig: any) => {
+      const portalDoc = matPortalDocs.find((d: any) => d.documento_key === docConfig.key);
       return {
         key: docConfig.key,
-        nombre: docConfig.nombre,
-        estado: portalDoc?.estado ?? 'pendiente',
-        enviadoEn: portalDoc?.enviadoEn,
-        puntaje: portalDoc?.puntaje,
-        firmaBase64: portalDoc?.firmaBase64,
+        nombre: docConfig.label,
+        estado: (portalDoc?.estado as EstadoDocPortal) ?? 'pendiente',
+        enviadoEn: portalDoc?.enviado_en ?? undefined,
+        puntaje: portalDoc?.metadata?.puntaje ?? undefined,
+        firmaBase64: portalDoc?.firma_data ?? undefined,
       };
     });
+
+    const portalEstudiante = mat.portal_estudiante as any;
 
     return {
       matriculaId: mat.id,
       personaNombre: `${persona.nombres} ${persona.apellidos}`,
-      personaCedula: persona.numeroDocumento,
+      personaCedula: persona.numero_documento,
       cursoNombre: curso.nombre,
-      cursoNumeroCurso: curso.numeroCurso,
-      tipoFormacion: curso.tipoFormacion,
-      tipoFormacionLabel: resolveNivelCursoLabel(curso.tipoFormacion),
-      fechaInicio: curso.fechaInicio,
-      fechaFin: curso.fechaFin,
-      portalHabilitado: mat.portalEstudiante?.habilitado ?? false,
+      cursoNumeroCurso: curso.nombre, // Using nombre as identifier
+      tipoFormacion,
+      tipoFormacionLabel: resolveNivelCursoLabel(tipoFormacion),
+      fechaInicio: curso.fecha_inicio || '',
+      fechaFin: curso.fecha_fin || '',
+      portalHabilitado: portalEstudiante?.habilitado ?? true,
       documentosEstado,
     } as MonitoreoRow;
   }).filter(Boolean) as MonitoreoRow[];
 
-  // Apply filters
+  // Apply client-side filters
   if (filtros?.busqueda) {
     const q = filtros.busqueda.toLowerCase();
     rows = rows.filter(
       (r) =>
         r.personaNombre.toLowerCase().includes(q) ||
         r.personaCedula.includes(q) ||
-        r.cursoNumeroCurso.toLowerCase().includes(q)
+        r.cursoNombre.toLowerCase().includes(q)
     );
-  }
-  if (filtros?.cursoId && filtros.cursoId !== 'todos') {
-    rows = rows.filter((r) => {
-      const curso = mockCursos.find((c) => c.numeroCurso === r.cursoNumeroCurso);
-      return curso?.id === filtros.cursoId;
-    });
   }
   if (filtros?.tipoFormacion && filtros.tipoFormacion !== 'todos') {
     rows = rows.filter((r) => r.tipoFormacion === filtros.tipoFormacion);
@@ -103,9 +134,29 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
   return rows;
 }
 
-export function getFilterOptions() {
-  const cursos = mockCursos.map((c) => ({ value: c.id, label: `${c.numeroCurso} — ${c.nombre}` }));
-  const niveles = getNivelesAsOptions();
-  const documentos = portalDocumentosCatalogo.map((d) => ({ value: d.key, label: d.nombre }));
-  return { cursos, niveles, documentos };
+export async function getFilterOptions() {
+  const { data: cursos } = await supabase
+    .from('cursos')
+    .select('id, nombre')
+    .is('deleted_at', null)
+    .order('nombre');
+
+  const { data: configDocs } = await supabase
+    .from('portal_config_documentos')
+    .select('key, label')
+    .eq('activo', true)
+    .order('orden');
+
+  const niveles = [
+    { value: 'formacion_inicial', label: 'Formación Inicial' },
+    { value: 'reentrenamiento', label: 'Reentrenamiento' },
+    { value: 'jefe_area', label: 'Jefe de Área' },
+    { value: 'coordinador_alturas', label: 'Coordinador de Alturas' },
+  ];
+
+  return {
+    cursos: (cursos || []).map((c: any) => ({ value: c.id, label: c.nombre })),
+    niveles,
+    documentos: (configDocs || []).map((d: any) => ({ value: d.key, label: d.label })),
+  };
 }

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      actividades_cartera: {
+        Row: {
+          created_at: string
+          descripcion: string
+          factura_id: string | null
+          fecha: string
+          grupo_cartera_id: string
+          id: string
+          tipo: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario: string | null
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string
+          factura_id?: string | null
+          fecha?: string
+          grupo_cartera_id: string
+          id?: string
+          tipo: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario?: string | null
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string
+          factura_id?: string | null
+          fecha?: string
+          grupo_cartera_id?: string
+          id?: string
+          tipo?: Database["public"]["Enums"]["tipo_actividad_cartera"]
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actividades_cartera_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actividades_cartera_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           accion: Database["public"]["Enums"]["tipo_accion_audit"]
@@ -88,6 +136,95 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      certificados: {
+        Row: {
+          autorizado_excepcional: boolean
+          codigo: string
+          created_at: string
+          curso_id: string
+          estado: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion: string | null
+          fecha_revocacion: string | null
+          id: string
+          matricula_id: string
+          motivo_revocacion: string | null
+          persona_id: string
+          plantilla_id: string
+          revocado_por: string | null
+          snapshot_datos: Json
+          svg_final: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          autorizado_excepcional?: boolean
+          codigo: string
+          created_at?: string
+          curso_id: string
+          estado?: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion?: string | null
+          fecha_revocacion?: string | null
+          id?: string
+          matricula_id: string
+          motivo_revocacion?: string | null
+          persona_id: string
+          plantilla_id: string
+          revocado_por?: string | null
+          snapshot_datos?: Json
+          svg_final?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          autorizado_excepcional?: boolean
+          codigo?: string
+          created_at?: string
+          curso_id?: string
+          estado?: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion?: string | null
+          fecha_revocacion?: string | null
+          id?: string
+          matricula_id?: string
+          motivo_revocacion?: string | null
+          persona_id?: string
+          plantilla_id?: string
+          revocado_por?: string | null
+          snapshot_datos?: Json
+          svg_final?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificados_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_plantilla_id_fkey"
+            columns: ["plantilla_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas_certificado"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cursos: {
         Row: {
@@ -259,6 +396,53 @@ export type Database = {
           },
         ]
       }
+      documentos_portal: {
+        Row: {
+          created_at: string
+          documento_key: string
+          enviado_en: string | null
+          estado: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data: string | null
+          id: string
+          intentos: Json
+          matricula_id: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          documento_key: string
+          enviado_en?: string | null
+          estado?: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data?: string | null
+          id?: string
+          intentos?: Json
+          matricula_id: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          documento_key?: string
+          enviado_en?: string | null
+          estado?: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data?: string | null
+          id?: string
+          intentos?: Json
+          matricula_id?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_portal_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           activo: boolean
@@ -321,6 +505,133 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      excepciones_certificado: {
+        Row: {
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion: string | null
+          fecha_solicitud: string
+          id: string
+          matricula_id: string
+          motivo: string
+          resuelto_por: string | null
+          solicitado_por: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          matricula_id: string
+          motivo: string
+          resuelto_por?: string | null
+          solicitado_por: string
+        }
+        Update: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          matricula_id?: string
+          motivo?: string
+          resuelto_por?: string | null
+          solicitado_por?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excepciones_certificado_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factura_matriculas: {
+        Row: {
+          factura_id: string
+          matricula_id: string
+          valor_asignado: number
+        }
+        Insert: {
+          factura_id: string
+          matricula_id: string
+          valor_asignado?: number
+        }
+        Update: {
+          factura_id?: string
+          matricula_id?: string
+          valor_asignado?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factura_matriculas_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factura_matriculas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facturas: {
+        Row: {
+          archivo_factura: string | null
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision: string
+          fecha_vencimiento: string | null
+          grupo_cartera_id: string
+          id: string
+          numero_factura: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          archivo_factura?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision?: string
+          fecha_vencimiento?: string | null
+          grupo_cartera_id: string
+          id?: string
+          numero_factura?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          archivo_factura?: string | null
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_factura"]
+          fecha_emision?: string
+          fecha_vencimiento?: string | null
+          grupo_cartera_id?: string
+          id?: string
+          numero_factura?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facturas_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       formato_respuestas: {
         Row: {
@@ -474,6 +785,83 @@ export type Database = {
           visible_en_portal_estudiante?: boolean
         }
         Relationships: []
+      }
+      grupo_cartera_matriculas: {
+        Row: {
+          created_at: string
+          grupo_cartera_id: string
+          matricula_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo_cartera_id: string
+          matricula_id: string
+        }
+        Update: {
+          created_at?: string
+          grupo_cartera_id?: string
+          matricula_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_cartera_matriculas_grupo_cartera_id_fkey"
+            columns: ["grupo_cartera_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_cartera"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grupo_cartera_matriculas_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupos_cartera: {
+        Row: {
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id: string
+          observaciones: string | null
+          responsable_pago_id: string
+          saldo: number
+          total_abonos: number
+          total_valor: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id?: string
+          observaciones?: string | null
+          responsable_pago_id: string
+          saldo?: number
+          total_abonos?: number
+          total_valor?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_grupo_cartera"]
+          id?: string
+          observaciones?: string | null
+          responsable_pago_id?: string
+          saldo?: number
+          total_abonos?: number
+          total_valor?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupos_cartera_responsable_pago_id_fkey"
+            columns: ["responsable_pago_id"]
+            isOneToOne: false
+            referencedRelation: "responsables_pago"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       matriculas: {
         Row: {
@@ -746,6 +1134,50 @@ export type Database = {
         }
         Relationships: []
       }
+      pagos: {
+        Row: {
+          created_at: string
+          factura_id: string
+          fecha_pago: string
+          id: string
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"]
+          observaciones: string | null
+          soporte_pago: string | null
+          updated_at: string
+          valor_pago: number
+        }
+        Insert: {
+          created_at?: string
+          factura_id: string
+          fecha_pago?: string
+          id?: string
+          metodo_pago: Database["public"]["Enums"]["metodo_pago"]
+          observaciones?: string | null
+          soporte_pago?: string | null
+          updated_at?: string
+          valor_pago: number
+        }
+        Update: {
+          created_at?: string
+          factura_id?: string
+          fecha_pago?: string
+          id?: string
+          metodo_pago?: Database["public"]["Enums"]["metodo_pago"]
+          observaciones?: string | null
+          soporte_pago?: string | null
+          updated_at?: string
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagos_factura_id_fkey"
+            columns: ["factura_id"]
+            isOneToOne: false
+            referencedRelation: "facturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfiles: {
         Row: {
           created_at: string | null
@@ -928,6 +1360,199 @@ export type Database = {
         }
         Relationships: []
       }
+      plantilla_certificado_versiones: {
+        Row: {
+          created_at: string
+          id: string
+          modificado_por: string | null
+          plantilla_id: string
+          svg_raw: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modificado_por?: string | null
+          plantilla_id: string
+          svg_raw?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modificado_por?: string | null
+          plantilla_id?: string
+          svg_raw?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantilla_certificado_versiones_plantilla_id_fkey"
+            columns: ["plantilla_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas_certificado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plantillas_certificado: {
+        Row: {
+          activa: boolean
+          created_at: string
+          deleted_at: string | null
+          id: string
+          niveles_asignados: string[]
+          nombre: string
+          regla_codigo: string
+          reglas: Json
+          svg_raw: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings: Json
+          tokens_detectados: string[]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          niveles_asignados?: string[]
+          nombre: string
+          regla_codigo?: string
+          reglas?: Json
+          svg_raw?: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings?: Json
+          tokens_detectados?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          niveles_asignados?: string[]
+          nombre?: string
+          regla_codigo?: string
+          reglas?: Json
+          svg_raw?: string
+          tipo_formacion?: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings?: Json
+          tokens_detectados?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      portal_config_documentos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          depende_de: string[]
+          descripcion: string
+          habilitado_por_nivel: Json
+          icono: string
+          id: string
+          key: string
+          label: string
+          obligatorio: boolean
+          orden: number
+          tipo: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          depende_de?: string[]
+          descripcion?: string
+          habilitado_por_nivel?: Json
+          icono?: string
+          id?: string
+          key: string
+          label: string
+          obligatorio?: boolean
+          orden?: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          depende_de?: string[]
+          descripcion?: string
+          habilitado_por_nivel?: Json
+          icono?: string
+          id?: string
+          key?: string
+          label?: string
+          obligatorio?: boolean
+          orden?: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      responsables_pago: {
+        Row: {
+          activo: boolean
+          contacto_email: string | null
+          contacto_nombre: string | null
+          contacto_telefono: string | null
+          created_at: string
+          deleted_at: string | null
+          direccion_facturacion: string | null
+          empresa_id: string | null
+          id: string
+          nit: string
+          nombre: string
+          observaciones: string | null
+          tipo: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          direccion_facturacion?: string | null
+          empresa_id?: string | null
+          id?: string
+          nit?: string
+          nombre: string
+          observaciones?: string | null
+          tipo: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          direccion_facturacion?: string | null
+          empresa_id?: string | null
+          id?: string
+          nit?: string
+          nombre?: string
+          observaciones?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_responsable"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsables_pago_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tarifas_empresa: {
         Row: {
           created_at: string
@@ -1017,6 +1642,24 @@ export type Database = {
     }
     Functions: {
       duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_documentos_portal: {
+        Args: { p_matricula_id: string }
+        Returns: {
+          depende_de: string[]
+          descripcion: string
+          documento_key: string
+          enviado_en: string
+          estado: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data: string
+          icono: string
+          intentos: Json
+          label: string
+          metadata: Json
+          obligatorio: boolean
+          orden: number
+          tipo: Database["public"]["Enums"]["tipo_doc_portal"]
+        }[]
+      }
       get_formatos_for_matricula: {
         Args: { _matricula_id: string }
         Returns: {
@@ -1061,6 +1704,24 @@ export type Database = {
         }
       }
       get_my_rol: { Args: never; Returns: string }
+      login_portal_estudiante: {
+        Args: { p_cedula: string }
+        Returns: {
+          curso_id: string
+          curso_nombre: string
+          curso_tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          matricula_id: string
+          persona_apellidos: string
+          persona_id: string
+          persona_nombres: string
+          persona_numero_documento: string
+          portal_habilitado: boolean
+        }[]
+      }
+      recalcular_grupo_cartera: {
+        Args: { p_grupo_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       arl_enum:
@@ -1082,17 +1743,18 @@ export type Database = {
         | "personalizado"
       estado_certificado: "elegible" | "generado" | "bloqueado" | "revocado"
       estado_curso: "programado" | "en_curso" | "cerrado" | "cancelado"
+      estado_doc_portal: "bloqueado" | "pendiente" | "completado"
       estado_documento_matricula: "pendiente" | "cargado"
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
-      estado_factura: "pendiente" | "parcial" | "pagada"
+      estado_factura: "por_pagar" | "parcial" | "pagada"
       estado_formato: "borrador" | "activo" | "archivado"
       estado_formato_respuesta: "pendiente" | "completado" | "firmado"
       estado_grupo_cartera:
-        | "pendiente"
-        | "parcial"
+        | "sin_facturar"
+        | "facturado"
+        | "abonado"
         | "pagado"
         | "vencido"
-        | "anulado"
       estado_matricula:
         | "creada"
         | "pendiente"
@@ -1134,13 +1796,22 @@ export type Database = {
         | "servicios"
         | "otro"
       tipo_accion_audit: "crear" | "editar" | "eliminar" | "cambio_estado"
-      tipo_actividad_cartera: "nota" | "llamada" | "correo" | "sistema"
+      tipo_actividad_cartera:
+        | "llamada"
+        | "promesa_pago"
+        | "comentario"
+        | "sistema"
       tipo_cargo:
         | "entrenador"
         | "supervisor"
         | "administrativo"
         | "instructor"
         | "otro"
+      tipo_doc_portal:
+        | "firma_autorizacion"
+        | "evaluacion"
+        | "formulario"
+        | "solo_lectura"
       tipo_documento_identidad:
         | "cedula_ciudadania"
         | "cedula_extranjeria"
@@ -1173,11 +1844,16 @@ export type Database = {
         | "factura"
         | "pago"
         | "comentario"
+        | "plantilla_certificado"
+        | "excepcion_certificado"
+        | "responsable_pago"
+        | "actividad_cartera"
       tipo_formacion:
         | "formacion_inicial"
         | "reentrenamiento"
         | "jefe_area"
         | "coordinador_alturas"
+      tipo_responsable: "empresa" | "independiente" | "arl"
       tipo_vinculacion: "empresa" | "independiente" | "arl"
     }
     CompositeTypes: {
@@ -1327,17 +2003,18 @@ export const Constants = {
       ],
       estado_certificado: ["elegible", "generado", "bloqueado", "revocado"],
       estado_curso: ["programado", "en_curso", "cerrado", "cancelado"],
+      estado_doc_portal: ["bloqueado", "pendiente", "completado"],
       estado_documento_matricula: ["pendiente", "cargado"],
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
-      estado_factura: ["pendiente", "parcial", "pagada"],
+      estado_factura: ["por_pagar", "parcial", "pagada"],
       estado_formato: ["borrador", "activo", "archivado"],
       estado_formato_respuesta: ["pendiente", "completado", "firmado"],
       estado_grupo_cartera: [
-        "pendiente",
-        "parcial",
+        "sin_facturar",
+        "facturado",
+        "abonado",
         "pagado",
         "vencido",
-        "anulado",
       ],
       estado_matricula: [
         "creada",
@@ -1384,13 +2061,24 @@ export const Constants = {
         "otro",
       ],
       tipo_accion_audit: ["crear", "editar", "eliminar", "cambio_estado"],
-      tipo_actividad_cartera: ["nota", "llamada", "correo", "sistema"],
+      tipo_actividad_cartera: [
+        "llamada",
+        "promesa_pago",
+        "comentario",
+        "sistema",
+      ],
       tipo_cargo: [
         "entrenador",
         "supervisor",
         "administrativo",
         "instructor",
         "otro",
+      ],
+      tipo_doc_portal: [
+        "firma_autorizacion",
+        "evaluacion",
+        "formulario",
+        "solo_lectura",
       ],
       tipo_documento_identidad: [
         "cedula_ciudadania",
@@ -1426,6 +2114,10 @@ export const Constants = {
         "factura",
         "pago",
         "comentario",
+        "plantilla_certificado",
+        "excepcion_certificado",
+        "responsable_pago",
+        "actividad_cartera",
       ],
       tipo_formacion: [
         "formacion_inicial",
@@ -1433,6 +2125,7 @@ export const Constants = {
         "jefe_area",
         "coordinador_alturas",
       ],
+      tipo_responsable: ["empresa", "independiente", "arl"],
       tipo_vinculacion: ["empresa", "independiente", "arl"],
     },
   },

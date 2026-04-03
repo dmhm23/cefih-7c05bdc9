@@ -1,5 +1,5 @@
-import { v4 as uuid } from 'uuid';
-import {
+import { supabase } from '@/integrations/supabase/client';
+import type {
   ResponsablePago,
   GrupoCartera,
   Factura,
@@ -8,216 +8,270 @@ import {
   MetodoPago,
   TipoActividadCartera,
   TipoResponsable,
-  METODO_PAGO_LABELS,
 } from '@/types/cartera';
-import { mockMatriculas, mockAuditLogs } from '@/data/mockData';
-import { mockEmpresas } from '@/data/mockEmpresas';
-import {
-  mockResponsables,
-  mockGruposCartera,
-  mockFacturas,
-  mockPagos,
-  mockActividades,
-} from '@/data/mockCartera';
-import { delay } from './api';
 
-function addCarteraAuditLog(
-  accion: 'crear' | 'editar' | 'eliminar',
-  entidadTipo: 'factura' | 'pago' | 'grupo_cartera',
-  entidadId: string,
-  valorAnterior?: Record<string, unknown>,
-  valorNuevo?: Record<string, unknown>,
-  camposModificados?: string[]
-) {
-  mockAuditLogs.push({
-    id: uuid(),
-    entidadTipo,
-    entidadId,
-    accion,
-    camposModificados,
-    valorAnterior,
-    valorNuevo,
-    usuarioId: 'current_user',
-    usuarioNombre: 'Usuario Actual',
-    timestamp: new Date().toISOString(),
-  });
+// ─── helpers: map DB rows to domain types ─────────────────
+
+function mapResponsable(row: any): ResponsablePago {
+  return {
+    id: row.id,
+    tipo: row.tipo,
+    nombre: row.nombre,
+    nit: row.nit,
+    empresaId: row.empresa_id ?? undefined,
+    contactoNombre: row.contacto_nombre ?? undefined,
+    contactoTelefono: row.contacto_telefono ?? undefined,
+    contactoEmail: row.contacto_email ?? undefined,
+    direccionFacturacion: row.direccion_facturacion ?? undefined,
+    observaciones: row.observaciones ?? undefined,
+  };
 }
 
-// ─── helpers ──────────────────────────────────────────────
-function recalcGrupo(grupo: GrupoCartera) {
-  const facturas = mockFacturas.filter(f => f.grupoCarteraId === grupo.id);
-  const pagos = mockPagos.filter(p => facturas.some(f => f.id === p.facturaId));
-  grupo.totalAbonos = pagos.reduce((s, p) => s + p.valorPago, 0);
-  grupo.saldo = grupo.totalValor - grupo.totalAbonos;
-
-  if (grupo.saldo <= 0 && grupo.totalValor > 0) {
-    grupo.estado = 'pagado';
-  } else {
-    // Check for overdue invoices
-    const now = new Date();
-    const hasOverdue = facturas.some(f => f.estado !== 'pagada' && new Date(f.fechaVencimiento) < now);
-    if (hasOverdue) {
-      grupo.estado = 'vencido';
-    } else if (grupo.totalAbonos > 0) {
-      grupo.estado = 'abonado';
-    } else if (facturas.length > 0) {
-      grupo.estado = 'facturado';
-    } else {
-      grupo.estado = 'sin_facturar';
-    }
-  }
+function mapGrupo(row: any): GrupoCartera {
+  return {
+    id: row.id,
+    responsablePagoId: row.responsable_pago_id,
+    estado: row.estado,
+    totalValor: Number(row.total_valor),
+    totalAbonos: Number(row.total_abonos),
+    saldo: Number(row.saldo),
+    matriculaIds: row.matricula_ids ?? [],
+    observaciones: row.observaciones ?? undefined,
+    createdAt: row.created_at,
+  };
 }
 
-function recalcFactura(factura: Factura) {
-  const pagos = mockPagos.filter(p => p.facturaId === factura.id);
-  const totalPagado = pagos.reduce((s, p) => s + p.valorPago, 0);
-  if (totalPagado >= factura.total) factura.estado = 'pagada';
-  else if (totalPagado > 0) factura.estado = 'parcial';
-  else factura.estado = 'por_pagar';
+function mapFactura(row: any): Factura {
+  return {
+    id: row.id,
+    grupoCarteraId: row.grupo_cartera_id,
+    numeroFactura: row.numero_factura,
+    fechaEmision: row.fecha_emision,
+    fechaVencimiento: row.fecha_vencimiento,
+    subtotal: Number(row.subtotal),
+    total: Number(row.total),
+    estado: row.estado,
+    archivoFactura: row.archivo_factura ?? undefined,
+    matriculaIds: row.matricula_ids ?? [],
+  };
 }
 
-function addSystemActivity(grupoCarteraId: string, descripcion: string, facturaId?: string) {
-  mockActividades.push({
-    id: uuid(),
-    grupoCarteraId,
-    facturaId,
-    tipo: 'sistema',
-    descripcion,
-    fecha: new Date().toISOString(),
-    usuario: 'Sistema',
-  });
+function mapPago(row: any): RegistroPago {
+  return {
+    id: row.id,
+    facturaId: row.factura_id,
+    fechaPago: row.fecha_pago,
+    valorPago: Number(row.valor_pago),
+    metodoPago: row.metodo_pago,
+    soportePago: row.soporte_pago ?? undefined,
+    observaciones: row.observaciones ?? undefined,
+  };
+}
+
+function mapActividad(row: any): ActividadCartera {
+  return {
+    id: row.id,
+    grupoCarteraId: row.grupo_cartera_id,
+    facturaId: row.factura_id ?? undefined,
+    tipo: row.tipo,
+    descripcion: row.descripcion,
+    fecha: row.fecha,
+    usuario: row.usuario ?? undefined,
+  };
 }
 
 // ─── auto-grouping ───────────────────────────────────────
-/**
- * Assigns a matrícula to a cartera group automatically.
- * - For 'empresa': finds/creates ResponsablePago by NIT, then finds/creates GrupoCartera.
- * - For 'independiente': finds/creates ResponsablePago by persona document, then finds/creates GrupoCartera.
- */
-export function asignarMatriculaACartera(params: {
+export async function asignarMatriculaACartera(params: {
   matriculaId: string;
   valorCupo: number;
-  tipoVinculacion: 'empresa' | 'independiente' | 'arl';
-  // Empresa fields
+  tipoVinculacion: TipoResponsable;
   empresaNombre?: string;
   empresaNit?: string;
+  empresaId?: string;
   empresaContactoNombre?: string;
   empresaContactoTelefono?: string;
-  // Independiente fields
   personaNombre?: string;
   personaDocumento?: string;
   personaTelefono?: string;
   personaEmail?: string;
-}) {
+}): Promise<{ responsableId: string; grupoId: string }> {
   const {
     matriculaId, valorCupo, tipoVinculacion,
-    empresaNombre, empresaNit, empresaContactoNombre, empresaContactoTelefono,
+    empresaNombre, empresaNit, empresaId, empresaContactoNombre, empresaContactoTelefono,
     personaNombre, personaDocumento, personaTelefono, personaEmail,
   } = params;
 
-  let responsable: ResponsablePago | undefined;
+  let responsable: ResponsablePago | null = null;
 
   if ((tipoVinculacion === 'empresa' || tipoVinculacion === 'arl') && empresaNit) {
     // Find by NIT
-    responsable = mockResponsables.find(r => r.nit === empresaNit);
-    if (!responsable) {
-      // Try to find empresaId from directorio
-      const empresaDir = mockEmpresas.find(e => e.nit === empresaNit);
-      responsable = {
-        id: uuid(),
-        tipo: tipoVinculacion as TipoResponsable,
-        nombre: empresaNombre || 'Empresa sin nombre',
-        nit: empresaNit,
-        empresaId: empresaDir?.id,
-        contactoNombre: empresaContactoNombre,
-        contactoTelefono: empresaContactoTelefono,
-      };
-      mockResponsables.push(responsable);
+    const { data: existing } = await supabase
+      .from('responsables_pago')
+      .select('*')
+      .eq('nit', empresaNit)
+      .eq('tipo', tipoVinculacion)
+      .maybeSingle();
+
+    if (existing) {
+      responsable = mapResponsable(existing);
+    } else {
+      const { data: created, error } = await supabase
+        .from('responsables_pago')
+        .insert({
+          tipo: tipoVinculacion,
+          nombre: empresaNombre || 'Empresa sin nombre',
+          nit: empresaNit,
+          empresa_id: empresaId || null,
+          contacto_nombre: empresaContactoNombre || null,
+          contacto_telefono: empresaContactoTelefono || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      responsable = mapResponsable(created);
     }
   } else {
-    // Independiente — find by document number
-    const nit = personaDocumento || uuid();
-    responsable = mockResponsables.find(r => r.tipo === 'independiente' && r.nit === nit);
-    if (!responsable) {
-      responsable = {
-        id: uuid(),
-        tipo: 'independiente' as TipoResponsable,
-        nombre: personaNombre || 'Independiente',
-        nit,
-        contactoTelefono: personaTelefono,
-        contactoEmail: personaEmail,
-      };
-      mockResponsables.push(responsable);
+    // Independiente
+    const nit = personaDocumento || '';
+    const { data: existing } = await supabase
+      .from('responsables_pago')
+      .select('*')
+      .eq('tipo', 'independiente')
+      .eq('nit', nit)
+      .maybeSingle();
+
+    if (existing) {
+      responsable = mapResponsable(existing);
+    } else {
+      const { data: created, error } = await supabase
+        .from('responsables_pago')
+        .insert({
+          tipo: 'independiente' as TipoResponsable,
+          nombre: personaNombre || 'Independiente',
+          nit,
+          contacto_telefono: personaTelefono || null,
+          contacto_email: personaEmail || null,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      responsable = mapResponsable(created);
     }
   }
 
-  // Find or create GrupoCartera for this responsable
-  let grupo = mockGruposCartera.find(g => g.responsablePagoId === responsable!.id);
-  if (!grupo) {
-    grupo = {
-      id: uuid(),
-      responsablePagoId: responsable.id,
-      estado: 'sin_facturar',
-      totalValor: 0,
-      totalAbonos: 0,
-      saldo: 0,
-      matriculaIds: [],
-      createdAt: new Date().toISOString(),
-    };
-    mockGruposCartera.push(grupo);
+  // Find or create grupo for this responsable
+  const { data: existingGrupo } = await supabase
+    .from('grupos_cartera')
+    .select('*')
+    .eq('responsable_pago_id', responsable!.id)
+    .maybeSingle();
+
+  let grupoId: string;
+  if (existingGrupo) {
+    grupoId = existingGrupo.id;
+  } else {
+    const { data: newGrupo, error } = await supabase
+      .from('grupos_cartera')
+      .insert({ responsable_pago_id: responsable!.id })
+      .select()
+      .single();
+    if (error) throw error;
+    grupoId = newGrupo.id;
   }
 
-  // Add matrícula to group if not already there
-  if (!grupo.matriculaIds.includes(matriculaId)) {
-    grupo.matriculaIds.push(matriculaId);
-    grupo.totalValor += valorCupo || 0;
-    grupo.saldo = grupo.totalValor - grupo.totalAbonos;
-  }
+  // Link matrícula to grupo
+  await supabase
+    .from('grupo_cartera_matriculas')
+    .upsert({ grupo_cartera_id: grupoId, matricula_id: matriculaId });
 
-  addSystemActivity(grupo.id, `Matrícula ${matriculaId} asignada automáticamente al grupo.`);
+  // Recalcular grupo (trigger-based, but force refresh)
+  await supabase.rpc('recalcular_grupo_cartera', { p_grupo_id: grupoId });
 
-  return { responsableId: responsable.id, grupoId: grupo.id };
+  return { responsableId: responsable!.id, grupoId };
 }
 
 // ─── service ──────────────────────────────────────────────
 export const carteraService = {
   // Responsables
   async getResponsables(): Promise<ResponsablePago[]> {
-    await delay(500);
-    return [...mockResponsables];
+    const { data, error } = await supabase
+      .from('responsables_pago')
+      .select('*')
+      .is('deleted_at', null)
+      .order('nombre');
+    if (error) throw error;
+    return (data || []).map(mapResponsable);
   },
 
   async getResponsableById(id: string): Promise<ResponsablePago | null> {
-    await delay(300);
-    return mockResponsables.find(r => r.id === id) || null;
+    const { data, error } = await supabase
+      .from('responsables_pago')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapResponsable(data) : null;
   },
 
   async createResponsable(data: Omit<ResponsablePago, 'id'>): Promise<ResponsablePago> {
-    await delay(500);
-    const nuevo: ResponsablePago = { id: uuid(), ...data };
-    mockResponsables.push(nuevo);
-    return nuevo;
+    const { data: created, error } = await supabase
+      .from('responsables_pago')
+      .insert({
+        tipo: data.tipo,
+        nombre: data.nombre,
+        nit: data.nit,
+        empresa_id: data.empresaId || null,
+        contacto_nombre: data.contactoNombre || null,
+        contacto_telefono: data.contactoTelefono || null,
+        contacto_email: data.contactoEmail || null,
+        direccion_facturacion: data.direccionFacturacion || null,
+        observaciones: data.observaciones || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapResponsable(created);
   },
 
   // Grupos
   async getGrupos(): Promise<GrupoCartera[]> {
-    await delay(600);
-    // Recalc all groups to detect overdue on every fetch
-    mockGruposCartera.forEach(g => recalcGrupo(g));
-    return [...mockGruposCartera];
+    const { data, error } = await supabase
+      .from('grupos_cartera')
+      .select('*, grupo_cartera_matriculas(matricula_id)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(row => ({
+      ...mapGrupo(row),
+      matriculaIds: (row.grupo_cartera_matriculas || []).map((gcm: any) => gcm.matricula_id),
+    }));
   },
 
   async getGrupoById(id: string): Promise<GrupoCartera | null> {
-    await delay(400);
-    const grupo = mockGruposCartera.find(g => g.id === id);
-    if (grupo) recalcGrupo(grupo);
-    return grupo || null;
+    const { data, error } = await supabase
+      .from('grupos_cartera')
+      .select('*, grupo_cartera_matriculas(matricula_id)')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return {
+      ...mapGrupo(data),
+      matriculaIds: (data.grupo_cartera_matriculas || []).map((gcm: any) => gcm.matricula_id),
+    };
   },
 
   // Facturas
   async getFacturasByGrupo(grupoId: string): Promise<Factura[]> {
-    await delay(400);
-    return mockFacturas.filter(f => f.grupoCarteraId === grupoId);
+    const { data, error } = await supabase
+      .from('facturas')
+      .select('*, factura_matriculas(matricula_id)')
+      .eq('grupo_cartera_id', grupoId)
+      .order('fecha_emision', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(row => ({
+      ...mapFactura(row),
+      matriculaIds: (row.factura_matriculas || []).map((fm: any) => fm.matricula_id),
+    }));
   },
 
   async createFactura(data: {
@@ -229,57 +283,115 @@ export const carteraService = {
     total: number;
     archivoFactura?: string;
   }): Promise<Factura> {
-    await delay(600);
-    const factura: Factura = {
-      id: uuid(),
-      grupoCarteraId: data.grupoCarteraId,
-      numeroFactura: data.numeroFactura,
-      fechaEmision: data.fechaEmision,
-      fechaVencimiento: data.fechaVencimiento,
-      subtotal: data.total,
-      total: data.total,
-      estado: 'por_pagar',
-      archivoFactura: data.archivoFactura,
-      matriculaIds: data.matriculaIds,
-    };
-    mockFacturas.push(factura);
-    addCarteraAuditLog('crear', 'factura', factura.id, undefined, { numeroFactura: data.numeroFactura, total: data.total });
+    const { data: created, error } = await supabase
+      .from('facturas')
+      .insert({
+        grupo_cartera_id: data.grupoCarteraId,
+        numero_factura: data.numeroFactura,
+        fecha_emision: data.fechaEmision,
+        fecha_vencimiento: data.fechaVencimiento,
+        subtotal: data.total,
+        total: data.total,
+        archivo_factura: data.archivoFactura || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    // Link matrículas
     if (data.matriculaIds.length > 0) {
-      data.matriculaIds.forEach(mId => {
-        const mat = mockMatriculas.find(m => m.id === mId);
-        if (mat) {
-          mat.facturaNumero = data.numeroFactura;
-          mat.fechaFacturacion = data.fechaEmision;
-        }
-      });
+      const links = data.matriculaIds.map(mId => ({
+        factura_id: created.id,
+        matricula_id: mId,
+        valor_asignado: 0,
+      }));
+      await supabase.from('factura_matriculas').insert(links);
     }
 
-    // Update grupo state
-    const grupo = mockGruposCartera.find(g => g.id === data.grupoCarteraId);
-    if (grupo) recalcGrupo(grupo);
+    // Recalc grupo (triggers handle factura state + activities)
+    await supabase.rpc('recalcular_grupo_cartera', { p_grupo_id: data.grupoCarteraId });
 
-    // Auto-log activity
-    addSystemActivity(
-      data.grupoCarteraId,
-      `Factura ${data.numeroFactura} registrada por $${data.total.toLocaleString('es-CO')}.`,
-      factura.id
-    );
+    return { ...mapFactura(created), matriculaIds: data.matriculaIds };
+  },
 
-    return factura;
+  async updateFactura(id: string, data: {
+    numeroFactura?: string;
+    fechaEmision?: string;
+    fechaVencimiento?: string;
+    total?: number;
+    archivoFactura?: string;
+  }): Promise<Factura | null> {
+    const updateObj: Record<string, unknown> = {};
+    if (data.numeroFactura !== undefined) updateObj.numero_factura = data.numeroFactura;
+    if (data.fechaEmision !== undefined) updateObj.fecha_emision = data.fechaEmision;
+    if (data.fechaVencimiento !== undefined) updateObj.fecha_vencimiento = data.fechaVencimiento;
+    if (data.total !== undefined) {
+      updateObj.subtotal = data.total;
+      updateObj.total = data.total;
+    }
+    if (data.archivoFactura !== undefined) updateObj.archivo_factura = data.archivoFactura;
+
+    const { data: updated, error } = await supabase
+      .from('facturas')
+      .update(updateObj)
+      .eq('id', id)
+      .select('*, factura_matriculas(matricula_id)')
+      .single();
+    if (error) throw error;
+
+    // Recalc grupo
+    await supabase.rpc('recalcular_grupo_cartera', { p_grupo_id: updated.grupo_cartera_id });
+
+    return {
+      ...mapFactura(updated),
+      matriculaIds: (updated.factura_matriculas || []).map((fm: any) => fm.matricula_id),
+    };
+  },
+
+  async deleteFactura(id: string): Promise<void> {
+    // Get grupo_cartera_id before delete
+    const { data: factura } = await supabase
+      .from('facturas')
+      .select('grupo_cartera_id')
+      .eq('id', id)
+      .single();
+
+    const { error } = await supabase.from('facturas').delete().eq('id', id);
+    if (error) throw error;
+
+    // Trigger handles cleanup; recalc grupo
+    if (factura) {
+      await supabase.rpc('recalcular_grupo_cartera', { p_grupo_id: factura.grupo_cartera_id });
+    }
   },
 
   // Pagos
   async getPagosByFactura(facturaId: string): Promise<RegistroPago[]> {
-    await delay(400);
-    return mockPagos.filter(p => p.facturaId === facturaId);
+    const { data, error } = await supabase
+      .from('pagos')
+      .select('*')
+      .eq('factura_id', facturaId)
+      .order('fecha_pago', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapPago);
   },
 
   async getPagosByGrupo(grupoId: string): Promise<RegistroPago[]> {
-    await delay(400);
-    const facturaIds = mockFacturas
-      .filter(f => f.grupoCarteraId === grupoId)
-      .map(f => f.id);
-    return mockPagos.filter(p => facturaIds.includes(p.facturaId));
+    const { data: facturas } = await supabase
+      .from('facturas')
+      .select('id')
+      .eq('grupo_cartera_id', grupoId);
+
+    if (!facturas || facturas.length === 0) return [];
+
+    const facturaIds = facturas.map(f => f.id);
+    const { data, error } = await supabase
+      .from('pagos')
+      .select('*')
+      .in('factura_id', facturaIds)
+      .order('fecha_pago', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapPago);
   },
 
   async registrarPago(data: {
@@ -290,45 +402,72 @@ export const carteraService = {
     observaciones?: string;
     soportePago?: string;
   }): Promise<RegistroPago> {
-    await delay(600);
-    const pago: RegistroPago = { id: uuid(), ...data };
-    mockPagos.push(pago);
-    addCarteraAuditLog('crear', 'pago', pago.id, undefined, { valorPago: data.valorPago, metodoPago: data.metodoPago });
+    const { data: created, error } = await supabase
+      .from('pagos')
+      .insert({
+        factura_id: data.facturaId,
+        fecha_pago: data.fechaPago,
+        valor_pago: data.valorPago,
+        metodo_pago: data.metodoPago,
+        observaciones: data.observaciones || null,
+        soporte_pago: data.soportePago || null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    // Triggers handle recalculation of factura state + grupo + activity log
+    return mapPago(created);
+  },
 
-    // Recalc factura
-    const factura = mockFacturas.find(f => f.id === data.facturaId);
-    if (factura) {
-      recalcFactura(factura);
-      // Recalc grupo
-      const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-      if (grupo) {
-        recalcGrupo(grupo);
-        // Auto-log activity
-        const metodoLabel = METODO_PAGO_LABELS;
-        addSystemActivity(
-          grupo.id,
-          `Pago registrado por $${data.valorPago.toLocaleString('es-CO')} — ${metodoLabel[data.metodoPago]}.`,
-          data.facturaId
-        );
-      }
-    }
+  async updatePago(id: string, data: {
+    fechaPago?: string;
+    valorPago?: number;
+    metodoPago?: MetodoPago;
+    observaciones?: string;
+    soportePago?: string;
+  }): Promise<RegistroPago | null> {
+    const updateObj: Record<string, unknown> = {};
+    if (data.fechaPago !== undefined) updateObj.fecha_pago = data.fechaPago;
+    if (data.valorPago !== undefined) updateObj.valor_pago = data.valorPago;
+    if (data.metodoPago !== undefined) updateObj.metodo_pago = data.metodoPago;
+    if (data.observaciones !== undefined) updateObj.observaciones = data.observaciones;
+    if (data.soportePago !== undefined) updateObj.soporte_pago = data.soportePago;
 
-    return pago;
+    const { data: updated, error } = await supabase
+      .from('pagos')
+      .update(updateObj)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return mapPago(updated);
+  },
+
+  async deletePago(id: string): Promise<void> {
+    const { error } = await supabase.from('pagos').delete().eq('id', id);
+    if (error) throw error;
+    // Triggers handle recalculation
   },
 
   // Actividades
   async getActividadesByGrupo(grupoId: string): Promise<ActividadCartera[]> {
-    await delay(400);
-    return mockActividades
-      .filter(a => a.grupoCarteraId === grupoId)
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    const { data, error } = await supabase
+      .from('actividades_cartera')
+      .select('*')
+      .eq('grupo_cartera_id', grupoId)
+      .order('fecha', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapActividad);
   },
 
   async getActividadesByFactura(facturaId: string): Promise<ActividadCartera[]> {
-    await delay(300);
-    return mockActividades
-      .filter(a => a.facturaId === facturaId)
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    const { data, error } = await supabase
+      .from('actividades_cartera')
+      .select('*')
+      .eq('factura_id', facturaId)
+      .order('fecha', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapActividad);
   },
 
   async registrarActividad(data: {
@@ -338,130 +477,18 @@ export const carteraService = {
     descripcion: string;
     usuario?: string;
   }): Promise<ActividadCartera> {
-    await delay(400);
-    const actividad: ActividadCartera = {
-      id: uuid(),
-      grupoCarteraId: data.grupoCarteraId,
-      facturaId: data.facturaId,
-      tipo: data.tipo,
-      descripcion: data.descripcion,
-      fecha: new Date().toISOString(),
-      usuario: data.usuario || 'Admin',
-    };
-    mockActividades.push(actividad);
-    return actividad;
-  },
-
-  // Update factura
-  async updateFactura(id: string, data: {
-    numeroFactura?: string;
-    fechaEmision?: string;
-    fechaVencimiento?: string;
-    total?: number;
-    archivoFactura?: string;
-  }): Promise<Factura | null> {
-    await delay(500);
-    const idx = mockFacturas.findIndex(f => f.id === id);
-    if (idx === -1) return null;
-    const factura = mockFacturas[idx];
-    if (data.numeroFactura !== undefined) factura.numeroFactura = data.numeroFactura;
-    if (data.fechaEmision !== undefined) factura.fechaEmision = data.fechaEmision;
-    if (data.fechaVencimiento !== undefined) factura.fechaVencimiento = data.fechaVencimiento;
-    if (data.total !== undefined) {
-      factura.subtotal = data.total;
-      factura.total = data.total;
-    }
-    if (data.archivoFactura !== undefined) factura.archivoFactura = data.archivoFactura;
-    recalcFactura(factura);
-    addCarteraAuditLog('editar', 'factura', id, undefined, data as unknown as Record<string, unknown>, Object.keys(data));
-    if (factura.matriculaIds?.length) {
-      factura.matriculaIds.forEach(mId => {
-        const mat = mockMatriculas.find(m => m.id === mId);
-        if (mat) {
-          mat.facturaNumero = factura.numeroFactura;
-          mat.fechaFacturacion = factura.fechaEmision;
-        }
-      });
-    }
-
-    const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-    if (grupo) {
-      recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} actualizada.`, factura.id);
-    }
-    return { ...factura };
-  },
-
-  // Update pago
-  async updatePago(id: string, data: {
-    fechaPago?: string;
-    valorPago?: number;
-    metodoPago?: MetodoPago;
-    observaciones?: string;
-    soportePago?: string;
-  }): Promise<RegistroPago | null> {
-    await delay(500);
-    const idx = mockPagos.findIndex(p => p.id === id);
-    if (idx === -1) return null;
-    const pago = mockPagos[idx];
-    if (data.fechaPago !== undefined) pago.fechaPago = data.fechaPago;
-    if (data.valorPago !== undefined) pago.valorPago = data.valorPago;
-    if (data.metodoPago !== undefined) pago.metodoPago = data.metodoPago;
-    if (data.observaciones !== undefined) pago.observaciones = data.observaciones;
-    if (data.soportePago !== undefined) pago.soportePago = data.soportePago;
-
-    // Recalc factura & grupo
-    const factura = mockFacturas.find(f => f.id === pago.facturaId);
-    if (factura) {
-      recalcFactura(factura);
-      const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-      if (grupo) {
-        recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago actualizado — ${METODO_PAGO_LABELS[pago.metodoPago]} $${pago.valorPago.toLocaleString('es-CO')}.`, pago.facturaId);
-      }
-    }
-    return { ...pago };
-  },
-
-  // Delete factura
-  async deleteFactura(id: string): Promise<void> {
-    await delay(500);
-    const idx = mockFacturas.findIndex(f => f.id === id);
-    if (idx === -1) return;
-    const factura = mockFacturas[idx];
-    // Remove associated payments first
-    const pagoIds = mockPagos.filter(p => p.facturaId === id).map(p => p.id);
-    pagoIds.forEach(pid => {
-      const pi = mockPagos.findIndex(p => p.id === pid);
-      if (pi !== -1) mockPagos.splice(pi, 1);
-    });
-    addCarteraAuditLog('eliminar', 'factura', id);
-    mockFacturas.splice(idx, 1);
-    // Recalc grupo
-    const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-    if (grupo) {
-      recalcGrupo(grupo);
-      addSystemActivity(grupo.id, `Factura ${factura.numeroFactura} eliminada${pagoIds.length ? ` (con ${pagoIds.length} pago(s) asociados)` : ''}.`, id);
-    }
-  },
-
-  // Delete pago
-  async deletePago(id: string): Promise<void> {
-    await delay(500);
-    const idx = mockPagos.findIndex(p => p.id === id);
-    if (idx === -1) return;
-    const pago = mockPagos[idx];
-    addCarteraAuditLog('eliminar', 'pago', id);
-    mockPagos.splice(idx, 1);
-    // Recalc factura & grupo
-    const factura = mockFacturas.find(f => f.id === pago.facturaId);
-    if (factura) {
-      recalcFactura(factura);
-      const grupo = mockGruposCartera.find(g => g.id === factura.grupoCarteraId);
-      if (grupo) {
-        recalcGrupo(grupo);
-        addSystemActivity(grupo.id, `Pago de $${pago.valorPago.toLocaleString('es-CO')} eliminado.`, pago.facturaId);
-      }
-    }
+    const { data: created, error } = await supabase
+      .from('actividades_cartera')
+      .insert({
+        grupo_cartera_id: data.grupoCarteraId,
+        factura_id: data.facturaId || null,
+        tipo: data.tipo,
+        descripcion: data.descripcion,
+        usuario: data.usuario || 'Admin',
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapActividad(created);
   },
 };

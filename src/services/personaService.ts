@@ -119,7 +119,7 @@ export const personaService = {
     const dbData = mapPersonaToDb(data);
     const { data: row, error } = await supabase
       .from('personas')
-      .insert(dbData)
+      .insert(dbData as any)
       .select()
       .single();
 

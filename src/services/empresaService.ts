@@ -79,7 +79,7 @@ export const empresaService = {
     const dbData = mapEmpresaToDb(data);
     const { data: row, error } = await supabase
       .from('empresas')
-      .insert(dbData)
+      .insert(dbData as any)
       .select()
       .single();
 

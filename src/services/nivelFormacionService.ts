@@ -69,7 +69,7 @@ export const nivelFormacionService = {
 
     const { data: row, error } = await supabase
       .from('niveles_formacion')
-      .insert(dbData)
+      .insert(dbData as any)
       .select()
       .single();
 

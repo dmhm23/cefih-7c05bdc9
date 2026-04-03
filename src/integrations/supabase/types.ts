@@ -1082,17 +1082,18 @@ export type Database = {
         | "personalizado"
       estado_certificado: "elegible" | "generado" | "bloqueado" | "revocado"
       estado_curso: "programado" | "en_curso" | "cerrado" | "cancelado"
+      estado_doc_portal: "bloqueado" | "pendiente" | "completado"
       estado_documento_matricula: "pendiente" | "cargado"
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
-      estado_factura: "pendiente" | "parcial" | "pagada"
+      estado_factura: "por_pagar" | "parcial" | "pagada"
       estado_formato: "borrador" | "activo" | "archivado"
       estado_formato_respuesta: "pendiente" | "completado" | "firmado"
       estado_grupo_cartera:
-        | "pendiente"
-        | "parcial"
+        | "sin_facturar"
+        | "facturado"
+        | "abonado"
         | "pagado"
         | "vencido"
-        | "anulado"
       estado_matricula:
         | "creada"
         | "pendiente"
@@ -1134,13 +1135,22 @@ export type Database = {
         | "servicios"
         | "otro"
       tipo_accion_audit: "crear" | "editar" | "eliminar" | "cambio_estado"
-      tipo_actividad_cartera: "nota" | "llamada" | "correo" | "sistema"
+      tipo_actividad_cartera:
+        | "llamada"
+        | "promesa_pago"
+        | "comentario"
+        | "sistema"
       tipo_cargo:
         | "entrenador"
         | "supervisor"
         | "administrativo"
         | "instructor"
         | "otro"
+      tipo_doc_portal:
+        | "firma_autorizacion"
+        | "evaluacion"
+        | "formulario"
+        | "solo_lectura"
       tipo_documento_identidad:
         | "cedula_ciudadania"
         | "cedula_extranjeria"
@@ -1173,11 +1183,16 @@ export type Database = {
         | "factura"
         | "pago"
         | "comentario"
+        | "plantilla_certificado"
+        | "excepcion_certificado"
+        | "responsable_pago"
+        | "actividad_cartera"
       tipo_formacion:
         | "formacion_inicial"
         | "reentrenamiento"
         | "jefe_area"
         | "coordinador_alturas"
+      tipo_responsable: "empresa" | "independiente" | "arl"
       tipo_vinculacion: "empresa" | "independiente" | "arl"
     }
     CompositeTypes: {
@@ -1327,17 +1342,18 @@ export const Constants = {
       ],
       estado_certificado: ["elegible", "generado", "bloqueado", "revocado"],
       estado_curso: ["programado", "en_curso", "cerrado", "cancelado"],
+      estado_doc_portal: ["bloqueado", "pendiente", "completado"],
       estado_documento_matricula: ["pendiente", "cargado"],
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
-      estado_factura: ["pendiente", "parcial", "pagada"],
+      estado_factura: ["por_pagar", "parcial", "pagada"],
       estado_formato: ["borrador", "activo", "archivado"],
       estado_formato_respuesta: ["pendiente", "completado", "firmado"],
       estado_grupo_cartera: [
-        "pendiente",
-        "parcial",
+        "sin_facturar",
+        "facturado",
+        "abonado",
         "pagado",
         "vencido",
-        "anulado",
       ],
       estado_matricula: [
         "creada",
@@ -1384,13 +1400,24 @@ export const Constants = {
         "otro",
       ],
       tipo_accion_audit: ["crear", "editar", "eliminar", "cambio_estado"],
-      tipo_actividad_cartera: ["nota", "llamada", "correo", "sistema"],
+      tipo_actividad_cartera: [
+        "llamada",
+        "promesa_pago",
+        "comentario",
+        "sistema",
+      ],
       tipo_cargo: [
         "entrenador",
         "supervisor",
         "administrativo",
         "instructor",
         "otro",
+      ],
+      tipo_doc_portal: [
+        "firma_autorizacion",
+        "evaluacion",
+        "formulario",
+        "solo_lectura",
       ],
       tipo_documento_identidad: [
         "cedula_ciudadania",
@@ -1426,6 +1453,10 @@ export const Constants = {
         "factura",
         "pago",
         "comentario",
+        "plantilla_certificado",
+        "excepcion_certificado",
+        "responsable_pago",
+        "actividad_cartera",
       ],
       tipo_formacion: [
         "formacion_inicial",
@@ -1433,6 +1464,7 @@ export const Constants = {
         "jefe_area",
         "coordinador_alturas",
       ],
+      tipo_responsable: ["empresa", "independiente", "arl"],
       tipo_vinculacion: ["empresa", "independiente", "arl"],
     },
   },

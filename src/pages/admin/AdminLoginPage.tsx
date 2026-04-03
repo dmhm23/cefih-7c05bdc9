@@ -62,8 +62,8 @@ const AdminLoginPage = () => {
 
       <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-destructive mb-4 shadow-lg shadow-destructive/20">
-            <Shield className="w-8 h-8 text-destructive-foreground" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary mb-4 shadow-lg shadow-primary/20">
+            <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-semibold text-foreground tracking-tight">
             Acceso Administrativo

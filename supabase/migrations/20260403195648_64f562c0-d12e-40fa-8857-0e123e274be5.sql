@@ -1,0 +1,1 @@
+ALTER TYPE public.nivel_educativo ADD VALUE IF NOT EXISTS 'analfabeta';

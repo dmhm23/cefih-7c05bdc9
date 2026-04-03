@@ -293,6 +293,7 @@ export const carteraService = {
     await delay(600);
     const pago: RegistroPago = { id: uuid(), ...data };
     mockPagos.push(pago);
+    addCarteraAuditLog('crear', 'pago', pago.id, undefined, { valorPago: data.valorPago, metodoPago: data.metodoPago });
 
     // Recalc factura
     const factura = mockFacturas.find(f => f.id === data.facturaId);

@@ -105,8 +105,8 @@ const AdminLoginPage = () => {
 
             <Button type="submit"
               className={cn("w-full h-12 text-base font-medium rounded-xl",
-                "bg-destructive hover:bg-destructive/90",
-                "shadow-lg shadow-destructive/25 hover:shadow-xl hover:shadow-destructive/30",
+                "bg-primary hover:bg-primary/90",
+                "shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
                 "transition-all duration-300 hover:-translate-y-0.5", "group")}
               disabled={isLoading}>
               {isLoading ? (

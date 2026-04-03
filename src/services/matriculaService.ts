@@ -1,5 +1,6 @@
-import { v4 as uuid } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
+import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
 
 // ---------------------------------------------------------------------------
 // Helpers

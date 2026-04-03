@@ -97,7 +97,7 @@ export async function sincronizarDocumentos(
 
   const rows = nuevos.map(r => ({
     matricula_id: matriculaId,
-    tipo: r.tipo,
+    tipo: r.tipo as any,
     nombre: r.nombre,
     estado: 'pendiente' as const,
     opcional: r.opcional || false,

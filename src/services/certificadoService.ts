@@ -104,12 +104,12 @@ export const certificadoService = {
         plantilla_id: params.plantillaId,
         codigo: params.codigo,
         estado: 'generado',
-        snapshot_datos: params.snapshotDatos,
+        snapshot_datos: params.snapshotDatos as any,
         svg_final: params.svgFinal,
         version: 1,
         fecha_generacion: new Date().toISOString(),
         autorizado_excepcional: params.autorizadoExcepcional ?? false,
-      })
+      } as any)
       .select()
       .single();
     if (error) throw error;

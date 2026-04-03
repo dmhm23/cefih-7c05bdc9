@@ -226,6 +226,42 @@ export type Database = {
           },
         ]
       }
+      comentarios: {
+        Row: {
+          created_at: string
+          editado_en: string | null
+          entidad_id: string
+          entidad_tipo: string
+          id: string
+          seccion: Database["public"]["Enums"]["seccion_comentario"]
+          texto: string
+          usuario_id: string | null
+          usuario_nombre: string
+        }
+        Insert: {
+          created_at?: string
+          editado_en?: string | null
+          entidad_id: string
+          entidad_tipo: string
+          id?: string
+          seccion: Database["public"]["Enums"]["seccion_comentario"]
+          texto: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+        }
+        Update: {
+          created_at?: string
+          editado_en?: string | null
+          entidad_id?: string
+          entidad_tipo?: string
+          id?: string
+          seccion?: Database["public"]["Enums"]["seccion_comentario"]
+          texto?: string
+          usuario_id?: string | null
+          usuario_nombre?: string
+        }
+        Relationships: []
+      }
       cursos: {
         Row: {
           activo: boolean
@@ -1642,6 +1678,8 @@ export type Database = {
     }
     Functions: {
       duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_dashboard_charts_data: { Args: { p_periodo?: string }; Returns: Json }
+      get_dashboard_stats: { Args: never; Returns: Json }
       get_documentos_portal: {
         Args: { p_matricula_id: string }
         Returns: {

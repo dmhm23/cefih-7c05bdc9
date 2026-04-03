@@ -1,17 +1,9 @@
 
-import { useMatriculas } from "@/hooks/useMatriculas";
-import { useCursos } from "@/hooks/useCursos";
-import { useGruposCartera } from "@/hooks/useCartera";
+import { useState, useEffect } from "react";
 import StatCard from "@/components/dashboard/StatCard";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import TodoWidget from "@/components/dashboard/TodoWidget";
-import {
-  calcTotalFacturadoPagado,
-  calcCarteraPorCobrar,
-  calcMatriculasIncompletas,
-  calcCursosSinCerrar,
-  calcPendientesMinTrabajo,
-} from "@/data/mockDashboard";
+import { fetchDashboardStats, type DashboardStats } from "@/data/mockDashboard";
 
 const formatCOPFull = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);
@@ -23,17 +15,17 @@ const abbreviate = (v: number): string => {
 };
 
 const Dashboard = () => {
-  const { data: matriculas = [], isLoading: loadingM } = useMatriculas();
-  const { data: cursos = [], isLoading: loadingC } = useCursos();
-  const { data: grupos = [], isLoading: loadingG } = useGruposCartera();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const loading = loadingM || loadingC || loadingG;
+  useEffect(() => {
+    fetchDashboardStats()
+      .then(setStats)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-  const facturadoPagado = calcTotalFacturadoPagado(grupos);
-  const carteraPorCobrar = calcCarteraPorCobrar(grupos);
-  const matriculasIncompletas = calcMatriculasIncompletas(matriculas);
-  const cursosSinCerrar = calcCursosSinCerrar(cursos);
-  const pendientesMinTrabajo = calcPendientesMinTrabajo(cursos);
+  const s = stats || { facturadoPagado: 0, carteraPendiente: 0, matriculasIncompletas: 0, cursosSinCerrar: 0, pendientesMinTrabajo: 0 };
 
   return (
     <div className="space-y-6">
@@ -49,8 +41,8 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Facturado y Pagado"
-          value={abbreviate(facturadoPagado)}
-          fullValue={formatCOPFull(facturadoPagado)}
+          value={abbreviate(s.facturadoPagado)}
+          fullValue={formatCOPFull(s.facturadoPagado)}
           description="Acumulado total recaudado"
           href="/cartera?estado=pagado"
           colorScheme="green"
@@ -58,42 +50,42 @@ const Dashboard = () => {
         />
         <StatCard
           title="Cartera por Cobrar"
-          value={abbreviate(carteraPorCobrar)}
-          fullValue={formatCOPFull(carteraPorCobrar)}
+          value={abbreviate(s.carteraPendiente)}
+          fullValue={formatCOPFull(s.carteraPendiente)}
           description="Saldo pendiente de recaudo"
           href="/cartera?estado=pendiente"
-          colorScheme={carteraPorCobrar > 0 ? "red" : "green"}
+          colorScheme={s.carteraPendiente > 0 ? "red" : "green"}
           loading={loading}
         />
         <StatCard
           title="Matrículas Incompletas"
-          value={matriculasIncompletas.toString()}
+          value={s.matriculasIncompletas.toString()}
           description="Documentación pendiente"
           href="/matriculas?estado_documentacion=incompleto"
-          colorScheme={matriculasIncompletas > 0 ? "orange" : "green"}
+          colorScheme={s.matriculasIncompletas > 0 ? "orange" : "green"}
           loading={loading}
         />
         <StatCard
           title="Cursos sin Cerrar"
-          value={cursosSinCerrar.toString()}
+          value={s.cursosSinCerrar.toString()}
           description="Fecha fin vencida"
           href="/cursos?estado=en_ejecucion&cierre=pendiente"
-          colorScheme={cursosSinCerrar > 0 ? "red" : "green"}
+          colorScheme={s.cursosSinCerrar > 0 ? "red" : "green"}
           loading={loading}
         />
         <StatCard
           title="Pendientes MinTrabajo"
-          value={pendientesMinTrabajo.toString()}
+          value={s.pendientesMinTrabajo.toString()}
           description="Sin reporte a MinTrabajo"
           href="/cursos?estado=finalizado&reportado_mintrabajo=false"
-          colorScheme={pendientesMinTrabajo > 0 ? "orange" : "green"}
+          colorScheme={s.pendientesMinTrabajo > 0 ? "orange" : "green"}
           loading={loading}
         />
       </div>
 
       {/* Charts + Todo Widget in 2x2 grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashboardCharts matriculas={matriculas} loading={loading} />
+        <DashboardCharts loading={loading} />
         <TodoWidget />
       </div>
     </div>

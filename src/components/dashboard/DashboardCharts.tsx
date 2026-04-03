@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
@@ -9,17 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import {
-  generateVolumenMatriculas,
-  generateIngresosTiempo,
-  generateDistribucionNivel,
-  filterByPeriod,
+  fetchDashboardCharts,
+  type DashboardChartsData,
+  type TimeSeriesPoint,
+  type NivelDistribucion,
 } from "@/data/mockDashboard";
-import { Matricula } from "@/types/matricula";
 
 type Period = "trimestre" | "semestre" | "anual";
 
 interface DashboardChartsProps {
-  matriculas: Matricula[];
   loading?: boolean;
 }
 
@@ -32,14 +30,24 @@ const tooltipStyle = {
   borderRadius: '0.5rem',
 };
 
-const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
+const DashboardCharts = ({ loading }: DashboardChartsProps) => {
   const [period, setPeriod] = useState<Period>("anual");
+  const [chartsData, setChartsData] = useState<DashboardChartsData | null>(null);
+  const [chartsLoading, setChartsLoading] = useState(true);
 
-  const volumen = useMemo(() => filterByPeriod(generateVolumenMatriculas(), period), [period]);
-  const ingresos = useMemo(() => filterByPeriod(generateIngresosTiempo(), period), [period]);
-  const distribucion = useMemo(() => generateDistribucionNivel(matriculas), [matriculas]);
+  useEffect(() => {
+    setChartsLoading(true);
+    fetchDashboardCharts(period)
+      .then(setChartsData)
+      .catch(console.error)
+      .finally(() => setChartsLoading(false));
+  }, [period]);
 
-  if (loading) {
+  const volumen: TimeSeriesPoint[] = chartsData?.matriculasPorMes || [];
+  const ingresos: TimeSeriesPoint[] = chartsData?.ingresosPorMes || [];
+  const distribucion: NivelDistribucion[] = chartsData?.distribucionTipoFormacion || [];
+
+  if (loading || chartsLoading) {
     return (
       <>
         <Skeleton className="h-72" />
@@ -129,16 +137,16 @@ const DashboardCharts = ({ matriculas, loading }: DashboardChartsProps) => {
         </CardContent>
       </Card>
 
-      {/* Distribución por Nivel */}
+      {/* Distribución por Tipo Formación */}
       <Card className="h-[370px] flex flex-col overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-1.5">
-            <CardTitle className="text-sm font-medium">Distribución por Nivel</CardTitle>
+            <CardTitle className="text-sm font-medium">Distribución por Tipo</CardTitle>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Info size={14} className="text-muted-foreground cursor-help" />
               </TooltipTrigger>
-              <TooltipContent>Cantidad de estudiantes agrupados por nivel de formación empresarial.</TooltipContent>
+              <TooltipContent>Cantidad de cursos agrupados por tipo de formación.</TooltipContent>
             </Tooltip>
           </div>
         </CardHeader>

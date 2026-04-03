@@ -1,40 +1,6 @@
-import { GrupoCartera } from '@/types/cartera';
-import { Matricula, NivelFormacionEmpresa, NIVEL_FORMACION_EMPRESA_LABELS } from '@/types/matricula';
-import { Curso } from '@/types/curso';
+import { supabase } from '@/integrations/supabase/client';
 
-// ============ METRIC CALCULATORS ============
-
-export function calcTotalFacturadoPagado(grupos: GrupoCartera[]): number {
-  return grupos
-    .filter(g => g.estado === 'pagado')
-    .reduce((sum, g) => sum + g.totalAbonos, 0);
-}
-
-export function calcCarteraPorCobrar(grupos: GrupoCartera[]): number {
-  return grupos
-    .filter(g => g.estado !== 'pagado')
-    .reduce((sum, g) => sum + g.saldo, 0);
-}
-
-export function calcMatriculasIncompletas(matriculas: Matricula[]): number {
-  return matriculas.filter(m => {
-    const obligatorios = m.documentos.filter(d => !d.opcional);
-    return obligatorios.length > 0 && obligatorios.some(d => d.estado === 'pendiente');
-  }).length;
-}
-
-export function calcCursosSinCerrar(cursos: Curso[]): number {
-  const hoy = new Date().toISOString().slice(0, 10);
-  return cursos.filter(c => c.estado === 'en_progreso' && c.fechaFin <= hoy).length;
-}
-
-export function calcPendientesMinTrabajo(cursos: Curso[]): number {
-  return cursos.filter(c => c.estado === 'cerrado' && !c.minTrabajoRegistro).length;
-}
-
-// ============ CHART DATA GENERATORS ============
-
-const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+// ============ TYPES ============
 
 export interface TimeSeriesPoint {
   mes: string;
@@ -47,48 +13,76 @@ export interface NivelDistribucion {
   fill: string;
 }
 
-const NIVEL_COLORS: Record<string, string> = {
-  jefe_area: 'hsl(220, 60%, 50%)',
-  trabajador_autorizado: 'hsl(142, 71%, 45%)',
+export interface DashboardStats {
+  facturadoPagado: number;
+  carteraPendiente: number;
+  matriculasIncompletas: number;
+  cursosSinCerrar: number;
+  pendientesMinTrabajo: number;
+}
+
+export interface DashboardChartsData {
+  matriculasPorMes: TimeSeriesPoint[];
+  ingresosPorMes: TimeSeriesPoint[];
+  distribucionTipoFormacion: NivelDistribucion[];
+}
+
+// ============ COLORS ============
+
+const TIPO_FORMACION_COLORS: Record<string, string> = {
+  formacion_inicial: 'hsl(220, 60%, 50%)',
   reentrenamiento: 'hsl(38, 92%, 50%)',
-  coordinador_ta: 'hsl(0, 84%, 60%)',
+  jefe_area: 'hsl(142, 71%, 45%)',
+  coordinador_alturas: 'hsl(0, 84%, 60%)',
 };
 
-export function generateVolumenMatriculas(): TimeSeriesPoint[] {
-  const data = [12, 18, 15, 22, 28, 25, 30, 20, 24, 32, 26, 19];
-  return data.map((v, i) => ({ mes: MESES[i], valor: v }));
+const TIPO_FORMACION_LABELS: Record<string, string> = {
+  formacion_inicial: 'Formación Inicial',
+  reentrenamiento: 'Reentrenamiento',
+  jefe_area: 'Jefe de Área',
+  coordinador_alturas: 'Coordinador Alturas',
+};
+
+// ============ RPC CALLS ============
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const { data, error } = await supabase.rpc('get_dashboard_stats');
+  if (error) throw error;
+
+  const d = data as Record<string, number>;
+  return {
+    facturadoPagado: d.facturadoPagado ?? 0,
+    carteraPendiente: d.carteraPendiente ?? 0,
+    matriculasIncompletas: d.matriculasIncompletas ?? 0,
+    cursosSinCerrar: d.cursosSinCerrar ?? 0,
+    pendientesMinTrabajo: d.pendientesMinTrabajo ?? 0,
+  };
 }
 
-export function generateIngresosTiempo(): TimeSeriesPoint[] {
-  const data = [
-    3200000, 4800000, 4100000, 5600000, 7200000, 6500000,
-    8100000, 5300000, 6200000, 8500000, 6800000, 4900000,
-  ];
-  return data.map((v, i) => ({ mes: MESES[i], valor: v }));
+export async function fetchDashboardCharts(periodo: 'trimestre' | 'semestre' | 'anual' = 'anual'): Promise<DashboardChartsData> {
+  const { data, error } = await supabase.rpc('get_dashboard_charts_data', { p_periodo: periodo });
+  if (error) throw error;
+
+  const d = data as Record<string, unknown[]>;
+
+  return {
+    matriculasPorMes: ((d.matriculasPorMes || []) as Array<{ mes: string; valor: number }>).map(p => ({
+      mes: p.mes,
+      valor: Number(p.valor),
+    })),
+    ingresosPorMes: ((d.ingresosPorMes || []) as Array<{ mes: string; valor: number }>).map(p => ({
+      mes: p.mes,
+      valor: Number(p.valor),
+    })),
+    distribucionTipoFormacion: ((d.distribucionTipoFormacion || []) as Array<{ nivel: string; cantidad: number }>).map(p => ({
+      nivel: TIPO_FORMACION_LABELS[p.nivel] || p.nivel,
+      cantidad: Number(p.cantidad),
+      fill: TIPO_FORMACION_COLORS[p.nivel] || 'hsl(220, 15%, 50%)',
+    })),
+  };
 }
 
-export function generateDistribucionNivel(matriculas: Matricula[]): NivelDistribucion[] {
-  const conteo: Record<string, number> = {};
-  matriculas.forEach(m => {
-    const nivel = m.empresaNivelFormacion || 'sin_nivel';
-    conteo[nivel] = (conteo[nivel] || 0) + 1;
-  });
-
-  return Object.entries(conteo)
-    .filter(([k]) => k !== 'sin_nivel')
-    .map(([k, v]) => ({
-      nivel: NIVEL_FORMACION_EMPRESA_LABELS[k as NivelFormacionEmpresa] || k,
-      cantidad: v,
-      fill: NIVEL_COLORS[k] || 'hsl(220, 15%, 50%)',
-    }));
-}
-
-export function filterByPeriod(data: TimeSeriesPoint[], period: 'trimestre' | 'semestre' | 'anual'): TimeSeriesPoint[] {
-  const count = period === 'trimestre' ? 3 : period === 'semestre' ? 6 : 12;
-  return data.slice(-count);
-}
-
-// ============ TODO WIDGET ============
+// ============ TODO WIDGET (localStorage — sin cambios) ============
 
 export interface TodoItem {
   id: string;

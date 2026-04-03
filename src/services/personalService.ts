@@ -1,284 +1,303 @@
-import { v4 as uuid } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 import { Personal, PersonalFormData, Cargo, CargoFormData, TipoCargo, AdjuntoPersonal } from '@/types/personal';
-import { mockPersonalStaff, mockCargos, mockAuditLogs } from '@/data/mockData';
-import { delay, ApiError } from './api';
+import { ApiError, handleSupabaseError } from './api';
+
+function mapPersonalRow(row: any, cargoNombre?: string): Personal {
+  return {
+    id: row.id,
+    nombres: row.nombres,
+    apellidos: row.apellidos,
+    cargoId: row.cargo_id,
+    cargoNombre: cargoNombre || '',
+    firmaBase64: undefined, // Firma now uses storage, handled separately
+    adjuntos: [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapCargoRow(row: any): Cargo {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    tipo: row.tipo as TipoCargo,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapAdjuntoRow(row: any): AdjuntoPersonal {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    tipo: row.tipo_mime || '',
+    tamano: row.tamano || 0,
+    fechaCarga: row.fecha_carga,
+  };
+}
 
 export const personalService = {
   // ============ PERSONAL ============
   async getAll(): Promise<Personal[]> {
-    await delay(800);
-    return [...mockPersonalStaff];
+    const { data, error } = await supabase
+      .from('personal')
+      .select('*, cargos(nombre)')
+      .is('deleted_at', null)
+      .order('nombres');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(row => mapPersonalRow(row, (row as any).cargos?.nombre));
   },
 
   async getById(id: string): Promise<Personal | null> {
-    await delay(500);
-    return mockPersonalStaff.find(p => p.id === id) || null;
+    const { data: row, error } = await supabase
+      .from('personal')
+      .select('*, cargos(nombre)')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    if (!row) return null;
+
+    const personal = mapPersonalRow(row, (row as any).cargos?.nombre);
+
+    // Load adjuntos
+    const { data: adjuntos } = await supabase
+      .from('personal_adjuntos')
+      .select('*')
+      .eq('personal_id', id);
+
+    personal.adjuntos = (adjuntos || []).map(mapAdjuntoRow);
+
+    // Load firma from storage if path exists
+    if (row.firma_storage_path) {
+      const { data: signedUrl } = await supabase.storage
+        .from('firmas')
+        .createSignedUrl(row.firma_storage_path, 3600);
+      if (signedUrl?.signedUrl) {
+        personal.firmaBase64 = signedUrl.signedUrl;
+      }
+    }
+
+    return personal;
   },
 
   async getByTipoCargo(tipo: TipoCargo): Promise<Personal[]> {
-    await delay(500);
-    const cargoIds = mockCargos.filter(c => c.tipo === tipo).map(c => c.id);
-    return mockPersonalStaff.filter(p => cargoIds.includes(p.cargoId));
+    const { data: cargos } = await supabase
+      .from('cargos')
+      .select('id')
+      .eq('tipo', tipo)
+      .is('deleted_at', null);
+
+    if (!cargos?.length) return [];
+    const cargoIds = cargos.map(c => c.id);
+
+    const { data, error } = await supabase
+      .from('personal')
+      .select('*, cargos(nombre)')
+      .in('cargo_id', cargoIds)
+      .is('deleted_at', null);
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(row => mapPersonalRow(row, (row as any).cargos?.nombre));
   },
 
   async create(data: PersonalFormData): Promise<Personal> {
-    await delay(1000);
-    const now = new Date().toISOString();
-    const newPersonal: Personal = {
-      ...data,
-      id: uuid(),
-      adjuntos: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    mockPersonalStaff.push(newPersonal);
+    const { data: row, error } = await supabase
+      .from('personal')
+      .insert({
+        nombres: data.nombres,
+        apellidos: data.apellidos,
+        cargo_id: data.cargoId,
+        numero_documento: '',
+      })
+      .select('*, cargos(nombre)')
+      .single();
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: newPersonal.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return newPersonal;
+    if (error) handleSupabaseError(error);
+    return mapPersonalRow(row, (row as any).cargos?.nombre);
   },
 
   async update(id: string, data: Partial<PersonalFormData>): Promise<Personal> {
-    await delay(800);
-    const index = mockPersonalStaff.findIndex(p => p.id === id);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    const dbData: Record<string, any> = {};
+    if (data.nombres !== undefined) dbData.nombres = data.nombres;
+    if (data.apellidos !== undefined) dbData.apellidos = data.apellidos;
+    if (data.cargoId !== undefined) dbData.cargo_id = data.cargoId;
 
-    const now = new Date().toISOString();
-    mockPersonalStaff[index] = { ...mockPersonalStaff[index], ...data, updatedAt: now };
+    const { data: row, error } = await supabase
+      .from('personal')
+      .update(dbData)
+      .eq('id', id)
+      .select('*, cargos(nombre)')
+      .single();
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockPersonalStaff[index];
+    if (error) handleSupabaseError(error);
+    return mapPersonalRow(row, (row as any).cargos?.nombre);
   },
 
   async delete(id: string): Promise<void> {
-    await delay(600);
-    const index = mockPersonalStaff.findIndex(p => p.id === id);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    const { error } = await supabase
+      .from('personal')
+      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .eq('id', id);
 
-    const now = new Date().toISOString();
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: id,
-      accion: 'eliminar',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    mockPersonalStaff.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 
   // ============ FIRMA ============
   async updateFirma(id: string, firmaBase64: string): Promise<Personal> {
-    await delay(600);
-    const index = mockPersonalStaff.findIndex(p => p.id === id);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    // Upload firma to storage
+    const path = `personal/${id}/firma.png`;
+    const base64Data = firmaBase64.replace(/^data:image\/\w+;base64,/, '');
+    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-    const now = new Date().toISOString();
-    mockPersonalStaff[index] = { ...mockPersonalStaff[index], firmaBase64, updatedAt: now };
+    const { error: uploadError } = await supabase.storage
+      .from('firmas')
+      .upload(path, binaryData, { contentType: 'image/png', upsert: true });
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: ['firmaBase64'],
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
+    if (uploadError) throw new ApiError('Error al subir la firma', 500);
 
-    return mockPersonalStaff[index];
+    const { data: row, error } = await supabase
+      .from('personal')
+      .update({ firma_storage_path: path })
+      .eq('id', id)
+      .select('*, cargos(nombre)')
+      .single();
+
+    if (error) handleSupabaseError(error);
+    const personal = mapPersonalRow(row, (row as any).cargos?.nombre);
+    personal.firmaBase64 = firmaBase64;
+    return personal;
   },
 
   async deleteFirma(id: string): Promise<Personal> {
-    await delay(400);
-    const index = mockPersonalStaff.findIndex(p => p.id === id);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    // Get current path
+    const { data: current } = await supabase
+      .from('personal')
+      .select('firma_storage_path')
+      .eq('id', id)
+      .single();
 
-    const now = new Date().toISOString();
-    mockPersonalStaff[index] = { ...mockPersonalStaff[index], firmaBase64: undefined, updatedAt: now };
+    if (current?.firma_storage_path) {
+      await supabase.storage.from('firmas').remove([current.firma_storage_path]);
+    }
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: ['firmaBase64'],
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
+    const { data: row, error } = await supabase
+      .from('personal')
+      .update({ firma_storage_path: null })
+      .eq('id', id)
+      .select('*, cargos(nombre)')
+      .single();
 
-    return mockPersonalStaff[index];
+    if (error) handleSupabaseError(error);
+    return mapPersonalRow(row, (row as any).cargos?.nombre);
   },
 
   // ============ ADJUNTOS ============
   async addAdjunto(personalId: string, file: File): Promise<AdjuntoPersonal> {
-    await delay(800);
-    const index = mockPersonalStaff.findIndex(p => p.id === personalId);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    const path = `personal/${personalId}/${Date.now()}_${file.name}`;
 
-    const now = new Date().toISOString();
+    const { error: uploadError } = await supabase.storage
+      .from('adjuntos-personal')
+      .upload(path, file);
 
-    // Read file as data URL for mock storage
-    const dataUrl = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.readAsDataURL(file);
-    });
+    if (uploadError) throw new ApiError('Error al subir el archivo', 500);
 
-    const adjunto: AdjuntoPersonal = {
-      id: uuid(),
-      nombre: file.name,
-      tipo: file.type,
-      tamano: file.size,
-      fechaCarga: now,
-      dataUrl,
-    };
+    const { data: row, error } = await supabase
+      .from('personal_adjuntos')
+      .insert({
+        personal_id: personalId,
+        nombre: file.name,
+        tipo_mime: file.type,
+        tamano: file.size,
+        storage_path: path,
+      })
+      .select()
+      .single();
 
-    if (!mockPersonalStaff[index].adjuntos) {
-      mockPersonalStaff[index].adjuntos = [];
-    }
-    mockPersonalStaff[index].adjuntos.push(adjunto);
-    mockPersonalStaff[index].updatedAt = now;
-
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: personalId,
-      accion: 'editar',
-      camposModificados: ['adjuntos'],
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return adjunto;
+    if (error) handleSupabaseError(error);
+    return mapAdjuntoRow(row);
   },
 
   async deleteAdjunto(personalId: string, adjuntoId: string): Promise<void> {
-    await delay(400);
-    const index = mockPersonalStaff.findIndex(p => p.id === personalId);
-    if (index === -1) throw new ApiError('Personal no encontrado', 404, 'NOT_FOUND');
+    // Get storage path
+    const { data: adjunto } = await supabase
+      .from('personal_adjuntos')
+      .select('storage_path')
+      .eq('id', adjuntoId)
+      .single();
 
-    const adjIndex = mockPersonalStaff[index].adjuntos?.findIndex(a => a.id === adjuntoId) ?? -1;
-    if (adjIndex === -1) throw new ApiError('Adjunto no encontrado', 404, 'NOT_FOUND');
+    if (adjunto?.storage_path) {
+      await supabase.storage.from('adjuntos-personal').remove([adjunto.storage_path]);
+    }
 
-    const now = new Date().toISOString();
-    mockPersonalStaff[index].adjuntos.splice(adjIndex, 1);
-    mockPersonalStaff[index].updatedAt = now;
+    const { error } = await supabase
+      .from('personal_adjuntos')
+      .delete()
+      .eq('id', adjuntoId);
 
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'personal',
-      entidadId: personalId,
-      accion: 'editar',
-      camposModificados: ['adjuntos'],
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
+    if (error) handleSupabaseError(error);
   },
 
   // ============ CARGOS ============
   async getAllCargos(): Promise<Cargo[]> {
-    await delay(500);
-    return [...mockCargos];
+    const { data, error } = await supabase
+      .from('cargos')
+      .select('*')
+      .is('deleted_at', null)
+      .order('nombre');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapCargoRow);
   },
 
   async createCargo(data: CargoFormData): Promise<Cargo> {
-    await delay(800);
-    const exists = mockCargos.find(c => c.nombre.toLowerCase() === data.nombre.toLowerCase());
-    if (exists) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
+    const { data: row, error } = await supabase
+      .from('cargos')
+      .insert({
+        nombre: data.nombre,
+        tipo: data.tipo,
+      })
+      .select()
+      .single();
 
-    const now = new Date().toISOString();
-    const newCargo: Cargo = {
-      ...data,
-      id: uuid(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    mockCargos.push(newCargo);
-
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'cargo',
-      entidadId: newCargo.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return newCargo;
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
+      handleSupabaseError(error);
+    }
+    return mapCargoRow(row);
   },
 
   async updateCargo(id: string, data: Partial<CargoFormData>): Promise<Cargo> {
-    await delay(800);
-    const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
+    const { data: row, error } = await supabase
+      .from('cargos')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (data.nombre) {
-      const duplicate = mockCargos.find(c => c.id !== id && c.nombre.toLowerCase() === data.nombre!.toLowerCase());
-      if (duplicate) throw new ApiError('Ya existe un rol con ese nombre', 400, 'CARGO_DUPLICADO');
-    }
-
-    const now = new Date().toISOString();
-    mockCargos[index] = { ...mockCargos[index], ...data, updatedAt: now };
-
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'cargo',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockCargos[index];
+    if (error) handleSupabaseError(error);
+    return mapCargoRow(row);
   },
 
   async deleteCargo(id: string): Promise<void> {
-    await delay(600);
-    const index = mockCargos.findIndex(c => c.id === id);
-    if (index === -1) throw new ApiError('Rol no encontrado', 404, 'NOT_FOUND');
+    // Check if in use
+    const { data: inUse } = await supabase
+      .from('personal')
+      .select('id')
+      .eq('cargo_id', id)
+      .is('deleted_at', null)
+      .limit(1);
 
-    const inUse = mockPersonalStaff.some(p => p.cargoId === id);
-    if (inUse) throw new ApiError('No se puede eliminar un rol que está asignado a personal activo', 400, 'CARGO_EN_USO');
+    if (inUse && inUse.length > 0) {
+      throw new ApiError('No se puede eliminar un rol que está asignado a personal activo', 400, 'CARGO_EN_USO');
+    }
 
-    const now = new Date().toISOString();
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'cargo',
-      entidadId: id,
-      accion: 'eliminar',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
+    const { error } = await supabase
+      .from('cargos')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id);
 
-    mockCargos.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 };

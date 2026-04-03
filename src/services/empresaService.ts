@@ -1,188 +1,201 @@
-import { v4 as uuid } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 import { Empresa, EmpresaFormData, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
-import { mockEmpresas, mockTarifasEmpresa } from '@/data/mockEmpresas';
-import { mockMatriculas, mockAuditLogs } from '@/data/mockData';
-import { mockGruposCartera } from '@/data/mockCartera';
-import { delay, ApiError } from './api';
+import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
 
-function addAuditLog(
-  accion: 'crear' | 'editar' | 'eliminar',
-  entidadTipo: 'empresa' | 'tarifa_empresa',
-  entidadId: string,
-  valorAnterior?: Record<string, unknown>,
-  valorNuevo?: Record<string, unknown>,
-  camposModificados?: string[]
-) {
-  mockAuditLogs.push({
-    id: uuid(),
-    entidadTipo,
-    entidadId,
-    accion,
-    camposModificados,
-    valorAnterior,
-    valorNuevo,
-    usuarioId: 'current_user',
-    usuarioNombre: 'Usuario Actual',
-    timestamp: new Date().toISOString(),
-  });
+function mapEmpresaRow(row: any): Empresa {
+  return {
+    id: row.id,
+    nombreEmpresa: row.nombre_empresa,
+    nit: row.nit,
+    representanteLegal: '',
+    sectorEconomico: row.sector_economico || '',
+    arl: row.arl || '',
+    direccion: row.direccion || '',
+    telefonoEmpresa: row.telefono_contacto || '',
+    contactos: [],
+    personaContacto: row.persona_contacto || '',
+    telefonoContacto: row.telefono_contacto || '',
+    emailContacto: row.email_contacto || '',
+    activo: row.activo,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapEmpresaToDb(data: Partial<EmpresaFormData>): Record<string, any> {
+  const result: Record<string, any> = {};
+  if (data.nombreEmpresa !== undefined) result.nombre_empresa = data.nombreEmpresa;
+  if (data.nit !== undefined) result.nit = data.nit;
+  if (data.sectorEconomico !== undefined) result.sector_economico = data.sectorEconomico || null;
+  if (data.arl !== undefined) result.arl = data.arl || null;
+  if (data.personaContacto !== undefined) result.persona_contacto = data.personaContacto;
+  if (data.emailContacto !== undefined) result.email_contacto = data.emailContacto;
+  if (data.telefonoEmpresa !== undefined) result.telefono_contacto = data.telefonoEmpresa;
+  if ((data as any).telefonoContacto !== undefined) result.telefono_contacto = (data as any).telefonoContacto;
+  if (data.direccion !== undefined) result.direccion = data.direccion;
+  if (data.activo !== undefined) result.activo = data.activo;
+  if ((data as any).observaciones !== undefined) result.observaciones = (data as any).observaciones;
+  if ((data as any).ciudad !== undefined) result.ciudad = (data as any).ciudad;
+  if ((data as any).departamento !== undefined) result.departamento = (data as any).departamento;
+  return result;
 }
 
 export const empresaService = {
   async getAll(): Promise<Empresa[]> {
-    await delay(800);
-    return [...mockEmpresas];
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('*')
+      .is('deleted_at', null)
+      .order('nombre_empresa');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapEmpresaRow);
   },
 
   async getById(id: string): Promise<Empresa | null> {
-    await delay(500);
-    return mockEmpresas.find(e => e.id === id) || null;
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    return data ? mapEmpresaRow(data) : null;
   },
 
   async search(query: string): Promise<Empresa[]> {
-    await delay(600);
-    const q = query.toLowerCase();
-    return mockEmpresas.filter(e =>
-      e.nombreEmpresa.toLowerCase().includes(q) ||
-      e.nit.includes(query) ||
-      e.personaContacto.toLowerCase().includes(q) ||
-      e.emailContacto.toLowerCase().includes(q)
-    );
+    const { data, error } = await supabase
+      .from('empresas')
+      .select('*')
+      .is('deleted_at', null)
+      .or(`nombre_empresa.ilike.%${query}%,nit.ilike.%${query}%,persona_contacto.ilike.%${query}%,email_contacto.ilike.%${query}%`)
+      .order('nombre_empresa');
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(mapEmpresaRow);
   },
 
   async create(data: EmpresaFormData): Promise<Empresa> {
-    await delay(1000);
+    const dbData = mapEmpresaToDb(data);
+    const { data: row, error } = await supabase
+      .from('empresas')
+      .insert(dbData as any)
+      .select()
+      .single();
 
-    const exists = mockEmpresas.find(e => e.nit === data.nit);
-    if (exists) {
-      throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
+      handleSupabaseError(error);
     }
-
-    const now = new Date().toISOString();
-    const newEmpresa: Empresa = {
-      ...data,
-      id: uuid(),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    mockEmpresas.push(newEmpresa);
-    addAuditLog('crear', 'empresa', newEmpresa.id, undefined, data as unknown as Record<string, unknown>);
-    return newEmpresa;
+    return mapEmpresaRow(row);
   },
 
   async update(id: string, data: Partial<EmpresaFormData>): Promise<Empresa> {
-    await delay(800);
+    const dbData = mapEmpresaToDb(data);
+    const { data: row, error } = await supabase
+      .from('empresas')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
 
-    const index = mockEmpresas.findIndex(e => e.id === id);
-    if (index === -1) {
-      throw new ApiError('Empresa no encontrada', 404, 'NOT_FOUND');
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
+      handleSupabaseError(error);
     }
-
-    if (data.nit) {
-      const duplicate = mockEmpresas.find(e => e.nit === data.nit && e.id !== id);
-      if (duplicate) {
-        throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
-      }
-    }
-
-    const now = new Date().toISOString();
-    const valorAnterior = { ...mockEmpresas[index] };
-    mockEmpresas[index] = {
-      ...mockEmpresas[index],
-      ...data,
-      updatedAt: now,
-    };
-
-    addAuditLog('editar', 'empresa', id, valorAnterior as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>, Object.keys(data));
-    return mockEmpresas[index];
+    return mapEmpresaRow(row);
   },
 
   async delete(id: string): Promise<void> {
-    await delay(600);
+    // Soft delete
+    const { error } = await supabase
+      .from('empresas')
+      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .eq('id', id);
 
-    const index = mockEmpresas.findIndex(e => e.id === id);
-    if (index === -1) {
-      throw new ApiError('Empresa no encontrada', 404, 'NOT_FOUND');
-    }
-
-    // INC-005: Verificar integridad referencial
-    const matriculasVinculadas = mockMatriculas.filter(m => m.empresaId === id);
-    if (matriculasVinculadas.length > 0) {
-      throw new ApiError(
-        `No se puede eliminar la empresa. Tiene ${matriculasVinculadas.length} matrícula(s) vinculada(s).`,
-        400,
-        'TIENE_MATRICULAS'
-      );
-    }
-
-    const gruposVinculados = mockGruposCartera.filter(g => {
-      // Check if any responsable linked to this empresa
-      return false; // Simplified — in real backend this would check responsablePago.empresaId
-    });
-
-    addAuditLog('eliminar', 'empresa', id);
-    mockEmpresas.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 
   // ============ TARIFAS ============
 
   async getTarifas(empresaId: string): Promise<TarifaEmpresa[]> {
-    await delay(500);
-    return mockTarifasEmpresa.filter(t => t.empresaId === empresaId);
+    const { data, error } = await supabase
+      .from('tarifas_empresa')
+      .select('*')
+      .eq('empresa_id', empresaId);
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(row => ({
+      id: row.id,
+      empresaId: row.empresa_id,
+      nivelFormacionId: row.nivel_formacion_id,
+      nivelFormacionNombre: '', // Will be resolved by the UI
+      valor: Number(row.valor),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
   },
 
   async createTarifa(data: TarifaEmpresaFormData): Promise<TarifaEmpresa> {
-    await delay(800);
+    const { data: row, error } = await supabase
+      .from('tarifas_empresa')
+      .insert({
+        empresa_id: data.empresaId,
+        nivel_formacion_id: data.nivelFormacionId,
+        valor: data.valor,
+      })
+      .select()
+      .single();
 
-    // INC-006: Validar unicidad empresa+nivelFormacion
-    const duplicate = mockTarifasEmpresa.find(
-      t => t.empresaId === data.empresaId && t.nivelFormacionId === data.nivelFormacionId
-    );
-    if (duplicate) {
-      throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
+      handleSupabaseError(error);
     }
-
-    const now = new Date().toISOString();
-    const newTarifa: TarifaEmpresa = {
-      ...data,
-      id: uuid(),
-      createdAt: now,
-      updatedAt: now,
+    return {
+      id: row.id,
+      empresaId: row.empresa_id,
+      nivelFormacionId: row.nivel_formacion_id,
+      nivelFormacionNombre: data.nivelFormacionNombre || '',
+      valor: Number(row.valor),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
     };
-    mockTarifasEmpresa.push(newTarifa);
-    addAuditLog('crear', 'tarifa_empresa', newTarifa.id, undefined, data as unknown as Record<string, unknown>);
-    return newTarifa;
   },
 
   async updateTarifa(id: string, data: Partial<TarifaEmpresaFormData>): Promise<TarifaEmpresa> {
-    await delay(600);
-    const index = mockTarifasEmpresa.findIndex(t => t.id === id);
-    if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
+    const dbData: Record<string, any> = {};
+    if (data.empresaId) dbData.empresa_id = data.empresaId;
+    if (data.nivelFormacionId) dbData.nivel_formacion_id = data.nivelFormacionId;
+    if (data.valor !== undefined) dbData.valor = data.valor;
 
-    // INC-006: Validar unicidad si cambian empresa o nivelFormacion
-    if (data.empresaId || data.nivelFormacionId) {
-      const empresaId = data.empresaId || mockTarifasEmpresa[index].empresaId;
-      const nivelFormacionId = data.nivelFormacionId || mockTarifasEmpresa[index].nivelFormacionId;
-      const duplicate = mockTarifasEmpresa.find(
-        t => t.id !== id && t.empresaId === empresaId && t.nivelFormacionId === nivelFormacionId
-      );
-      if (duplicate) {
-        throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
-      }
+    const { data: row, error } = await supabase
+      .from('tarifas_empresa')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505') throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
+      handleSupabaseError(error);
     }
-
-    const now = new Date().toISOString();
-    const valorAnterior = { ...mockTarifasEmpresa[index] };
-    mockTarifasEmpresa[index] = { ...mockTarifasEmpresa[index], ...data, updatedAt: now };
-    addAuditLog('editar', 'tarifa_empresa', id, valorAnterior as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>, Object.keys(data));
-    return mockTarifasEmpresa[index];
+    return {
+      id: row.id,
+      empresaId: row.empresa_id,
+      nivelFormacionId: row.nivel_formacion_id,
+      nivelFormacionNombre: '',
+      valor: Number(row.valor),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   },
 
   async deleteTarifa(id: string): Promise<void> {
-    await delay(400);
-    const index = mockTarifasEmpresa.findIndex(t => t.id === id);
-    if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
-    addAuditLog('eliminar', 'tarifa_empresa', id);
-    mockTarifasEmpresa.splice(index, 1);
+    const { error } = await supabase
+      .from('tarifas_empresa')
+      .delete()
+      .eq('id', id);
+
+    if (error) handleSupabaseError(error);
   },
 };

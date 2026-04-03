@@ -2711,4 +2711,39 @@ Nuevo módulo completo para gestión de facturación, pagos y seguimiento de car
 
 ---
 
+### v1.9 — 3 de Abril 2026
+
+#### Autenticación Real con Lovable Cloud
+
+Migración del login simulado (credenciales demo hardcodeadas) a autenticación real con Supabase Auth (Email/Password). Implementación completa del flujo de autenticación, sistema de roles y panel de administración.
+
+**Backend (Lovable Cloud):**
+- **Tabla `public.perfiles`**: Tabla en PostgreSQL vinculada a `auth.users` con campos `id`, `email`, `nombres`, `rol` (default: `'global'`), `created_at`. RLS habilitado con políticas restrictivas.
+- **Trigger `on_auth_user_created`**: Inserta automáticamente perfil con rol `'global'` al crear un usuario en Supabase Auth.
+- **Función `get_my_rol()`**: SECURITY DEFINER para consultar rol del usuario sin recursión RLS.
+- **Políticas RLS**: SELECT (propio perfil o admin), INSERT/UPDATE/DELETE bloqueados para cliente.
+- **Edge Function `admin-crear-usuario`**: Valida JWT + rol admin, crea usuario con service role key, actualiza nombres. Endpoint: `POST /functions/v1/admin-crear-usuario`.
+- **Edge Function `bootstrap-admin`**: Uso único para provisionar el primer usuario administrador del sistema.
+
+**Frontend:**
+- **`AuthContext`** (`src/contexts/AuthContext.tsx`): Provider que escucha `onAuthStateChange`, expone `session`, `user`, `perfil` (con rol), `loading`, `signOut`. Hook `useAuth()`.
+- **`AuthGuard`** (`src/components/guards/AuthGuard.tsx`): Verifica sesión activa, redirige a `/` si no hay.
+- **`AdminGuard`** (`src/components/guards/AdminGuard.tsx`): Verifica sesión + rol admin, redirige a `/admin` si no cumple.
+- **`LoginForm`** (`src/components/LoginForm.tsx`): Eliminadas credenciales demo. Conectado a `supabase.auth.signInWithPassword`. Manejo de errores con toast.
+- **`AdminLoginPage`** (`src/pages/admin/AdminLoginPage.tsx`): Login con verificación de rol post-autenticación. Cierra sesión si no es admin.
+- **`AdminDashboardPage`** (`src/pages/admin/AdminDashboardPage.tsx`): Panel con formulario de creación de usuarios globales vía Edge Function.
+- **`App.tsx`**: Envuelto en `AuthProvider`. Rutas protegidas con `AuthGuard` (app principal) y `AdminGuard` (admin). Nuevas rutas `/admin` y `/admin/dashboard`.
+
+**Archivos creados:**
+- `src/contexts/AuthContext.tsx`
+- `src/components/guards/AuthGuard.tsx`, `src/components/guards/AdminGuard.tsx`
+- `src/pages/admin/AdminLoginPage.tsx`, `src/pages/admin/AdminDashboardPage.tsx`
+- `supabase/functions/admin-crear-usuario/index.ts`, `supabase/functions/bootstrap-admin/index.ts`
+
+**Archivos modificados:**
+- `src/components/LoginForm.tsx` — Conectado a Supabase Auth real
+- `src/App.tsx` — AuthProvider + guards + rutas admin
+
+---
+
 *Documento generado como referencia integral del sistema SAFA. Para dudas técnicas o funcionales, consultar el código fuente en el directorio `src/`.*

@@ -396,6 +396,53 @@ export type Database = {
           },
         ]
       }
+      documentos_portal: {
+        Row: {
+          created_at: string
+          documento_key: string
+          enviado_en: string | null
+          estado: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data: string | null
+          id: string
+          intentos: Json
+          matricula_id: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          documento_key: string
+          enviado_en?: string | null
+          estado?: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data?: string | null
+          id?: string
+          intentos?: Json
+          matricula_id: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          documento_key?: string
+          enviado_en?: string | null
+          estado?: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data?: string | null
+          id?: string
+          intentos?: Json
+          matricula_id?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_portal_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           activo: boolean
@@ -1399,6 +1446,54 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_config_documentos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          depende_de: string[]
+          descripcion: string
+          habilitado_por_nivel: Json
+          icono: string
+          id: string
+          key: string
+          label: string
+          obligatorio: boolean
+          orden: number
+          tipo: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          depende_de?: string[]
+          descripcion?: string
+          habilitado_por_nivel?: Json
+          icono?: string
+          id?: string
+          key: string
+          label: string
+          obligatorio?: boolean
+          orden?: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          depende_de?: string[]
+          descripcion?: string
+          habilitado_por_nivel?: Json
+          icono?: string
+          id?: string
+          key?: string
+          label?: string
+          obligatorio?: boolean
+          orden?: number
+          tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       responsables_pago: {
         Row: {
           activo: boolean
@@ -1547,6 +1642,24 @@ export type Database = {
     }
     Functions: {
       duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_documentos_portal: {
+        Args: { p_matricula_id: string }
+        Returns: {
+          depende_de: string[]
+          descripcion: string
+          documento_key: string
+          enviado_en: string
+          estado: Database["public"]["Enums"]["estado_doc_portal"]
+          firma_data: string
+          icono: string
+          intentos: Json
+          label: string
+          metadata: Json
+          obligatorio: boolean
+          orden: number
+          tipo: Database["public"]["Enums"]["tipo_doc_portal"]
+        }[]
+      }
       get_formatos_for_matricula: {
         Args: { _matricula_id: string }
         Returns: {
@@ -1591,6 +1704,20 @@ export type Database = {
         }
       }
       get_my_rol: { Args: never; Returns: string }
+      login_portal_estudiante: {
+        Args: { p_cedula: string }
+        Returns: {
+          curso_id: string
+          curso_nombre: string
+          curso_tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          matricula_id: string
+          persona_apellidos: string
+          persona_id: string
+          persona_nombres: string
+          persona_numero_documento: string
+          portal_habilitado: boolean
+        }[]
+      }
       recalcular_grupo_cartera: {
         Args: { p_grupo_id: string }
         Returns: undefined

@@ -777,7 +777,7 @@ export default function MatriculaDetallePage() {
             )}
             <div className="mt-4 pt-4 border-t">
               <ComentariosSection
-                matriculaId={matricula.id}
+                entidadId={matricula.id}
                 seccion="cartera"
                 titulo="Seguimiento de Cartera"
               />

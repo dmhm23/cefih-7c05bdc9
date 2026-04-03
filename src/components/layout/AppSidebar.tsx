@@ -17,38 +17,51 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { usePermission } from "@/hooks/usePermission";
+import { useAuth } from "@/contexts/AuthContext";
 
 const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Matrículas", url: "/matriculas", icon: GraduationCap },
-  { title: "Cursos", url: "/cursos", icon: BookOpen },
-  { title: "Cartera", url: "/cartera", icon: Wallet },
-  { title: "Gestión de Personal", url: "/gestion-personal", icon: UserCog },
-  { title: "Gestión de Formatos", url: "/gestion-formatos", icon: FileText },
-  { title: "Niveles de Formación", url: "/niveles", icon: Layers },
-  { title: "Portal Estudiante", url: "/portal-estudiante", icon: Smartphone },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, modulo: "dashboard" },
+  { title: "Matrículas", url: "/matriculas", icon: GraduationCap, modulo: "matriculas" },
+  { title: "Cursos", url: "/cursos", icon: BookOpen, modulo: "cursos" },
+  { title: "Cartera", url: "/cartera", icon: Wallet, modulo: "cartera" },
+  { title: "Gestión de Personal", url: "/gestion-personal", icon: UserCog, modulo: "personal" },
+  { title: "Gestión de Formatos", url: "/gestion-formatos", icon: FileText, modulo: "formatos" },
+  { title: "Niveles de Formación", url: "/niveles", icon: Layers, modulo: "niveles" },
+  { title: "Portal Estudiante", url: "/portal-estudiante", icon: Smartphone, modulo: "portal_estudiante" },
 ];
 
 const directorioItems = [
-  { title: "Personas", url: "/personas", icon: Users },
-  { title: "Empresas", url: "/empresas", icon: Building2 },
+  { title: "Personas", url: "/personas", icon: Users, modulo: "personas" },
+  { title: "Empresas", url: "/empresas", icon: Building2, modulo: "empresas" },
 ];
 
 const certificacionItems = [
-  { title: "Historial", url: "/certificacion/historial", icon: History },
-  { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage },
+  { title: "Historial", url: "/certificacion/historial", icon: History, modulo: "certificacion" },
+  { title: "Plantillas", url: "/certificacion/plantillas", icon: FileImage, modulo: "certificacion" },
 ];
+
+function useCanView(modulo: string) {
+  return usePermission(modulo, "ver");
+}
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
+  const { signOut } = useAuth();
   const isCollapsed = state === "collapsed";
+
+  // Filter menu items by permission
+  const visibleMenuItems = menuItems.filter((item) => useCanView(item.modulo));
+  const visibleDirectorio = directorioItems.filter((item) => useCanView(item.modulo));
+  const visibleCertificacion = certificacionItems.filter((item) => useCanView(item.modulo));
 
   const isDirectorioActive = location.pathname.startsWith("/personas") || location.pathname.startsWith("/empresas");
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -73,7 +86,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const isActive = location.pathname === item.url || 
                   (item.url !== "/dashboard" && location.pathname.startsWith(item.url));
                 return (
@@ -96,78 +109,81 @@ export function AppSidebar() {
               })}
 
               {/* Directorio - Collapsible */}
-              <Collapsible defaultOpen={isDirectorioActive} className="group/collapsible-dir">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip="Directorio"
-                      isActive={isDirectorioActive}
-                    >
-                      <Users className="h-4 w-4" />
-                      <span>Directorio</span>
-                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-dir:rotate-180" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {directorioItems.map((sub) => {
-                        const isSubActive = location.pathname === sub.url ||
-                          (sub.url !== "/personas" && sub.url !== "/empresas" && location.pathname.startsWith(sub.url)) ||
-                          location.pathname.startsWith(sub.url + "/");
-                        return (
-                          <SidebarMenuSubItem key={sub.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isSubActive}
-                            >
-                              <button onClick={() => navigate(sub.url)} className="w-full">
-                                <sub.icon className="h-3.5 w-3.5" />
-                                <span>{sub.title}</span>
-                              </button>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {visibleDirectorio.length > 0 && (
+                <Collapsible defaultOpen={isDirectorioActive} className="group/collapsible-dir">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip="Directorio"
+                        isActive={isDirectorioActive}
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>Directorio</span>
+                        <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-dir:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {visibleDirectorio.map((sub) => {
+                          const isSubActive = location.pathname === sub.url ||
+                            location.pathname.startsWith(sub.url + "/");
+                          return (
+                            <SidebarMenuSubItem key={sub.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isSubActive}
+                              >
+                                <button onClick={() => navigate(sub.url)} className="w-full">
+                                  <sub.icon className="h-3.5 w-3.5" />
+                                  <span>{sub.title}</span>
+                                </button>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
 
               {/* Certificación - Collapsible */}
-              <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip="Certificación"
-                      isActive={isCertificacionActive}
-                    >
-                      <Award className="h-4 w-4" />
-                      <span>Certificación</span>
-                      <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {certificacionItems.map((sub) => {
-                        const isSubActive = location.pathname === sub.url;
-                        return (
-                          <SidebarMenuSubItem key={sub.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={isSubActive}
-                            >
-                              <button onClick={() => navigate(sub.url)} className="w-full">
-                                <sub.icon className="h-3.5 w-3.5" />
-                                <span>{sub.title}</span>
-                              </button>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              {visibleCertificacion.length > 0 && (
+                <Collapsible defaultOpen={isCertificacionActive} className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip="Certificación"
+                        isActive={isCertificacionActive}
+                      >
+                        <Award className="h-4 w-4" />
+                        <span>Certificación</span>
+                        <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {visibleCertificacion.map((sub) => {
+                          const isSubActive = location.pathname === sub.url;
+                          return (
+                            <SidebarMenuSubItem key={sub.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={isSubActive}
+                              >
+                                <button onClick={() => navigate(sub.url)} className="w-full">
+                                  <sub.icon className="h-3.5 w-3.5" />
+                                  <span>{sub.title}</span>
+                                </button>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

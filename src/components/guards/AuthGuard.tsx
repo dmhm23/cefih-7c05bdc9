@@ -1,8 +1,15 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermission } from "@/hooks/usePermission";
 
-const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+interface AuthGuardProps {
+  children: React.ReactNode;
+  modulo?: string;
+}
+
+const AuthGuard = ({ children, modulo }: AuthGuardProps) => {
   const { session, loading } = useAuth();
+  const canView = usePermission(modulo || "dashboard", "ver");
 
   if (loading) {
     return (
@@ -14,6 +21,11 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   if (!session) {
     return <Navigate to="/" replace />;
+  }
+
+  // If a specific module is required, check permission
+  if (modulo && !canView) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

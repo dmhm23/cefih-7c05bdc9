@@ -81,9 +81,9 @@ export const plantillaService = {
         version: data.version,
         tipo_formacion: data.tipoFormacion,
         regla_codigo: data.reglaCodigo,
-        reglas: data.reglas,
+        reglas: data.reglas as any,
         niveles_asignados: data.nivelesAsignados,
-      })
+      } as any)
       .select()
       .single();
     if (error) throw error;

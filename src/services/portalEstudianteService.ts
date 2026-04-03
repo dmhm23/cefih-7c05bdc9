@@ -130,7 +130,7 @@ export const portalEstudianteService = {
 
     const { data: result, error } = await supabase
       .from('documentos_portal')
-      .upsert(upsertData, { onConflict: 'matricula_id,documento_key' })
+      .upsert(upsertData as any, { onConflict: 'matricula_id,documento_key' })
       .select()
       .single();
     if (error) throw error;

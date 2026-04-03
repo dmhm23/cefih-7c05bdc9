@@ -1,85 +1,122 @@
 
-
-# Plan de Implementación Backend — FASE 3
+# Plan de Implementación Backend — FASE 4 y FASE 5
 
 ## Estado Actual
-- **DB existente:** `perfiles`, `empresas`, `tarifas_empresa`, `cargos`, `personal`, `personal_adjuntos`, `niveles_formacion`, `personas`, `cursos`, `cursos_fechas_mintrabajo`, `audit_logs`
-- **ENUMs existentes:** `estado_matricula`, `tipo_vinculacion`, `metodo_pago`, `estado_documento_matricula`, `tipo_documento_matricula`, `estado_formato`, `categoria_formato`, `scope_formato`, y todos los demas de Fase 1/2
-- **ENUMs faltantes:** `nivel_previo`, `motor_render`, `estado_formato_respuesta`
-- **Servicios mock a migrar:** `matriculaService.ts`, `documentoService.ts`, `formatoFormacionService.ts`, `driveService.ts`
+- **DB existente:** `perfiles`, `empresas`, `tarifas_empresa`, `cargos`, `personal`, `personal_adjuntos`, `niveles_formacion`, `personas`, `cursos`, `cursos_fechas_mintrabajo`, `matriculas`, `documentos_matricula`, `formatos_formacion`, `versiones_formato`, `formato_respuestas`, `audit_logs`
+- **ENUMs existentes con valores incorrectos (necesitan recrearse):**
+  - `estado_factura`: tiene `pendiente, parcial, pagada` → necesita `por_pagar, parcial, pagada`
+  - `estado_grupo_cartera`: tiene `pendiente, parcial, pagado, vencido, anulado` → necesita `sin_facturar, facturado, abonado, pagado, vencido`
+  - `tipo_actividad_cartera`: tiene `nota, llamada, correo, sistema` → necesita `llamada, promesa_pago, comentario, sistema`
+- **ENUMs faltantes:** `tipo_responsable`, `tipo_doc_portal`, `estado_doc_portal`
+- **ENUMs existentes OK:** `estado_certificado`, `estado_excepcion_certificado`, `seccion_comentario`, `metodo_pago`
+- **Servicios mock a migrar:** `carteraService.ts`, `certificadoService.ts`, `plantillaService.ts`, `excepcionCertificadoService.ts`, `portalEstudianteService.ts`, `portalAdminService.ts`, `portalMonitoreoService.ts`
+- **Storage buckets ya creados:** `firmas`, `documentos-matricula`, `adjuntos-personal`, `facturas`, `certificados`
 
 ---
 
-## Paso 1 — Migracion: Tabla `matriculas` + triggers
+## Paso 1 — Migración: Corregir ENUMs + crear faltantes
 
-- Crear ENUMs faltantes: `nivel_previo` (`trabajador_autorizado`, `avanzado`), `motor_render` (`bloques`, `plantilla_html`), `estado_formato_respuesta` (`pendiente`, `completado`, `firmado`)
-- Tabla `matriculas` con 40+ columnas:
-  - FKs: `persona_id → personas ON DELETE RESTRICT`, `curso_id → cursos ON DELETE RESTRICT` (nullable), `empresa_id → empresas ON DELETE RESTRICT`
-  - Campos snapshot vinculacion laboral, salud (6 booleanos + detalles), evaluaciones JSONB, cartera, portal JSONB
-  - UNIQUE parcial `(persona_id, curso_id) WHERE curso_id IS NOT NULL`
-  - Indices en persona_id, curso_id, empresa_id, estado
-- 3 triggers de negocio:
-  1. `snapshot_empresa_matricula()` — copia nombre/nit/representante desde empresas al INSERT/UPDATE de empresa_id
-  2. `sync_fechas_curso_matricula()` — copia fechas del curso al INSERT/UPDATE de curso_id
-  3. `calcular_pagado_matricula()` — calcula `pagado = abono >= valor_cupo`
-- Triggers estandar: `update_updated_at`, `audit_log_trigger_fn('matricula')`
-- RLS: SELECT autenticados (deleted_at IS NULL), ALL admin/global
+- Recrear 3 ENUMs con valores correctos (DROP/CREATE o ALTER TYPE ADD VALUE):
+  - `estado_factura` → `por_pagar, parcial, pagada`
+  - `estado_grupo_cartera` → `sin_facturar, facturado, abonado, pagado, vencido`
+  - `tipo_actividad_cartera` → `llamada, promesa_pago, comentario, sistema`
+- Crear 3 ENUMs nuevos:
+  - `tipo_responsable` (`empresa`, `independiente`, `arl`)
+  - `tipo_doc_portal` (`firma_autorizacion`, `evaluacion`, `formulario`, `solo_lectura`)
+  - `estado_doc_portal` (`bloqueado`, `pendiente`, `completado`)
+- Agregar valores faltantes a `tipo_entidad_audit`: `plantilla_certificado`, `excepcion_certificado`, `responsable_pago`, `actividad_cartera`
 
-**Reglas cubiertas:** RN-MAT-001 a RN-MAT-022
+**Nota:** Como estos ENUMs no están en uso todavía (no hay tablas de cartera/certificados), se pueden hacer DROP + CREATE sin riesgo.
 
 ---
 
-## Paso 2 — Migracion: Tabla `documentos_matricula`
+## Paso 2 — Migración: Módulo de Cartera (7 tablas + 4 funciones + triggers)
 
-- Tabla: id, matricula_id (FK CASCADE), tipo, nombre, estado, storage_path, fecha_carga, fecha_documento, fecha_inicio_cobertura, opcional, archivo_nombre, archivo_tamano, created_at
-- RLS y trigger audit
+### Tablas:
+- `responsables_pago`: tipo, nombre, nit, empresa_id (FK opcional a empresas), contacto, dirección
+- `grupos_cartera`: responsable_pago_id (FK RESTRICT), estado, total_valor, total_abonos, saldo, observaciones
+- `grupo_cartera_matriculas`: tabla de vinculación (grupo_cartera_id, matricula_id) — PK compuesto
+- `facturas`: grupo_cartera_id (FK RESTRICT), numero_factura, fechas, subtotal, total, estado, archivo_factura
+- `factura_matriculas`: tabla de vinculación con valor_asignado — PK compuesto
+- `pagos`: factura_id (FK CASCADE), fecha, valor, metodo_pago, soporte_pago, observaciones
+- `actividades_cartera`: grupo_cartera_id (FK CASCADE), factura_id (FK SET NULL), tipo, descripción, fecha, usuario
 
-**Reglas cubiertas:** RN-MAT-011 a RN-MAT-013
+### Funciones SQL:
+1. `recalcular_grupo_cartera(p_grupo_id)` — Recalcula totales y estado del grupo basado en matrículas vinculadas y pagos acumulados
+2. `recalcular_estado_factura()` — Trigger AFTER INSERT/UPDATE/DELETE en pagos que recalcula estado de factura + llama a recalcular_grupo_cartera
+3. `sync_factura_a_matriculas()` — Trigger AFTER INSERT/UPDATE en facturas que sincroniza factura_numero y fecha_facturacion en matrículas
+4. `on_delete_factura()` — Trigger BEFORE DELETE en facturas que limpia datos en matrículas y recalcula grupo
+5. `registrar_actividad_sistema_factura()` — Trigger AFTER INSERT en facturas que auto-registra actividad de sistema
+6. `registrar_actividad_sistema_pago()` — Trigger AFTER INSERT en pagos que auto-registra actividad de sistema
 
----
+### RLS en todas las tablas:
+- SELECT para autenticados
+- ALL para admin/global
 
-## Paso 3 — Migracion: Formatos (`formatos_formacion`, `versiones_formato`, `formato_respuestas`)
+### Triggers de auditoría en: responsables_pago, grupos_cartera, facturas, pagos
 
-- Tabla `formatos_formacion`: 25+ columnas (motor, estado, scope, niveles_asignados UUID[], tipos_curso tipo_formacion[], html_template, bloques JSONB, legacy_component_id, encabezado_config JSONB, firmas, etc.)
-- Tabla `versiones_formato`: snapshots HTML/CSS por formato
-- Tabla `formato_respuestas`: respuestas por matricula+formato, UNIQUE(matricula_id, formato_id)
-- RPC `duplicar_formato(formato_id)` — copia con nombre "Copia de ..."
-- Funcion `get_formatos_for_matricula(matricula_id)` — resuelve formatos por tipo/nivel
-- RLS, triggers audit en las 3 tablas
-
-**Reglas cubiertas:** RN-FMT-001 a RN-FMT-033
-
----
-
-## Paso 4 — Seed: 4 formatos legacy precargados
-
-- INSERT de los 4 formatos legacy (`info_aprendiz`, `registro_asistencia`, `participacion_pta_ats`, `evaluacion_reentrenamiento`) con bloques JSONB completos
-- Preserva funcionalidad actual post-migracion
-
----
-
-## Paso 5 — Reescritura: `matriculaService.ts`
-
-- Reemplazar mock por `supabase.from('matriculas')` + joins con documentos
-- Operaciones: CRUD, cambiarEstado, capturarFirma (storage), registrarPago
-- Eliminar dependencia de `mockMatriculas`, `mockCursos`, `mockPersonas`
+**Reglas cubiertas:** RN-CAR-001 a RN-CAR-019, RN-INT-004, RN-INT-005, RN-INT-008
 
 ---
 
-## Paso 6 — Reescritura: `documentoService.ts` + `driveService.ts`
+## Paso 3 — Migración: Módulo de Certificación (3 tablas)
 
-- `documentoService`: queries a `documentos_matricula` + `niveles_formacion.documentos_requeridos`
-- `driveService`: reemplazar URLs ficticias por `supabase.storage.from('documentos-matricula').upload()`
-- Sincronizacion on-demand al consultar matricula
+### Tablas:
+- `plantillas_certificado`: nombre, tipo_formacion, svg_template, token_mappings JSONB, niveles_asignados UUID[], reglas JSONB, version, activa, soft-delete
+- `plantilla_certificado_versiones`: plantilla_id (FK CASCADE), svg_snapshot, token_mappings_snapshot, version, creador
+- `certificados`: matricula_id (FK RESTRICT), plantilla_id (FK), plantilla_version, codigo_unico (UNIQUE), estado, datos_snapshot JSONB, svg_renderizado, storage_path, revocación (por/motivo/fecha), version_certificado
+- `excepciones_certificado`: matricula_id (FK CASCADE), tipo, motivo, estado, aprobado_por, fecha_resolucion
+
+### RLS, triggers de auditoría
+
+**Reglas cubiertas:** RN-CER-001 a RN-CER-006
 
 ---
 
-## Paso 7 — Reescritura: `formatoFormacionService.ts`
+## Paso 4 — Migración: Portal del Estudiante (2 tablas + 2 funciones)
 
-- Reemplazar mock por queries Supabase a las 3 tablas
-- Versiones: saveVersion, getVersiones, restoreVersion
-- getForMatricula via RPC `get_formatos_for_matricula`
-- Plantillas base se mantienen como datos estaticos en frontend
+### Tablas:
+- `portal_config_documentos`: key (UNIQUE), nombre, tipo (tipo_doc_portal), requiere_firma, depende_de TEXT[], orden, habilitado_por_nivel JSONB, activo
+- `documentos_portal`: matricula_id (FK CASCADE), documento_key, estado (estado_doc_portal), enviado_en, firma_base64, puntaje, respuestas JSONB, intentos JSONB, UNIQUE(matricula_id, documento_key)
+
+### Funciones SQL:
+1. `login_portal_estudiante(p_cedula TEXT)` — Busca matrícula vigente con portal habilitado, retorna JSONB con datos del estudiante
+2. `get_documentos_portal(p_matricula_id UUID)` — Retorna documentos con evaluación de dependencias (desbloqueo automático)
+
+### RLS:
+- `portal_config_documentos`: SELECT autenticados, ALL admin/global
+- `documentos_portal`: SELECT autenticados, ALL admin/global
+
+**Reglas cubiertas:** RN-POR-001 a RN-POR-008
+
+---
+
+## Paso 5 — Reescritura: `carteraService.ts`
+
+- Reemplazar todos los mock por queries Supabase a las 7 tablas de cartera
+- Operaciones: CRUD responsables, grupos, facturas, pagos, actividades
+- `asignarMatriculaACartera()`: buscar/crear responsable_pago + grupo_cartera + insertar en grupo_cartera_matriculas
+- Los recálculos de estado se delegan a los triggers (ya no se hacen en el frontend)
+- Eliminar importaciones de `mockCartera`, `mockData`, `mockEmpresas`
+
+---
+
+## Paso 6 — Reescritura: `certificadoService.ts` + `plantillaService.ts` + `excepcionCertificadoService.ts`
+
+- `plantillaService`: CRUD contra `plantillas_certificado` + `plantilla_certificado_versiones`
+- `certificadoService`: CRUD contra `certificados`, generar certificado con snapshot
+- `excepcionCertificadoService`: CRUD contra `excepciones_certificado`
+- Storage: subir SVG/PDF al bucket `certificados`
+- Eliminar todas las dependencias de `mockCertificados`
+
+---
+
+## Paso 7 — Reescritura: `portalEstudianteService.ts` + `portalAdminService.ts` + `portalMonitoreoService.ts`
+
+- `portalEstudianteService`: usar RPC `login_portal_estudiante` + `get_documentos_portal`, queries a `documentos_portal`
+- `portalAdminService`: CRUD contra `portal_config_documentos`, toggle por nivel
+- `portalMonitoreoService`: queries con joins (matriculas + personas + cursos + documentos_portal) para tabla de monitoreo
+- Eliminar dependencias de `mockData`, `portalAdminConfig`, `portalEstudianteConfig`
 
 ---
 
@@ -87,22 +124,27 @@
 
 | Paso | Migraciones | Servicios | Tipos |
 |------|------------|-----------|-------|
-| 1-4 | 4 migraciones SQL | — | — |
-| 5 | — | `matriculaService.ts` | `matricula.ts` |
-| 6 | — | `documentoService.ts`, `driveService.ts` | — |
-| 7 | — | `formatoFormacionService.ts` | `formatoFormacion.ts` |
+| 1 | 1 migración (ENUMs) | — | — |
+| 2 | 1 migración (cartera) | — | — |
+| 3 | 1 migración (certificación) | — | — |
+| 4 | 1 migración (portal) | — | — |
+| 5 | — | `carteraService.ts` | `cartera.ts` |
+| 6 | — | `certificadoService.ts`, `plantillaService.ts`, `excepcionCertificadoService.ts` | `certificado.ts` |
+| 7 | — | `portalEstudianteService.ts`, `portalAdminService.ts`, `portalMonitoreoService.ts` | `portalEstudiante.ts`, `portalAdmin.ts` |
 
-**Total: 4 migraciones, 4 servicios reescritos, 2 tipos ajustados. Los hooks no cambian.**
+**Total: 4 migraciones SQL, 7 servicios reescritos, 4 tipos ajustados. Los hooks no cambian.**
 
 ## Orden de dependencias
 
 ```text
-Paso 1: matriculas (depende de personas, cursos, empresas)
-  ├── Paso 2: documentos_matricula
-  └── Paso 3: formatos + versiones + respuestas
-       └── Paso 4: seed formatos legacy
-            ├── Paso 5: matriculaService.ts
-            ├── Paso 6: documentoService.ts + driveService.ts
-            └── Paso 7: formatoFormacionService.ts
+Paso 1: Corregir/crear ENUMs
+  │
+  ├── Paso 2: Cartera (responsables_pago, grupos_cartera, facturas, pagos, actividades)
+  │     └── Paso 5: carteraService.ts
+  │
+  ├── Paso 3: Certificación (plantillas, certificados, excepciones)
+  │     └── Paso 6: certificadoService.ts + plantillaService.ts + excepcionCertificadoService.ts
+  │
+  └── Paso 4: Portal (config_documentos, documentos_portal, RPCs)
+        └── Paso 7: portalEstudianteService.ts + portalAdminService.ts + portalMonitoreoService.ts
 ```
-

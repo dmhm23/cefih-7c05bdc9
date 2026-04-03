@@ -142,7 +142,7 @@ export const cursoService = {
     // Don't set nombre — let the trigger auto-generate it
     const { data: row, error } = await supabase
       .from('cursos')
-      .insert(dbData)
+      .insert(dbData as any)
       .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
       .single();
 

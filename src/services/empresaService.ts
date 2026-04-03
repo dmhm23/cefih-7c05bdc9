@@ -1,7 +1,31 @@
 import { v4 as uuid } from 'uuid';
 import { Empresa, EmpresaFormData, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
 import { mockEmpresas, mockTarifasEmpresa } from '@/data/mockEmpresas';
+import { mockMatriculas, mockAuditLogs } from '@/data/mockData';
+import { mockGruposCartera } from '@/data/mockCartera';
 import { delay, ApiError } from './api';
+
+function addAuditLog(
+  accion: 'crear' | 'editar' | 'eliminar',
+  entidadTipo: 'empresa' | 'tarifa_empresa',
+  entidadId: string,
+  valorAnterior?: Record<string, unknown>,
+  valorNuevo?: Record<string, unknown>,
+  camposModificados?: string[]
+) {
+  mockAuditLogs.push({
+    id: uuid(),
+    entidadTipo,
+    entidadId,
+    accion,
+    camposModificados,
+    valorAnterior,
+    valorNuevo,
+    usuarioId: 'current_user',
+    usuarioNombre: 'Usuario Actual',
+    timestamp: new Date().toISOString(),
+  });
+}
 
 export const empresaService = {
   async getAll(): Promise<Empresa[]> {
@@ -42,6 +66,7 @@ export const empresaService = {
     };
 
     mockEmpresas.push(newEmpresa);
+    addAuditLog('crear', 'empresa', newEmpresa.id, undefined, data as unknown as Record<string, unknown>);
     return newEmpresa;
   },
 
@@ -61,12 +86,14 @@ export const empresaService = {
     }
 
     const now = new Date().toISOString();
+    const valorAnterior = { ...mockEmpresas[index] };
     mockEmpresas[index] = {
       ...mockEmpresas[index],
       ...data,
       updatedAt: now,
     };
 
+    addAuditLog('editar', 'empresa', id, valorAnterior as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>, Object.keys(data));
     return mockEmpresas[index];
   },
 
@@ -78,6 +105,22 @@ export const empresaService = {
       throw new ApiError('Empresa no encontrada', 404, 'NOT_FOUND');
     }
 
+    // INC-005: Verificar integridad referencial
+    const matriculasVinculadas = mockMatriculas.filter(m => m.empresaId === id);
+    if (matriculasVinculadas.length > 0) {
+      throw new ApiError(
+        `No se puede eliminar la empresa. Tiene ${matriculasVinculadas.length} matrícula(s) vinculada(s).`,
+        400,
+        'TIENE_MATRICULAS'
+      );
+    }
+
+    const gruposVinculados = mockGruposCartera.filter(g => {
+      // Check if any responsable linked to this empresa
+      return false; // Simplified — in real backend this would check responsablePago.empresaId
+    });
+
+    addAuditLog('eliminar', 'empresa', id);
     mockEmpresas.splice(index, 1);
   },
 
@@ -90,6 +133,15 @@ export const empresaService = {
 
   async createTarifa(data: TarifaEmpresaFormData): Promise<TarifaEmpresa> {
     await delay(800);
+
+    // INC-006: Validar unicidad empresa+curso
+    const duplicate = mockTarifasEmpresa.find(
+      t => t.empresaId === data.empresaId && t.cursoId === data.cursoId
+    );
+    if (duplicate) {
+      throw new ApiError('Ya existe una tarifa para esta combinación de empresa y curso', 400, 'TARIFA_DUPLICADA');
+    }
+
     const now = new Date().toISOString();
     const newTarifa: TarifaEmpresa = {
       ...data,
@@ -98,6 +150,7 @@ export const empresaService = {
       updatedAt: now,
     };
     mockTarifasEmpresa.push(newTarifa);
+    addAuditLog('crear', 'tarifa_empresa', newTarifa.id, undefined, data as unknown as Record<string, unknown>);
     return newTarifa;
   },
 
@@ -105,8 +158,23 @@ export const empresaService = {
     await delay(600);
     const index = mockTarifasEmpresa.findIndex(t => t.id === id);
     if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
+
+    // INC-006: Validar unicidad si cambian empresa o curso
+    if (data.empresaId || data.cursoId) {
+      const empresaId = data.empresaId || mockTarifasEmpresa[index].empresaId;
+      const cursoId = data.cursoId || mockTarifasEmpresa[index].cursoId;
+      const duplicate = mockTarifasEmpresa.find(
+        t => t.id !== id && t.empresaId === empresaId && t.cursoId === cursoId
+      );
+      if (duplicate) {
+        throw new ApiError('Ya existe una tarifa para esta combinación de empresa y curso', 400, 'TARIFA_DUPLICADA');
+      }
+    }
+
     const now = new Date().toISOString();
+    const valorAnterior = { ...mockTarifasEmpresa[index] };
     mockTarifasEmpresa[index] = { ...mockTarifasEmpresa[index], ...data, updatedAt: now };
+    addAuditLog('editar', 'tarifa_empresa', id, valorAnterior as unknown as Record<string, unknown>, data as unknown as Record<string, unknown>, Object.keys(data));
     return mockTarifasEmpresa[index];
   },
 
@@ -114,6 +182,7 @@ export const empresaService = {
     await delay(400);
     const index = mockTarifasEmpresa.findIndex(t => t.id === id);
     if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
+    addAuditLog('eliminar', 'tarifa_empresa', id);
     mockTarifasEmpresa.splice(index, 1);
   },
 };

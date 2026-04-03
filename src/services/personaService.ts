@@ -117,6 +117,16 @@ export const personaService = {
       throw new ApiError('Persona no encontrada', 404, 'NOT_FOUND');
     }
 
+    // INC-005: Verificar integridad referencial
+    const matriculasVinculadas = mockMatriculas.filter(m => m.personaId === id);
+    if (matriculasVinculadas.length > 0) {
+      throw new ApiError(
+        `No se puede eliminar la persona. Tiene ${matriculasVinculadas.length} matrícula(s) vinculada(s).`,
+        400,
+        'TIENE_MATRICULAS'
+      );
+    }
+
     const now = new Date().toISOString();
     
     // Log de auditoría antes de eliminar

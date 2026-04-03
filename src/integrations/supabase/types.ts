@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          accion: Database["public"]["Enums"]["tipo_accion_audit"]
+          campos_modificados: string[] | null
+          created_at: string
+          entidad_id: string
+          entidad_tipo: Database["public"]["Enums"]["tipo_entidad_audit"]
+          id: string
+          metadata: Json | null
+          usuario_id: string | null
+          usuario_nombre: string | null
+          valor_anterior: Json | null
+          valor_nuevo: Json | null
+        }
+        Insert: {
+          accion: Database["public"]["Enums"]["tipo_accion_audit"]
+          campos_modificados?: string[] | null
+          created_at?: string
+          entidad_id: string
+          entidad_tipo: Database["public"]["Enums"]["tipo_entidad_audit"]
+          id?: string
+          metadata?: Json | null
+          usuario_id?: string | null
+          usuario_nombre?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Update: {
+          accion?: Database["public"]["Enums"]["tipo_accion_audit"]
+          campos_modificados?: string[] | null
+          created_at?: string
+          entidad_id?: string
+          entidad_tipo?: Database["public"]["Enums"]["tipo_entidad_audit"]
+          id?: string
+          metadata?: Json | null
+          usuario_id?: string | null
+          usuario_nombre?: string | null
+          valor_anterior?: Json | null
+          valor_nuevo?: Json | null
+        }
+        Relationships: []
+      }
       perfiles: {
         Row: {
           created_at: string | null
@@ -46,7 +88,119 @@ export type Database = {
       get_my_rol: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      arl_enum:
+        | "sura"
+        | "positiva"
+        | "colmena"
+        | "bolivar"
+        | "axa_colpatria"
+        | "liberty"
+        | "equidad"
+        | "alfa"
+        | "aurora"
+        | "otra"
+      categoria_formato:
+        | "formacion"
+        | "evaluacion"
+        | "asistencia"
+        | "pta_ats"
+        | "personalizado"
+      estado_certificado: "elegible" | "generado" | "bloqueado" | "revocado"
+      estado_curso: "programado" | "en_curso" | "cerrado" | "cancelado"
+      estado_documento_matricula: "pendiente" | "cargado"
+      estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
+      estado_factura: "pendiente" | "parcial" | "pagada"
+      estado_formato: "borrador" | "activo" | "archivado"
+      estado_grupo_cartera:
+        | "pendiente"
+        | "parcial"
+        | "pagado"
+        | "vencido"
+        | "anulado"
+      estado_matricula:
+        | "creada"
+        | "pendiente"
+        | "completa"
+        | "certificada"
+        | "cerrada"
+      genero: "masculino" | "femenino" | "otro"
+      metodo_pago:
+        | "transferencia_bancaria"
+        | "efectivo"
+        | "consignacion"
+        | "nequi"
+        | "daviplata"
+        | "bre_b"
+        | "corresponsal_bancario"
+        | "otro"
+      nivel_educativo:
+        | "primaria"
+        | "secundaria"
+        | "tecnico"
+        | "tecnologo"
+        | "profesional"
+        | "especializacion"
+        | "maestria"
+        | "doctorado"
+        | "ninguno"
+        | "otro"
+      scope_formato: "nivel_formacion" | "tipo_curso"
+      seccion_comentario: "cartera" | "observaciones" | "curso_observaciones"
+      sector_economico:
+        | "construccion"
+        | "telecomunicaciones"
+        | "energia"
+        | "petroleo_gas"
+        | "manufactura"
+        | "mineria"
+        | "servicios"
+        | "otro"
+      tipo_accion_audit: "crear" | "editar" | "eliminar" | "cambio_estado"
+      tipo_actividad_cartera: "nota" | "llamada" | "correo" | "sistema"
+      tipo_cargo:
+        | "entrenador"
+        | "supervisor"
+        | "administrativo"
+        | "instructor"
+        | "otro"
+      tipo_documento_identidad:
+        | "cedula_ciudadania"
+        | "cedula_extranjeria"
+        | "pasaporte"
+        | "tarjeta_identidad"
+        | "pep"
+      tipo_documento_matricula:
+        | "cedula"
+        | "certificado_eps"
+        | "certificado_arl"
+        | "certificado_pension"
+        | "examen_medico"
+        | "certificado_alturas"
+        | "carta_autorizacion"
+        | "otro"
+      tipo_entidad_audit:
+        | "persona"
+        | "empresa"
+        | "tarifa_empresa"
+        | "curso"
+        | "nivel_formacion"
+        | "matricula"
+        | "documento_matricula"
+        | "personal"
+        | "cargo"
+        | "formato"
+        | "version_formato"
+        | "certificado"
+        | "grupo_cartera"
+        | "factura"
+        | "pago"
+        | "comentario"
+      tipo_formacion:
+        | "formacion_inicial"
+        | "reentrenamiento"
+        | "jefe_area"
+        | "coordinador_alturas"
+      tipo_vinculacion: "empresa" | "independiente" | "arl"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -173,6 +327,132 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      arl_enum: [
+        "sura",
+        "positiva",
+        "colmena",
+        "bolivar",
+        "axa_colpatria",
+        "liberty",
+        "equidad",
+        "alfa",
+        "aurora",
+        "otra",
+      ],
+      categoria_formato: [
+        "formacion",
+        "evaluacion",
+        "asistencia",
+        "pta_ats",
+        "personalizado",
+      ],
+      estado_certificado: ["elegible", "generado", "bloqueado", "revocado"],
+      estado_curso: ["programado", "en_curso", "cerrado", "cancelado"],
+      estado_documento_matricula: ["pendiente", "cargado"],
+      estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
+      estado_factura: ["pendiente", "parcial", "pagada"],
+      estado_formato: ["borrador", "activo", "archivado"],
+      estado_grupo_cartera: [
+        "pendiente",
+        "parcial",
+        "pagado",
+        "vencido",
+        "anulado",
+      ],
+      estado_matricula: [
+        "creada",
+        "pendiente",
+        "completa",
+        "certificada",
+        "cerrada",
+      ],
+      genero: ["masculino", "femenino", "otro"],
+      metodo_pago: [
+        "transferencia_bancaria",
+        "efectivo",
+        "consignacion",
+        "nequi",
+        "daviplata",
+        "bre_b",
+        "corresponsal_bancario",
+        "otro",
+      ],
+      nivel_educativo: [
+        "primaria",
+        "secundaria",
+        "tecnico",
+        "tecnologo",
+        "profesional",
+        "especializacion",
+        "maestria",
+        "doctorado",
+        "ninguno",
+        "otro",
+      ],
+      scope_formato: ["nivel_formacion", "tipo_curso"],
+      seccion_comentario: ["cartera", "observaciones", "curso_observaciones"],
+      sector_economico: [
+        "construccion",
+        "telecomunicaciones",
+        "energia",
+        "petroleo_gas",
+        "manufactura",
+        "mineria",
+        "servicios",
+        "otro",
+      ],
+      tipo_accion_audit: ["crear", "editar", "eliminar", "cambio_estado"],
+      tipo_actividad_cartera: ["nota", "llamada", "correo", "sistema"],
+      tipo_cargo: [
+        "entrenador",
+        "supervisor",
+        "administrativo",
+        "instructor",
+        "otro",
+      ],
+      tipo_documento_identidad: [
+        "cedula_ciudadania",
+        "cedula_extranjeria",
+        "pasaporte",
+        "tarjeta_identidad",
+        "pep",
+      ],
+      tipo_documento_matricula: [
+        "cedula",
+        "certificado_eps",
+        "certificado_arl",
+        "certificado_pension",
+        "examen_medico",
+        "certificado_alturas",
+        "carta_autorizacion",
+        "otro",
+      ],
+      tipo_entidad_audit: [
+        "persona",
+        "empresa",
+        "tarifa_empresa",
+        "curso",
+        "nivel_formacion",
+        "matricula",
+        "documento_matricula",
+        "personal",
+        "cargo",
+        "formato",
+        "version_formato",
+        "certificado",
+        "grupo_cartera",
+        "factura",
+        "pago",
+        "comentario",
+      ],
+      tipo_formacion: [
+        "formacion_inicial",
+        "reentrenamiento",
+        "jefe_area",
+        "coordinador_alturas",
+      ],
+      tipo_vinculacion: ["empresa", "independiente", "arl"],
+    },
   },
 } as const

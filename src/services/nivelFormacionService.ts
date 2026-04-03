@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { NivelFormacion, NivelFormacionFormData } from '@/types/nivelFormacion';
-import { mockNivelesFormacion, mockAuditLogs } from '@/data/mockData';
+import { mockNivelesFormacion, mockCursos, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 
 export const nivelFormacionService = {

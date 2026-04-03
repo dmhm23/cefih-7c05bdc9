@@ -60,7 +60,8 @@ export function MonitoreoTable() {
   );
 
   const { data: rows, isLoading, refetch } = usePortalMonitoreo(filtros);
-  const options = useMemo(() => getFilterOptions(), []);
+  const [options, setOptions] = useState<{ cursos: { value: string; label: string }[]; niveles: { value: string; label: string }[]; documentos: { value: string; label: string }[] }>({ cursos: [], niveles: [], documentos: [] });
+  useEffect(() => { getFilterOptions().then(setOptions); }, []);
 
   const filterConfigs: FilterConfig[] = useMemo(
     () => [

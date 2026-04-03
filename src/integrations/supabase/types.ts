@@ -1678,6 +1678,8 @@ export type Database = {
     }
     Functions: {
       duplicar_formato: { Args: { _formato_id: string }; Returns: string }
+      get_dashboard_charts_data: { Args: { p_periodo?: string }; Returns: Json }
+      get_dashboard_stats: { Args: never; Returns: Json }
       get_documentos_portal: {
         Args: { p_matricula_id: string }
         Returns: {

@@ -78,18 +78,35 @@ Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 | Backend | Lovable Cloud (Supabase) — Auth, PostgreSQL, Edge Functions |
 | Autenticación | Supabase Auth (Email/Password) |
 
-### 2.2 Patrón de Arquitectura: Backend Emulado
+### 2.2 Patrón de Arquitectura: Híbrida (Backend Real + Servicios Mock)
 
-El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
+El sistema utiliza una arquitectura **híbrida**. La autenticación y la gestión de perfiles/roles operan contra un backend real (Lovable Cloud / Supabase), mientras que los módulos de negocio (personas, matrículas, cursos, etc.) aún operan con servicios mock en memoria, pendientes de migración a base de datos.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
+│               CAPA DE AUTENTICACIÓN (REAL)                │
+│  Supabase Auth (Email/Password)                          │
+│  AuthContext → session, user, perfil, loading, signOut   │
+│  AuthGuard (sesión) · AdminGuard (sesión + rol admin)    │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
+│              CAPA DE BACKEND REAL (Lovable Cloud)         │
+│  PostgreSQL: public.perfiles (id, email, nombres, rol)   │
+│  Trigger: on_auth_user_created → auto-insert perfil      │
+│  RLS: get_my_rol() SECURITY DEFINER                      │
+│  Edge Functions:                                         │
+│    ├── admin-crear-usuario (validación JWT + rol admin)   │
+│    └── bootstrap-admin (uso único, inicialización)       │
+└──────────────────────┬──────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────┐
 │                    CAPA DE PRESENTACIÓN                   │
 │  Pages → Components → Hooks (React Query)                │
 └──────────────────────┬──────────────────────────────────┘
                        │ mutateAsync / queryFn
 ┌──────────────────────▼──────────────────────────────────┐
-│                   CAPA DE SERVICIOS                       │
+│              CAPA DE SERVICIOS (MOCK — en migración)      │
 │  personaService · matriculaService · cursoService        │
 │  comentarioService · documentoService · driveService     │
 │  nivelFormacionService · personalService                 │
@@ -98,17 +115,18 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 │  portalInitService · formatoFormacionService             │
 │  certificadoService · plantillaService                   │
 │  tipoCertificadoService · excepcionCertificadoService    │
-│  carteraService                                          │
+│  carteraService · empresaService                         │
 │        ┌─────────────┐                                   │
 │        │ delay(ms)   │  ← Simula latencia de red         │
 │        └─────────────┘                                   │
 └──────────────────────┬──────────────────────────────────┘
                        │ CRUD sobre arrays
 ┌──────────────────────▼──────────────────────────────────┐
-│                   CAPA DE DATOS                           │
+│                   CAPA DE DATOS (MOCK)                    │
 │  mockData.ts (arrays en memoria)                         │
 │  mockCertificados.ts (plantillas, tipos, certificados)   │
 │  mockCartera.ts (responsables, grupos, facturas, pagos)  │
+│  mockEmpresas.ts (empresas)                              │
 │  portalAdminConfig.ts (catálogo portal)                  │
 │  mockPersonas · mockMatriculas · mockCursos              │
 │  mockNivelesFormacion · mockPersonalStaff · mockCargos   │
@@ -120,10 +138,12 @@ El sistema utiliza una arquitectura **Frontend-First** con backend emulado:
 ```
 
 **Características clave:**
-- Todas las operaciones son **asíncronas** con `delay()` artificial (500-1500ms) para simular latencia real.
-- Los servicios operan sobre **arrays mutables** en memoria (`mockData.ts`).
+- La **autenticación es real** vía Lovable Cloud (Supabase Auth). Los perfiles de usuario se almacenan en PostgreSQL (`public.perfiles`).
+- Los módulos de negocio operan con servicios mock **asíncronos** con `delay()` artificial (500-1500ms) para simular latencia real.
+- Los servicios mock operan sobre **arrays mutables** en memoria (`mockData.ts`).
 - Cada operación de escritura genera automáticamente un **log de auditoría**.
 - La clase `ApiError` simula errores HTTP con códigos de estado y códigos de error personalizados.
+- El cliente de Supabase (`src/integrations/supabase/client.ts`) es **auto-generado** y no debe editarse manualmente.
 
 ### 2.3 Estructura de Directorios
 

@@ -510,6 +510,16 @@ export default function MatriculasPage() {
         totalCount={filteredMatriculas.length}
         onNavigate={handleNavigate}
       />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Eliminar matrícula(s)"
+        description={`¿Estás seguro de eliminar ${idsToDelete.length} matrícula(s)? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        onConfirm={handleDeleteConfirm}
+        variant="destructive"
+      />
     </div>
   );
 }

@@ -22,6 +22,7 @@
 10. [Módulo de Certificación](#10-módulo-de-certificación)
 11. [Módulo de Cartera](#11-módulo-de-cartera)
 12. [Dashboard](#12-dashboard)
+12b. [Autenticación y Autorización](#12b-autenticación-y-autorización)
 13. [Componentes Compartidos](#13-componentes-compartidos)
 14. [Capa de Servicios y Datos](#14-capa-de-servicios-y-datos)
 15. [Hooks (React Query)](#15-hooks-react-query)

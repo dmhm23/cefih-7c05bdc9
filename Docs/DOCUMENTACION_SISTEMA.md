@@ -150,9 +150,11 @@ El sistema utiliza una arquitectura **híbrida**. La autenticación y la gestió
 ```
 src/
 ├── components/
+│   ├── guards/          # AuthGuard, AdminGuard (protección de rutas)
 │   ├── layout/          # MainLayout, AppSidebar
 │   ├── certificacion/   # Componentes de certificación (PlantillaTestDialog, PlantillaVersionHistory)
 │   ├── cursos/          # Componentes específicos de cursos
+│   ├── empresas/        # Componentes específicos de empresas
 │   ├── estudiante/      # Componentes del portal estudiante (QuizReviewCard)
 │   ├── formatos/        # Editor y preview de formatos de formación
 │   ├── matriculas/      # Componentes específicos de matrículas
@@ -164,17 +166,26 @@ src/
 │   ├── shared/          # Componentes reutilizables
 │   └── ui/              # shadcn/ui base components
 ├── contexts/
+│   ├── AuthContext.tsx              # Contexto de autenticación global (session, user, perfil, signOut)
 │   └── PortalEstudianteContext.tsx  # Sesión del portal estudiante
 ├── data/
 │   ├── mockData.ts      # Datos iniciales en memoria
 │   ├── mockCertificados.ts  # Datos mock de certificación
+│   ├── mockCartera.ts   # Datos mock de cartera
+│   ├── mockEmpresas.ts  # Datos mock de empresas
 │   ├── formOptions.ts   # Catálogos para selectores
 │   ├── portalAdminConfig.ts  # Catálogo de documentos del portal
 │   └── portalEstudianteConfig.ts  # Configuración del portal público
 ├── hooks/               # Custom hooks (React Query)
+├── integrations/
+│   └── supabase/
+│       ├── client.ts    # Cliente Supabase (auto-generado, NO editar)
+│       └── types.ts     # Tipos de la BD (auto-generado, NO editar)
 ├── pages/               # Páginas por módulo
+│   ├── admin/           # AdminLoginPage, AdminDashboardPage
 │   ├── certificacion/   # Páginas de certificación
 │   ├── cursos/
+│   ├── empresas/        # Páginas de empresas
 │   ├── estudiante/      # Páginas del portal público (AccesoEstudiante, PanelDocumentos, etc.)
 │   ├── formatos/
 │   ├── matriculas/
@@ -185,6 +196,13 @@ src/
 ├── services/            # Capa de servicios (API emulada)
 ├── types/               # Definiciones TypeScript
 └── utils/               # Utilidades (CSV, resolvers, generador de certificados)
+
+supabase/
+├── config.toml          # Configuración del proyecto Supabase
+├── functions/
+│   ├── admin-crear-usuario/index.ts  # Edge Function: creación de usuarios por admin
+│   └── bootstrap-admin/index.ts      # Edge Function: inicialización del primer admin (uso único)
+└── migrations/          # Migraciones SQL (auto-gestionadas)
 ```
 
 ### 2.4 Enrutamiento

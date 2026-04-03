@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     }
 
     // Validate rol_id exists if provided
-    const targetRolId = rol_id || "a0000000-0000-0000-0000-000000000002"; // default: administrador
+    const targetRolId = rol_id || "a0000000-0000-0000-0000-000000000003"; // default: operador
     const { data: rolCheck } = await supabaseAdmin
       .from("roles")
       .select("id")

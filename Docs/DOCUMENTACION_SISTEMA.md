@@ -75,6 +75,8 @@ Adicionalmente, un **Dashboard** centraliza las métricas operativas clave.
 | Iconos | Lucide React |
 | Componentes UI | Radix UI (via shadcn/ui) |
 | Firma Digital | react-signature-canvas |
+| Backend | Lovable Cloud (Supabase) — Auth, PostgreSQL, Edge Functions |
+| Autenticación | Supabase Auth (Email/Password) |
 
 ### 2.2 Patrón de Arquitectura: Backend Emulado
 

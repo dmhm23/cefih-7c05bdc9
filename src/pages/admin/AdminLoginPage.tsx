@@ -32,13 +32,14 @@ const AdminLoginPage = () => {
       // Check admin role
       const { data: perfil, error: perfilError } = await supabase
         .from("perfiles")
-        .select("rol")
+        .select("rol_id, roles!inner(nombre)")
         .eq("id", data.user.id)
         .single();
 
-      if (perfilError || perfil?.rol !== "admin") {
+      const rolNombre = (perfil as any)?.roles?.nombre;
+      if (perfilError || rolNombre !== "superadministrador") {
         await supabase.auth.signOut();
-        toast({ title: "Acceso denegado", description: "No tienes permisos de administrador para ingresar aquí.", variant: "destructive" });
+        toast({ title: "Acceso denegado", description: "No tienes permisos de superadministrador para ingresar aquí.", variant: "destructive" });
         setIsLoading(false);
         return;
       }

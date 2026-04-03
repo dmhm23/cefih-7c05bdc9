@@ -6,7 +6,13 @@ interface Perfil {
   id: string;
   email: string;
   nombres: string | null;
-  rol: string;
+  rol_id: string;
+  rol_nombre?: string;
+}
+
+interface PermisoItem {
+  modulo: string;
+  accion: string;
 }
 
 interface AuthContextType {

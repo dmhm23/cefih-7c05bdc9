@@ -177,7 +177,7 @@ export const cursoService = {
 
     const { data: row, error } = await supabase
       .from('cursos')
-      .update({ estado: dbEstado })
+      .update({ estado: dbEstado as any })
       .eq('id', id)
       .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
       .single();

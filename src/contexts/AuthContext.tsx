@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Perfil {
+export interface Perfil {
   id: string;
   email: string;
   nombres: string | null;
@@ -10,7 +10,7 @@ interface Perfil {
   rol_nombre?: string;
 }
 
-interface PermisoItem {
+export interface PermisoItem {
   modulo: string;
   accion: string;
 }
@@ -39,41 +39,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [permisos, setPermisos] = useState<PermisoItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPerfil = async (userId: string) => {
-    const { data, error } = await supabase
+  const fetchPerfilAndPermisos = async (userId: string) => {
+    // Fetch perfil with rol name
+    const { data: perfilData, error: perfilError } = await supabase
       .from("perfiles")
-      .select("*")
+      .select("id, email, nombres, rol_id, roles!inner(nombre)")
       .eq("id", userId)
       .single();
-    if (!error && data) {
-      setPerfil(data as Perfil);
+
+    if (!perfilError && perfilData) {
+      const rolNombre = (perfilData as any)?.roles?.nombre || "";
+      setPerfil({
+        id: perfilData.id,
+        email: perfilData.email,
+        nombres: perfilData.nombres,
+        rol_id: perfilData.rol_id,
+        rol_nombre: rolNombre,
+      });
+
+      // Fetch permissions via RPC
+      const { data: permData } = await supabase.rpc("get_user_permissions", {
+        p_user_id: userId,
+      });
+      if (permData) {
+        setPermisos(permData as PermisoItem[]);
+      }
     }
   };
 
   useEffect(() => {
-    // Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
-          setTimeout(() => fetchPerfil(session.user.id), 0);
+          setTimeout(() => fetchPerfilAndPermisos(session.user.id), 0);
         } else {
           setPerfil(null);
+          setPermisos([]);
         }
         setLoading(false);
       }
     );
 
-    // THEN check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchPerfil(session.user.id);
+        fetchPerfilAndPermisos(session.user.id);
       }
       setLoading(false);
     });
@@ -86,10 +102,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setUser(null);
     setPerfil(null);
+    setPermisos([]);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, perfil, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user, perfil, permisos, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

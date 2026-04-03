@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Combobox } from '@/components/ui/combobox';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { TipoFormacion } from '@/types/curso';
 import { mockNivelesFormacion } from '@/data/mockData';
 import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { TipoDocPortal } from '@/types/portalEstudiante';
+import { useFormatos } from '@/hooks/useFormatosFormacion';
 
 const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'firma_autorizacion', label: 'Firma / Autorización' },
@@ -20,6 +21,15 @@ const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
 ];
 
 const NIVELES = mockNivelesFormacion.map((n) => n.id) as unknown as TipoFormacion[];
+
+function categoriaToPorTipo(categoria: string): TipoDocPortal {
+  switch (categoria) {
+    case 'evaluacion': return 'evaluacion';
+    case 'seguridad': return 'firma_autorizacion';
+    case 'formacion':
+    default: return 'formulario';
+  }
+}
 
 interface Props {
   open: boolean;
@@ -32,8 +42,9 @@ interface Props {
 
 export function DocumentoConfigDialog({ open, onOpenChange, documento, existingKeys, allDocumentos, onSave }: Props) {
   const isEdit = !!documento;
+  const { data: formatos, isLoading: loadingFormatos } = useFormatos();
 
-  const [key, setKey] = useState(documento?.key || '');
+  const [selectedFormatoId, setSelectedFormatoId] = useState('');
   const [nombre, setNombre] = useState(documento?.nombre || '');
   const [tipo, setTipo] = useState<TipoDocPortal>(documento?.tipo || 'formulario');
   const [requiereFirma, setRequiereFirma] = useState(documento?.requiereFirma || false);
@@ -48,9 +59,25 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
     documento?.habilitadoPorNivel || defaultNiveles
   );
 
+  // Filter formatos: only visible_en_portal_estudiante + activo, exclude already added
+  const availableFormatos = useMemo(() => {
+    if (!formatos) return [];
+    return formatos.filter(f =>
+      f.visibleEnPortalEstudiante &&
+      f.activo &&
+      f.estado !== 'archivado' &&
+      !existingKeys.includes(f.id)
+    );
+  }, [formatos, existingKeys]);
+
+  const formatoOptions = useMemo(() =>
+    availableFormatos.map(f => ({ value: f.id, label: f.nombre })),
+    [availableFormatos]
+  );
+
   useEffect(() => {
     if (open) {
-      setKey(documento?.key || '');
+      setSelectedFormatoId('');
       setNombre(documento?.nombre || '');
       setTipo(documento?.tipo || 'formulario');
       setRequiereFirma(documento?.requiereFirma || false);
@@ -59,10 +86,22 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
     }
   }, [open, documento]);
 
+  // When a formato is selected, auto-fill fields
+  useEffect(() => {
+    if (!selectedFormatoId || isEdit) return;
+    const formato = formatos?.find(f => f.id === selectedFormatoId);
+    if (formato) {
+      setNombre(formato.nombre);
+      setTipo(categoriaToPorTipo(formato.categoria));
+      setRequiereFirma(formato.requiereFirmaAprendiz);
+    }
+  }, [selectedFormatoId, formatos, isEdit]);
+
   const handleSave = () => {
-    if (!key.trim() || !nombre.trim()) return;
+    const key = isEdit ? documento!.key : selectedFormatoId;
+    if (!key || !nombre.trim()) return;
     onSave({
-      key: key.trim(),
+      key,
       nombre: nombre.trim(),
       tipo,
       requiereFirma,
@@ -83,84 +122,101 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
     setHabilitadoPorNivel(prev => ({ ...prev, [nivel]: !prev[nivel] }));
   };
 
-  const otherDocs = allDocumentos.filter(d => d.key !== key);
+  const currentKey = isEdit ? documento!.key : selectedFormatoId;
+  const otherDocs = allDocumentos.filter(d => d.key !== currentKey);
+
+  const canSave = isEdit ? !!nombre.trim() : !!selectedFormatoId && !!nombre.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar documento' : 'Agregar documento'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar documento' : 'Agregar documento del portal'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Clave única</Label>
-            <Input
-              value={key}
-              onChange={e => setKey(e.target.value.replace(/[^a-z0-9_]/g, ''))}
-              placeholder="ej: consentimiento_salud"
-              disabled={isEdit}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Nombre visible</Label>
-            <Input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Consentimiento de Salud" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>Tipo de documento</Label>
-            <Select value={tipo} onValueChange={v => setTipo(v as TipoDocPortal)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TIPO_DOC_OPTIONS.map(o => (
-                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Label>Requiere firma</Label>
-            <Switch checked={requiereFirma} onCheckedChange={setRequiereFirma} />
-          </div>
-
-          {otherDocs.length > 0 && (
+          {!isEdit && (
             <div className="space-y-1.5">
-              <Label>Depende de</Label>
-              <div className="space-y-2">
-                {otherDocs.map(d => (
-                  <label key={d.key} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={dependeDe.includes(d.key)}
-                      onCheckedChange={() => toggleDep(d.key)}
-                    />
-                    {d.nombre}
-                  </label>
-                ))}
-              </div>
+              <Label>Formato de formación</Label>
+              <Combobox
+                options={formatoOptions}
+                value={selectedFormatoId}
+                onValueChange={setSelectedFormatoId}
+                placeholder={loadingFormatos ? 'Cargando formatos...' : 'Seleccionar formato...'}
+                searchPlaceholder="Buscar formato..."
+                emptyMessage="No hay formatos disponibles para el portal"
+                disabled={loadingFormatos}
+              />
+              {availableFormatos.length === 0 && !loadingFormatos && (
+                <p className="text-xs text-muted-foreground">
+                  No hay formatos con "Visible en portal estudiante" activo. Activa esta opción en Gestión de Formatos.
+                </p>
+              )}
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label>Habilitado por nivel</Label>
-            <div className="space-y-2">
-              {NIVELES.map(nivel => (
-                <label key={nivel} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={habilitadoPorNivel[nivel]}
-                    onCheckedChange={() => toggleNivel(nivel)}
-                  />
-                  {resolveNivelCursoLabel(nivel)}
-                </label>
-              ))}
-            </div>
-          </div>
+          {(isEdit || selectedFormatoId) && (
+            <>
+              <div className="space-y-1.5">
+                <Label>Nombre visible</Label>
+                <p className="text-sm text-muted-foreground bg-muted/50 rounded px-3 py-2">{nombre}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Tipo de documento</Label>
+                <Select value={tipo} onValueChange={v => setTipo(v as TipoDocPortal)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {TIPO_DOC_OPTIONS.map(o => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label>Requiere firma</Label>
+                <Switch checked={requiereFirma} onCheckedChange={setRequiereFirma} />
+              </div>
+
+              {otherDocs.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Depende de</Label>
+                  <div className="space-y-2">
+                    {otherDocs.map(d => (
+                      <label key={d.key} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={dependeDe.includes(d.key)}
+                          onCheckedChange={() => toggleDep(d.key)}
+                        />
+                        {d.nombre}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Habilitado por nivel</Label>
+                <div className="space-y-2">
+                  {NIVELES.map(nivel => (
+                    <label key={nivel} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={habilitadoPorNivel[nivel]}
+                        onCheckedChange={() => toggleNivel(nivel)}
+                      />
+                      {resolveNivelCursoLabel(nivel)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={!key.trim() || !nombre.trim()}>Guardar</Button>
+          <Button onClick={handleSave} disabled={!canSave}>Guardar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -315,6 +315,70 @@ export type Database = {
           },
         ]
       }
+      personas: {
+        Row: {
+          activo: boolean
+          apellidos: string
+          contacto_emergencia: Json | null
+          created_at: string
+          deleted_at: string | null
+          email: string
+          fecha_nacimiento: string | null
+          firma_storage_path: string | null
+          genero: Database["public"]["Enums"]["genero"] | null
+          id: string
+          nivel_educativo: Database["public"]["Enums"]["nivel_educativo"] | null
+          nombres: string
+          numero_documento: string
+          observaciones: string | null
+          telefono: string
+          tipo_documento: Database["public"]["Enums"]["tipo_documento_identidad"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          apellidos: string
+          contacto_emergencia?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          fecha_nacimiento?: string | null
+          firma_storage_path?: string | null
+          genero?: Database["public"]["Enums"]["genero"] | null
+          id?: string
+          nivel_educativo?:
+            | Database["public"]["Enums"]["nivel_educativo"]
+            | null
+          nombres: string
+          numero_documento: string
+          observaciones?: string | null
+          telefono?: string
+          tipo_documento?: Database["public"]["Enums"]["tipo_documento_identidad"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          apellidos?: string
+          contacto_emergencia?: Json | null
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          fecha_nacimiento?: string | null
+          firma_storage_path?: string | null
+          genero?: Database["public"]["Enums"]["genero"] | null
+          id?: string
+          nivel_educativo?:
+            | Database["public"]["Enums"]["nivel_educativo"]
+            | null
+          nombres?: string
+          numero_documento?: string
+          observaciones?: string | null
+          telefono?: string
+          tipo_documento?: Database["public"]["Enums"]["tipo_documento_identidad"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tarifas_empresa: {
         Row: {
           created_at: string

@@ -1,13 +1,9 @@
-import { mockMatriculas, mockCursos, mockPersonas } from '@/data/mockData';
-import { portalDocumentosCatalogo } from '@/data/portalAdminConfig';
-import { DocumentoPortalConfig, DocumentoPortalEstado, PortalEstudianteData } from '@/types/portalEstudiante';
+import { supabase } from '@/integrations/supabase/client';
+import { DocumentoPortalConfig, DocumentoPortalEstado } from '@/types/portalEstudiante';
 import { Matricula } from '@/types/matricula';
 import { Persona } from '@/types/persona';
 import { Curso } from '@/types/curso';
 import { FormatoFormacion } from '@/types/formatoFormacion';
-import { delay } from './api';
-import { formatoFormacionService } from './formatoFormacionService';
-import { initPortalEstudiante } from './portalInitService';
 
 export interface MatriculaVigenteResult {
   matricula: Matricula;
@@ -15,97 +11,77 @@ export interface MatriculaVigenteResult {
   curso: Curso;
 }
 
+// Helper to map DB row to frontend Matricula (minimal fields needed for portal)
+function mapMinimalMatricula(row: any): Matricula {
+  return {
+    id: row.matricula_id,
+    personaId: row.persona_id,
+    cursoId: row.curso_id,
+    portalEstudiante: {
+      habilitado: row.portal_habilitado ?? true,
+      documentos: [],
+    },
+  } as unknown as Matricula;
+}
+
+function mapMinimalPersona(row: any): Persona {
+  return {
+    id: row.persona_id,
+    nombres: row.persona_nombres,
+    apellidos: row.persona_apellidos,
+    numeroDocumento: row.persona_numero_documento,
+  } as unknown as Persona;
+}
+
+function mapMinimalCurso(row: any): Curso {
+  return {
+    id: row.curso_id,
+    nombre: row.curso_nombre,
+    tipoFormacion: row.curso_tipo_formacion,
+  } as unknown as Curso;
+}
+
 export const portalEstudianteService = {
   async buscarMatriculaVigente(cedula: string): Promise<MatriculaVigenteResult | null> {
-    await delay(800);
+    const { data, error } = await supabase.rpc('login_portal_estudiante', { p_cedula: cedula });
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
 
-    const persona = mockPersonas.find(p => p.numeroDocumento === cedula);
-    if (!persona) return null;
+    const row = data[0];
+    if (!row.portal_habilitado) return null;
 
-    const hoy = new Date().toISOString().split('T')[0];
-
-    // Buscar matrículas de esta persona con curso vigente
-    const candidatas = mockMatriculas
-      .filter(m => m.personaId === persona.id)
-      .map(m => {
-        const curso = mockCursos.find(c => c.id === m.cursoId);
-        return { matricula: m, curso };
-      })
-      .filter(({ curso }) => {
-        if (!curso) return false;
-        if (curso.estado === 'cerrado') return false;
-        if (curso.fechaFin && curso.fechaFin < hoy) return false;
-        return true;
-      })
-      .sort((a, b) => {
-        // Desempate: curso.fechaInicio más reciente
-        const fa = a.curso!.fechaInicio || '';
-        const fb = b.curso!.fechaInicio || '';
-        return fb.localeCompare(fa);
-      });
-
-    if (candidatas.length === 0) return null;
-
-    const { matricula, curso } = candidatas[0];
-
-    // Fallback: inicializar portalEstudiante si no existe (datos legacy)
-    initPortalEstudiante(matricula, curso!);
-
-    return { matricula, persona, curso: curso! };
-  },
-
-  async getPortalConfig(tipoFormacion?: string): Promise<DocumentoPortalConfig[]> {
-    await delay(300);
-    let docs = portalDocumentosCatalogo.map(({ habilitadoPorNivel, ...rest }) => rest);
-    if (tipoFormacion) {
-      const full = portalDocumentosCatalogo.filter(d => d.habilitadoPorNivel[tipoFormacion as keyof typeof d.habilitadoPorNivel]);
-      docs = full.map(({ habilitadoPorNivel, ...rest }) => rest);
-    }
-    return docs.sort((a, b) => a.orden - b.orden);
+    return {
+      matricula: mapMinimalMatricula(row),
+      persona: mapMinimalPersona(row),
+      curso: mapMinimalCurso(row),
+    };
   },
 
   async getDocumentosEstado(matriculaId: string): Promise<{
     config: DocumentoPortalConfig[];
     estados: DocumentoPortalEstado[];
   }> {
-    await delay(500);
+    const { data, error } = await supabase.rpc('get_documentos_portal', { p_matricula_id: matriculaId });
+    if (error) throw error;
 
-    const matricula = mockMatriculas.find(m => m.id === matriculaId);
-    if (!matricula) throw new Error('Matrícula no encontrada');
+    const rows = data || [];
+    const config: DocumentoPortalConfig[] = rows.map((row: any) => ({
+      key: row.documento_key,
+      nombre: row.label,
+      tipo: row.tipo,
+      requiereFirma: row.tipo === 'firma_autorizacion',
+      dependeDe: row.depende_de || [],
+      orden: row.orden,
+    }));
 
-    const portalData: PortalEstudianteData = matricula.portalEstudiante || {
-      habilitado: true,
-      documentos: [],
-    };
-
-    // Get config filtered by curso nivel
-    const curso = mockCursos.find(c => c.id === matricula.cursoId);
-    const config = portalDocumentosCatalogo
-      .filter(d => !curso || d.habilitadoPorNivel[curso.tipoFormacion])
-      .map(({ habilitadoPorNivel, ...rest }) => rest)
-      .sort((a, b) => a.orden - b.orden);
-
-    // Calcular estados con dependencias
-    const estados: DocumentoPortalEstado[] = config.map(docConfig => {
-      const existente = portalData.documentos.find(d => d.key === docConfig.key);
-
-      // Si ya fue completado, respetar
-      if (existente?.estado === 'completado') {
-        return existente;
-      }
-
-      // Verificar dependencias
-      const dependenciasCumplidas = docConfig.dependeDe.every(depKey => {
-        const dep = portalData.documentos.find(d => d.key === depKey);
-        return dep?.estado === 'completado';
-      });
-
-      if (!dependenciasCumplidas) {
-        return { key: docConfig.key, estado: 'bloqueado' as const };
-      }
-
-      return existente || { key: docConfig.key, estado: 'pendiente' as const };
-    });
+    const estados: DocumentoPortalEstado[] = rows.map((row: any) => ({
+      key: row.documento_key,
+      estado: row.estado,
+      enviadoEn: row.enviado_en ?? undefined,
+      firmaBase64: row.firma_data ?? undefined,
+      metadata: row.metadata || {},
+      intentos: row.intentos || [],
+    }));
 
     return { config, estados };
   },
@@ -115,56 +91,57 @@ export const portalEstudianteService = {
     documentoKey: string,
     payload: Partial<DocumentoPortalEstado>
   ): Promise<DocumentoPortalEstado> {
-    await delay(800);
-
-    const index = mockMatriculas.findIndex(m => m.id === matriculaId);
-    if (index === -1) throw new Error('Matrícula no encontrada');
-
-    const matricula = mockMatriculas[index];
-
-    if (!matricula.portalEstudiante) {
-      matricula.portalEstudiante = {
-        habilitado: true,
-        documentos: [],
-      };
-    }
-
     const now = new Date().toISOString();
 
-    // Determine estado for evaluaciones based on aprobado
+    // Determine estado
     let finalEstado: 'completado' | 'pendiente' = 'completado';
     if (documentoKey === 'evaluacion' && payload.metadata && (payload.metadata as any).aprobado === false) {
       finalEstado = 'pendiente';
     }
 
-    const docIndex = matricula.portalEstudiante.documentos.findIndex(
-      d => d.key === documentoKey
-    );
+    // Check if existing record
+    const { data: existing } = await supabase
+      .from('documentos_portal')
+      .select('*')
+      .eq('matricula_id', matriculaId)
+      .eq('documento_key', documentoKey)
+      .maybeSingle();
 
-    // Accumulate previous attempts for evaluacion
-    let intentosPrevios: DocumentoPortalEstado[] = [];
-    if (documentoKey === 'evaluacion' && docIndex >= 0) {
-      const prev = matricula.portalEstudiante.documentos[docIndex];
-      intentosPrevios = [...(prev.intentos || []), { ...prev, intentos: undefined }];
+    // For evaluacion, accumulate attempts
+    let intentos: any[] = [];
+    if (documentoKey === 'evaluacion' && existing) {
+      const prevIntentos = Array.isArray(existing.intentos) ? existing.intentos : [];
+      intentos = [...prevIntentos, {
+        estado: existing.estado,
+        enviado_en: existing.enviado_en,
+        metadata: existing.metadata,
+      }];
     }
 
-    const nuevoEstado: DocumentoPortalEstado = {
-      key: documentoKey,
+    const upsertData = {
+      matricula_id: matriculaId,
+      documento_key: documentoKey,
       estado: finalEstado,
-      enviadoEn: now,
-      ...payload,
-      ...(documentoKey === 'evaluacion' && intentosPrevios.length > 0 ? { intentos: intentosPrevios } : {}),
+      enviado_en: now,
+      firma_data: payload.firmaBase64 || null,
+      metadata: payload.metadata || {},
+      intentos: documentoKey === 'evaluacion' && intentos.length > 0 ? intentos : [],
     };
 
-    if (docIndex >= 0) {
-      matricula.portalEstudiante.documentos[docIndex] = nuevoEstado;
-    } else {
-      matricula.portalEstudiante.documentos.push(nuevoEstado);
-    }
+    const { data: result, error } = await supabase
+      .from('documentos_portal')
+      .upsert(upsertData, { onConflict: 'matricula_id,documento_key' })
+      .select()
+      .single();
+    if (error) throw error;
 
-    mockMatriculas[index] = { ...matricula, updatedAt: now };
-
-    return nuevoEstado;
+    return {
+      key: documentoKey,
+      estado: result.estado as any,
+      enviadoEn: result.enviado_en ?? undefined,
+      firmaBase64: result.firma_data ?? undefined,
+      metadata: result.metadata as any || {},
+    };
   },
 
   async getInfoAprendizData(matriculaId: string): Promise<{
@@ -172,18 +149,52 @@ export const portalEstudianteService = {
     matricula: Matricula;
     curso: Curso;
   }> {
-    await delay(500);
+    // Get matricula with joins
+    const { data: mat, error: mErr } = await supabase
+      .from('matriculas')
+      .select('*, personas(*), cursos(*)')
+      .eq('id', matriculaId)
+      .single();
+    if (mErr) throw mErr;
 
-    const matricula = mockMatriculas.find(m => m.id === matriculaId);
-    if (!matricula) throw new Error('Matrícula no encontrada');
+    const persona = mat.personas as any;
+    const curso = mat.cursos as any;
 
-    const persona = mockPersonas.find(p => p.id === matricula.personaId);
-    if (!persona) throw new Error('Persona no encontrada');
-
-    const curso = mockCursos.find(c => c.id === matricula.cursoId);
-    if (!curso) throw new Error('Curso no encontrado');
-
-    return { persona, matricula, curso };
+    return {
+      persona: {
+        id: persona.id,
+        nombres: persona.nombres,
+        apellidos: persona.apellidos,
+        numeroDocumento: persona.numero_documento,
+        tipoDocumento: persona.tipo_documento,
+        email: persona.email,
+        telefono: persona.telefono,
+        fechaNacimiento: persona.fecha_nacimiento,
+        genero: persona.genero,
+        nivelEducativo: persona.nivel_educativo,
+        contactoEmergencia: persona.contacto_emergencia,
+      } as unknown as Persona,
+      matricula: {
+        id: mat.id,
+        personaId: mat.persona_id,
+        cursoId: mat.curso_id,
+        empresaId: mat.empresa_id,
+        empresaNombre: mat.empresa_nombre,
+        empresaNit: mat.empresa_nit,
+        arl: mat.arl,
+        eps: mat.eps,
+        tipoVinculacion: mat.tipo_vinculacion,
+        areaTrabajo: mat.area_trabajo,
+        sectorEconomico: mat.sector_economico,
+      } as unknown as Matricula,
+      curso: {
+        id: curso.id,
+        nombre: curso.nombre,
+        tipoFormacion: curso.tipo_formacion,
+        fechaInicio: curso.fecha_inicio,
+        fechaFin: curso.fecha_fin,
+      } as unknown as Curso,
+    };
   },
 
   async getEvaluacionFormato(matriculaId: string): Promise<{
@@ -192,27 +203,54 @@ export const portalEstudianteService = {
     matricula: Matricula;
     curso: Curso;
   } | null> {
-    await delay(500);
+    // Get matricula data
+    const { data: mat, error: mErr } = await supabase
+      .from('matriculas')
+      .select('*, personas(*), cursos(*)')
+      .eq('id', matriculaId)
+      .single();
+    if (mErr) throw mErr;
 
-    const matricula = mockMatriculas.find(m => m.id === matriculaId);
-    if (!matricula) return null;
-
-    const curso = mockCursos.find(c => c.id === matricula.cursoId);
+    const curso = mat.cursos as any;
     if (!curso) return null;
 
-    const persona = mockPersonas.find(p => p.id === matricula.personaId);
-    if (!persona) return null;
+    // Find an evaluation format applicable to this course
+    const { data: formatos } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .eq('activo', true)
+      .eq('estado', 'activo')
+      .is('deleted_at', null);
 
-    // Buscar formato con bloques evaluation_quiz cuyo nivelFormacionIds incluya el nivel del curso
-    const allFormatos = await formatoFormacionService.getAll();
-    const formato = allFormatos.find(f =>
-      f.activo &&
-      (f.asignacionScope === 'todos' || f.nivelFormacionIds.includes(curso.tipoFormacion)) &&
-      f.bloques.some(bl => bl.type === 'evaluation_quiz')
-    );
+    const formato = (formatos || []).find((f: any) => {
+      const bloques = Array.isArray(f.bloques) ? f.bloques : [];
+      const hasQuiz = bloques.some((bl: any) => bl.type === 'evaluation_quiz');
+      if (!hasQuiz) return false;
+
+      if (f.asignacion_scope === 'tipo_curso') {
+        return (f.tipos_curso || []).includes(curso.tipo_formacion);
+      }
+      // For nivel_formacion scope, check niveles_asignados
+      if (f.asignacion_scope === 'nivel_formacion' && curso.nivel_formacion_id) {
+        return (f.niveles_asignados || []).includes(curso.nivel_formacion_id);
+      }
+      return false;
+    });
 
     if (!formato) return null;
 
-    return { formato, persona, matricula, curso };
+    const persona = mat.personas as any;
+
+    return {
+      formato: formato as unknown as FormatoFormacion,
+      persona: {
+        id: persona.id,
+        nombres: persona.nombres,
+        apellidos: persona.apellidos,
+        numeroDocumento: persona.numero_documento,
+      } as unknown as Persona,
+      matricula: { id: mat.id, personaId: mat.persona_id, cursoId: mat.curso_id } as unknown as Matricula,
+      curso: { id: curso.id, nombre: curso.nombre, tipoFormacion: curso.tipo_formacion } as unknown as Curso,
+    };
   },
 };

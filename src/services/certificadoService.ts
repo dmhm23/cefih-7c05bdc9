@@ -1,35 +1,88 @@
-import { simulateApiCall } from './api';
-import { mockCertificados } from '@/data/mockCertificados';
+import { supabase } from '@/integrations/supabase/client';
 import type { CertificadoGenerado, CertificadoFormData } from '@/types/certificado';
-import { v4 as uuidv4 } from 'uuid';
+
+function mapCertificado(row: any): CertificadoGenerado {
+  return {
+    id: row.id,
+    matriculaId: row.matricula_id,
+    cursoId: row.curso_id,
+    personaId: row.persona_id,
+    plantillaId: row.plantilla_id,
+    codigo: row.codigo,
+    estado: row.estado,
+    snapshotDatos: row.snapshot_datos || {},
+    svgFinal: row.svg_final,
+    version: row.version,
+    fechaGeneracion: row.fecha_generacion,
+    revocadoPor: row.revocado_por ?? undefined,
+    motivoRevocacion: row.motivo_revocacion ?? undefined,
+    fechaRevocacion: row.fecha_revocacion ?? undefined,
+    autorizadoExcepcional: row.autorizado_excepcional ?? false,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 export const certificadoService = {
   async getAll(): Promise<CertificadoGenerado[]> {
-    return simulateApiCall([...mockCertificados]);
+    const { data, error } = await supabase
+      .from('certificados')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapCertificado);
   },
 
   async getById(id: string): Promise<CertificadoGenerado | undefined> {
-    return simulateApiCall(mockCertificados.find(c => c.id === id));
+    const { data, error } = await supabase
+      .from('certificados')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapCertificado(data) : undefined;
   },
 
   async getByMatricula(matriculaId: string): Promise<CertificadoGenerado[]> {
-    return simulateApiCall(mockCertificados.filter(c => c.matriculaId === matriculaId));
+    const { data, error } = await supabase
+      .from('certificados')
+      .select('*')
+      .eq('matricula_id', matriculaId)
+      .order('version', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapCertificado);
   },
 
   async getByCurso(cursoId: string): Promise<CertificadoGenerado[]> {
-    return simulateApiCall(mockCertificados.filter(c => c.cursoId === cursoId));
+    const { data, error } = await supabase
+      .from('certificados')
+      .select('*')
+      .eq('curso_id', cursoId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(mapCertificado);
   },
 
   async create(data: CertificadoFormData): Promise<CertificadoGenerado> {
-    const now = new Date().toISOString();
-    const nuevo: CertificadoGenerado = {
-      ...data,
-      id: uuidv4(),
-      createdAt: now,
-      updatedAt: now,
-    };
-    mockCertificados.push(nuevo);
-    return simulateApiCall(nuevo);
+    const { data: created, error } = await supabase
+      .from('certificados')
+      .insert({
+        matricula_id: data.matriculaId,
+        curso_id: data.cursoId,
+        persona_id: data.personaId,
+        plantilla_id: data.plantillaId,
+        codigo: data.codigo,
+        estado: data.estado,
+        snapshot_datos: data.snapshotDatos,
+        svg_final: data.svgFinal,
+        version: data.version,
+        fecha_generacion: data.fechaGeneracion,
+        autorizado_excepcional: data.autorizadoExcepcional ?? false,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCertificado(created);
   },
 
   async generar(params: {
@@ -42,40 +95,41 @@ export const certificadoService = {
     codigo: string;
     autorizadoExcepcional?: boolean;
   }): Promise<CertificadoGenerado> {
-    const now = new Date().toISOString();
-    const nuevo: CertificadoGenerado = {
-      id: uuidv4(),
-      matriculaId: params.matriculaId,
-      cursoId: params.cursoId,
-      personaId: params.personaId,
-      plantillaId: params.plantillaId,
-      codigo: params.codigo,
-      estado: 'generado',
-      snapshotDatos: params.snapshotDatos,
-      svgFinal: params.svgFinal,
-      version: 1,
-      fechaGeneracion: now,
-      autorizadoExcepcional: params.autorizadoExcepcional || false,
-      createdAt: now,
-      updatedAt: now,
-    };
-    mockCertificados.push(nuevo);
-    return simulateApiCall(nuevo);
+    const { data: created, error } = await supabase
+      .from('certificados')
+      .insert({
+        matricula_id: params.matriculaId,
+        curso_id: params.cursoId,
+        persona_id: params.personaId,
+        plantilla_id: params.plantillaId,
+        codigo: params.codigo,
+        estado: 'generado',
+        snapshot_datos: params.snapshotDatos,
+        svg_final: params.svgFinal,
+        version: 1,
+        fecha_generacion: new Date().toISOString(),
+        autorizado_excepcional: params.autorizadoExcepcional ?? false,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCertificado(created);
   },
 
   async revocar(id: string, revocadoPor: string, motivo: string): Promise<CertificadoGenerado> {
-    const idx = mockCertificados.findIndex(c => c.id === id);
-    if (idx === -1) throw new Error('Certificado no encontrado');
-    const now = new Date().toISOString();
-    mockCertificados[idx] = {
-      ...mockCertificados[idx],
-      estado: 'revocado',
-      revocadoPor,
-      motivoRevocacion: motivo,
-      fechaRevocacion: now,
-      updatedAt: now,
-    };
-    return simulateApiCall(mockCertificados[idx]);
+    const { data: updated, error } = await supabase
+      .from('certificados')
+      .update({
+        estado: 'revocado',
+        revocado_por: revocadoPor,
+        motivo_revocacion: motivo,
+        fecha_revocacion: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCertificado(updated);
   },
 
   async reemitir(params: {
@@ -84,37 +138,43 @@ export const certificadoService = {
     snapshotDatos: Record<string, unknown>;
     codigo: string;
   }): Promise<CertificadoGenerado> {
-    const anteriorIdx = mockCertificados.findIndex(c => c.id === params.certificadoAnteriorId);
-    if (anteriorIdx === -1) throw new Error('Certificado anterior no encontrado');
+    // Get anterior
+    const { data: anterior, error: getError } = await supabase
+      .from('certificados')
+      .select('*')
+      .eq('id', params.certificadoAnteriorId)
+      .single();
+    if (getError) throw getError;
 
-    const anterior = mockCertificados[anteriorIdx];
-    const now = new Date().toISOString();
+    // Revocar anterior
+    await supabase
+      .from('certificados')
+      .update({
+        estado: 'revocado',
+        motivo_revocacion: 'Reemitido con nueva versión',
+        fecha_revocacion: new Date().toISOString(),
+      })
+      .eq('id', params.certificadoAnteriorId);
 
-    mockCertificados[anteriorIdx] = {
-      ...anterior,
-      estado: 'revocado',
-      motivoRevocacion: 'Reemitido con nueva versión',
-      fechaRevocacion: now,
-      updatedAt: now,
-    };
-
-    const nuevo: CertificadoGenerado = {
-      id: uuidv4(),
-      matriculaId: anterior.matriculaId,
-      cursoId: anterior.cursoId,
-      personaId: anterior.personaId,
-      plantillaId: anterior.plantillaId,
-      codigo: params.codigo,
-      estado: 'generado',
-      snapshotDatos: params.snapshotDatos,
-      svgFinal: params.svgFinal,
-      version: anterior.version + 1,
-      fechaGeneracion: now,
-      autorizadoExcepcional: anterior.autorizadoExcepcional,
-      createdAt: now,
-      updatedAt: now,
-    };
-    mockCertificados.push(nuevo);
-    return simulateApiCall(nuevo);
+    // Crear nuevo
+    const { data: nuevo, error } = await supabase
+      .from('certificados')
+      .insert({
+        matricula_id: anterior.matricula_id,
+        curso_id: anterior.curso_id,
+        persona_id: anterior.persona_id,
+        plantilla_id: anterior.plantilla_id,
+        codigo: params.codigo,
+        estado: 'generado',
+        snapshot_datos: params.snapshotDatos,
+        svg_final: params.svgFinal,
+        version: anterior.version + 1,
+        fecha_generacion: new Date().toISOString(),
+        autorizado_excepcional: anterior.autorizado_excepcional,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return mapCertificado(nuevo);
   },
 };

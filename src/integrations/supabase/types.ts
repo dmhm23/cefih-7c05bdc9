@@ -266,6 +266,232 @@ export type Database = {
         }
         Relationships: []
       }
+      matriculas: {
+        Row: {
+          abono: number
+          activo: boolean
+          alergias: boolean
+          alergias_detalle: string | null
+          area_trabajo: string | null
+          arl: string | null
+          arl_otra: string | null
+          autoevaluacion_respuestas: Json | null
+          autorizacion_datos: boolean
+          centro_formacion_previo: string | null
+          cobro_contacto_celular: string | null
+          cobro_contacto_nombre: string | null
+          consentimiento_salud: boolean
+          consumo_medicamentos: boolean
+          consumo_medicamentos_detalle: string | null
+          created_at: string
+          cta_fact_numero: string | null
+          cta_fact_titular: string | null
+          curso_id: string | null
+          deleted_at: string | null
+          embarazo: boolean | null
+          empresa_cargo: string | null
+          empresa_contacto_nombre: string | null
+          empresa_contacto_telefono: string | null
+          empresa_id: string | null
+          empresa_nit: string | null
+          empresa_nivel_formacion: string | null
+          empresa_nombre: string | null
+          empresa_representante_legal: string | null
+          encuesta_completada: boolean
+          encuesta_respuestas: Json | null
+          eps: string | null
+          eps_otra: string | null
+          estado: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas: Json | null
+          evaluacion_completada: boolean
+          evaluacion_puntaje: number | null
+          evaluacion_respuestas: Json | null
+          factura_numero: string | null
+          fecha_certificacion_previa: string | null
+          fecha_entrega_certificado: string | null
+          fecha_facturacion: string | null
+          fecha_fin: string | null
+          fecha_generacion_certificado: string | null
+          fecha_inicio: string | null
+          fecha_pago: string | null
+          firma_capturada: boolean
+          firma_storage_path: string | null
+          forma_pago: Database["public"]["Enums"]["metodo_pago"] | null
+          id: string
+          nivel_lectoescritura: boolean
+          nivel_previo: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones: string | null
+          pagado: boolean
+          persona_id: string
+          portal_estudiante: Json | null
+          restriccion_medica: boolean
+          restriccion_medica_detalle: string | null
+          sector_economico: string | null
+          sector_economico_otro: string | null
+          tipo_vinculacion:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at: string
+          valor_cupo: number
+        }
+        Insert: {
+          abono?: number
+          activo?: boolean
+          alergias?: boolean
+          alergias_detalle?: string | null
+          area_trabajo?: string | null
+          arl?: string | null
+          arl_otra?: string | null
+          autoevaluacion_respuestas?: Json | null
+          autorizacion_datos?: boolean
+          centro_formacion_previo?: string | null
+          cobro_contacto_celular?: string | null
+          cobro_contacto_nombre?: string | null
+          consentimiento_salud?: boolean
+          consumo_medicamentos?: boolean
+          consumo_medicamentos_detalle?: string | null
+          created_at?: string
+          cta_fact_numero?: string | null
+          cta_fact_titular?: string | null
+          curso_id?: string | null
+          deleted_at?: string | null
+          embarazo?: boolean | null
+          empresa_cargo?: string | null
+          empresa_contacto_nombre?: string | null
+          empresa_contacto_telefono?: string | null
+          empresa_id?: string | null
+          empresa_nit?: string | null
+          empresa_nivel_formacion?: string | null
+          empresa_nombre?: string | null
+          empresa_representante_legal?: string | null
+          encuesta_completada?: boolean
+          encuesta_respuestas?: Json | null
+          eps?: string | null
+          eps_otra?: string | null
+          estado?: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas?: Json | null
+          evaluacion_completada?: boolean
+          evaluacion_puntaje?: number | null
+          evaluacion_respuestas?: Json | null
+          factura_numero?: string | null
+          fecha_certificacion_previa?: string | null
+          fecha_entrega_certificado?: string | null
+          fecha_facturacion?: string | null
+          fecha_fin?: string | null
+          fecha_generacion_certificado?: string | null
+          fecha_inicio?: string | null
+          fecha_pago?: string | null
+          firma_capturada?: boolean
+          firma_storage_path?: string | null
+          forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
+          id?: string
+          nivel_lectoescritura?: boolean
+          nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones?: string | null
+          pagado?: boolean
+          persona_id: string
+          portal_estudiante?: Json | null
+          restriccion_medica?: boolean
+          restriccion_medica_detalle?: string | null
+          sector_economico?: string | null
+          sector_economico_otro?: string | null
+          tipo_vinculacion?:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at?: string
+          valor_cupo?: number
+        }
+        Update: {
+          abono?: number
+          activo?: boolean
+          alergias?: boolean
+          alergias_detalle?: string | null
+          area_trabajo?: string | null
+          arl?: string | null
+          arl_otra?: string | null
+          autoevaluacion_respuestas?: Json | null
+          autorizacion_datos?: boolean
+          centro_formacion_previo?: string | null
+          cobro_contacto_celular?: string | null
+          cobro_contacto_nombre?: string | null
+          consentimiento_salud?: boolean
+          consumo_medicamentos?: boolean
+          consumo_medicamentos_detalle?: string | null
+          created_at?: string
+          cta_fact_numero?: string | null
+          cta_fact_titular?: string | null
+          curso_id?: string | null
+          deleted_at?: string | null
+          embarazo?: boolean | null
+          empresa_cargo?: string | null
+          empresa_contacto_nombre?: string | null
+          empresa_contacto_telefono?: string | null
+          empresa_id?: string | null
+          empresa_nit?: string | null
+          empresa_nivel_formacion?: string | null
+          empresa_nombre?: string | null
+          empresa_representante_legal?: string | null
+          encuesta_completada?: boolean
+          encuesta_respuestas?: Json | null
+          eps?: string | null
+          eps_otra?: string | null
+          estado?: Database["public"]["Enums"]["estado_matricula"]
+          evaluacion_competencias_respuestas?: Json | null
+          evaluacion_completada?: boolean
+          evaluacion_puntaje?: number | null
+          evaluacion_respuestas?: Json | null
+          factura_numero?: string | null
+          fecha_certificacion_previa?: string | null
+          fecha_entrega_certificado?: string | null
+          fecha_facturacion?: string | null
+          fecha_fin?: string | null
+          fecha_generacion_certificado?: string | null
+          fecha_inicio?: string | null
+          fecha_pago?: string | null
+          firma_capturada?: boolean
+          firma_storage_path?: string | null
+          forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
+          id?: string
+          nivel_lectoescritura?: boolean
+          nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
+          observaciones?: string | null
+          pagado?: boolean
+          persona_id?: string
+          portal_estudiante?: Json | null
+          restriccion_medica?: boolean
+          restriccion_medica_detalle?: string | null
+          sector_economico?: string | null
+          sector_economico_otro?: string | null
+          tipo_vinculacion?:
+            | Database["public"]["Enums"]["tipo_vinculacion"]
+            | null
+          updated_at?: string
+          valor_cupo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matriculas_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       niveles_formacion: {
         Row: {
           activo: boolean
@@ -569,6 +795,7 @@ export type Database = {
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
       estado_factura: "pendiente" | "parcial" | "pagada"
       estado_formato: "borrador" | "activo" | "archivado"
+      estado_formato_respuesta: "pendiente" | "completado" | "firmado"
       estado_grupo_cartera:
         | "pendiente"
         | "parcial"
@@ -591,6 +818,7 @@ export type Database = {
         | "bre_b"
         | "corresponsal_bancario"
         | "otro"
+      motor_render: "bloques" | "plantilla_html"
       nivel_educativo:
         | "primaria"
         | "secundaria"
@@ -602,6 +830,7 @@ export type Database = {
         | "doctorado"
         | "ninguno"
         | "otro"
+      nivel_previo: "trabajador_autorizado" | "avanzado"
       scope_formato: "nivel_formacion" | "tipo_curso"
       seccion_comentario: "cartera" | "observaciones" | "curso_observaciones"
       sector_economico:
@@ -811,6 +1040,7 @@ export const Constants = {
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
       estado_factura: ["pendiente", "parcial", "pagada"],
       estado_formato: ["borrador", "activo", "archivado"],
+      estado_formato_respuesta: ["pendiente", "completado", "firmado"],
       estado_grupo_cartera: [
         "pendiente",
         "parcial",
@@ -836,6 +1066,7 @@ export const Constants = {
         "corresponsal_bancario",
         "otro",
       ],
+      motor_render: ["bloques", "plantilla_html"],
       nivel_educativo: [
         "primaria",
         "secundaria",
@@ -848,6 +1079,7 @@ export const Constants = {
         "ninguno",
         "otro",
       ],
+      nivel_previo: ["trabajador_autorizado", "avanzado"],
       scope_formato: ["nivel_formacion", "tipo_curso"],
       seccion_comentario: ["cartera", "observaciones", "curso_observaciones"],
       sector_economico: [

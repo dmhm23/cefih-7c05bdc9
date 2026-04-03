@@ -10,7 +10,7 @@ import {
   TipoResponsable,
   METODO_PAGO_LABELS,
 } from '@/types/cartera';
-import { mockMatriculas } from '@/data/mockData';
+import { mockMatriculas, mockAuditLogs } from '@/data/mockData';
 import { mockEmpresas } from '@/data/mockEmpresas';
 import {
   mockResponsables,
@@ -20,6 +20,28 @@ import {
   mockActividades,
 } from '@/data/mockCartera';
 import { delay } from './api';
+
+function addCarteraAuditLog(
+  accion: 'crear' | 'editar' | 'eliminar',
+  entidadTipo: 'factura' | 'pago' | 'grupo_cartera',
+  entidadId: string,
+  valorAnterior?: Record<string, unknown>,
+  valorNuevo?: Record<string, unknown>,
+  camposModificados?: string[]
+) {
+  mockAuditLogs.push({
+    id: uuid(),
+    entidadTipo,
+    entidadId,
+    accion,
+    camposModificados,
+    valorAnterior,
+    valorNuevo,
+    usuarioId: 'current_user',
+    usuarioNombre: 'Usuario Actual',
+    timestamp: new Date().toISOString(),
+  });
+}
 
 // ─── helpers ──────────────────────────────────────────────
 function recalcGrupo(grupo: GrupoCartera) {

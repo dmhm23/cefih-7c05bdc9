@@ -1220,23 +1220,31 @@ export type Database = {
           email: string
           id: string
           nombres: string | null
-          rol: string
+          rol_id: string
         }
         Insert: {
           created_at?: string | null
           email: string
           id: string
           nombres?: string | null
-          rol?: string
+          rol_id?: string
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
           nombres?: string | null
-          rol?: string
+          rol_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_rol_id_fkey"
+            columns: ["rol_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       personal: {
         Row: {
@@ -1589,6 +1597,62 @@ export type Database = {
           },
         ]
       }
+      rol_permisos: {
+        Row: {
+          accion: string
+          created_at: string
+          modulo: string
+          rol_id: string
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          modulo: string
+          rol_id: string
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          modulo?: string
+          rol_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rol_permisos_rol_id_fkey"
+            columns: ["rol_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roles: {
+        Row: {
+          created_at: string
+          descripcion: string | null
+          es_sistema: boolean
+          id: string
+          nombre: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descripcion?: string | null
+          es_sistema?: boolean
+          id?: string
+          nombre: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descripcion?: string | null
+          es_sistema?: boolean
+          id?: string
+          nombre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tarifas_empresa: {
         Row: {
           created_at: string
@@ -1742,6 +1806,17 @@ export type Database = {
         }
       }
       get_my_rol: { Args: never; Returns: string }
+      get_user_permissions: {
+        Args: { p_user_id: string }
+        Returns: {
+          accion: string
+          modulo: string
+        }[]
+      }
+      has_permission: {
+        Args: { p_accion: string; p_modulo: string; p_user_id: string }
+        Returns: boolean
+      }
       login_portal_estudiante: {
         Args: { p_cedula: string }
         Returns: {
@@ -1886,6 +1961,8 @@ export type Database = {
         | "excepcion_certificado"
         | "responsable_pago"
         | "actividad_cartera"
+        | "rol"
+        | "rol_permiso"
       tipo_formacion:
         | "formacion_inicial"
         | "reentrenamiento"
@@ -2156,6 +2233,8 @@ export const Constants = {
         "excepcion_certificado",
         "responsable_pago",
         "actividad_cartera",
+        "rol",
+        "rol_permiso",
       ],
       tipo_formacion: [
         "formacion_inicial",

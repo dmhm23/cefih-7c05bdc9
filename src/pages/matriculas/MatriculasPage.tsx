@@ -66,6 +66,8 @@ export default function MatriculasPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
     estadoCartera: "todos",

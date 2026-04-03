@@ -39,6 +39,11 @@ export const personaService = {
       throw new ApiError('Ya existe una persona con este documento', 400, 'DOCUMENTO_DUPLICADO');
     }
 
+    // INC-004: Validar contacto de emergencia
+    if (!data.contactoEmergencia?.nombre || !data.contactoEmergencia?.telefono) {
+      throw new ApiError('El contacto de emergencia debe tener nombre y teléfono', 400, 'CONTACTO_EMERGENCIA_INCOMPLETO');
+    }
+
     const now = new Date().toISOString();
     const newPersona: Persona = {
       ...data,

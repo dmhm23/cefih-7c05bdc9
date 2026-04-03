@@ -56,6 +56,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cargos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          deleted_at: string | null
+          descripcion: string | null
+          id: string
+          nombre: string
+          tipo: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          tipo: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          tipo?: Database["public"]["Enums"]["tipo_cargo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       empresas: {
         Row: {
           activo: boolean
@@ -142,6 +175,100 @@ export type Database = {
           rol?: string
         }
         Relationships: []
+      }
+      personal: {
+        Row: {
+          activo: boolean
+          apellidos: string
+          cargo_id: string
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          firma_storage_path: string | null
+          id: string
+          nombres: string
+          numero_documento: string
+          telefono: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          apellidos: string
+          cargo_id: string
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          firma_storage_path?: string | null
+          id?: string
+          nombres: string
+          numero_documento: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          apellidos?: string
+          cargo_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          firma_storage_path?: string | null
+          id?: string
+          nombres?: string
+          numero_documento?: string
+          telefono?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      personal_adjuntos: {
+        Row: {
+          created_at: string
+          fecha_carga: string
+          id: string
+          nombre: string
+          personal_id: string
+          storage_path: string
+          tamano: number | null
+          tipo_mime: string | null
+        }
+        Insert: {
+          created_at?: string
+          fecha_carga?: string
+          id?: string
+          nombre: string
+          personal_id: string
+          storage_path: string
+          tamano?: number | null
+          tipo_mime?: string | null
+        }
+        Update: {
+          created_at?: string
+          fecha_carga?: string
+          id?: string
+          nombre?: string
+          personal_id?: string
+          storage_path?: string
+          tamano?: number | null
+          tipo_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personal_adjuntos_personal_id_fkey"
+            columns: ["personal_id"]
+            isOneToOne: false
+            referencedRelation: "personal"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tarifas_empresa: {
         Row: {

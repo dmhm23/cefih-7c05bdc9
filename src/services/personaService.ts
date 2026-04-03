@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { Persona, PersonaFormData } from '@/types/persona';
-import { mockPersonas, mockAuditLogs } from '@/data/mockData';
+import { mockPersonas, mockMatriculas, mockAuditLogs } from '@/data/mockData';
 import { delay, ApiError } from './api';
 
 export const personaService = {

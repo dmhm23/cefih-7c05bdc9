@@ -159,15 +159,15 @@ export const empresaService = {
     const index = mockTarifasEmpresa.findIndex(t => t.id === id);
     if (index === -1) throw new ApiError('Tarifa no encontrada', 404, 'NOT_FOUND');
 
-    // INC-006: Validar unicidad si cambian empresa o curso
-    if (data.empresaId || data.cursoId) {
+    // INC-006: Validar unicidad si cambian empresa o nivelFormacion
+    if (data.empresaId || data.nivelFormacionId) {
       const empresaId = data.empresaId || mockTarifasEmpresa[index].empresaId;
-      const cursoId = data.cursoId || mockTarifasEmpresa[index].cursoId;
+      const nivelFormacionId = data.nivelFormacionId || mockTarifasEmpresa[index].nivelFormacionId;
       const duplicate = mockTarifasEmpresa.find(
-        t => t.id !== id && t.empresaId === empresaId && t.cursoId === cursoId
+        t => t.id !== id && t.empresaId === empresaId && t.nivelFormacionId === nivelFormacionId
       );
       if (duplicate) {
-        throw new ApiError('Ya existe una tarifa para esta combinación de empresa y curso', 400, 'TARIFA_DUPLICADA');
+        throw new ApiError('Ya existe una tarifa para esta combinación de empresa y nivel de formación', 400, 'TARIFA_DUPLICADA');
       }
     }
 

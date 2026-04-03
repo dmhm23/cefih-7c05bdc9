@@ -8,10 +8,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { TipoFormacion } from '@/types/curso';
-import { mockNivelesFormacion } from '@/data/mockData';
-import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { TipoDocPortal } from '@/types/portalEstudiante';
 import { useFormatos } from '@/hooks/useFormatosFormacion';
+import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
 
 const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'firma_autorizacion', label: 'Firma / Autorización' },
@@ -19,8 +18,6 @@ const TIPO_DOC_OPTIONS: { value: TipoDocPortal; label: string }[] = [
   { value: 'formulario', label: 'Formulario' },
   { value: 'solo_lectura', label: 'Solo lectura' },
 ];
-
-const NIVELES = mockNivelesFormacion.map((n) => n.id) as unknown as TipoFormacion[];
 
 function categoriaToPorTipo(categoria: string): TipoDocPortal {
   switch (categoria) {
@@ -43,6 +40,8 @@ interface Props {
 export function DocumentoConfigDialog({ open, onOpenChange, documento, existingKeys, allDocumentos, onSave }: Props) {
   const isEdit = !!documento;
   const { data: formatos, isLoading: loadingFormatos } = useFormatos();
+  const { data: nivelesData } = useNivelesFormacion();
+  const NIVELES = (nivelesData || []).map((n) => n.id) as unknown as TipoFormacion[];
 
   const [selectedFormatoId, setSelectedFormatoId] = useState('');
   const [nombre, setNombre] = useState(documento?.nombre || '');
@@ -199,15 +198,18 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
               <div className="space-y-1.5">
                 <Label>Habilitado por nivel</Label>
                 <div className="space-y-2">
-                  {NIVELES.map(nivel => (
-                    <label key={nivel} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={habilitadoPorNivel[nivel]}
-                        onCheckedChange={() => toggleNivel(nivel)}
-                      />
-                      {resolveNivelCursoLabel(nivel)}
-                    </label>
-                  ))}
+                  {NIVELES.map(nivel => {
+                    const nivelInfo = (nivelesData || []).find(n => n.id === nivel);
+                    return (
+                      <label key={nivel} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={habilitadoPorNivel[nivel]}
+                          onCheckedChange={() => toggleNivel(nivel)}
+                        />
+                        {nivelInfo?.nombreNivel || nivel}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </>

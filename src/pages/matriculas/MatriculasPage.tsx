@@ -20,8 +20,8 @@ import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { mockGruposCartera } from "@/data/mockCartera";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
+import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 
@@ -83,6 +83,23 @@ export default function MatriculasPage() {
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
 
+  // Load cartera status from DB
+  const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("grupo_cartera_matriculas")
+        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)");
+      if (data) {
+        const map: Record<string, EstadoGrupoCartera> = {};
+        for (const row of data as any[]) {
+          map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
+        }
+        setCarteraMap(map);
+      }
+    })();
+  }, [matriculas]);
+
   // Persist column config
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
@@ -104,10 +121,7 @@ export default function MatriculasPage() {
   };
 
   const getEstadoCartera = (matricula: Matricula): EstadoGrupoCartera => {
-    const grupo = mockGruposCartera.find((g) =>
-      g.matriculaIds.includes(matricula.id)
-    );
-    return grupo?.estado ?? "sin_facturar";
+    return carteraMap[matricula.id] ?? "sin_facturar";
   };
 
   const filterConfigs: FilterConfig[] = [

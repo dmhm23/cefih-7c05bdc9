@@ -13,7 +13,7 @@ import {
   type DashboardChartsData,
   type TimeSeriesPoint,
   type NivelDistribucion,
-} from "@/data/mockDashboard";
+} from "@/data/dashboardData";
 
 type Period = "trimestre" | "semestre" | "anual";
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import StatCard from "@/components/dashboard/StatCard";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import TodoWidget from "@/components/dashboard/TodoWidget";
-import { fetchDashboardStats, type DashboardStats } from "@/data/mockDashboard";
+import { fetchDashboardStats, type DashboardStats } from "@/data/dashboardData";
 
 const formatCOPFull = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v);

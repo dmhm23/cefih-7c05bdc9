@@ -211,13 +211,13 @@ export default function RolesTab() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/50">
-                        <th className="text-left p-3 font-medium">Módulo</th>
+                        <th className="text-left p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Módulo</th>
                         {ALL_ACCIONES.map((a) => (
-                          <th key={a} className="text-center p-3 font-medium w-20">
+                          <th key={a} className="text-center p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground w-20">
                             {ACCIONES_LABELS[a]}
                           </th>
                         ))}
-                        <th className="text-center p-3 font-medium w-16">Todos</th>
+                        <th className="text-center p-3 text-xs font-medium uppercase tracking-wider text-muted-foreground w-16">Todos</th>
                       </tr>
                     </thead>
                     <tbody>

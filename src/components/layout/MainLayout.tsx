@@ -24,6 +24,7 @@ const routeNames: Record<string, string> = {
   "/matriculas": "Matrículas",
   "/cursos": "Cursos",
   "/niveles": "Niveles de Formación",
+  "/admin": "Administración",
 };
 
 export function MainLayout({ children }: MainLayoutProps) {

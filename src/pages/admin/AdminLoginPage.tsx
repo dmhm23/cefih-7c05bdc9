@@ -110,7 +110,7 @@ const AdminLoginPage = () => {
                 "transition-all duration-300 hover:-translate-y-0.5", "group")}
               disabled={isLoading}>
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               ) : (
                 <>
                   Acceder al Panel

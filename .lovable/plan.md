@@ -1,35 +1,29 @@
 
 
-# Plan: Implementar eliminación real de matrículas
+# Plan: Permitir recrear personas eliminadas (soft-delete)
 
 ## Problema
 
-La acción "Eliminar" en la tabla de matrículas (bulk action y posiblemente individual) solo muestra un toast con texto "(pendiente)" — nunca ejecuta la eliminación. Es un placeholder.
+La tabla `personas` tiene un constraint `UNIQUE (numero_documento)` que aplica a **todas** las filas, incluyendo las eliminadas (soft-delete con `deleted_at IS NOT NULL`). Cuando se elimina una persona y se intenta crear otra con el mismo documento, Postgres rechaza el INSERT por duplicado.
 
 ## Solución
 
-### 1. Agregar acción de eliminar individual en RowActions
+Reemplazar el constraint `UNIQUE (numero_documento)` por un **índice parcial único** que solo aplique a registros activos (no eliminados):
 
-En `MatriculasPage.tsx`, agregar una acción de eliminación por fila en el `RowActions` (línea 407), usando un diálogo de confirmación antes de ejecutar.
+```sql
+ALTER TABLE public.personas DROP CONSTRAINT personas_numero_documento_key;
+CREATE UNIQUE INDEX personas_numero_documento_activo_uq 
+  ON public.personas (numero_documento) 
+  WHERE deleted_at IS NULL;
+```
 
-### 2. Implementar eliminación real en bulk action
-
-Reemplazar el toast placeholder (línea 225) por lógica que:
-- Muestre un `ConfirmDialog` pidiendo confirmación
-- Llame a `deleteMatricula` del hook `useDeleteMatricula` para cada ID seleccionado
-- Limpie la selección tras completar
-
-### 3. Estado y diálogo de confirmación
-
-Agregar estado local para controlar el diálogo de confirmación (`idsToDelete`, `showDeleteConfirm`). Usar el componente `ConfirmDialog` existente en `src/components/shared/ConfirmDialog.tsx`.
-
-### 4. Verificar RLS
-
-La tabla `matriculas` tiene política `Admin gestiona matriculas` con `ALL` para superadministrador/administrador — ya cubre DELETE. Pero el servicio usa soft-delete (`deleted_at` + `activo: false`), no DELETE real, así que la política de UPDATE es suficiente.
+Esto permite que existan múltiples filas con el mismo `numero_documento` siempre que las anteriores estén soft-deleted.
 
 ## Archivos afectados
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/matriculas/MatriculasPage.tsx` | Reemplazar placeholder por eliminación real con confirmación, agregar acción individual de eliminar |
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | 1 migración SQL | Reemplazar constraint por índice parcial único |
+
+**Total: 1 migración, 0 archivos de código**
 

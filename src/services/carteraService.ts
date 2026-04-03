@@ -243,8 +243,7 @@ export const carteraService = {
       matriculaIds: data.matriculaIds,
     };
     mockFacturas.push(factura);
-
-    // Sync linked matrículas
+    addCarteraAuditLog('crear', 'factura', factura.id, undefined, { numeroFactura: data.numeroFactura, total: data.total });
     if (data.matriculaIds.length > 0) {
       data.matriculaIds.forEach(mId => {
         const mat = mockMatriculas.find(m => m.id === mId);

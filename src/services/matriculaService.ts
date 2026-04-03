@@ -1,181 +1,156 @@
 import { v4 as uuid } from 'uuid';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
-import { mockMatriculas, mockCursos, mockAuditLogs, mockPersonas } from '@/data/mockData';
-import { delay, ApiError } from './api';
-import { getDocumentosRequeridos, sincronizarDocumentos } from './documentoService';
-import { initPortalEstudiante } from './portalInitService';
-import { asignarMatriculaACartera } from './carteraService';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Map a DB row (snake_case) to the frontend Matricula shape */
+function rowToMatricula(row: any): Matricula {
+  const m = snakeToCamel<any>(row);
+  // Map firma_storage_path → firmaBase64 is not applicable; keep storage path
+  // documentos come from a separate query
+  return {
+    ...m,
+    firmaBase64: undefined, // firma lives in storage, not inline
+    documentos: [], // populated separately
+  } as Matricula;
+}
+
+/** Map frontend form data → DB columns (snake_case), stripping non-DB fields */
+function formToRow(data: Record<string, any>): Record<string, any> {
+  const row = camelToSnake(data);
+  // Remove fields that don't exist in the DB table
+  delete row.documentos;
+  delete row.firma_base64;
+  delete row.created_at;
+  delete row.updated_at;
+  delete row.id;
+  // JSONB fields should stay as-is (camelToSnake skips them)
+  return row;
+}
+
+// ---------------------------------------------------------------------------
+// Service
+// ---------------------------------------------------------------------------
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {
-    await delay(800);
-    return [...mockMatriculas];
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToMatricula);
   },
 
   async getById(id: string): Promise<Matricula | null> {
-    await delay(500);
-    const matricula = mockMatriculas.find(m => m.id === id);
-    if (!matricula) return null;
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
 
-    // Sincronizar requisitos documentales con el nivel vigente
-    const nivelKey = (matricula as any).empresaNivelFormacion || undefined;
-    const { documentos, huboCambios } = sincronizarDocumentos(matricula.documentos, nivelKey);
-    if (huboCambios) {
-      matricula.documentos = documentos;
-      matricula.updatedAt = new Date().toISOString();
-    }
+    if (error) handleSupabaseError(error);
+    if (!data) return null;
 
+    // Fetch documents
+    const { data: docs } = await supabase
+      .from('documentos_matricula')
+      .select('*')
+      .eq('matricula_id', id);
+
+    const matricula = rowToMatricula(data);
+    matricula.documentos = (docs || []).map((d: any) => snakeToCamel<DocumentoRequerido>(d));
     return matricula;
   },
 
   async getByPersonaId(personaId: string): Promise<Matricula[]> {
-    await delay(600);
-    return mockMatriculas.filter(m => m.personaId === personaId);
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .eq('persona_id', personaId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToMatricula);
   },
 
   async getByCursoId(cursoId: string): Promise<Matricula[]> {
-    await delay(600);
-    return mockMatriculas.filter(m => m.cursoId === cursoId);
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .eq('curso_id', cursoId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToMatricula);
   },
 
   async getByEstado(estado: EstadoMatricula): Promise<Matricula[]> {
-    await delay(600);
-    return mockMatriculas.filter(m => m.estado === estado);
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .eq('estado', estado)
+      .is('deleted_at', null);
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToMatricula);
   },
 
   async getHistorialByPersona(personaId: string): Promise<Matricula | null> {
-    await delay(300);
-    // Return the most recent completed/certified matricula for pre-filling
-    const previas = mockMatriculas
-      .filter(m => m.personaId === personaId && ['completa', 'certificada', 'cerrada'].includes(m.estado))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return previas[0] || null;
+    const { data, error } = await supabase
+      .from('matriculas')
+      .select('*')
+      .eq('persona_id', personaId)
+      .in('estado', ['completa', 'certificada', 'cerrada'])
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    if (!data) return null;
+    return rowToMatricula(data);
   },
 
   async create(data: Omit<MatriculaFormData, 'documentos' | 'estado'>): Promise<Matricula> {
-    await delay(1000);
+    const row = formToRow(data as any);
+    // Always start as 'creada'
+    row.estado = 'creada';
 
-    // Curso es opcional ahora
-    let curso = null;
-    if (data.cursoId) {
-      curso = mockCursos.find(c => c.id === data.cursoId);
-      if (!curso) {
-        throw new ApiError('Curso no encontrado', 404, 'CURSO_NOT_FOUND');
-      }
-      if (curso.estado === 'cerrado') {
-        throw new ApiError('No se puede matricular en un curso cerrado', 400, 'CURSO_CERRADO');
-      }
-      if (curso.matriculasIds.length >= curso.capacidadMaxima) {
-        throw new ApiError('El curso ha alcanzado su capacidad máxima', 400, 'CAPACIDAD_MAXIMA');
-      }
+    const { data: inserted, error } = await supabase
+      .from('matriculas')
+      .insert(row)
+      .select()
+      .single();
 
-      // Verificar que no exista matrícula duplicada
-      const exists = mockMatriculas.find(
-        m => m.personaId === data.personaId && m.cursoId === data.cursoId
-      );
-      if (exists) {
+    if (error) {
+      if (error.code === '23505') {
         throw new ApiError('Esta persona ya está matriculada en este curso', 400, 'MATRICULA_DUPLICADA');
       }
+      handleSupabaseError(error);
     }
 
-    const now = new Date().toISOString();
-
-    // Documentos requeridos dinámicos según nivel de formación
-    const documentosRequeridos = getDocumentosRequeridos(
-      data.empresaNivelFormacion as any
-    );
-
-    const newMatricula: Matricula = {
-      ...data,
-      id: uuid(),
-      estado: 'creada',
-      // Autocompletar fechas desde curso
-      fechaInicio: curso?.fechaInicio || data.fechaInicio,
-      fechaFin: curso?.fechaFin || data.fechaFin,
-      documentos: documentosRequeridos,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    mockMatriculas.push(newMatricula);
-    
-    // Actualizar curso con la nueva matrícula
-    if (curso) {
-      curso.matriculasIds.push(newMatricula.id);
-      // Auto-inicializar portal del estudiante
-      initPortalEstudiante(newMatricula, curso);
-    }
-
-    // ── Auto-asignar a grupo de cartera ──
-    const persona = mockPersonas.find(p => p.id === data.personaId);
-    asignarMatriculaACartera({
-      matriculaId: newMatricula.id,
-      valorCupo: newMatricula.valorCupo || 0,
-      tipoVinculacion: newMatricula.tipoVinculacion || 'independiente',
-      empresaNombre: newMatricula.empresaNombre,
-      empresaNit: newMatricula.empresaNit,
-      empresaContactoNombre: newMatricula.empresaContactoNombre || newMatricula.cobroContactoNombre,
-      empresaContactoTelefono: newMatricula.empresaContactoTelefono || newMatricula.cobroContactoCelular,
-      personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
-      personaDocumento: persona?.numeroDocumento,
-      personaTelefono: persona?.telefono,
-      personaEmail: persona?.email,
-    });
-
-    // Log de auditoría
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'matricula',
-      entidadId: newMatricula.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return newMatricula;
+    return rowToMatricula(inserted);
   },
 
   async update(id: string, data: Partial<MatriculaFormData>): Promise<Matricula> {
-    await delay(800);
+    const row = formToRow(data as any);
 
-    const index = mockMatriculas.findIndex(m => m.id === id);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
-    }
+    const { data: updated, error } = await supabase
+      .from('matriculas')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
 
-    const now = new Date().toISOString();
-    const valorAnterior = { ...mockMatriculas[index] };
-
-    mockMatriculas[index] = {
-      ...mockMatriculas[index],
-      ...data,
-      updatedAt: now,
-    };
-
-    // Auto-inicializar portal si se asignó un curso y no tenía portal
-    if (data.cursoId && !mockMatriculas[index].portalEstudiante) {
-      const curso = mockCursos.find(c => c.id === data.cursoId);
-      if (curso) {
-        initPortalEstudiante(mockMatriculas[index], curso);
-      }
-    }
-
-    // Log de auditoría
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'matricula',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      valorAnterior,
-      valorNuevo: data,
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockMatriculas[index];
+    if (error) handleSupabaseError(error);
+    return rowToMatricula(updated);
   },
 
   async updateDocumento(
@@ -183,43 +158,46 @@ export const matriculaService = {
     documentoId: string,
     data: Partial<DocumentoRequerido>
   ): Promise<Matricula> {
-    await delay(600);
-
-    const index = mockMatriculas.findIndex(m => m.id === matriculaId);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
+    const row = camelToSnake(data);
+    // Map url_drive → storage_path
+    if ('url_drive' in row) {
+      row.storage_path = row.url_drive;
+      delete row.url_drive;
     }
+    delete row.id;
 
-    const docIndex = mockMatriculas[index].documentos.findIndex(d => d.id === documentoId);
-    if (docIndex === -1) {
-      throw new ApiError('Documento no encontrado', 404, 'DOCUMENTO_NOT_FOUND');
-    }
+    const { error } = await supabase
+      .from('documentos_matricula')
+      .update(row)
+      .eq('id', documentoId)
+      .eq('matricula_id', matriculaId);
 
-    mockMatriculas[index].documentos[docIndex] = {
-      ...mockMatriculas[index].documentos[docIndex],
-      ...data,
-    };
-    mockMatriculas[index].updatedAt = new Date().toISOString();
+    if (error) handleSupabaseError(error);
 
-    return mockMatriculas[index];
+    // Return updated matricula
+    return (await this.getById(matriculaId))!;
   },
 
   async capturarFirma(id: string, firmaBase64: string): Promise<Matricula> {
-    await delay(800);
+    // Upload firma to storage
+    const path = `firmas-matricula/${id}.png`;
+    const blob = await fetch(firmaBase64).then(r => r.blob());
 
-    const index = mockMatriculas.findIndex(m => m.id === id);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
-    }
+    const { error: uploadError } = await supabase.storage
+      .from('documentos-matricula')
+      .upload(path, blob, { upsert: true, contentType: 'image/png' });
 
-    mockMatriculas[index] = {
-      ...mockMatriculas[index],
-      firmaCapturada: true,
-      firmaBase64,
-      updatedAt: new Date().toISOString(),
-    };
+    if (uploadError) throw new ApiError('Error al subir firma: ' + uploadError.message, 500);
 
-    return mockMatriculas[index];
+    const { data: updated, error } = await supabase
+      .from('matriculas')
+      .update({ firma_capturada: true, firma_storage_path: path })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToMatricula(updated);
   },
 
   async registrarPago(id: string, datosPago: {
@@ -234,80 +212,41 @@ export const matriculaService = {
     cobroContactoNombre?: string;
     cobroContactoCelular?: string;
   }): Promise<Matricula> {
-    await delay(800);
-
-    const index = mockMatriculas.findIndex(m => m.id === id);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
+    const row = camelToSnake(datosPago);
+    // Map formaPago → forma_pago (already done by camelToSnake)
+    if (!row.fecha_pago) {
+      row.fecha_pago = new Date().toISOString().split('T')[0];
     }
 
-    const valorCupo = datosPago.valorCupo ?? mockMatriculas[index].valorCupo ?? 0;
-    const abono = datosPago.abono ?? mockMatriculas[index].abono ?? 0;
-    const saldo = valorCupo - abono;
+    const { data: updated, error } = await supabase
+      .from('matriculas')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
 
-    mockMatriculas[index] = {
-      ...mockMatriculas[index],
-      ...datosPago,
-      valorCupo,
-      abono,
-      pagado: saldo <= 0,
-      facturaNumero: datosPago.ctaFactNumero || datosPago.facturaNumero || mockMatriculas[index].facturaNumero,
-      fechaPago: datosPago.fechaPago || new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString(),
-    } as Matricula;
-
-    return mockMatriculas[index];
+    if (error) handleSupabaseError(error);
+    return rowToMatricula(updated);
   },
 
   async cambiarEstado(id: string, nuevoEstado: EstadoMatricula): Promise<Matricula> {
-    await delay(600);
+    const { data: updated, error } = await supabase
+      .from('matriculas')
+      .update({ estado: nuevoEstado })
+      .eq('id', id)
+      .select()
+      .single();
 
-    const index = mockMatriculas.findIndex(m => m.id === id);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
-    }
-
-    const now = new Date().toISOString();
-    const estadoAnterior = mockMatriculas[index].estado;
-
-    mockMatriculas[index] = {
-      ...mockMatriculas[index],
-      estado: nuevoEstado,
-      updatedAt: now,
-    };
-
-    // Log de auditoría
-    mockAuditLogs.push({
-      id: uuid(),
-      entidadTipo: 'matricula',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: ['estado'],
-      valorAnterior: { estado: estadoAnterior },
-      valorNuevo: { estado: nuevoEstado },
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: now,
-    });
-
-    return mockMatriculas[index];
+    if (error) handleSupabaseError(error);
+    return rowToMatricula(updated);
   },
 
   async delete(id: string): Promise<void> {
-    await delay(600);
+    const { error } = await supabase
+      .from('matriculas')
+      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .eq('id', id);
 
-    const index = mockMatriculas.findIndex(m => m.id === id);
-    if (index === -1) {
-      throw new ApiError('Matrícula no encontrada', 404, 'NOT_FOUND');
-    }
-
-    // Remover del curso
-    const cursoId = mockMatriculas[index].cursoId;
-    const curso = mockCursos.find(c => c.id === cursoId);
-    if (curso) {
-      curso.matriculasIds = curso.matriculasIds.filter(mId => mId !== id);
-    }
-
-    mockMatriculas.splice(index, 1);
+    if (error) handleSupabaseError(error);
   },
 };

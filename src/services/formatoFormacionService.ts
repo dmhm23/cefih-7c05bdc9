@@ -1,312 +1,63 @@
-import { FormatoFormacion, FormatoFormacionFormData, Bloque, FormatoVersion, PlantillaBase } from '@/types/formatoFormacion';
-import { simulateApiCall } from './api';
-import { v4 as uuidv4 } from 'uuid';
-import { mockAuditLogs } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
+import { FormatoFormacion, FormatoFormacionFormData, FormatoVersion, PlantillaBase } from '@/types/formatoFormacion';
+import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
 
 // ---------------------------------------------------------------------------
-// Helpers para construir bloques
+// Helpers
 // ---------------------------------------------------------------------------
 
-const b = (type: Bloque['type'], label: string, props?: Record<string, unknown>, extra?: Partial<BloqueBase>): Bloque => ({
-  id: uuidv4(),
-  type,
-  label,
-  ...extra,
-  ...(props ? { props } : {}),
-} as Bloque);
+function rowToFormato(row: any): FormatoFormacion {
+  const f = snakeToCamel<any>(row);
+  return {
+    ...f,
+    // Map DB field names to frontend interface
+    nivelFormacionIds: f.nivelesAsignados || [],
+    bloques: f.bloques || [],
+    tokensUsados: f.tokensUsados || [],
+  } as FormatoFormacion;
+}
 
-type BloqueBase = { id: string; type: string; label: string; required?: boolean };
+function formToRow(data: Record<string, any>): Record<string, any> {
+  const row: Record<string, any> = {};
 
-// ---------------------------------------------------------------------------
-// Mock: 4 formatos existentes pre-cargados como bloques
-// ---------------------------------------------------------------------------
+  // Manual mapping of key fields to avoid camelToSnake issues with JSONB
+  if (data.nombre !== undefined) row.nombre = data.nombre;
+  if (data.descripcion !== undefined) row.descripcion = data.descripcion;
+  if (data.codigo !== undefined) row.codigo = data.codigo;
+  if (data.version !== undefined) row.version = data.version;
+  if (data.motorRender !== undefined) row.motor_render = data.motorRender;
+  if (data.categoria !== undefined) row.categoria = data.categoria;
+  if (data.estado !== undefined) row.estado = data.estado;
+  if (data.asignacionScope !== undefined) row.asignacion_scope = data.asignacionScope;
+  if (data.nivelFormacionIds !== undefined) row.niveles_asignados = data.nivelFormacionIds;
+  if (data.tiposCurso !== undefined) row.tipos_curso = data.tiposCurso;
+  if (data.htmlTemplate !== undefined) row.html_template = data.htmlTemplate;
+  if (data.cssTemplate !== undefined) row.css_template = data.cssTemplate;
+  if (data.bloques !== undefined) row.bloques = data.bloques;
+  if (data.usaEncabezadoInstitucional !== undefined) row.usa_encabezado_institucional = data.usaEncabezadoInstitucional;
+  if (data.encabezadoConfig !== undefined) row.encabezado_config = data.encabezadoConfig;
+  if (data.tokensUsados !== undefined) row.tokens_usados = data.tokensUsados;
+  if (data.requiereFirmaAprendiz !== undefined) row.requiere_firma_aprendiz = data.requiereFirmaAprendiz;
+  if (data.requiereFirmaEntrenador !== undefined) row.requiere_firma_entrenador = data.requiereFirmaEntrenador;
+  if (data.requiereFirmaSupervisor !== undefined) row.requiere_firma_supervisor = data.requiereFirmaSupervisor;
+  if (data.visibleEnMatricula !== undefined) row.visible_en_matricula = data.visibleEnMatricula;
+  if (data.visibleEnCurso !== undefined) row.visible_en_curso = data.visibleEnCurso;
+  if (data.visibleEnPortalEstudiante !== undefined) row.visible_en_portal_estudiante = data.visibleEnPortalEstudiante;
+  if (data.activo !== undefined) row.activo = data.activo;
+  if (data.modoDiligenciamiento !== undefined) row.modo_diligenciamiento = data.modoDiligenciamiento;
+  if (data.esAutomatico !== undefined) row.es_automatico = data.esAutomatico;
+  if (data.documentMeta !== undefined) row.document_meta = data.documentMeta;
+  if (data.legacyComponentId !== undefined) row.legacy_component_id = data.legacyComponentId;
+  if (data.plantillaBaseId !== undefined) row.plantilla_base_id = data.plantillaBaseId;
 
-const BLOQUES_INFO_APRENDIZ: Bloque[] = [
-  b('section_title', 'Ficha de Matrícula'),
-  b('auto_field', 'Fecha inicio del curso', { key: 'fecha_inicio_curso' }),
-  b('auto_field', 'Fecha finalización del curso', { key: 'fecha_fin_curso' }),
-  b('auto_field', 'Empresa que paga el curso', { key: 'empresa_nombre' }),
-  b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
-  b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
-  b('auto_field', 'Nombres y Apellidos', { key: 'nombre_aprendiz', span: true }),
-  b('auto_field', 'Género', { key: 'genero_aprendiz' }),
-  b('auto_field', 'País de nacimiento', { key: 'pais_nacimiento_aprendiz' }),
-  b('auto_field', 'Fecha de nacimiento', { key: 'fecha_nacimiento_aprendiz' }),
-  b('auto_field', 'Nivel educativo', { key: 'nivel_educativo_aprendiz' }),
-  b('auto_field', 'Área de trabajo', { key: 'area_trabajo' }),
-  b('auto_field', 'Cargo', { key: 'empresa_cargo' }),
-  b('auto_field', 'Nivel de formación', { key: 'empresa_nivel_formacion', span: true }),
-
-  b('section_title', 'Información de Emergencia'),
-  b('auto_field', 'Contacto de emergencia', { key: 'contacto_emergencia_nombre' }),
-  b('auto_field', 'Teléfono de emergencia', { key: 'contacto_emergencia_telefono' }),
-  b('auto_field', 'RH del participante', { key: 'rh_aprendiz' }),
-
-  b('section_title', 'Autoevaluación'),
-  ...([
-    '¿Ha realizado curso de alturas nivel Avanzado Trabajador Autorizado o Reentrenamiento con anterioridad?',
-    '¿Sabe qué es un arnés y para qué sirve?',
-    '¿Considera tener conocimientos y habilidades en Trabajo en Alturas?',
-    '¿La Res. 4272 de 2021, es la que Establece los Requisitos Mínimos de seguridad para Trabajar en Alturas?',
-    '¿Tiene presente la diferencia entre las medidas de prevención y medidas de protección contra caídas?',
-    '¿Dentro de sus actividades laborales, debe desarrollar actividades superando los 2 m?',
-  ].map(q => b('radio', q, { options: [
-    { value: 'si', label: 'Sí' },
-    { value: 'no', label: 'No' },
-    { value: 'na', label: 'N/A' },
-  ]}))),
-
-  b('section_title', 'Evaluación de Competencias'),
-  ...([
-    '¿Sabe seguir y acatar instrucciones?',
-    '¿Sabe trabajar en equipo?',
-    '¿Sabe qué es acto y condición insegura?',
-    '¿Qué tanta disposición tiene para desarrollar la presente formación?',
-    '¿Se considera usted habilidoso para la resolución de problemas?',
-  ].map(q => b('radio', q, { options: [
-    { value: 'malo', label: 'Malo' },
-    { value: 'aceptable', label: 'Aceptable' },
-    { value: 'excelente', label: 'Excelente' },
-    { value: 'na', label: 'N/A' },
-  ]}))),
-
-  b('section_title', 'Consentimiento de Salud'),
-  b('health_consent', 'Consentimiento de Salud', {
-    questions: [
-      { id: 'restriccionMedica', label: '¿Tiene alguna restricción médica?', hasDetail: true },
-      { id: 'alergias', label: '¿Tiene alergias?', hasDetail: true },
-      { id: 'consumoMedicamentos', label: '¿Consume medicamentos?', hasDetail: true },
-      { id: 'embarazo', label: '¿Se encuentra en estado de embarazo?', conditionalOn: "genero_F" },
-      { id: 'lectoescritura', label: '¿Sabe leer y escribir?' },
-    ],
-  }),
-
-  b('section_title', 'Autorización de Uso de Datos'),
-  b('data_authorization', 'Autorización de Uso de Datos', {
-    summaryItems: [
-      'Sus Datos Sensibles: Autoriza el uso de sus datos personales, huellas, fotos y videos para fines de seguridad y registro.',
-      'Publicidad y Cobros: Acepta recibir publicidad, estados de cuenta y avisos de deudas por WhatsApp y correo electrónico.',
-      'Prohibición de Celulares: No puede tomar fotos ni videos durante las capacitaciones.',
-      'Salud y Seguridad: Declara que su estado de salud es real y acepta los riesgos propios del entrenamiento físico.',
-      'Firma Digital: Acepta que sus firmas electrónicas tengan plena validez legal, únicamente para los formatos requeridos en la formación y entrenamiento en trabajo en alturas.',
-      'Sus Derechos: Puede solicitar en cualquier momento la corrección o eliminación de su información.',
-    ],
-  }),
-
-  b('signature_aprendiz', 'Firma del Participante'),
-];
-
-const BLOQUES_REGISTRO_ASISTENCIA: Bloque[] = [
-  b('section_title', 'Datos de Asistencia'),
-  b('date', 'Fecha de asistencia', undefined, { required: true }),
-  b('auto_field', 'Empresa', { key: 'empresa_nombre' }),
-  b('auto_field', 'Nombres y Apellidos', { key: 'nombre_aprendiz', span: true }),
-  b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
-  b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
-  b('auto_field', 'Instructor a cargo', { key: 'entrenador_nombre' }),
-  b('signature_aprendiz', 'Firma del Participante'),
-];
-
-const TEXTO_PTA_P1 = 'En cumplimiento de la Resolución 4272 de 2021, por la cual se reglamenta el trabajo seguro en alturas en Colombia, y como parte de las actividades prácticas del curso, yo, el abajo firmante, dejo constancia de que participé activamente en el diligenciamiento del Permiso de Trabajo en Alturas (PTS) y del Análisis de Trabajo Seguro (ATS) correspondientes a la práctica desarrollada en la fecha indicada.';
-const TEXTO_PTA_P2 = 'Durante esta actividad, participé en la identificación de peligros, evaluación de riesgos y definición de medidas preventivas y controles relacionados con las tareas en alturas, comprendiendo la importancia de aplicar estos procedimientos antes, durante y después de la ejecución del trabajo.';
-const TEXTO_PTA_P3 = 'Reconozco que esta práctica forma parte del proceso formativo obligatorio establecido por la normativa vigente, y que su finalidad es fortalecer mis competencias técnicas y mi compromiso con la seguridad y la prevención de accidentes durante la ejecución de labores en alturas.';
-
-const BLOQUES_PARTICIPACION_PTA_ATS: Bloque[] = [
-  b('section_title', 'Declaración'),
-  b('paragraph', 'Texto normativo 1', { text: TEXTO_PTA_P1 }),
-  b('paragraph', 'Texto normativo 2', { text: TEXTO_PTA_P2 }),
-  b('paragraph', 'Texto normativo 3', { text: TEXTO_PTA_P3 }),
-  b('paragraph', 'Declaración firmante', { text: 'Con mi firma digital, declaro que:' }),
-  b('paragraph', 'Compromisos', { text: '• Comprendí el objetivo y contenido del Permiso de Trabajo en Alturas (PTS) y el Análisis de Trabajo Seguro (ATS).\n• Participé en el diligenciamiento real del formato junto con mis compañeros de curso.\n• Asumo el compromiso de aplicar este conocimiento en cualquier labor en alturas, conforme a la legislación vigente.' }),
-
-  b('section_title', 'Datos del Participante'),
-  b('auto_field', 'Nombres y Apellidos', { key: 'nombre_aprendiz', span: true }),
-  b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
-  b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
-  b('signature_aprendiz', 'Firma del Participante'),
-];
-
-const PREGUNTAS_REENTRENAMIENTO = [
-  { id: 1, texto: 'La Resolución 4272 de 2021 establece los requisitos mínimos de seguridad para el trabajo seguro en alturas en Colombia.', opciones: ['Verdadero', 'Falso'], correcta: 0 },
-  { id: 2, texto: 'Se considera trabajo en alturas toda actividad que se realice a una altura igual o superior a:', opciones: ['1 metro', '1.5 metros', '2 metros', '3 metros'], correcta: 2 },
-  { id: 3, texto: 'El sistema de arresto de caídas tiene como objetivo:', opciones: ['Prevenir la caída del trabajador', 'Detener la caída una vez ocurre y minimizar lesiones', 'Reemplazar el uso de andamios', 'Permitir el trabajo sin supervisión'], correcta: 1 },
-  { id: 4, texto: 'El punto de anclaje para trabajo en alturas debe soportar una carga mínima de:', opciones: ['5 kN (500 kg)', '15 kN (1.500 kg)', '22.2 kN (2.268 kg)', '30 kN (3.000 kg)'], correcta: 2 },
-  { id: 5, texto: 'Antes de iniciar un trabajo en alturas es obligatorio diligenciar el ATS y obtener el permiso de trabajo.', opciones: ['Verdadero', 'Falso'], correcta: 0 },
-  { id: 6, texto: 'El factor de caída se define como la relación entre:', opciones: ['El peso del trabajador y la resistencia del arnés', 'La distancia de caída y la longitud de la cuerda de vida', 'La altura del punto de anclaje y el piso', 'La velocidad de caída y el tiempo de detención'], correcta: 1 },
-  { id: 7, texto: '¿Cuál de las siguientes es una medida de PREVENCIÓN contra caídas?', opciones: ['Arnés de cuerpo completo', 'Red de seguridad', 'Delimitación y señalización del área de trabajo', 'Línea de vida horizontal'], correcta: 2 },
-  { id: 8, texto: 'El EPP para trabajo en alturas incluye obligatoriamente el casco con barbuquejo en posición de uso.', opciones: ['Verdadero', 'Falso'], correcta: 0 },
-  { id: 9, texto: 'Un trabajador autorizado para trabajo en alturas está capacitado para:', opciones: ['Diseñar sistemas de anclaje y supervisar', 'Ingresar a zonas con riesgo de caída y realizar la tarea bajo supervisión', 'Aprobar permisos de trabajo y hacer inspección', 'Reemplazar al coordinador en su ausencia'], correcta: 1 },
-  { id: 10, texto: 'La vida útil de un arnés que ha detenido una caída es:', opciones: ['Puede seguir usándose si no presenta daños visibles', 'Se reduce a la mitad de su vida útil original', 'Termina inmediatamente; debe retirarse del servicio', 'Se extiende si se somete a mantenimiento'], correcta: 2 },
-  { id: 11, texto: 'La distancia de detención total incluye: longitud del absorbedor + extensión de la cuerda + desplazamiento del cuerpo.', opciones: ['Verdadero', 'Falso'], correcta: 0 },
-  { id: 12, texto: '¿Qué acción debe tomar un trabajador al detectar un equipo con daño visible?', opciones: ['Reportarlo al coordinador y NO usar el equipo', 'Usarlo con precaución si el daño parece menor', 'Repararlo él mismo', 'Continuar y reportar al finalizar la jornada'], correcta: 0 },
-  { id: 13, texto: 'El síndrome de arnés puede ocurrir cuando un trabajador queda suspendido sin movimiento por más de:', opciones: ['1 minuto', '5 minutos', '30 minutos', '1 hora'], correcta: 1 },
-  { id: 14, texto: 'Los andamios tubulares deben ser inspeccionados por una persona competente antes de su uso.', opciones: ['Verdadero', 'Falso'], correcta: 0 },
-  { id: 15, texto: 'El programa de protección contra caídas debe incluir como mínimo:', opciones: ['Inventario de EPP únicamente', 'Identificación de peligros, medidas de prevención y protección, inspección de equipos, y procedimiento de rescate', 'Solo el procedimiento de rescate y primeros auxilios', 'Únicamente la capacitación del personal'], correcta: 1 },
-];
-
-const BLOQUES_EVALUACION_REENTRENAMIENTO: Bloque[] = [
-  b('section_title', 'Datos del Participante'),
-  b('auto_field', 'Nombres y Apellidos', { key: 'nombre_aprendiz', span: true }),
-  b('auto_field', 'Tipo de documento', { key: 'tipo_documento_aprendiz' }),
-  b('auto_field', 'Número de documento', { key: 'documento_aprendiz' }),
-  b('auto_field', 'Nivel de formación', { key: 'empresa_nivel_formacion' }),
-  b('auto_field', 'Entrenador', { key: 'entrenador_nombre' }),
-
-  b('section_title', 'Evaluación de Conocimientos'),
-  b('evaluation_quiz', 'Evaluación Reentrenamiento', {
-    umbralAprobacion: 70,
-    preguntas: PREGUNTAS_REENTRENAMIENTO,
-  }),
-
-  b('section_title', 'Encuesta de Satisfacción'),
-  b('satisfaction_survey', 'Encuesta de Satisfacción', {
-    escalaPreguntas: [
-      '¿Qué tan satisfecho se encuentra con la capacitación y entrenamiento en trabajo en alturas recibida?',
-      '¿Qué tan satisfecho se encuentra con el servicio al cliente recibido por parte de todo el personal de la empresa?',
-      '¿Qué tan satisfecho se encuentra con la amabilidad y el trato recibido por parte del personal?',
-      '¿Qué tan satisfecho se encuentra con la calidad del servicio brindado durante todo el proceso?',
-    ],
-    escalaOpciones: [
-      { value: 'muy_satisfecho', label: 'Muy satisfecho' },
-      { value: 'satisfecho', label: 'Satisfecho' },
-      { value: 'poco_satisfecho', label: 'Poco satisfecho' },
-      { value: 'insatisfecho', label: 'Insatisfecho' },
-    ],
-    preguntaSiNo: '¿Volvería a contratar y recomendaría el servicio recibido?',
-  }),
-
-  b('signature_aprendiz', 'Firma del Participante'),
-];
+  return row;
+}
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Plantillas base (estáticas en frontend)
 // ---------------------------------------------------------------------------
 
-const now = new Date().toISOString();
-
-let mockFormatos: FormatoFormacion[] = [
-  {
-    id: 'fmt-info-aprendiz',
-    nombre: 'Información del Aprendiz',
-    descripcion: 'Ficha completa del aprendiz con autoevaluación, competencias, salud y autorización de datos',
-    codigo: 'FIH04-013',
-    version: '021',
-    asignacionScope: 'todos',
-    nivelFormacionIds: ['nf1', 'nf2', 'nf3', 'nf4', 'nf5'],
-    visibleEnMatricula: true,
-    visibleEnCurso: false,
-    visibleEnPortalEstudiante: true,
-    activo: true,
-    modoDiligenciamiento: 'manual_estudiante' as const,
-    esAutomatico: false,
-    motorRender: 'bloques',
-    categoria: 'formacion',
-    estado: 'activo',
-    usaEncabezadoInstitucional: true,
-    requiereFirmaAprendiz: true,
-    requiereFirmaEntrenador: false,
-    requiereFirmaSupervisor: false,
-    bloques: BLOQUES_INFO_APRENDIZ,
-    documentMeta: { fechaCreacion: '22/03/2018', fechaEdicion: '17/02/2025', subsistema: 'Alturas' },
-    legacyComponentId: 'info_aprendiz',
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 'fmt-registro-asistencia',
-    nombre: 'Registro de Asistencia de Formación y Entrenamiento en Alturas',
-    descripcion: 'Registro de asistencia por día de formación',
-    codigo: 'FIH04-014',
-    version: '009',
-    asignacionScope: 'todos',
-    nivelFormacionIds: ['nf1', 'nf2', 'nf3', 'nf4', 'nf5'],
-    visibleEnMatricula: true,
-    visibleEnCurso: false,
-    visibleEnPortalEstudiante: false,
-    activo: true,
-    modoDiligenciamiento: 'automatico_sistema' as const,
-    esAutomatico: true,
-    motorRender: 'bloques',
-    categoria: 'asistencia',
-    estado: 'activo',
-    usaEncabezadoInstitucional: true,
-    requiereFirmaAprendiz: true,
-    requiereFirmaEntrenador: false,
-    requiereFirmaSupervisor: false,
-    bloques: BLOQUES_REGISTRO_ASISTENCIA,
-    documentMeta: { fechaCreacion: '12/04/2018', fechaEdicion: '03/2025', subsistema: 'Alturas' },
-    legacyComponentId: 'registro_asistencia',
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 'fmt-participacion-pta-ats',
-    nombre: 'Participación en el Diligenciamiento del PTA - ATS',
-    descripcion: 'Declaración de participación en Permiso de Trabajo en Alturas y Análisis de Trabajo Seguro',
-    codigo: 'FIH04-077',
-    version: '001',
-    asignacionScope: 'nivel_formacion',
-    nivelFormacionIds: ['nf3', 'nf1', 'nf5'],
-    visibleEnMatricula: true,
-    visibleEnCurso: false,
-    visibleEnPortalEstudiante: true,
-    activo: true,
-    modoDiligenciamiento: 'manual_estudiante' as const,
-    esAutomatico: false,
-    motorRender: 'bloques',
-    categoria: 'pta_ats',
-    estado: 'activo',
-    usaEncabezadoInstitucional: true,
-    requiereFirmaAprendiz: true,
-    requiereFirmaEntrenador: false,
-    requiereFirmaSupervisor: false,
-    bloques: BLOQUES_PARTICIPACION_PTA_ATS,
-    documentMeta: { fechaCreacion: '10/03/2025', fechaEdicion: '03/2025', subsistema: 'Alturas' },
-    legacyComponentId: 'participacion_pta_ats',
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: 'fmt-evaluacion-reentrenamiento',
-    nombre: 'Evaluación de Reentrenamiento en Trabajo en Alturas',
-    descripcion: 'Evaluación de conocimientos (15 preguntas) con encuesta de satisfacción',
-    codigo: 'FIH04-019',
-    version: '009',
-    asignacionScope: 'nivel_formacion',
-    nivelFormacionIds: ['nf1', 'nf3'],
-    
-    visibleEnMatricula: true,
-    visibleEnCurso: false,
-    visibleEnPortalEstudiante: true,
-    activo: true,
-    modoDiligenciamiento: 'manual_estudiante' as const,
-    esAutomatico: false,
-    motorRender: 'bloques',
-    categoria: 'evaluacion',
-    estado: 'activo',
-    usaEncabezadoInstitucional: true,
-    requiereFirmaAprendiz: true,
-    requiereFirmaEntrenador: false,
-    requiereFirmaSupervisor: false,
-    bloques: BLOQUES_EVALUACION_REENTRENAMIENTO,
-    documentMeta: { fechaCreacion: '12/04/2018', fechaEdicion: '03/2025', subsistema: 'Alturas' },
-    legacyComponentId: 'evaluacion_reentrenamiento',
-    createdAt: now,
-    updatedAt: now,
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Mock versiones
-// ---------------------------------------------------------------------------
-
-let mockVersiones: FormatoVersion[] = [];
-
-// ---------------------------------------------------------------------------
-// Mock plantillas base
-// ---------------------------------------------------------------------------
-
-const mockPlantillasBase: PlantillaBase[] = [
+const PLANTILLAS_BASE: PlantillaBase[] = [
   {
     id: 'pb-registro',
     nombre: 'Registro de Actividad',
@@ -322,154 +73,221 @@ const mockPlantillasBase: PlantillaBase[] = [
 
 export const formatoFormacionService = {
   getAll: async (): Promise<FormatoFormacion[]> => {
-    return simulateApiCall([...mockFormatos]);
+    const { data, error } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToFormato);
   },
 
   getById: async (id: string): Promise<FormatoFormacion | undefined> => {
-    return simulateApiCall(mockFormatos.find(f => f.id === id));
+    const { data, error } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) handleSupabaseError(error);
+    if (!data) return undefined;
+    return rowToFormato(data);
   },
 
   create: async (data: FormatoFormacionFormData): Promise<FormatoFormacion> => {
-    const nuevo: FormatoFormacion = {
-      ...data,
-      id: `fmt-${uuidv4().slice(0, 8)}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    mockFormatos.push(nuevo);
-    mockAuditLogs.push({
-      id: uuidv4(),
-      entidadTipo: 'formato_formacion',
-      entidadId: nuevo.id,
-      accion: 'crear',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: new Date().toISOString(),
-    });
-    return simulateApiCall(nuevo);
+    const row = formToRow(data);
+
+    const { data: inserted, error } = await supabase
+      .from('formatos_formacion')
+      .insert(row)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToFormato(inserted);
   },
 
   update: async (id: string, data: Partial<FormatoFormacionFormData>): Promise<FormatoFormacion> => {
-    const idx = mockFormatos.findIndex(f => f.id === id);
-    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
-    mockFormatos[idx] = { ...mockFormatos[idx], ...data, updatedAt: new Date().toISOString() };
-    mockAuditLogs.push({
-      id: uuidv4(),
-      entidadTipo: 'formato_formacion',
-      entidadId: id,
-      accion: 'editar',
-      camposModificados: Object.keys(data),
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: new Date().toISOString(),
-    });
-    return simulateApiCall(mockFormatos[idx]);
+    const row = formToRow(data);
+
+    const { data: updated, error } = await supabase
+      .from('formatos_formacion')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToFormato(updated);
   },
 
   toggleActivo: async (id: string): Promise<FormatoFormacion> => {
-    const idx = mockFormatos.findIndex(f => f.id === id);
-    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
-    mockFormatos[idx] = { ...mockFormatos[idx], activo: !mockFormatos[idx].activo, updatedAt: new Date().toISOString() };
-    return simulateApiCall(mockFormatos[idx]);
+    // First get current value
+    const { data: current } = await supabase
+      .from('formatos_formacion')
+      .select('activo')
+      .eq('id', id)
+      .single();
+
+    const { data: updated, error } = await supabase
+      .from('formatos_formacion')
+      .update({ activo: !current?.activo })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToFormato(updated);
   },
 
   duplicate: async (id: string): Promise<FormatoFormacion> => {
-    const original = mockFormatos.find(f => f.id === id);
-    if (!original) throw new Error(`Formato ${id} no encontrado`);
-    const copia: FormatoFormacion = {
-      ...original,
-      id: `fmt-${uuidv4().slice(0, 8)}`,
-      nombre: `${original.nombre} (copia)`,
-      legacyComponentId: undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    mockFormatos.push(copia);
-    return simulateApiCall(copia);
+    const { data, error } = await supabase.rpc('duplicar_formato', {
+      _formato_id: id,
+    });
+
+    if (error) handleSupabaseError(error);
+
+    // Fetch the new formato
+    const newId = data as string;
+    const formato = await formatoFormacionService.getById(newId);
+    if (!formato) throw new ApiError('Error al duplicar formato', 500);
+    return formato;
   },
 
   search: async (query: string): Promise<FormatoFormacion[]> => {
-    const q = query.toLowerCase();
-    const results = mockFormatos.filter(f =>
-      f.nombre.toLowerCase().includes(q) ||
-      f.codigo.toLowerCase().includes(q) ||
-      f.descripcion.toLowerCase().includes(q)
-    );
-    return simulateApiCall(results);
+    const q = `%${query}%`;
+    const { data, error } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .is('deleted_at', null)
+      .or(`nombre.ilike.${q},codigo.ilike.${q},descripcion.ilike.${q}`);
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map(rowToFormato);
   },
 
   /** Obtener formatos aplicables para una matrícula según nivel de formación */
-  getForMatricula: async (nivelFormacionId: string): Promise<FormatoFormacion[]> => {
-    const results = mockFormatos.filter(f =>
-      f.activo &&
-      f.visibleEnMatricula &&
-      (f.asignacionScope === 'todos' || f.nivelFormacionIds.includes(nivelFormacionId))
-    );
-    return simulateApiCall(results);
+  getForMatricula: async (nivelFormacionIdOrMatriculaId: string): Promise<FormatoFormacion[]> => {
+    // Try as nivel_formacion_id first (direct filter)
+    const { data, error } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .eq('activo', true)
+      .eq('estado', 'activo')
+      .is('deleted_at', null)
+      .eq('visible_en_matricula', true);
+
+    if (error) handleSupabaseError(error);
+
+    // Filter client-side by niveles_asignados containing the given ID
+    return (data || [])
+      .filter((f: any) => {
+        if (f.asignacion_scope === 'nivel_formacion') {
+          return (f.niveles_asignados || []).includes(nivelFormacionIdOrMatriculaId);
+        }
+        // For 'tipo_curso' scope, include all (they match by tipo)
+        return true;
+      })
+      .map(rowToFormato);
   },
 
   // --- Versioning ---
   saveVersion: async (formatoId: string): Promise<FormatoVersion> => {
-    const formato = mockFormatos.find(f => f.id === formatoId);
-    if (!formato) throw new Error(`Formato ${formatoId} no encontrado`);
-    const ver: FormatoVersion = {
-      id: `ver-${uuidv4().slice(0, 8)}`,
-      formatoId,
-      version: parseInt(formato.version) || 1,
-      htmlTemplate: formato.htmlTemplate || '',
-      cssTemplate: formato.cssTemplate,
-      createdAt: new Date().toISOString(),
-      creadoPor: 'Usuario actual',
-    };
-    mockVersiones.push(ver);
-    return simulateApiCall(ver);
+    // Get current formato data
+    const { data: formato } = await supabase
+      .from('formatos_formacion')
+      .select('html_template, css_template, version')
+      .eq('id', formatoId)
+      .single();
+
+    if (!formato) throw new ApiError('Formato no encontrado', 404);
+
+    // Get next version number
+    const { data: versions } = await supabase
+      .from('versiones_formato')
+      .select('version')
+      .eq('formato_id', formatoId)
+      .order('version', { ascending: false })
+      .limit(1);
+
+    const nextVersion = ((versions?.[0]?.version || 0) as number) + 1;
+
+    const { data: inserted, error } = await supabase
+      .from('versiones_formato')
+      .insert({
+        formato_id: formatoId,
+        version: nextVersion,
+        html_template: formato.html_template || '',
+        css_template: formato.css_template,
+      })
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return snakeToCamel<FormatoVersion>(inserted);
   },
 
   getVersiones: async (formatoId: string): Promise<FormatoVersion[]> => {
-    return simulateApiCall(mockVersiones.filter(v => v.formatoId === formatoId));
+    const { data, error } = await supabase
+      .from('versiones_formato')
+      .select('*')
+      .eq('formato_id', formatoId)
+      .order('version', { ascending: false });
+
+    if (error) handleSupabaseError(error);
+    return (data || []).map((v: any) => snakeToCamel<FormatoVersion>(v));
   },
 
   restoreVersion: async (formatoId: string, versionId: string): Promise<FormatoFormacion> => {
-    const ver = mockVersiones.find(v => v.id === versionId && v.formatoId === formatoId);
-    if (!ver) throw new Error('Versión no encontrada');
-    const idx = mockFormatos.findIndex(f => f.id === formatoId);
-    if (idx === -1) throw new Error('Formato no encontrado');
-    mockFormatos[idx] = {
-      ...mockFormatos[idx],
-      htmlTemplate: ver.htmlTemplate,
-      cssTemplate: ver.cssTemplate,
-      updatedAt: new Date().toISOString(),
-    };
-    return simulateApiCall(mockFormatos[idx]);
+    const { data: ver } = await supabase
+      .from('versiones_formato')
+      .select('*')
+      .eq('id', versionId)
+      .eq('formato_id', formatoId)
+      .single();
+
+    if (!ver) throw new ApiError('Versión no encontrada', 404);
+
+    const { data: updated, error } = await supabase
+      .from('formatos_formacion')
+      .update({
+        html_template: ver.html_template,
+        css_template: ver.css_template,
+      })
+      .eq('id', formatoId)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToFormato(updated);
   },
 
   // --- Archive ---
   archive: async (id: string): Promise<FormatoFormacion> => {
-    const idx = mockFormatos.findIndex(f => f.id === id);
-    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
-    mockFormatos[idx] = { ...mockFormatos[idx], estado: 'archivado', activo: false, updatedAt: new Date().toISOString() };
-    return simulateApiCall(mockFormatos[idx]);
+    const { data: updated, error } = await supabase
+      .from('formatos_formacion')
+      .update({ estado: 'archivado', activo: false })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToFormato(updated);
   },
 
-  // --- Delete ---
+  // --- Delete (soft) ---
   delete: async (id: string): Promise<void> => {
-    const idx = mockFormatos.findIndex(f => f.id === id);
-    if (idx === -1) throw new Error(`Formato ${id} no encontrado`);
-    mockAuditLogs.push({
-      id: uuidv4(),
-      entidadTipo: 'formato_formacion',
-      entidadId: id,
-      accion: 'eliminar',
-      usuarioId: 'current_user',
-      usuarioNombre: 'Usuario Actual',
-      timestamp: new Date().toISOString(),
-    });
-    mockFormatos.splice(idx, 1);
-    return simulateApiCall(undefined as unknown as void);
+    const { error } = await supabase
+      .from('formatos_formacion')
+      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .eq('id', id);
+
+    if (error) handleSupabaseError(error);
   },
 
   // --- Plantillas base ---
   getPlantillasBase: async (): Promise<PlantillaBase[]> => {
-    return simulateApiCall([...mockPlantillasBase]);
+    return PLANTILLAS_BASE;
   },
 };

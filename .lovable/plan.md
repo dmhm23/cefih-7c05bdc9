@@ -1,46 +1,23 @@
-
-
-## Plan: Actualizar README.md con documentacion completa del proyecto SAFA
+## Plan: Actualizar documento de requerimientos backend
 
 ### Objetivo
+Sobrescribir `/mnt/documents/Requerimientos_Backend_Supabase_por_Fases.md` con el contenido completo de `Requerimientos_Backend_Supabase_por_Fases_v2.md`, que contiene la versión enriquecida (v4.0) con cobertura del 100% de las reglas de negocio.
 
-Reemplazar el README generico de Lovable con una documentacion profesional que refleje la naturaleza, alcance y estructura real del proyecto SAFA.
-
-### Estructura propuesta del nuevo README
-
-1. **Encabezado y descripcion** -- SAFA: Sistema de Administracion para Centros de Formacion en Trabajo Seguro en Alturas. Marco normativo (Resolucion 4272/2021).
-
-2. **Modulos funcionales** -- Tabla con los 11 modulos:
-   - Dashboard, Personas, Empresas, Matriculas, Cursos, Niveles de Formacion, Gestion de Personal, Gestion de Formatos, Portal Estudiante (Admin + Publico), Certificacion, Cartera
-
-3. **Stack tecnologico** -- React 18, TypeScript, Vite 5, Tailwind CSS, shadcn/ui (Radix), React Router v6, TanStack React Query v5, React Hook Form + Zod, Zustand, dnd-kit, Recharts, react-signature-canvas, date-fns
-
-4. **Arquitectura** -- Frontend-first con backend emulado (mock services con delays simulados). Patron: Pages → Hooks (React Query) → Services → Mock Data. Preparado para migracion a API REST real.
-
-5. **Estructura del proyecto** -- Arbol simplificado de carpetas clave:
-   - `src/pages/` (12 secciones)
-   - `src/components/` (modulo-specific + shared + ui)
-   - `src/services/` (20 servicios)
-   - `src/hooks/` (15 hooks)
-   - `src/types/` (11 tipos)
-   - `src/data/` (mock data + catalogos)
-   - `src/utils/` (utilidades)
-   - `Docs/` (documentacion tecnica)
-
-6. **Instalacion y desarrollo** -- Instrucciones npm/bun para clonar, instalar dependencias, ejecutar dev server, build y tests.
-
-7. **Documentacion adicional** -- Referencias a `Docs/DOCUMENTACION_SISTEMA.md` (manual tecnico v1.8) y `REGLAS_NEGOCIO_v3.md` (190+ reglas de negocio).
-
-8. **Despliegue** -- Via Lovable (Share → Publish). URL publicada: cefih.lovable.app
+### Cambios
+- Reemplazar el contenido del archivo original (120 líneas, ~60% cobertura) con el documento v2 completo (1262 líneas, 100% cobertura)
+- El archivo v2 ya mantiene la misma estructura por fases del original pero con:
+  - Tablas detalladas con columnas, tipos, restricciones y referencias a reglas
+  - 16 enums SQL definidos explícitamente
+  - 12 triggers/functions con código SQL
+  - 8 Edge Functions especificadas
+  - Fase 6 (Dashboard) agregada
+  - Tabla de trazabilidad completa (190+ reglas → fase de implementación)
+  - Resolución de las 11 inconsistencias mapeadas
 
 ### Archivo afectado
+| Archivo | Acción |
+|---------|--------|
+| `/mnt/documents/Requerimientos_Backend_Supabase_por_Fases.md` | Sobrescribir con contenido de v2 |
 
-| Archivo | Cambio |
-|---|---|
-| `README.md` | Reescritura completa |
-
-### Notas
-- Se mantiene en espanol consistente con el resto del proyecto
-- No se incluyen credenciales ni datos sensibles
-- Se preserva la referencia a Lovable como plataforma de desarrollo
-
+### Nota
+El archivo v2 se conserva como respaldo.

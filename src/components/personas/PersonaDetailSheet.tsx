@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdatePersona } from "@/hooks/usePersonas";
 import { useMatriculasByPersona } from "@/hooks/useMatriculas";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { NIVEL_FORMACION_EMPRESA_LABELS } from "@/types/matricula";
+import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { Persona, PersonaFormData } from "@/types/persona";
 import {
   TIPOS_DOCUMENTO,

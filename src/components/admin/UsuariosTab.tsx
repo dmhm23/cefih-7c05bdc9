@@ -83,7 +83,7 @@ export default function UsuariosTab() {
             <label className="text-sm font-medium text-foreground">Rol</label>
             <Select value={rolId} onValueChange={setRolId}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar rol (default: Administrador)" />
+                <SelectValue placeholder="Seleccionar rol (default: Operador)" />
               </SelectTrigger>
               <SelectContent>
                 {roles.map((r) => (

@@ -137,6 +137,95 @@ export type Database = {
         }
         Relationships: []
       }
+      certificados: {
+        Row: {
+          autorizado_excepcional: boolean
+          codigo: string
+          created_at: string
+          curso_id: string
+          estado: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion: string | null
+          fecha_revocacion: string | null
+          id: string
+          matricula_id: string
+          motivo_revocacion: string | null
+          persona_id: string
+          plantilla_id: string
+          revocado_por: string | null
+          snapshot_datos: Json
+          svg_final: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          autorizado_excepcional?: boolean
+          codigo: string
+          created_at?: string
+          curso_id: string
+          estado?: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion?: string | null
+          fecha_revocacion?: string | null
+          id?: string
+          matricula_id: string
+          motivo_revocacion?: string | null
+          persona_id: string
+          plantilla_id: string
+          revocado_por?: string | null
+          snapshot_datos?: Json
+          svg_final?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          autorizado_excepcional?: boolean
+          codigo?: string
+          created_at?: string
+          curso_id?: string
+          estado?: Database["public"]["Enums"]["estado_certificado"]
+          fecha_generacion?: string | null
+          fecha_revocacion?: string | null
+          id?: string
+          matricula_id?: string
+          motivo_revocacion?: string | null
+          persona_id?: string
+          plantilla_id?: string
+          revocado_por?: string | null
+          snapshot_datos?: Json
+          svg_final?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificados_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificados_plantilla_id_fkey"
+            columns: ["plantilla_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas_certificado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cursos: {
         Row: {
           activo: boolean
@@ -369,6 +458,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      excepciones_certificado: {
+        Row: {
+          created_at: string
+          estado: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion: string | null
+          fecha_solicitud: string
+          id: string
+          matricula_id: string
+          motivo: string
+          resuelto_por: string | null
+          solicitado_por: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          matricula_id: string
+          motivo: string
+          resuelto_por?: string | null
+          solicitado_por: string
+        }
+        Update: {
+          created_at?: string
+          estado?: Database["public"]["Enums"]["estado_excepcion_certificado"]
+          fecha_resolucion?: string | null
+          fecha_solicitud?: string
+          id?: string
+          matricula_id?: string
+          motivo?: string
+          resuelto_por?: string | null
+          solicitado_por?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excepciones_certificado_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       factura_matriculas: {
         Row: {
@@ -1177,6 +1310,92 @@ export type Database = {
           telefono?: string
           tipo_documento?: Database["public"]["Enums"]["tipo_documento_identidad"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      plantilla_certificado_versiones: {
+        Row: {
+          created_at: string
+          id: string
+          modificado_por: string | null
+          plantilla_id: string
+          svg_raw: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modificado_por?: string | null
+          plantilla_id: string
+          svg_raw?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modificado_por?: string | null
+          plantilla_id?: string
+          svg_raw?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantilla_certificado_versiones_plantilla_id_fkey"
+            columns: ["plantilla_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas_certificado"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plantillas_certificado: {
+        Row: {
+          activa: boolean
+          created_at: string
+          deleted_at: string | null
+          id: string
+          niveles_asignados: string[]
+          nombre: string
+          regla_codigo: string
+          reglas: Json
+          svg_raw: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings: Json
+          tokens_detectados: string[]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          niveles_asignados?: string[]
+          nombre: string
+          regla_codigo?: string
+          reglas?: Json
+          svg_raw?: string
+          tipo_formacion: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings?: Json
+          tokens_detectados?: string[]
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          niveles_asignados?: string[]
+          nombre?: string
+          regla_codigo?: string
+          reglas?: Json
+          svg_raw?: string
+          tipo_formacion?: Database["public"]["Enums"]["tipo_formacion"]
+          token_mappings?: Json
+          tokens_detectados?: string[]
+          updated_at?: string
+          version?: number
         }
         Relationships: []
       }

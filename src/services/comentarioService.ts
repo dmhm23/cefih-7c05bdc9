@@ -25,9 +25,9 @@ function addAuditLog(
 }
 
 export const comentarioService = {
-  async getByMatriculaSeccion(matriculaId: string, seccion: SeccionComentario): Promise<Comentario[]> {
+  async getByEntidadSeccion(entidadId: string, seccion: SeccionComentario): Promise<Comentario[]> {
     const filtered = mockComentarios.filter(
-      (c) => c.matriculaId === matriculaId && c.seccion === seccion
+      (c) => c.entidadId === entidadId && c.seccion === seccion
     );
     return simulateApiCall(filtered.sort((a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime()), 200);
   },

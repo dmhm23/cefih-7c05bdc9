@@ -238,11 +238,21 @@ supabase/
 | `/certificacion/plantillas/:id/editar` | `PlantillaEditorPage` | Editor de mapeo de etiquetas SVG |
 | `/cartera` | `CarteraPage` | Bandeja de grupos de cartera |
 | `/cartera/:id` | `GrupoCarteraDetallePage` | Detalle de grupo: facturas, pagos, seguimiento |
+| `/empresas` | `EmpresasPage` | Listado de empresas |
+| `/empresas/nueva` | `EmpresaFormPage` | Crear empresa |
+| `/empresas/:id` | `EmpresaDetallePage` | Detalle de empresa |
+| `/empresas/:id/editar` | `EmpresaFormPage` | Editar empresa |
+| `/admin` | `AdminLoginPage` | Login administrativo (verificación de rol admin) |
+| `/admin/dashboard` | `AdminDashboardPage` | Panel de administración — creación de usuarios (protegido por `AdminGuard`) |
 | `/estudiante` | `AccesoEstudiantePage` | Acceso público por cédula |
 | `/estudiante/inicio` | `PanelDocumentosPage` | Panel de documentos del estudiante |
 | `/estudiante/documentos/:documentoKey` | `DocumentoRendererPage` | Renderer genérico de documentos |
 
-Rutas protegidas se envuelven en `MainLayout`. Rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`. El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
+**Protección de rutas:**
+- Las rutas de la aplicación principal (`/dashboard`, `/personas`, `/matriculas`, etc.) se envuelven en `AuthGuard` + `MainLayout`. `AuthGuard` verifica que exista una sesión activa; si no, redirige a `/`.
+- Las rutas de administración (`/admin/dashboard`) se envuelven en `AdminGuard`, que verifica sesión activa + `perfil.rol === 'admin'`; si no cumple, redirige a `/admin`.
+- Las rutas del portal estudiante se envuelven en `PortalEstudianteProvider` y `PortalGuard`.
+- El módulo de Certificación agrupa sus subrutas bajo `/certificacion/` con menú desplegable en el sidebar.
 
 ---
 

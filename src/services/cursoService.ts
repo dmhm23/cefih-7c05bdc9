@@ -131,7 +131,8 @@ export const cursoService = {
 
   async create(data: CursoFormData): Promise<Curso> {
     const dbData: Record<string, any> = {
-      tipo_formacion: TIPO_FE_TO_DB[data.tipoFormacion] || 'formacion_inicial',
+      tipo_formacion: TIPO_FE_TO_DB[data.tipoFormacion] || data.tipoFormacion || 'formacion_inicial',
+      nivel_formacion_id: data.nivelFormacionId || null,
       fecha_inicio: data.fechaInicio || null,
       fecha_fin: data.fechaFin || null,
       capacidad_maxima: data.capacidadMaxima || 30,

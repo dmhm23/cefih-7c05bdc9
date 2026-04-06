@@ -271,13 +271,25 @@ export const cursoService = {
   },
 
   async agregarEstudiantes(cursoId: string, matriculaIds: string[]): Promise<Curso> {
-    // Matrículas table doesn't exist yet — just return the curso
+    for (const matriculaId of matriculaIds) {
+      const { error } = await supabase
+        .from('matriculas')
+        .update({ curso_id: cursoId })
+        .eq('id', matriculaId);
+      if (error) handleSupabaseError(error);
+    }
     const curso = await cursoService.getById(cursoId);
     if (!curso) throw new ApiError('Curso no encontrado', 404);
     return curso;
   },
 
   async removerEstudiante(cursoId: string, matriculaId: string): Promise<Curso> {
+    const { error } = await supabase
+      .from('matriculas')
+      .update({ curso_id: null })
+      .eq('id', matriculaId)
+      .eq('curso_id', cursoId);
+    if (error) handleSupabaseError(error);
     const curso = await cursoService.getById(cursoId);
     if (!curso) throw new ApiError('Curso no encontrado', 404);
     return curso;

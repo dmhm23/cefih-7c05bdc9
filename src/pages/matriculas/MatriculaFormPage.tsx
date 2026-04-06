@@ -2,7 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info, HeartPulse, ShieldCheck, ChevronDown, ChevronUp, FileText, UserCircle, Globe, Droplet, GraduationCap, Mail, Phone, AlertCircle, X, Plus } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info, HeartPulse, ShieldCheck, ChevronDown, ChevronUp, FileText, UserCircle, Globe, Droplet, GraduationCap, Mail, Phone, AlertCircle, X, Plus, DollarSign } from "lucide-react";
+import { asignarMatriculaACartera } from "@/services/carteraService";
+import { TipoResponsable } from "@/types/cartera";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -79,6 +81,8 @@ const matriculaSchema = z.object({
   epsOtra: z.string().optional(),
   arl: z.string().optional(),
   arlOtra: z.string().optional(),
+  // Cobros
+  valorCupo: z.coerce.number().min(0).default(0),
   // Consentimiento de salud
   consentimientoSalud: z.boolean().default(false),
   restriccionMedica: z.boolean().default(false),
@@ -145,6 +149,7 @@ export default function MatriculaFormPage() {
       epsOtra: "",
       arl: "",
       arlOtra: "",
+      valorCupo: 0,
       consentimientoSalud: false,
       restriccionMedica: false,
       restriccionMedicaDetalle: "",
@@ -254,6 +259,7 @@ export default function MatriculaFormPage() {
           epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
           arl: data.arl || undefined,
           arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+          valorCupo: data.valorCupo || 0,
           consentimientoSalud: data.consentimientoSalud,
           restriccionMedica: data.restriccionMedica,
           restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
@@ -397,7 +403,7 @@ export default function MatriculaFormPage() {
 
   const onSubmit = async (data: MatriculaFormData) => {
     try {
-      await createMatricula.mutateAsync({
+      const matricula = await createMatricula.mutateAsync({
         personaId: data.personaId,
         cursoId: data.cursoId || undefined,
         empresaId: data.empresaId || undefined,
@@ -419,6 +425,7 @@ export default function MatriculaFormPage() {
         epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
         arl: data.arl || undefined,
         arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+        valorCupo: data.valorCupo || 0,
         consentimientoSalud: data.consentimientoSalud,
         restriccionMedica: data.restriccionMedica,
         restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
@@ -434,6 +441,33 @@ export default function MatriculaFormPage() {
         encuestaCompletada: false,
         pagado: false,
       });
+
+      // Asignar a cartera si hay valor de cupo y tipo de vinculación
+      if (data.valorCupo > 0 && data.tipoVinculacion && matricula?.id) {
+        try {
+          const tipoResp = (data.tipoVinculacion === 'empresa' || data.tipoVinculacion === 'arl')
+            ? data.tipoVinculacion as TipoResponsable
+            : 'independiente' as TipoResponsable;
+          await asignarMatriculaACartera({
+            matriculaId: matricula.id,
+            valorCupo: data.valorCupo,
+            tipoVinculacion: tipoResp,
+            empresaNombre: data.empresaNombre || undefined,
+            empresaNit: data.empresaNit || undefined,
+            empresaId: data.empresaId || undefined,
+            empresaContactoNombre: data.empresaContactoNombre || undefined,
+            empresaContactoTelefono: data.empresaContactoTelefono || undefined,
+            personaNombre: selectedPersona ? `${selectedPersona.nombres} ${selectedPersona.apellidos}` : undefined,
+            personaDocumento: selectedPersona?.numeroDocumento,
+            personaTelefono: selectedPersona?.telefono,
+            personaEmail: selectedPersona?.email,
+          });
+        } catch (e) {
+          console.error('Error asignando cartera:', e);
+          // Don't block enrollment creation
+        }
+      }
+
       toast({ title: "Matrícula creada correctamente" });
       skipNavGuardRef.current = true;
       navigate("/matriculas");
@@ -1196,6 +1230,42 @@ export default function MatriculaFormPage() {
                   )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Sección: Valor del cupo */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Valor del cupo
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Valor a cobrar por la matrícula. Si es mayor a 0, se generará automáticamente el grupo de cartera.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="valorCupo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor del cupo ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </CardContent>
           </Card>
 

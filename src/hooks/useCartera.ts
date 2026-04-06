@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { carteraService } from '@/services/carteraService';
-import { MetodoPago, TipoActividadCartera } from '@/types/cartera';
+import { carteraService, asignarMatriculaACartera } from '@/services/carteraService';
+import { MetodoPago, TipoActividadCartera, TipoResponsable } from '@/types/cartera';
 
 export const useGruposCartera = () =>
   useQuery({ queryKey: ['cartera', 'grupos'], queryFn: () => carteraService.getGrupos() });
@@ -107,6 +107,18 @@ export const useDeletePago = () => {
     mutationFn: (id: string) => carteraService.deletePago(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['cartera'] });
+    },
+  });
+};
+
+export const useAsignarCartera = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: Parameters<typeof asignarMatriculaACartera>[0]) =>
+      asignarMatriculaACartera(params),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+      qc.invalidateQueries({ queryKey: ['matriculas'] });
     },
   });
 };

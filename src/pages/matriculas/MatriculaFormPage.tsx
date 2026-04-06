@@ -79,6 +79,8 @@ const matriculaSchema = z.object({
   epsOtra: z.string().optional(),
   arl: z.string().optional(),
   arlOtra: z.string().optional(),
+  // Cobros
+  valorCupo: z.coerce.number().min(0).default(0),
   // Consentimiento de salud
   consentimientoSalud: z.boolean().default(false),
   restriccionMedica: z.boolean().default(false),

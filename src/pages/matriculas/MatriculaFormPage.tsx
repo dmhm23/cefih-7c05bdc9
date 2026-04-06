@@ -401,7 +401,7 @@ export default function MatriculaFormPage() {
 
   const onSubmit = async (data: MatriculaFormData) => {
     try {
-      await createMatricula.mutateAsync({
+      const matricula = await createMatricula.mutateAsync({
         personaId: data.personaId,
         cursoId: data.cursoId || undefined,
         empresaId: data.empresaId || undefined,
@@ -423,6 +423,7 @@ export default function MatriculaFormPage() {
         epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
         arl: data.arl || undefined,
         arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+        valorCupo: data.valorCupo || 0,
         consentimientoSalud: data.consentimientoSalud,
         restriccionMedica: data.restriccionMedica,
         restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,
@@ -438,6 +439,33 @@ export default function MatriculaFormPage() {
         encuestaCompletada: false,
         pagado: false,
       });
+
+      // Asignar a cartera si hay valor de cupo y tipo de vinculación
+      if (data.valorCupo > 0 && data.tipoVinculacion && matricula?.id) {
+        try {
+          const tipoResp = (data.tipoVinculacion === 'empresa' || data.tipoVinculacion === 'arl')
+            ? data.tipoVinculacion as TipoResponsable
+            : 'independiente' as TipoResponsable;
+          await asignarMatriculaACartera({
+            matriculaId: matricula.id,
+            valorCupo: data.valorCupo,
+            tipoVinculacion: tipoResp,
+            empresaNombre: data.empresaNombre || undefined,
+            empresaNit: data.empresaNit || undefined,
+            empresaId: data.empresaId || undefined,
+            empresaContactoNombre: data.empresaContactoNombre || undefined,
+            empresaContactoTelefono: data.empresaContactoTelefono || undefined,
+            personaNombre: selectedPersona ? `${selectedPersona.nombres} ${selectedPersona.apellidos}` : undefined,
+            personaDocumento: selectedPersona?.numeroDocumento,
+            personaTelefono: selectedPersona?.telefono,
+            personaEmail: selectedPersona?.email,
+          });
+        } catch (e) {
+          console.error('Error asignando cartera:', e);
+          // Don't block enrollment creation
+        }
+      }
+
       toast({ title: "Matrícula creada correctamente" });
       skipNavGuardRef.current = true;
       navigate("/matriculas");

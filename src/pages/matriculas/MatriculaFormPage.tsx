@@ -1232,6 +1232,42 @@ export default function MatriculaFormPage() {
             </CardContent>
           </Card>
 
+          {/* Sección: Valor del cupo */}
+          <Card>
+            <CardHeader className="pb-2 pt-4 px-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Valor del cupo
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Valor a cobrar por la matrícula. Si es mayor a 0, se generará automáticamente el grupo de cartera.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="valorCupo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Valor del cupo ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Sección 4: Historial de Formación Previa */}
           <Card>
             <CardHeader className="pb-2 pt-4 px-4">

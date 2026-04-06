@@ -97,6 +97,49 @@ export default function MatriculaDetallePage() {
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+  const [hasGrupoCartera, setHasGrupoCartera] = useState<boolean | null>(null);
+  const [syncingCartera, setSyncingCartera] = useState(false);
+
+  useEffect(() => {
+    if (!matricula?.id) return;
+    supabase
+      .from('grupo_cartera_matriculas')
+      .select('grupo_cartera_id')
+      .eq('matricula_id', matricula.id)
+      .maybeSingle()
+      .then(({ data }) => setHasGrupoCartera(!!data));
+  }, [matricula?.id]);
+
+  const handleSyncCartera = async () => {
+    if (!matricula || !id) return;
+    setSyncingCartera(true);
+    try {
+      const tipoResp: TipoResponsable =
+        (matricula.tipoVinculacion === 'empresa' || matricula.tipoVinculacion === 'arl')
+          ? matricula.tipoVinculacion as TipoResponsable
+          : 'independiente';
+      await asignarMatriculaACartera({
+        matriculaId: id,
+        valorCupo: matricula.valorCupo || 0,
+        tipoVinculacion: tipoResp,
+        empresaNombre: matricula.empresaNombre,
+        empresaNit: matricula.empresaNit,
+        empresaId: matricula.empresaId,
+        empresaContactoNombre: matricula.empresaContactoNombre,
+        empresaContactoTelefono: matricula.empresaContactoTelefono,
+        personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+        personaDocumento: persona?.numeroDocumento,
+        personaTelefono: persona?.telefono,
+        personaEmail: persona?.email,
+      });
+      setHasGrupoCartera(true);
+      toast({ title: "Matrícula vinculada a cartera correctamente" });
+    } catch (e: any) {
+      toast({ title: "Error al sincronizar cartera", description: e.message, variant: "destructive" });
+    } finally {
+      setSyncingCartera(false);
+    }
+  };
 
   useEffect(() => {
     setFormData({});

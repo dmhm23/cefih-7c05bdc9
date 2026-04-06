@@ -45,10 +45,10 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   // Cache blob URLs to avoid re-creating them on every render
-  const blobUrls = useMemo(() => {
+  const previewUrls = useMemo(() => {
     const map: Record<string, string> = {};
     adjuntos.forEach((adj) => {
-      if (adj.dataUrl) map[adj.id] = dataUrlToBlobUrl(adj.dataUrl);
+      if (adj.dataUrl) map[adj.id] = toPreviewUrl(adj.dataUrl);
     });
     return map;
   }, [adjuntos]);

@@ -68,7 +68,21 @@ export const personalService = {
       .select('*')
       .eq('personal_id', id);
 
-    personal.adjuntos = (adjuntos || []).map(mapAdjuntoRow);
+    const mappedAdjuntos = (adjuntos || []).map(mapAdjuntoRow);
+
+    // Generate signed URLs for each adjunto
+    for (const adj of mappedAdjuntos) {
+      if (adj.storagePath) {
+        const { data: signedUrl } = await supabase.storage
+          .from('adjuntos-personal')
+          .createSignedUrl(adj.storagePath, 3600);
+        if (signedUrl?.signedUrl) {
+          adj.dataUrl = signedUrl.signedUrl;
+        }
+      }
+    }
+
+    personal.adjuntos = mappedAdjuntos;
 
     // Load firma from storage if path exists
     if (row.firma_storage_path) {

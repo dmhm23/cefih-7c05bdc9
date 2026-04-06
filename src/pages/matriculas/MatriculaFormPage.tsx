@@ -148,6 +148,7 @@ export default function MatriculaFormPage() {
       epsOtra: "",
       arl: "",
       arlOtra: "",
+      valorCupo: 0,
       consentimientoSalud: false,
       restriccionMedica: false,
       restriccionMedicaDetalle: "",

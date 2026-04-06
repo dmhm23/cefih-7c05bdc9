@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Save, Loader2, Search, UserPlus, Building2, User as UserIcon, Calendar, Info, HeartPulse, ShieldCheck, ChevronDown, ChevronUp, FileText, UserCircle, Globe, Droplet, GraduationCap, Mail, Phone, AlertCircle, X, Plus, DollarSign } from "lucide-react";
 import { asignarMatriculaACartera } from "@/services/carteraService";
+import { TipoResponsable } from "@/types/cartera";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

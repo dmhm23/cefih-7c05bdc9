@@ -1865,6 +1865,9 @@ export type Database = {
         | "alfa"
         | "aurora"
         | "otra"
+        | "sura_arl"
+        | "suramericana"
+        | "otra_arl"
       categoria_formato:
         | "formacion"
         | "evaluacion"
@@ -1926,6 +1929,25 @@ export type Database = {
         | "mineria"
         | "servicios"
         | "otro"
+        | "infraestructura_vial"
+        | "energia_electrica"
+        | "petroleo_gas_mineria"
+        | "industria_manufacturera"
+        | "mantenimiento_industrial"
+        | "servicios_publicos"
+        | "logistica_almacenamiento"
+        | "limpieza_aseo"
+        | "publicidad_exterior"
+        | "agricultura_tecnificada"
+        | "sector_forestal"
+        | "aeronautica"
+        | "naval_portuario"
+        | "eventos_espectaculos"
+        | "educacion_formacion"
+        | "salud_investigacion"
+        | "bienes_raices"
+        | "energias_renovables"
+        | "otro_sector"
       tipo_accion_audit: "crear" | "editar" | "eliminar" | "cambio_estado"
       tipo_actividad_cartera:
         | "llamada"
@@ -2126,6 +2148,9 @@ export const Constants = {
         "alfa",
         "aurora",
         "otra",
+        "sura_arl",
+        "suramericana",
+        "otra_arl",
       ],
       categoria_formato: [
         "formacion",
@@ -2193,6 +2218,25 @@ export const Constants = {
         "mineria",
         "servicios",
         "otro",
+        "infraestructura_vial",
+        "energia_electrica",
+        "petroleo_gas_mineria",
+        "industria_manufacturera",
+        "mantenimiento_industrial",
+        "servicios_publicos",
+        "logistica_almacenamiento",
+        "limpieza_aseo",
+        "publicidad_exterior",
+        "agricultura_tecnificada",
+        "sector_forestal",
+        "aeronautica",
+        "naval_portuario",
+        "eventos_espectaculos",
+        "educacion_formacion",
+        "salud_investigacion",
+        "bienes_raices",
+        "energias_renovables",
+        "otro_sector",
       ],
       tipo_accion_audit: ["crear", "editar", "eliminar", "cambio_estado"],
       tipo_actividad_cartera: [

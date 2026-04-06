@@ -1,41 +1,41 @@
 
 
-# Plan: Vincular matrículas existentes a Cartera y prevenir desincronización futura
+# Plan: Recalcular grupo de cartera al actualizar valor del cupo en matrícula
 
-## Diagnóstico
+## Problema
 
-Las 2 matrículas existentes (IDs `9e0d12d4...` y `95b654ae...`) fueron creadas **antes** de que se integrara la llamada a `asignarMatriculaACartera` en el formulario. Por eso las tablas `responsables_pago`, `grupos_cartera` y `grupo_cartera_matriculas` están vacías.
+Cuando se edita el `valorCupo` de una matrícula desde su página de detalle, el cambio se guarda en la tabla `matriculas` pero el grupo de cartera asociado **no se recalcula**. La función `recalcular_grupo_cartera` (que suma los `valor_cupo` de las matrículas vinculadas) solo se invoca al crear la matrícula o al operar con facturas/pagos, nunca al editar el valor del cupo.
 
-El código actual **sí invoca** `asignarMatriculaACartera` al crear nuevas matrículas, pero hay dos problemas adicionales:
-
-1. **Las matrículas existentes no tienen grupo de cartera** — necesitan ser vinculadas manualmente o mediante un proceso de sincronización.
-2. **El query de búsqueda de responsable existente no filtra por `deleted_at IS NULL`** — podría encontrar responsables eliminados y reutilizarlos.
+El grupo actual tiene `total_valor = 0` mientras las matrículas ya tienen `valor_cupo = 70000` cada una.
 
 ## Solución
 
-### Paso 1: Migración de datos — vincular las 2 matrículas existentes
+### Paso 1: Recalcular al guardar cambios en matrícula (código)
 
-Ejecutar una migración SQL que:
-- Cree el responsable de pago para "Gerenciar SAS" (empresa, NIT `800073419-7`, empresa_id `6aabe8d5...`)
-- Cree un grupo de cartera para ese responsable
-- Vincule las 2 matrículas al grupo
-- Recalcule el grupo
+En `MatriculaDetallePage.tsx`, modificar `handleSave` para que, después de guardar los cambios de la matrícula, si `valorCupo` fue modificado, busque el grupo de cartera vinculado y llame a `recalcular_grupo_cartera`.
 
-### Paso 2: Corregir filtro `deleted_at` en `asignarMatriculaACartera`
+```
+handleSave:
+  1. await updateMatricula(...)
+  2. if formData contiene "valorCupo":
+     a. buscar grupo_cartera_id desde grupo_cartera_matriculas
+     b. llamar supabase.rpc('recalcular_grupo_cartera', { p_grupo_id })
+```
 
-En `src/services/carteraService.ts`, agregar `.is('deleted_at', null)` a las queries que buscan responsables existentes (líneas 109 y 137) para evitar reutilizar responsables soft-deleted.
+### Paso 2: Migración de datos — recalcular grupos existentes
 
-### Paso 3: Agregar botón "Sincronizar Cartera" en la página de detalle de matrícula
+Ejecutar una migración SQL que recalcule todos los grupos de cartera existentes para sincronizar los valores actuales de las matrículas.
 
-En `MatriculaDetallePage.tsx`, detectar si la matrícula no tiene grupo de cartera asignado y mostrar un botón para vincularla. Esto cubre matrículas huérfanas que se crearon antes de la integración.
+```sql
+SELECT public.recalcular_grupo_cartera(id) FROM public.grupos_cartera;
+```
 
 ## Archivos afectados
 
 | Paso | Archivo | Cambio |
 |------|---------|--------|
-| 1 | 1 migración SQL | Crear responsable, grupo y vincular matrículas existentes |
-| 2 | `src/services/carteraService.ts` | Agregar filtro `deleted_at IS NULL` en búsqueda de responsables |
-| 3 | `src/pages/matriculas/MatriculaDetallePage.tsx` | Botón para vincular matrícula huérfana a cartera |
+| 1 | `src/pages/matriculas/MatriculaDetallePage.tsx` | Llamar `recalcular_grupo_cartera` tras editar valorCupo |
+| 2 | 1 migración SQL | Recalcular todos los grupos existentes |
 
-**Total: 1 migración, 2 archivos editados**
+**Total: 1 archivo editado, 1 migración**
 

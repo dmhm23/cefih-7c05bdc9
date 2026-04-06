@@ -155,6 +155,7 @@ export const cursoService = {
   async update(id: string, data: Partial<CursoFormData>, justificacion?: string): Promise<Curso> {
     const dbData: Record<string, any> = {};
     if (data.tipoFormacion !== undefined) dbData.tipo_formacion = TIPO_FE_TO_DB[data.tipoFormacion] || data.tipoFormacion;
+    if (data.nivelFormacionId !== undefined) dbData.nivel_formacion_id = data.nivelFormacionId || null;
     if (data.fechaInicio !== undefined) dbData.fecha_inicio = data.fechaInicio || null;
     if (data.fechaFin !== undefined) dbData.fecha_fin = data.fechaFin || null;
     if (data.capacidadMaxima !== undefined) dbData.capacidad_maxima = data.capacidadMaxima;

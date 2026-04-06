@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
+import { ArrowLeft, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";

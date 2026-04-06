@@ -311,6 +311,19 @@ export default function MatriculaDetallePage() {
   const handleSave = async () => {
     try {
       await updateMatricula.mutateAsync({ id: matricula.id, data: formData });
+
+      // Si se modificó valorCupo, recalcular el grupo de cartera asociado
+      if (formData.valorCupo !== undefined) {
+        const { data: link } = await supabase
+          .from('grupo_cartera_matriculas')
+          .select('grupo_cartera_id')
+          .eq('matricula_id', matricula.id)
+          .maybeSingle();
+        if (link?.grupo_cartera_id) {
+          await supabase.rpc('recalcular_grupo_cartera', { p_grupo_id: link.grupo_cartera_id });
+        }
+      }
+
       toast({ title: "Cambios guardados correctamente" });
       setFormData({});
       setIsDirty(false);

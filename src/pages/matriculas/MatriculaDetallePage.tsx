@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";

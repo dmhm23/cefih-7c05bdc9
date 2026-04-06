@@ -1,73 +1,40 @@
 
-Diagnóstico
+# Plan: Conectar creación de matrícula con el módulo de Cartera
 
-- Confirmé que sí existen matrículas disponibles para asignar:
-  - hay 2 matrículas activas sin curso,
-  - ambas tienen `empresa_nivel_formacion = b62b5715-b6d5-4fe6-ae18-fd1c0def3bed`,
-  - una corresponde a la CC `1110495867`.
-- Confirmé que el curso actual `1a1026aa-e557-4719-93ad-64c8caac3c8f` tiene:
-  - `nivel_formacion_id = NULL`
-  - `tipo_formacion = formacion_inicial`
-- El modal hoy no las muestra porque mezcla 2 vocabularios distintos:
-  - el curso llega al modal como `trabajador_autorizado`
-  - los niveles cargados desde base de datos llegan como `formacion_inicial`
-  - por eso `nivelesValidos` queda vacío y aparece “No hay matrículas disponibles...”.
+## Diagnóstico
 
-Hallazgo clave
+La función `asignarMatriculaACartera()` existe en `carteraService.ts` y contiene toda la lógica para crear responsables de pago, grupos de cartera y vincular matrículas. Sin embargo, **nunca es invocada** desde ningún punto de la aplicación. Por eso:
 
-El problema no está solo en el modal; hay una inconsistencia estructural en Cursos/Niveles:
+- Las 2 matrículas existentes (tipo empresa, con Gerenciar SAS) tienen `valor_cupo = 0` y no generaron grupo de cartera.
+- La tabla `grupos_cartera` está vacía.
+- La tabla `grupo_cartera_matriculas` está vacía.
 
-1. `CursoFormPage` usa el selector de nivel, pero guarda ese UUID dentro de `tipoFormacion`.
-2. `cursoService.create/update` interpreta `tipoFormacion` como enum de tipo, no como UUID, y por eso no guarda `nivel_formacion_id`.
-3. `nivelFormacionService.create` hardcodea `tipo_formacion = 'formacion_inicial'`, así que hoy los niveles quedaron mal clasificados en la base.
-4. `cursoService.agregarEstudiantes()` sigue siendo placeholder y no asigna realmente el `curso_id`.
+Además, el formulario de matrícula no tiene campo para `valorCupo`, así que siempre se guarda con valor 0.
 
-Plan
+## Solución
 
-1. Separar correctamente “nivel” y “tipo” en Cursos
-- Hacer que el formulario de curso trabaje con `nivelFormacionId` como valor real del selector.
-- Guardar siempre `nivel_formacion_id` al crear/editar curso.
-- Derivar `tipo_formacion` a partir del nivel seleccionado, en vez de reutilizar `tipoFormacion` para dos cosas distintas.
+### Paso 1: Agregar campo `valorCupo` al formulario de matrícula
 
-2. Corregir el modal “Agregar Estudiantes al Curso”
-- Cambiar la lógica para que filtre por un UUID de nivel real.
-- Prioridad de resolución:
-  - primero `curso.nivelFormacionId`
-  - si está vacío, usar un fallback legacy por nombre exacto del nivel para cursos viejos
-- Dejar de comparar `trabajador_autorizado` contra `formacion_inicial`, que es lo que hoy rompe el filtro.
+En `MatriculaFormPage.tsx`, agregar un campo numérico "Valor del cupo" en la sección de vinculación laboral / cobros. Incluirlo en el schema de Zod y en el `onSubmit`.
 
-3. Evitar que el problema se siga reproduciendo
-- Quitar el hardcode de `formacion_inicial` en niveles.
-- Permitir guardar el `tipo_formacion` correcto en niveles.
-- Reparar los niveles existentes que quedaron mal clasificados.
+### Paso 2: Llamar `asignarMatriculaACartera` al crear matrícula
 
-4. Completar la asignación real del estudiante al curso
-- Implementar `cursoService.agregarEstudiantes()` para actualizar `matriculas.curso_id`.
-- Mantener sincronización de fechas/documentos según la lógica existente de matrícula.
+En `MatriculaFormPage.tsx`, después de crear la matrícula exitosamente, invocar `asignarMatriculaACartera` con los datos del formulario (matriculaId, valorCupo, tipoVinculacion, empresa, persona). Esto creará automáticamente el responsable de pago y el grupo de cartera.
 
-5. Compatibilidad para cursos ya creados
-- Ajustar vistas del módulo de cursos para mostrar el nivel usando `nivelFormacionId` primero y el valor legacy solo como respaldo.
-- Si un curso viejo no tiene nivel resolvible, mostrar un mensaje claro para obligar a corregirlo antes de matricular.
+### Paso 3: Llamar `asignarMatriculaACartera` al editar `valorCupo`
 
-Detalles técnicos
+En `MatriculaDetallePage.tsx`, cuando se edita el `valorCupo`, verificar si la matrícula ya tiene grupo de cartera asignado; si no, llamar a `asignarMatriculaACartera` para crearla. Si ya existe, recalcular el grupo.
 
-- Archivos principales:
-  - `src/pages/cursos/CursoFormPage.tsx`
-  - `src/services/cursoService.ts`
-  - `src/types/curso.ts`
-  - `src/components/cursos/AgregarEstudiantesModal.tsx`
-  - `src/components/cursos/CourseInfoCard.tsx`
-  - `src/components/cursos/CursoDetailSheet.tsx`
-  - `src/components/cursos/CourseHeader.tsx`
-  - `src/components/cursos/CursosListView.tsx`
-  - `src/pages/niveles/NivelFormPage.tsx`
-  - `src/services/nivelFormacionService.ts`
-  - `src/types/nivelFormacion.ts`
-- Base de datos:
-  - no hace falta cambiar esquema,
-  - sí conviene una migración de datos para corregir `tipo_formacion` en niveles existentes.
-- Resultado esperado:
-  - las 2 matrículas disponibles volverán a aparecer,
-  - incluyendo la de la CC `1110495867`,
-  - los cursos nuevos quedarán bien guardados,
-  - y la asignación al curso sí persistirá de verdad.
+### Paso 4: Agregar un hook `useAsignarCartera` para encapsular la llamada
+
+Crear un mutation hook que encapsule `asignarMatriculaACartera` y se pueda reusar desde el formulario y el detalle.
+
+## Archivos afectados
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Agregar campo valorCupo, llamar asignarMatriculaACartera post-creación |
+| `src/hooks/useCartera.ts` | Agregar hook `useAsignarCartera` |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Trigger asignación a cartera al editar valorCupo si no hay grupo |
+
+**Total: 3 archivos editados, 0 migraciones**

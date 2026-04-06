@@ -6,6 +6,7 @@ function mapNivelRow(row: any): NivelFormacion {
   return {
     id: row.id,
     nombreNivel: row.nombre,
+    tipoFormacion: row.tipo_formacion,
     duracionHoras: row.duracion_horas,
     documentosRequeridos: row.documentos_requeridos || [],
     camposAdicionales: row.campos_adicionales || [],

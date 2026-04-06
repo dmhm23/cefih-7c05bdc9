@@ -16,9 +16,12 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useAgregarEstudiantesCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
 import { Persona } from "@/types/persona";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface AgregarEstudiantesModalProps {
   open: boolean;
@@ -40,20 +43,33 @@ export function AgregarEstudiantesModal({
 
   const { data: matriculas = [] } = useMatriculas();
   const { data: personas = [] } = usePersonas();
+  const { data: niveles = [] } = useNivelesFormacion();
   const agregarEstudiantes = useAgregarEstudiantesCurso();
   const { toast } = useToast();
 
   const getPersona = (personaId: string): Persona | undefined =>
     personas.find((p) => p.id === personaId);
 
+  // Resolver IDs válidos de nivel de formación
+  const nivelesValidos = useMemo(() => {
+    if (UUID_REGEX.test(nivelFormacion)) {
+      return [nivelFormacion];
+    }
+    // nivelFormacion es un tipo (ej. "formacion_inicial"), buscar todos los niveles de ese tipo
+    return niveles
+      .filter((n) => n.tipoFormacion === nivelFormacion)
+      .map((n) => n.id);
+  }, [nivelFormacion, niveles]);
+
   // Matrículas disponibles: sin curso asignado Y mismo nivel de formación
   const disponibles = useMemo(() => {
     return matriculas.filter(
       (m) =>
         (!m.cursoId || m.cursoId === "") &&
-        m.empresaNivelFormacion === nivelFormacion
+        m.empresaNivelFormacion &&
+        nivelesValidos.includes(m.empresaNivelFormacion)
     );
-  }, [matriculas, nivelFormacion]);
+  }, [matriculas, nivelesValidos]);
 
   // Filtrado por cédula o nombre
   const filtradas = useMemo(() => {

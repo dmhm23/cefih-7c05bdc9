@@ -110,6 +110,7 @@ export async function asignarMatriculaACartera(params: {
       .select('*')
       .eq('nit', empresaNit)
       .eq('tipo', tipoVinculacion)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (existing) {

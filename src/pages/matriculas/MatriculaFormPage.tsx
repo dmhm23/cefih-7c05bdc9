@@ -259,6 +259,7 @@ export default function MatriculaFormPage() {
           epsOtra: data.eps === 'otra_eps' ? data.epsOtra || undefined : undefined,
           arl: data.arl || undefined,
           arlOtra: data.arl === 'otra_arl' ? data.arlOtra || undefined : undefined,
+          valorCupo: data.valorCupo || 0,
           consentimientoSalud: data.consentimientoSalud,
           restriccionMedica: data.restriccionMedica,
           restriccionMedicaDetalle: data.restriccionMedicaDetalle || undefined,

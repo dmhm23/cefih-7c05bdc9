@@ -33,6 +33,7 @@ function mapAdjuntoRow(row: any): AdjuntoPersonal {
     tipo: row.tipo_mime || '',
     tamano: row.tamano || 0,
     fechaCarga: row.fecha_carga,
+    storagePath: row.storage_path || undefined,
   };
 }
 

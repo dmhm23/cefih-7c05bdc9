@@ -57,7 +57,7 @@ export function AgregarEstudiantesModal({
     }
     // nivelFormacion es un tipo (ej. "formacion_inicial"), buscar todos los niveles de ese tipo
     return niveles
-      .filter((n) => n.tipo_formacion === nivelFormacion)
+      .filter((n) => n.tipoFormacion === nivelFormacion)
       .map((n) => n.id);
   }, [nivelFormacion, niveles]);
 

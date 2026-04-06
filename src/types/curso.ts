@@ -26,6 +26,7 @@ export interface Curso {
   entrenadorNombre: string;
   supervisorId?: string;
   supervisorNombre?: string;
+  nivelFormacionId?: string;
   capacidadMaxima: number;
   estado: EstadoCurso;
   matriculasIds: string[];

@@ -483,7 +483,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         onOpenChange={setModalAgregarOpen}
         cursoId={curso.id}
         matriculasActuales={curso.matriculasIds}
-        nivelFormacion={curso.tipoFormacion}
+        nivelFormacion={curso.nivelFormacionId || curso.tipoFormacion}
       />
 
       <ConfirmDialog

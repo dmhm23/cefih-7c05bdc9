@@ -110,3 +110,15 @@ export const useDeletePago = () => {
     },
   });
 };
+
+export const useAsignarCartera = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: Parameters<typeof asignarMatriculaACartera>[0]) =>
+      asignarMatriculaACartera(params),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cartera'] });
+      qc.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+};

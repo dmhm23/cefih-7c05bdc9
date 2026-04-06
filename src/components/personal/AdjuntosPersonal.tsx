@@ -8,8 +8,12 @@ import { format } from "date-fns";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-/** Convert a base64 data URL to a blob URL that Chrome allows in iframes */
-const dataUrlToBlobUrl = (dataUrl: string): string => {
+/** Convert a base64 data URL to a blob URL, or return HTTP URLs as-is */
+const toPreviewUrl = (dataUrl: string): string => {
+  // If it's already an HTTP(S) URL (signed URL), use directly
+  if (dataUrl.startsWith('http://') || dataUrl.startsWith('https://')) {
+    return dataUrl;
+  }
   try {
     const [header, base64] = dataUrl.split(",");
     const mime = header.match(/:(.*?);/)?.[1] ?? "application/octet-stream";

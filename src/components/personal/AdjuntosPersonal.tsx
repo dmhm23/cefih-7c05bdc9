@@ -8,8 +8,12 @@ import { format } from "date-fns";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
-/** Convert a base64 data URL to a blob URL that Chrome allows in iframes */
-const dataUrlToBlobUrl = (dataUrl: string): string => {
+/** Convert a base64 data URL to a blob URL, or return HTTP URLs as-is */
+const toPreviewUrl = (dataUrl: string): string => {
+  // If it's already an HTTP(S) URL (signed URL), use directly
+  if (dataUrl.startsWith('http://') || dataUrl.startsWith('https://')) {
+    return dataUrl;
+  }
   try {
     const [header, base64] = dataUrl.split(",");
     const mime = header.match(/:(.*?);/)?.[1] ?? "application/octet-stream";
@@ -41,10 +45,10 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   // Cache blob URLs to avoid re-creating them on every render
-  const blobUrls = useMemo(() => {
+  const previewUrls = useMemo(() => {
     const map: Record<string, string> = {};
     adjuntos.forEach((adj) => {
-      if (adj.dataUrl) map[adj.id] = dataUrlToBlobUrl(adj.dataUrl);
+      if (adj.dataUrl) map[adj.id] = toPreviewUrl(adj.dataUrl);
     });
     return map;
   }, [adjuntos]);
@@ -134,7 +138,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
               </div>
 
               {/* Inline preview */}
-              {previewId === adj.id && blobUrls[adj.id] && (
+              {previewId === adj.id && previewUrls[adj.id] && (
                 <div className="border rounded-lg overflow-hidden mt-1">
                   <div className="flex items-center justify-between bg-muted px-3 py-1.5">
                     <div className="flex items-center gap-2 text-xs font-medium truncate">
@@ -146,7 +150,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-xs"
-                        onClick={() => window.open(blobUrls[adj.id], "_blank")}
+                        onClick={() => window.open(previewUrls[adj.id], "_blank")}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" /> Abrir
                       </Button>
@@ -156,17 +160,17 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     </div>
                   </div>
                   {adj.tipo === "application/pdf" ? (
-                    <object data={blobUrls[adj.id]} type="application/pdf" className="w-full h-52">
+                    <object data={previewUrls[adj.id]} type="application/pdf" className="w-full h-52">
                       <div className="p-4 text-center text-sm text-muted-foreground space-y-2">
                         <FileText className="h-6 w-6 mx-auto" />
                         <p>No se puede mostrar el PDF en este contexto.</p>
-                        <Button variant="outline" size="sm" onClick={() => window.open(blobUrls[adj.id], "_blank")}>
+                        <Button variant="outline" size="sm" onClick={() => window.open(previewUrls[adj.id], "_blank")}>
                           <ExternalLink className="h-3 w-3 mr-1" /> Abrir en nueva pestaña
                         </Button>
                       </div>
                     </object>
                   ) : adj.tipo.startsWith("image/") ? (
-                    <img src={blobUrls[adj.id]} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
+                    <img src={previewUrls[adj.id]} alt="Vista previa" className="w-full max-h-52 object-contain p-2" />
                   ) : (
                     <div className="p-3 text-center text-sm text-muted-foreground">
                       <FileText className="h-6 w-6 mx-auto mb-1" />

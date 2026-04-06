@@ -19,7 +19,8 @@ export interface AdjuntoPersonal {
   tipo: string; // MIME type
   tamano: number;
   fechaCarga: string;
-  dataUrl?: string; // base64 data URL (mock storage)
+  dataUrl?: string; // signed URL or base64 data URL
+  storagePath?: string;
 }
 
 export interface Personal {

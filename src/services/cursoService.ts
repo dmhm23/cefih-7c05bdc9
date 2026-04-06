@@ -37,6 +37,7 @@ function mapCursoRow(row: any): Curso {
     nombre: row.nombre || '',
     descripcion: '',
     tipoFormacion: TIPO_DB_TO_FE[row.tipo_formacion] || row.tipo_formacion,
+    nivelFormacionId: row.nivel_formacion_id || undefined,
     numeroCurso: row.nombre || '',
     fechaInicio: row.fecha_inicio || '',
     fechaFin: row.fecha_fin || '',

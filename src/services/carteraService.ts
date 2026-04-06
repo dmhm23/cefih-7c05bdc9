@@ -139,6 +139,7 @@ export async function asignarMatriculaACartera(params: {
       .select('*')
       .eq('tipo', 'independiente')
       .eq('nit', nit)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (existing) {

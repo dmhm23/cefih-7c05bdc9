@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, CreditCard, ExternalLink } from "lucide-react";
+import { ArrowLeft, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
@@ -55,6 +55,9 @@ import {
 } from "@/data/formOptions";
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { asignarMatriculaACartera } from "@/services/carteraService";
+import { supabase } from "@/integrations/supabase/client";
+import type { TipoResponsable } from "@/types/cartera";
 
 interface ChecklistItem {
   id: string;
@@ -94,6 +97,49 @@ export default function MatriculaDetallePage() {
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+  const [hasGrupoCartera, setHasGrupoCartera] = useState<boolean | null>(null);
+  const [syncingCartera, setSyncingCartera] = useState(false);
+
+  useEffect(() => {
+    if (!matricula?.id) return;
+    supabase
+      .from('grupo_cartera_matriculas')
+      .select('grupo_cartera_id')
+      .eq('matricula_id', matricula.id)
+      .maybeSingle()
+      .then(({ data }) => setHasGrupoCartera(!!data));
+  }, [matricula?.id]);
+
+  const handleSyncCartera = async () => {
+    if (!matricula || !id) return;
+    setSyncingCartera(true);
+    try {
+      const tipoResp: TipoResponsable =
+        (matricula.tipoVinculacion === 'empresa' || matricula.tipoVinculacion === 'arl')
+          ? matricula.tipoVinculacion as TipoResponsable
+          : 'independiente';
+      await asignarMatriculaACartera({
+        matriculaId: id,
+        valorCupo: matricula.valorCupo || 0,
+        tipoVinculacion: tipoResp,
+        empresaNombre: matricula.empresaNombre,
+        empresaNit: matricula.empresaNit,
+        empresaId: matricula.empresaId,
+        empresaContactoNombre: matricula.empresaContactoNombre,
+        empresaContactoTelefono: matricula.empresaContactoTelefono,
+        personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+        personaDocumento: persona?.numeroDocumento,
+        personaTelefono: persona?.telefono,
+        personaEmail: persona?.email,
+      });
+      setHasGrupoCartera(true);
+      toast({ title: "Matrícula vinculada a cartera correctamente" });
+    } catch (e: any) {
+      toast({ title: "Error al sincronizar cartera", description: e.message, variant: "destructive" });
+    } finally {
+      setSyncingCartera(false);
+    }
+  };
 
   useEffect(() => {
     setFormData({});
@@ -773,6 +819,12 @@ export default function MatriculaDetallePage() {
               <Button size="sm" className="mt-2" onClick={() => setPagoDialogOpen(true)}>
                 <CreditCard className="h-4 w-4 mr-1" />
                 Registrar Pago
+              </Button>
+            )}
+            {hasGrupoCartera === false && (
+              <Button size="sm" variant="outline" className="mt-2 ml-2" onClick={handleSyncCartera} disabled={syncingCartera}>
+                <RefreshCw className={cn("h-4 w-4 mr-1", syncingCartera && "animate-spin")} />
+                Sincronizar Cartera
               </Button>
             )}
             <div className="mt-4 pt-4 border-t">

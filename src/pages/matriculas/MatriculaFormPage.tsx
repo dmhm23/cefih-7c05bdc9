@@ -442,15 +442,15 @@ export default function MatriculaFormPage() {
         pagado: false,
       });
 
-      // Asignar a cartera si hay valor de cupo y tipo de vinculación
-      if (data.valorCupo > 0 && data.tipoVinculacion && matricula?.id) {
+      // Asignar a cartera siempre al crear matrícula
+      if (matricula?.id) {
         try {
           const tipoResp = (data.tipoVinculacion === 'empresa' || data.tipoVinculacion === 'arl')
             ? data.tipoVinculacion as TipoResponsable
             : 'independiente' as TipoResponsable;
           await asignarMatriculaACartera({
             matriculaId: matricula.id,
-            valorCupo: data.valorCupo,
+            valorCupo: data.valorCupo || 0,
             tipoVinculacion: tipoResp,
             empresaNombre: data.empresaNombre || undefined,
             empresaNit: data.empresaNit || undefined,

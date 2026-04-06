@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { carteraService } from '@/services/carteraService';
-import { MetodoPago, TipoActividadCartera } from '@/types/cartera';
+import { carteraService, asignarMatriculaACartera } from '@/services/carteraService';
+import { MetodoPago, TipoActividadCartera, TipoResponsable } from '@/types/cartera';
 
 export const useGruposCartera = () =>
   useQuery({ queryKey: ['cartera', 'grupos'], queryFn: () => carteraService.getGrupos() });

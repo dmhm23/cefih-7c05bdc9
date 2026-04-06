@@ -16,9 +16,12 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useAgregarEstudiantesCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
 import { Persona } from "@/types/persona";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface AgregarEstudiantesModalProps {
   open: boolean;

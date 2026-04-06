@@ -1,43 +1,31 @@
 
-# Plan: Corregir filtrado de estudiantes al asignar a curso
 
-## Problema raíz
+# Plan: Corregir filtrado de estudiantes cuando el curso no tiene nivel_formacion_id
 
-La comparación en `AgregarEstudiantesModal` falla porque compara tipos incompatibles:
+## Problema
 
-- **Curso** pasa `tipoFormacion` = `"trabajador_autorizado"` (string enum del frontend)
-- **Matrícula** almacena `empresaNivelFormacion` = `"b62b5715-b6d5-4fe6-ae18-fd1c0def3bed"` (UUID del nivel de formación)
+La matrícula tiene `empresa_nivel_formacion = 'b62b5715-...'` (UUID del nivel "Trabajador Autorizado", tipo `formacion_inicial`). El curso `FI-0001` tiene `nivel_formacion_id = NULL` y `tipo_formacion = 'formacion_inicial'`.
 
-La condición `m.empresaNivelFormacion === nivelFormacion` nunca es verdadera porque un UUID nunca iguala a un string como `"trabajador_autorizado"`.
+El modal compara `m.empresaNivelFormacion === nivelFormacion`. Como el curso no tiene `nivel_formacion_id`, el fallback es `"formacion_inicial"` (string), que nunca iguala al UUID. Resultado: 0 estudiantes disponibles.
 
 ## Solución
 
-Exponer `nivel_formacion_id` (UUID) desde el curso y usarlo para filtrar en el modal.
+Cambiar la lógica de filtrado en `AgregarEstudiantesModal` para que cuando reciba un UUID, compare directo. Cuando reciba un string de tipo (fallback), busque todos los niveles de ese tipo y compare contra sus UUIDs.
 
-### Paso 1: Agregar `nivelFormacionId` al tipo `Curso` y al mapping
+### Paso 1: Modificar `AgregarEstudiantesModal.tsx`
 
-En `src/types/curso.ts`, agregar campo opcional `nivelFormacionId?: string`.
-En `src/services/cursoService.ts`, mapear `row.nivel_formacion_id` al nuevo campo en `mapCursoRow`.
+Importar `useNivelesFormacion` y resolver el filtrado correctamente:
 
-### Paso 2: Pasar el UUID al modal
+- Si `nivelFormacion` parece un UUID → comparar directo con `m.empresaNivelFormacion`
+- Si `nivelFormacion` es un string de tipo (ej. `"formacion_inicial"`) → buscar todos los `niveles_formacion` de ese tipo y aceptar matrículas cuyo `empresaNivelFormacion` esté en esa lista de UUIDs
 
-En `src/components/cursos/EnrollmentsTable.tsx`, cambiar:
-```
-nivelFormacion={curso.tipoFormacion}
-```
-a:
-```
-nivelFormacion={curso.nivelFormacionId || curso.tipoFormacion}
-```
-
-Esto asegura que el modal reciba el UUID del nivel de formación, que es el mismo formato que usa `empresaNivelFormacion` en las matrículas.
+Esto cubre ambos escenarios: cursos con y sin `nivel_formacion_id` asignado.
 
 ## Archivos afectados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/types/curso.ts` | Agregar `nivelFormacionId?: string` |
-| `src/services/cursoService.ts` | Mapear `nivel_formacion_id` en `mapCursoRow` |
-| `src/components/cursos/EnrollmentsTable.tsx` | Pasar `curso.nivelFormacionId` al modal |
+| `src/components/cursos/AgregarEstudiantesModal.tsx` | Mejorar lógica de filtrado para resolver tipo → UUIDs |
 
-**Total: 3 archivos editados, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
+

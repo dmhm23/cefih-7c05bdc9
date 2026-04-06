@@ -55,6 +55,9 @@ import {
 } from "@/data/formOptions";
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { asignarMatriculaACartera } from "@/services/carteraService";
+import { supabase } from "@/integrations/supabase/client";
+import type { TipoResponsable } from "@/types/cartera";
 
 interface ChecklistItem {
   id: string;

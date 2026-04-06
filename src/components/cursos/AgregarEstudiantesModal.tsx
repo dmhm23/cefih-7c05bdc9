@@ -50,14 +50,24 @@ export function AgregarEstudiantesModal({
   const getPersona = (personaId: string): Persona | undefined =>
     personas.find((p) => p.id === personaId);
 
+  // Map frontend labels to DB enum values for fallback matching
+  const TIPO_FE_TO_DB: Record<string, string> = {
+    trabajador_autorizado: 'formacion_inicial',
+    reentrenamiento: 'reentrenamiento',
+    jefe_area: 'jefe_area',
+    coordinador_ta: 'coordinador_alturas',
+  };
+
   // Resolver IDs válidos de nivel de formación
   const nivelesValidos = useMemo(() => {
     if (UUID_REGEX.test(nivelFormacion)) {
       return [nivelFormacion];
     }
-    // nivelFormacion es un tipo (ej. "formacion_inicial"), buscar todos los niveles de ese tipo
+    // nivelFormacion es un tipo (ej. "trabajador_autorizado" o "formacion_inicial")
+    // Try both the raw value and the mapped DB value
+    const dbValue = TIPO_FE_TO_DB[nivelFormacion] || nivelFormacion;
     return niveles
-      .filter((n) => n.tipoFormacion === nivelFormacion)
+      .filter((n) => n.tipoFormacion === nivelFormacion || n.tipoFormacion === dbValue)
       .map((n) => n.id);
   }, [nivelFormacion, niveles]);
 

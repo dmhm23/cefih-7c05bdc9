@@ -65,8 +65,8 @@ export const nivelFormacionService = {
 
   async create(data: NivelFormacionFormData): Promise<NivelFormacion> {
     const dbData = mapNivelToDb(data);
-    // tipo_formacion is required by DB — default to formacion_inicial
-    dbData.tipo_formacion = 'formacion_inicial';
+    // tipo_formacion is required by DB — use the value from data, default to formacion_inicial
+    dbData.tipo_formacion = data.tipoFormacion || 'formacion_inicial';
 
     const { data: row, error } = await supabase
       .from('niveles_formacion')

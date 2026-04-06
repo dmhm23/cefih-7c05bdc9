@@ -41,6 +41,7 @@ export interface Curso {
 }
 
 export type CursoFormData = Omit<Curso, 'id' | 'createdAt' | 'updatedAt' | 'matriculasIds' | 'minTrabajoFechasAdicionales'> & {
+  nivelFormacionId?: string;
   minTrabajoFechasAdicionales?: FechaAdicionalMinTrabajo[];
   camposAdicionalesValores?: Record<string, any>;
 };

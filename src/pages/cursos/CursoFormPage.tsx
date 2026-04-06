@@ -216,11 +216,13 @@ export default function CursoFormPage() {
       }
 
       const nivel = niveles.find((n) => n.id === data.tipoFormacion);
+      const tipoFormacionDb = nivel?.tipoFormacion || 'formacion_inicial';
       const label = nivel?.nombreNivel || data.tipoFormacion;
       await createCurso.mutateAsync({
         nombre: `${label} - #${data.numeroCurso}`,
         descripcion: "",
-        tipoFormacion: data.tipoFormacion as any,
+        tipoFormacion: tipoFormacionDb as any,
+        nivelFormacionId: data.tipoFormacion,
         numeroCurso: data.numeroCurso,
         fechaInicio: data.fechaInicio,
         fechaFin: data.fechaFin ?? "",

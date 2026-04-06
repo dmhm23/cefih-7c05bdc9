@@ -59,6 +59,7 @@ export const DEFAULT_CONFIG_CODIGO: ConfiguracionCodigoEstudiante = {
 export interface NivelFormacion {
   id: string;
   nombreNivel: string;
+  tipoFormacion?: string;
   duracionHoras?: number;
   documentosRequeridos: string[];
   camposAdicionales?: CampoAdicional[];

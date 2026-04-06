@@ -821,6 +821,12 @@ export default function MatriculaDetallePage() {
                 Registrar Pago
               </Button>
             )}
+            {hasGrupoCartera === false && (
+              <Button size="sm" variant="outline" className="mt-2 ml-2" onClick={handleSyncCartera} disabled={syncingCartera}>
+                <RefreshCw className={cn("h-4 w-4 mr-1", syncingCartera && "animate-spin")} />
+                Sincronizar Cartera
+              </Button>
+            )}
             <div className="mt-4 pt-4 border-t">
               <ComentariosSection
                 entidadId={matricula.id}

@@ -105,6 +105,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                 <div className="flex items-center gap-0.5 shrink-0">
                   {adj.dataUrl && (
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
@@ -115,6 +116,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     </Button>
                   )}
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
@@ -125,6 +127,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     <Download className="h-3.5 w-3.5" />
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-destructive"
@@ -147,6 +150,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-xs"
@@ -154,7 +158,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                       >
                         <ExternalLink className="h-3 w-3 mr-1" /> Abrir
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setPreviewId(null)}>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setPreviewId(null)}>
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>

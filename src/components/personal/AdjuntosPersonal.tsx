@@ -168,7 +168,7 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
                       <div className="p-4 text-center text-sm text-muted-foreground space-y-2">
                         <FileText className="h-6 w-6 mx-auto" />
                         <p>No se puede mostrar el PDF en este contexto.</p>
-                        <Button variant="outline" size="sm" onClick={() => window.open(previewUrls[adj.id], "_blank")}>
+                        <Button type="button" variant="outline" size="sm" onClick={() => window.open(previewUrls[adj.id], "_blank")}>
                           <ExternalLink className="h-3 w-3 mr-1" /> Abrir en nueva pestaña
                         </Button>
                       </div>

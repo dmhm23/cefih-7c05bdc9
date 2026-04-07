@@ -1,41 +1,49 @@
 
 
-# Plan: Recalcular grupo de cartera al actualizar valor del cupo en matrícula
+# Plan: Corregir visualización de adjuntos y firma en Gestión de Personal
 
-## Problema
+## Problema raíz
 
-Cuando se edita el `valorCupo` de una matrícula desde su página de detalle, el cambio se guarda en la tabla `matriculas` pero el grupo de cartera asociado **no se recalcula**. La función `recalcular_grupo_cartera` (que suma los `valor_cupo` de las matrículas vinculadas) solo se invoca al crear la matrícula o al operar con facturas/pagos, nunca al editar el valor del cupo.
+Hay **dos contextos** donde se muestra el detalle de personal:
 
-El grupo actual tiene `total_valor = 0` mientras las matrículas ya tienen `valor_cupo = 70000` cada una.
+### 1. DetailSheet (panel lateral desde el listado)
+- La página `GestionPersonalPage` pasa `selectedPersonal` al `PersonalDetailSheet`, pero este dato viene de `usePersonalList()` que llama a `getAll()`.
+- `getAll()` retorna `adjuntos: []` y `firmaBase64: undefined` porque **no carga adjuntos ni genera signed URLs**.
+- Cuando el usuario sube un archivo o firma, la mutación invalida el query `['personal']`, pero `getAll()` vuelve a retornar datos sin adjuntos ni firma.
+- **Resultado**: el toast dice "cargado" pero los adjuntos/firma nunca aparecen.
+
+### 2. DetallePage (vista completa `/gestion-personal/:id`)
+- Usa `usePersonal(id)` que llama a `getById()` — este **sí** carga adjuntos con signed URLs y firma.
+- **Sin embargo**, después de subir un adjunto, `addAdjunto` invalida `['personal', id]`, lo que re-ejecuta `getById()`, y los adjuntos aparecen correctamente.
+- Este flujo **funciona bien**.
+
+El problema principal está en el **DetailSheet del panel lateral**.
 
 ## Solución
 
-### Paso 1: Recalcular al guardar cambios en matrícula (código)
+### Cambio en `PersonalDetailSheet.tsx`
 
-En `MatriculaDetallePage.tsx`, modificar `handleSave` para que, después de guardar los cambios de la matrícula, si `valorCupo` fue modificado, busque el grupo de cartera vinculado y llame a `recalcular_grupo_cartera`.
+En lugar de usar el `personal` que viene de la lista (sin adjuntos), el componente debe hacer su propia consulta con `usePersonal(personal.id)` para obtener los datos completos (adjuntos + firma con signed URLs).
 
 ```
-handleSave:
-  1. await updateMatricula(...)
-  2. if formData contiene "valorCupo":
-     a. buscar grupo_cartera_id desde grupo_cartera_matriculas
-     b. llamar supabase.rpc('recalcular_grupo_cartera', { p_grupo_id })
+// Antes: usa personal de la lista (sin adjuntos)
+adjuntos={personal.adjuntos || []}
+firmaExistente={personal.firmaBase64}
+
+// Después: usa fullPersonal de usePersonal(id) 
+const { data: fullPersonal } = usePersonal(personal?.id || "");
+const displayPersonal = fullPersonal || personal;
+adjuntos={displayPersonal.adjuntos || []}
+firmaExistente={displayPersonal.firmaBase64}
 ```
 
-### Paso 2: Migración de datos — recalcular grupos existentes
-
-Ejecutar una migración SQL que recalcule todos los grupos de cartera existentes para sincronizar los valores actuales de las matrículas.
-
-```sql
-SELECT public.recalcular_grupo_cartera(id) FROM public.grupos_cartera;
-```
+Esto asegura que al abrir el panel lateral, se carguen los adjuntos reales con signed URLs, y que al subir/eliminar archivos, la invalidación del query `['personal', id]` refresque los datos completos.
 
 ## Archivos afectados
 
-| Paso | Archivo | Cambio |
-|------|---------|--------|
-| 1 | `src/pages/matriculas/MatriculaDetallePage.tsx` | Llamar `recalcular_grupo_cartera` tras editar valorCupo |
-| 2 | 1 migración SQL | Recalcular todos los grupos existentes |
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/personal/PersonalDetailSheet.tsx` | Agregar `usePersonal(id)` para cargar datos completos con adjuntos y firma |
 
-**Total: 1 archivo editado, 1 migración**
+**Total: 1 archivo editado, 0 migraciones**
 

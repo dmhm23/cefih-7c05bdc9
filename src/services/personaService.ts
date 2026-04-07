@@ -136,7 +136,7 @@ export const personaService = {
     const dbData = mapPersonaToDb(data);
     const { data: row, error } = await supabase
       .from('personas')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select()
       .single();

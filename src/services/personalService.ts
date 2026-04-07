@@ -141,7 +141,7 @@ export const personalService = {
 
     const { data: row, error } = await supabase
       .from('personal')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select('*, cargos(nombre)')
       .single();

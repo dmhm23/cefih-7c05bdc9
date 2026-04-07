@@ -335,7 +335,7 @@ export const carteraService = {
 
     const { data: updated, error } = await supabase
       .from('facturas')
-      .update(updateObj)
+      .update(updateObj as any)
       .eq('id', id)
       .select('*, factura_matriculas(matricula_id)')
       .single();
@@ -437,7 +437,7 @@ export const carteraService = {
 
     const { data: updated, error } = await supabase
       .from('pagos')
-      .update(updateObj)
+      .update(updateObj as any)
       .eq('id', id)
       .select()
       .single();

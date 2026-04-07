@@ -166,7 +166,7 @@ export const cursoService = {
 
     const { data: row, error } = await supabase
       .from('cursos')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
       .single();

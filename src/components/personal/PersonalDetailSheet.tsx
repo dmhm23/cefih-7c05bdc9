@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, UserCog } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
@@ -10,13 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   useUpdatePersonal,
   useCargos,
+  usePersonal,
   useUpdateFirma,
   useDeleteFirma,
   useAddAdjunto,
   useDeleteAdjunto,
 } from "@/hooks/usePersonal";
 import { Personal, PersonalFormData } from "@/types/personal";
-import { useEffect } from "react";
 
 interface PersonalDetailSheetProps {
   open: boolean;
@@ -37,6 +37,8 @@ export function PersonalDetailSheet({
 }: PersonalDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: fullPersonal } = usePersonal(personal?.id || "");
+  const displayPersonal = fullPersonal || personal;
   const updatePersonal = useUpdatePersonal();
   const { data: cargos = [] } = useCargos();
   const updateFirma = useUpdateFirma();
@@ -51,7 +53,7 @@ export function PersonalDetailSheet({
     setIsDirty(false);
   }, [personal?.id]);
 
-  if (!personal) return null;
+  if (!personal || !displayPersonal) return null;
 
   const handleFieldChange = (field: keyof PersonalFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -85,7 +87,7 @@ export function PersonalDetailSheet({
   };
 
   const getValue = <K extends keyof Personal>(field: K): Personal[K] => {
-    return (formData[field as keyof PersonalFormData] as Personal[K]) ?? personal[field];
+    return (formData[field as keyof PersonalFormData] as Personal[K]) ?? displayPersonal[field];
   };
 
   const fullName = `${getValue("nombres")} ${getValue("apellidos")}`;
@@ -180,7 +182,7 @@ export function PersonalDetailSheet({
         {/* Documentos Adjuntos */}
         <DetailSection title="Documentos Adjuntos">
           <AdjuntosPersonal
-            adjuntos={personal.adjuntos || []}
+            adjuntos={displayPersonal.adjuntos || []}
             onUpload={handleUploadAdjunto}
             onDelete={handleDeleteAdjunto}
             isUploading={addAdjunto.isPending}
@@ -191,7 +193,7 @@ export function PersonalDetailSheet({
         {/* Firma Digital */}
         <DetailSection title="Firma Digital">
           <FirmaPersonal
-            firmaExistente={personal.firmaBase64}
+            firmaExistente={displayPersonal.firmaBase64}
             onGuardarFirma={handleGuardarFirma}
             onEliminarFirma={handleEliminarFirma}
             isPending={updateFirma.isPending || deleteFirma.isPending}

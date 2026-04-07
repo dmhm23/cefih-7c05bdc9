@@ -133,7 +133,7 @@ export const plantillaService = {
 
     const { data: updated, error } = await supabase
       .from('plantillas_certificado')
-      .update(updateObj)
+      .update(updateObj as any)
       .eq('id', id)
       .select()
       .single();

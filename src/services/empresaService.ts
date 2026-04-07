@@ -94,7 +94,7 @@ export const empresaService = {
     const dbData = mapEmpresaToDb(data);
     const { data: row, error } = await supabase
       .from('empresas')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select()
       .single();
@@ -170,7 +170,7 @@ export const empresaService = {
 
     const { data: row, error } = await supabase
       .from('tarifas_empresa')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select()
       .single();

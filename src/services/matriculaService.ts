@@ -158,7 +158,7 @@ export const matriculaService = {
 
     const { data: updated, error } = await supabase
       .from('matriculas')
-      .update(row)
+      .update(row as any)
       .eq('id', id)
       .select()
       .single();

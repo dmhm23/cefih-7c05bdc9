@@ -113,7 +113,7 @@ export const formatoFormacionService = {
 
     const { data: updated, error } = await supabase
       .from('formatos_formacion')
-      .update(row)
+      .update(row as any)
       .eq('id', id)
       .select()
       .single();

@@ -82,7 +82,7 @@ export const nivelFormacionService = {
     const dbData = mapNivelToDb(data);
     const { data: row, error } = await supabase
       .from('niveles_formacion')
-      .update(dbData)
+      .update(dbData as any)
       .eq('id', id)
       .select()
       .single();

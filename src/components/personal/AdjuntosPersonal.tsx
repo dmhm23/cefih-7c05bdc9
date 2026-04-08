@@ -35,7 +35,7 @@ const formatFileSize = (bytes: number) => {
 
 interface AdjuntosPersonalProps {
   adjuntos: AdjuntoPersonal[];
-  onUpload: (file: File) => void;
+  onUpload: (files: File[]) => void | Promise<void>;
   onDelete: (adjuntoId: string) => void;
   isUploading?: boolean;
   isDeleting?: boolean;
@@ -53,9 +53,9 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
     return map;
   }, [adjuntos]);
 
-  const handleFile = (file: File) => {
-    if (file.size > MAX_FILE_SIZE) return;
-    onUpload(file);
+  const handleFiles = (files: File[]) => {
+    const valid = files.filter(f => f.size <= MAX_FILE_SIZE);
+    if (valid.length > 0) onUpload(valid);
   };
 
   const handleDownload = (adj: AdjuntoPersonal) => {
@@ -73,10 +73,11 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
       {/* Upload zone */}
       <FileDropZone
         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-        onFile={handleFile}
+        onFiles={handleFiles}
+        multiple
         disabled={isUploading}
         label={isUploading ? "Subiendo..." : "Arrastra archivos aquí o haz clic para seleccionar"}
-        hint="PDF, JPG, PNG, DOC, DOCX · Máx. 10 MB"
+        hint="PDF, JPG, PNG, DOC, DOCX · Máx. 10 MB · Múltiples archivos"
       />
 
       {/* File list */}

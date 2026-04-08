@@ -139,28 +139,28 @@ export default function PersonalFormPage() {
   };
 
   // --- Adjuntos handlers ---
-  const handleUploadAdjunto = (file: File) => {
+  const handleUploadAdjuntos = (files: File[]) => {
     if (isEditing && id) {
-      addAdjunto.mutate(
-        { personalId: id, file },
-        { onSuccess: () => toast({ title: "Archivo adjuntado" }) }
-      );
+      Promise.all(files.map(file =>
+        addAdjunto.mutateAsync({ personalId: id, file })
+      )).then(() => toast({ title: files.length === 1 ? "Archivo adjuntado" : `${files.length} archivos adjuntados` }));
     } else {
-      // Store locally for creation mode
-      const reader = new FileReader();
-      reader.onload = () => {
-        const adj: AdjuntoPersonal = {
-          id: uuidv4(),
-          nombre: file.name,
-          tipo: file.type,
-          tamano: file.size,
-          fechaCarga: new Date().toISOString(),
-          dataUrl: reader.result as string,
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const adj: AdjuntoPersonal = {
+            id: uuidv4(),
+            nombre: file.name,
+            tipo: file.type,
+            tamano: file.size,
+            fechaCarga: new Date().toISOString(),
+            dataUrl: reader.result as string,
+          };
+          setTempAdjuntos((prev) => [...prev, adj]);
+          setTempFiles((prev) => [...prev, file]);
         };
-        setTempAdjuntos((prev) => [...prev, adj]);
-        setTempFiles((prev) => [...prev, file]);
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
     }
   };
 

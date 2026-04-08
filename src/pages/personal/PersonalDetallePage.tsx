@@ -178,7 +178,7 @@ export default function PersonalDetallePage() {
             </h3>
             <AdjuntosPersonal
               adjuntos={personal.adjuntos || []}
-              onUpload={handleUploadAdjunto}
+              onUpload={handleUploadAdjuntos}
               onDelete={handleDeleteAdjunto}
               isUploading={addAdjunto.isPending}
               isDeleting={deleteAdjunto.isPending}

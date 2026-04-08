@@ -80,6 +80,14 @@ export default function EmpresaFormPage() {
       });
       if (empresa.contactos && empresa.contactos.length > 0) {
         setContactos(empresa.contactos);
+      } else if (empresa.personaContacto || empresa.emailContacto || empresa.telefonoContacto) {
+        setContactos([{
+          id: uuid(),
+          nombre: empresa.personaContacto || "",
+          telefono: empresa.telefonoContacto || "",
+          email: empresa.emailContacto || "",
+          esPrincipal: true,
+        }]);
       }
     }
   }, [empresa, form]);

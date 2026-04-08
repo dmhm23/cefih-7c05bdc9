@@ -122,15 +122,15 @@ export const empresaService = {
   async getTarifas(empresaId: string): Promise<TarifaEmpresa[]> {
     const { data, error } = await supabase
       .from('tarifas_empresa')
-      .select('*')
+      .select('*, niveles_formacion(nombre)')
       .eq('empresa_id', empresaId);
 
     if (error) handleSupabaseError(error);
-    return (data || []).map(row => ({
+    return (data || []).map((row: any) => ({
       id: row.id,
       empresaId: row.empresa_id,
       nivelFormacionId: row.nivel_formacion_id,
-      nivelFormacionNombre: '', // Will be resolved by the UI
+      nivelFormacionNombre: row.niveles_formacion?.nombre || '',
       valor: Number(row.valor),
       createdAt: row.created_at,
       updatedAt: row.updated_at,

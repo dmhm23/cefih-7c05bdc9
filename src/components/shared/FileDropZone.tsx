@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface FileDropZoneProps {
-  onFile: (file: File) => void;
+  onFile?: (file: File) => void;
+  /** Callback for multiple files at once */
+  onFiles?: (files: File[]) => void;
+  /** Allow selecting multiple files */
+  multiple?: boolean;
   accept?: string;
   disabled?: boolean;
   maxSize?: number;
@@ -39,6 +43,8 @@ const truncateFileName = (name: string, maxLen = 30): string => {
 
 export function FileDropZone({
   onFile,
+  onFiles,
+  multiple,
   accept,
   disabled,
   maxSize,
@@ -66,14 +72,22 @@ export function FileDropZone({
     );
   };
 
-  const processFile = useCallback(
-    (f: File) => {
-      if (!isAccepted(f)) return;
-      if (maxSize && f.size > maxSize) return;
-      onFile(f);
+  const processFiles = useCallback(
+    (files: File[]) => {
+      const valid = files.filter(f => {
+        if (!isAccepted(f)) return false;
+        if (maxSize && f.size > maxSize) return false;
+        return true;
+      });
+      if (valid.length === 0) return;
+      if (onFiles) {
+        onFiles(valid);
+      } else if (onFile) {
+        valid.forEach(f => onFile(f));
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onFile, maxSize, accept]
+    [onFile, onFiles, maxSize, accept]
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -93,13 +107,13 @@ export function FileDropZone({
     e.stopPropagation();
     setIsDragging(false);
     if (disabled) return;
-    const f = e.dataTransfer.files?.[0];
-    if (f) processFile(f);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length > 0) processFiles(multiple ? files : [files[0]]);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) processFile(f);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) processFiles(files);
     e.target.value = "";
   };
 
@@ -163,6 +177,7 @@ export function FileDropZone({
           type="file"
           className="hidden"
           accept={accept}
+          multiple={multiple}
           onChange={handleInputChange}
           disabled={disabled}
         />
@@ -201,6 +216,7 @@ export function FileDropZone({
         type="file"
         className="hidden"
         accept={accept}
+        multiple={multiple}
         onChange={handleInputChange}
         disabled={disabled}
       />

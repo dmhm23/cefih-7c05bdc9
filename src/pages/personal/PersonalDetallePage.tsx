@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePersonal, useUpdatePersonal, useCargos, useUpdateFirma, useDeleteFirma, useAddAdjunto, useDeleteAdjunto } from "@/hooks/usePersonal";
 import { EditableField } from "@/components/shared/EditableField";
 import { FirmaPersonal } from "@/components/personal/FirmaPersonal";
@@ -17,6 +18,7 @@ export default function PersonalDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: personal, isLoading } = usePersonal(id || "");
   const { data: cargos = [] } = useCargos();
@@ -98,12 +100,13 @@ export default function PersonalDetallePage() {
     }
   };
 
-  const handleUploadAdjunto = async (file: File) => {
+  const handleUploadAdjuntos = async (files: File[]) => {
     try {
-      await addAdjunto.mutateAsync({ personalId: personal.id, file });
-      toast({ title: "Archivo cargado correctamente" });
+      await Promise.all(files.map(file => addAdjunto.mutateAsync({ personalId: personal.id, file })));
+      await queryClient.refetchQueries({ queryKey: ['personal', id] });
+      toast({ title: files.length === 1 ? "Archivo cargado correctamente" : `${files.length} archivos cargados correctamente` });
     } catch {
-      toast({ title: "Error al cargar archivo", variant: "destructive" });
+      toast({ title: "Error al cargar archivo(s)", variant: "destructive" });
     }
   };
 
@@ -175,7 +178,7 @@ export default function PersonalDetallePage() {
             </h3>
             <AdjuntosPersonal
               adjuntos={personal.adjuntos || []}
-              onUpload={handleUploadAdjunto}
+              onUpload={handleUploadAdjuntos}
               onDelete={handleDeleteAdjunto}
               isUploading={addAdjunto.isPending}
               isDeleting={deleteAdjunto.isPending}

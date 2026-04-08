@@ -210,7 +210,11 @@ export const personalService = {
 
   // ============ ADJUNTOS ============
   async addAdjunto(personalId: string, file: File): Promise<AdjuntoPersonal> {
-    const path = `personal/${personalId}/${Date.now()}_${file.name}`;
+    const sanitizedName = file.name
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    const path = `personal/${personalId}/${Date.now()}_${sanitizedName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('adjuntos-personal')

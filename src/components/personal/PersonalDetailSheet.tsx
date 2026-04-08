@@ -113,11 +113,13 @@ export function PersonalDetailSheet({
   };
 
   // Adjuntos handlers
-  const handleUploadAdjunto = (file: File) => {
-    addAdjunto.mutate(
-      { personalId: personal.id, file },
-      { onSuccess: () => toast({ title: "Archivo adjuntado" }) }
-    );
+  const handleUploadAdjuntos = async (files: File[]) => {
+    try {
+      await Promise.all(files.map(file => addAdjunto.mutateAsync({ personalId: personal.id, file })));
+      toast({ title: files.length === 1 ? "Archivo adjuntado" : `${files.length} archivos adjuntados` });
+    } catch {
+      toast({ title: "Error al cargar archivo(s)", variant: "destructive" });
+    }
   };
 
   const handleDeleteAdjunto = (adjuntoId: string) => {
@@ -183,7 +185,7 @@ export function PersonalDetailSheet({
         <DetailSection title="Documentos Adjuntos">
           <AdjuntosPersonal
             adjuntos={displayPersonal.adjuntos || []}
-            onUpload={handleUploadAdjunto}
+            onUpload={handleUploadAdjuntos}
             onDelete={handleDeleteAdjunto}
             isUploading={addAdjunto.isPending}
             isDeleting={deleteAdjunto.isPending}

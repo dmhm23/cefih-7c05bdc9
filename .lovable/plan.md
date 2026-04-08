@@ -1,45 +1,49 @@
 
 
-# Plan: Mejorar feedback y velocidad al guardar perfil
+# Plan: Corregir carga de adjuntos en Gestión de Personal
 
-## Diagnóstico
+## Problemas identificados
 
-La lentitud viene del flujo secuencial en `onSubmit` (líneas 193-204):
+### 1. Solo permite un archivo a la vez
+`FileDropZone` toma solo `files?.[0]` en `handleDrop` (línea 96) y `handleInputChange` (línea 101). El `<input>` no tiene atributo `multiple`. `AdjuntosPersonal` usa `onFile` (singular) que solo acepta un `File`.
 
-1. `await createPersonal.mutateAsync(...)` — request 1
-2. `await updateFirma.mutateAsync(...)` — request 2 (espera a que termine el 1)
-3. `for (const file of tempFiles) { await addAdjunto.mutateAsync(...) }` — request 3, 4, 5... (cada archivo espera al anterior)
+### 2. Toast antes de que aparezca el archivo
+En `PersonalDetallePage`, `handleUploadAdjunto` muestra el toast inmediatamente al resolver `addAdjunto.mutateAsync`, pero la invalidación del query y refetch es asíncrona, así que el archivo aparece después del mensaje.
 
-Si hay 1 firma + 2 adjuntos, son 4 requests secuenciales. Con ~500-800ms por request, suman ~3 segundos.
-
-Además, `isLoading` solo refleja `createPersonal.isPending || updatePersonal.isPending`, no cubre la subida de firma ni adjuntos post-creación.
+### 3. Nombres con espacios/paréntesis rechazan la carga
+En `personalService.addAdjunto` (línea 213), el path es `personal/${personalId}/${Date.now()}_${file.name}`. Si el nombre tiene espacios o paréntesis (ej. "Documento sin título (6).pdf"), Supabase Storage puede rechazar la subida.
 
 ## Solución
 
-### Archivo: `src/pages/personal/PersonalFormPage.tsx`
+### Archivo: `src/components/shared/FileDropZone.tsx`
+- Agregar prop `multiple?: boolean`
+- Agregar prop `onFiles?: (files: File[]) => void` para carga múltiple
+- En `handleDrop`: iterar sobre todos los archivos del `dataTransfer`, no solo el primero
+- En `handleInputChange`: iterar sobre todos los archivos seleccionados
+- Agregar atributo `multiple` al `<input>` cuando `multiple` sea true
+- Mantener compatibilidad con `onFile` (singular) existente
 
-1. **Paralelizar uploads**: Después de crear el perfil, subir firma y todos los adjuntos en paralelo con `Promise.all` en vez de secuencialmente
-2. **Estado de carga completo**: Usar un `useState<boolean>` (`isSaving`) que cubra todo el proceso (crear + subir firma + subir adjuntos), para que el botón muestre spinner durante toda la operación
+### Archivo: `src/components/personal/AdjuntosPersonal.tsx`
+- Cambiar `onUpload: (file: File) => void` a `onUpload: (file: File) => void | Promise<void>`
+- Usar `onFiles` del FileDropZone para pasar múltiples archivos
+- Llamar `onUpload` para cada archivo en secuencia o emitir todos
 
-```typescript
-// Antes (secuencial ~3s):
-const newPersonal = await createPersonal.mutateAsync(personalData);
-if (tempFirma) await updateFirma.mutateAsync({...});
-for (const file of tempFiles) await addAdjunto.mutateAsync({...});
+### Archivo: `src/services/personalService.ts`
+- En `addAdjunto` (línea 213): sanitizar el nombre del archivo reemplazando espacios y caracteres especiales antes de construir el path de storage
+- Mantener el nombre original en la columna `nombre` de la BD para que el usuario vea el nombre real
 
-// Después (paralelo ~1.5s):
-const newPersonal = await createPersonal.mutateAsync(personalData);
-const uploads: Promise<any>[] = [];
-if (tempFirma) uploads.push(updateFirma.mutateAsync({...}));
-for (const file of tempFiles) uploads.push(addAdjunto.mutateAsync({...}));
-await Promise.all(uploads);
-```
+### Archivo: `src/pages/personal/PersonalDetallePage.tsx`
+- En `handleUploadAdjunto`: mover el toast después de que `invalidateQueries` resuelva, o usar `await queryClient.invalidateQueries()` + `await queryClient.refetchQueries()` antes de mostrar el toast
+- Soportar carga múltiple: recibir array de archivos, subirlos con `Promise.all`, y mostrar un solo toast al final
 
 ## Archivos afectados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/pages/personal/PersonalFormPage.tsx` | Paralelizar uploads + agregar estado `isSaving` para feedback completo |
+| `src/components/shared/FileDropZone.tsx` | Agregar props `multiple` y `onFiles`, procesar todos los archivos |
+| `src/components/personal/AdjuntosPersonal.tsx` | Usar `onFiles` para pasar múltiples archivos |
+| `src/services/personalService.ts` | Sanitizar nombre de archivo en el path de storage |
+| `src/pages/personal/PersonalDetallePage.tsx` | Soportar carga múltiple + toast después del refetch |
 
-**Total: 1 archivo editado, 0 migraciones**
+**Total: 4 archivos editados, 0 migraciones**
 

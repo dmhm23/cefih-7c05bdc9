@@ -185,7 +185,7 @@ export function PersonalDetailSheet({
         <DetailSection title="Documentos Adjuntos">
           <AdjuntosPersonal
             adjuntos={displayPersonal.adjuntos || []}
-            onUpload={handleUploadAdjunto}
+            onUpload={handleUploadAdjuntos}
             onDelete={handleDeleteAdjunto}
             isUploading={addAdjunto.isPending}
             isDeleting={deleteAdjunto.isPending}

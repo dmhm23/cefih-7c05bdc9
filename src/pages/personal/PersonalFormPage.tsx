@@ -393,7 +393,7 @@ export default function PersonalFormPage() {
             <CardContent>
               <AdjuntosPersonal
                 adjuntos={adjuntosToShow}
-                onUpload={handleUploadAdjunto}
+                onUpload={handleUploadAdjuntos}
                 onDelete={handleDeleteAdjunto}
                 isUploading={addAdjunto.isPending}
                 isDeleting={deleteAdjunto.isPending}

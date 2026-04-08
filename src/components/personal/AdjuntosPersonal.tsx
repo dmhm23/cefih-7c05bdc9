@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { FileText, Trash2, Download, Eye, X, ExternalLink } from "lucide-react";
+import { FileText, Trash2, Download, Eye, X, ExternalLink, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { AdjuntoPersonal } from "@/types/personal";
@@ -79,6 +80,17 @@ export function AdjuntosPersonal({ adjuntos, onUpload, onDelete, isUploading, is
         label={isUploading ? "Subiendo..." : "Arrastra archivos aquí o haz clic para seleccionar"}
         hint="PDF, JPG, PNG, DOC, DOCX · Máx. 10 MB · Múltiples archivos"
       />
+
+      {/* Upload progress indicator */}
+      {isUploading && (
+        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+          <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+          <div className="flex-1 space-y-1.5">
+            <p className="text-sm font-medium text-muted-foreground">Cargando documentos...</p>
+            <Progress value={undefined} className="h-1.5 [&>div]:animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+          </div>
+        </div>
+      )}
 
       {/* File list */}
       {adjuntos.length === 0 ? (

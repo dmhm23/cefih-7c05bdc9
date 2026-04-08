@@ -49,6 +49,7 @@ export function FirmaPersonal({ firmaExistente, onGuardarFirma, onEliminarFirma,
           </div>
           {onEliminarFirma && (
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className="text-destructive h-7 px-2"

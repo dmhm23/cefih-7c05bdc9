@@ -241,7 +241,7 @@ export default function PersonalFormPage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit, () => toast({ title: "Campos incompletos", description: "Por favor, completa todos los campos obligatorios correctamente.", variant: "destructive" }))} className="space-y-5">
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="text-base">Datos del Perfil</CardTitle>

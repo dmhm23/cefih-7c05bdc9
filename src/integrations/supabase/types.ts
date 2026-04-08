@@ -494,6 +494,7 @@ export type Database = {
           nombre_empresa: string
           observaciones: string | null
           persona_contacto: string
+          representante_legal: string | null
           sector_economico:
             | Database["public"]["Enums"]["sector_economico"]
             | null
@@ -514,6 +515,7 @@ export type Database = {
           nombre_empresa: string
           observaciones?: string | null
           persona_contacto?: string
+          representante_legal?: string | null
           sector_economico?:
             | Database["public"]["Enums"]["sector_economico"]
             | null
@@ -534,6 +536,7 @@ export type Database = {
           nombre_empresa?: string
           observaciones?: string | null
           persona_contacto?: string
+          representante_legal?: string | null
           sector_economico?:
             | Database["public"]["Enums"]["sector_economico"]
             | null

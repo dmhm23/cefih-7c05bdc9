@@ -1,0 +1,1 @@
+ALTER TABLE public.empresas ADD COLUMN representante_legal text DEFAULT '';

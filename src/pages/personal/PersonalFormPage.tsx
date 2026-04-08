@@ -67,6 +67,7 @@ export default function PersonalFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isEditing = !!id;
+  const [isSaving, setIsSaving] = useState(false);
 
   const { data: personal, isLoading: isLoadingPersonal } = usePersonal(id || "");
   const { data: cargos = [] } = useCargos();
@@ -177,6 +178,7 @@ export default function PersonalFormPage() {
   };
 
   const onSubmit = async (data: PersonalFormSchema) => {
+    setIsSaving(true);
     try {
       const cargo = cargos.find((c) => c.id === data.cargoId);
       const personalData = {
@@ -193,14 +195,16 @@ export default function PersonalFormPage() {
       } else {
         const newPersonal = await createPersonal.mutateAsync(personalData);
 
-        // Upload pending firma
+        // Upload firma and adjuntos in parallel
+        const uploads: Promise<any>[] = [];
         if (tempFirma) {
-          await updateFirma.mutateAsync({ id: newPersonal.id, firmaBase64: tempFirma });
+          uploads.push(updateFirma.mutateAsync({ id: newPersonal.id, firmaBase64: tempFirma }));
         }
-
-        // Upload pending adjuntos
         for (const file of tempFiles) {
-          await addAdjunto.mutateAsync({ personalId: newPersonal.id, file });
+          uploads.push(addAdjunto.mutateAsync({ personalId: newPersonal.id, file }));
+        }
+        if (uploads.length > 0) {
+          await Promise.all(uploads);
         }
 
         toast({ title: "Perfil creado correctamente" });
@@ -212,10 +216,12 @@ export default function PersonalFormPage() {
         description: error.message || "No se pudo guardar",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const isLoading = createPersonal.isPending || updatePersonal.isPending;
+  const isLoading = isSaving;
 
   if (isEditing && isLoadingPersonal) {
     return <div className="flex justify-center py-12">Cargando...</div>;

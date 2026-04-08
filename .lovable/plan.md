@@ -1,38 +1,36 @@
 
 
-# Plan: Agregar indicador de carga al subir documentos en AdjuntosPersonal
+# Plan: Persistir el campo "Representante Legal" en la base de datos
 
 ## Problema
 
-Cuando se suben archivos, el único feedback es que el texto del dropzone cambia a "Subiendo...", pero no hay indicación visual en la lista de archivos. El usuario no percibe claramente que algo está sucediendo.
+La tabla `empresas` en la base de datos **no tiene** una columna `representante_legal`. El servicio `empresaService.ts` confirma esto:
+- `mapEmpresaRow` siempre retorna `representanteLegal: ''` (hardcoded)
+- `mapEmpresaToDb` no incluye ningún mapeo para `representanteLegal`
+
+El formulario captura el dato correctamente, pero al guardarlo se descarta porque no hay dónde almacenarlo.
 
 ## Solución
 
-Agregar un indicador de carga sutil debajo del dropzone cuando `isUploading` es `true`: una barra de progreso indeterminada con un texto informativo. Usaré el componente `Progress` existente con una animación de pulso, más un icono `Loader2` girando.
+### Paso 1: Migración SQL
+Agregar la columna `representante_legal` a la tabla `empresas`:
 
-### Archivo: `src/components/personal/AdjuntosPersonal.tsx`
-
-- Importar `Loader2` de lucide-react y `Progress` de `@/components/ui/progress`
-- Después del `FileDropZone`, agregar un bloque condicional cuando `isUploading === true`:
-  - Un contenedor con borde, padding y fondo sutil (`bg-muted/30`)
-  - Icono `Loader2` con `animate-spin`
-  - Texto "Cargando documentos..."
-  - Barra de progreso indeterminada (valor animado con CSS)
-
-```
-┌─────────────────────────────────────┐
-│  ↻ Cargando documentos...           │
-│  ═══════════════════░░░░░░░░        │
-└─────────────────────────────────────┘
+```sql
+ALTER TABLE public.empresas
+ADD COLUMN representante_legal text DEFAULT '';
 ```
 
-La barra usará una animación CSS de ancho que oscila, dando la sensación de progreso continuo sin necesitar un porcentaje real.
+### Paso 2: Actualizar `src/services/empresaService.ts`
+
+- En `mapEmpresaRow`: cambiar `representanteLegal: ''` por `representanteLegal: row.representante_legal || ''`
+- En `mapEmpresaToDb`: agregar el mapeo `if (data.representanteLegal !== undefined) result.representante_legal = data.representanteLegal || null;`
 
 ## Archivos afectados
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/personal/AdjuntosPersonal.tsx` | Agregar indicador de carga animado cuando `isUploading` |
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | 1 migración SQL | Agregar columna `representante_legal` |
+| 2 | `src/services/empresaService.ts` | Mapear lectura y escritura del campo |
 
-**Total: 1 archivo editado, 0 migraciones**
+**Total: 1 archivo editado, 1 migración**
 

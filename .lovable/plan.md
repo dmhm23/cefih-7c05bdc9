@@ -1,31 +1,45 @@
 
 
-# Plan: Corregir botón "Guardar Perfil" en Gestión de Personal
+# Plan: Mejorar feedback y velocidad al guardar perfil
 
 ## Diagnóstico
 
-Identifiqué dos problemas que pueden impedir la creación del perfil:
+La lentitud viene del flujo secuencial en `onSubmit` (líneas 193-204):
 
-### 1. Botón "Eliminar" firma sin `type="button"` (FirmaPersonal.tsx, línea 51)
-Cuando el usuario carga una firma durante la creación de un perfil, aparece el botón "Eliminar" en `FirmaPersonal`. Este botón **no tiene** `type="button"`, por lo que dentro del `<form>` actúa como `type="submit"`. Si el usuario interactúa con la firma antes de hacer clic en "Guardar", podría estar disparando un envío del formulario que falla o interfiere con el estado de la mutación (`isPending` se queda en `true`), lo que **deshabilita** el botón "Guardar Perfil" permanentemente.
+1. `await createPersonal.mutateAsync(...)` — request 1
+2. `await updateFirma.mutateAsync(...)` — request 2 (espera a que termine el 1)
+3. `for (const file of tempFiles) { await addAdjunto.mutateAsync(...) }` — request 3, 4, 5... (cada archivo espera al anterior)
 
-### 2. Validación silenciosa de campos obligatorios
-El esquema de validación requiere `apellidos` con mínimo 2 caracteres. Si el usuario solo llena "nombre" y "rol" sin completar "apellidos", react-hook-form bloquea el envío sin mostrar un mensaje visible (el `FormMessage` aparece debajo del campo pero puede no ser notorio). Esto haría que el botón "Guardar" parezca no funcionar.
+Si hay 1 firma + 2 adjuntos, son 4 requests secuenciales. Con ~500-800ms por request, suman ~3 segundos.
+
+Además, `isLoading` solo refleja `createPersonal.isPending || updatePersonal.isPending`, no cubre la subida de firma ni adjuntos post-creación.
 
 ## Solución
 
-### Archivo: `src/components/personal/FirmaPersonal.tsx`
-- Agregar `type="button"` al botón "Eliminar" (línea 51) para evitar que dispare el envío del formulario
-
 ### Archivo: `src/pages/personal/PersonalFormPage.tsx`
-- Agregar manejo del caso de error de validación en el formulario usando `form.handleSubmit(onSubmit, onError)` donde `onError` muestre un toast indicando que hay campos sin completar, para que el usuario sepa por qué no se creó el perfil
+
+1. **Paralelizar uploads**: Después de crear el perfil, subir firma y todos los adjuntos en paralelo con `Promise.all` en vez de secuencialmente
+2. **Estado de carga completo**: Usar un `useState<boolean>` (`isSaving`) que cubra todo el proceso (crear + subir firma + subir adjuntos), para que el botón muestre spinner durante toda la operación
+
+```typescript
+// Antes (secuencial ~3s):
+const newPersonal = await createPersonal.mutateAsync(personalData);
+if (tempFirma) await updateFirma.mutateAsync({...});
+for (const file of tempFiles) await addAdjunto.mutateAsync({...});
+
+// Después (paralelo ~1.5s):
+const newPersonal = await createPersonal.mutateAsync(personalData);
+const uploads: Promise<any>[] = [];
+if (tempFirma) uploads.push(updateFirma.mutateAsync({...}));
+for (const file of tempFiles) uploads.push(addAdjunto.mutateAsync({...}));
+await Promise.all(uploads);
+```
 
 ## Archivos afectados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/personal/FirmaPersonal.tsx` | Agregar `type="button"` al botón "Eliminar" |
-| `src/pages/personal/PersonalFormPage.tsx` | Agregar callback `onError` para mostrar toast de validación |
+| `src/pages/personal/PersonalFormPage.tsx` | Paralelizar uploads + agregar estado `isSaving` para feedback completo |
 
-**Total: 2 archivos editados, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
 

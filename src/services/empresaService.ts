@@ -7,7 +7,7 @@ function mapEmpresaRow(row: any): Empresa {
     id: row.id,
     nombreEmpresa: row.nombre_empresa,
     nit: row.nit,
-    representanteLegal: '',
+    representanteLegal: row.representante_legal || '',
     sectorEconomico: row.sector_economico || '',
     arl: row.arl || '',
     direccion: row.direccion || '',
@@ -32,6 +32,7 @@ function mapEmpresaToDb(data: Partial<EmpresaFormData>): Record<string, any> {
   if (data.emailContacto !== undefined) result.email_contacto = data.emailContacto;
   if (data.telefonoEmpresa !== undefined) result.telefono_contacto = data.telefonoEmpresa;
   if ((data as any).telefonoContacto !== undefined) result.telefono_contacto = (data as any).telefonoContacto;
+  if (data.representanteLegal !== undefined) result.representante_legal = data.representanteLegal || null;
   if (data.direccion !== undefined) result.direccion = data.direccion;
   if (data.activo !== undefined) result.activo = data.activo;
   if ((data as any).observaciones !== undefined) result.observaciones = (data as any).observaciones;

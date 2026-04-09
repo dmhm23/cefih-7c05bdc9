@@ -2,12 +2,11 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
 import { Curso, CursoFormData } from "@/types/curso";
-import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
-
-const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
 interface CourseInfoCardProps {
   curso: Curso;

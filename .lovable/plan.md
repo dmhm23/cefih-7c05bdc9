@@ -1,72 +1,178 @@
+# **Plan ajustado: Mover la generación del número de curso a base de datos, con consecutivo seguro y unicidad garantizada**
 
+## **Problema**
 
-# Plan: Generar automáticamente el número del curso
+Actualmente la lógica de generación del número del curso vive en el frontend, lo que duplica reglas de negocio y no garantiza consistencia si un curso se crea desde otro flujo. Además, el trigger actual autogenerar_nombre_curso sigue usando un formato legacy (FI-0002).
 
-## Problema
+El problema no es solo dónde se genera el código, sino también que una estrategia basada en COUNT(*) + 1 no es segura ante concurrencia, ya que dos inserciones simultáneas podrían producir el mismo consecutivo.
 
-El campo "Número del Curso" es manual. Debe generarse automáticamente con la estructura `{prefijo}{sep}{codigoTipoFormacion}{sep}{anio2d}{sep}{mes2d}{sep}{consecutivo}` usando la configuración del nivel de formación seleccionado y la fecha de inicio.
+## **Objetivo**
 
-## Solución
+Definir una única fuente de verdad para el número del curso en la base de datos, respetar la edición manual cuando aplique y asegurar que el consecutivo mensual por nivel de formación se genere de forma transaccional y sin riesgo de duplicados.
 
-### 1. `src/services/cursoService.ts` — Nuevo método para contar cursos del mismo nivel/mes/año
+---
 
-```typescript
-async countByNivelAndMonth(nivelFormacionId: string, year: number, month: number): Promise<number> {
-  // Consulta cursos del mismo nivel cuya fecha_inicio cae en el mismo año y mes
-  const startOfMonth = `${year}-${String(month).padStart(2,'0')}-01`;
-  const endOfMonth = new Date(year, month, 0).toISOString().slice(0,10); // último día del mes
-  
-  const { count, error } = await supabase
-    .from('cursos')
-    .select('id', { count: 'exact', head: true })
-    .eq('nivel_formacion_id', nivelFormacionId)
-    .is('deleted_at', null)
-    .gte('fecha_inicio', startOfMonth)
-    .lte('fecha_inicio', endOfMonth);
-    
-  if (error) handleSupabaseError(error);
-  return count ?? 0;
-}
-```
+## **Solución estructural**
 
-### 2. `src/pages/cursos/CursoFormPage.tsx` — Generar código automáticamente
+### **1. Reescribir el trigger** 
 
-- Agregar función `generarNumeroCurso(nivelId, fechaInicio)` que:
-  1. Obtiene la `ConfiguracionCodigoEstudiante` del nivel seleccionado
-  2. Llama a `cursoService.countByNivelAndMonth(nivelId, year, month)`
-  3. Construye el código: `prefijo + sep + codigoTipoFormacion + sep + año2d + sep + mes2d + sep + consecutivo`
-  4. Hace `form.setValue("numeroCurso", codigoGenerado)`
+### **autogenerar_nombre_curso**
 
-- Ejecutar `generarNumeroCurso` cuando cambia el nivel (`handleTipoFormacionChange`) o la fecha de inicio
-- Cambiar el campo `numeroCurso` en el formulario a `disabled` con `className="bg-muted"`
-- Mantener el texto descriptivo "Calculado automáticamente"
-- Relajar la validación zod de `numeroCurso` a `.optional()` (se genera internamente, no requiere input del usuario)
+El trigger debe implementar la regla oficial:
 
-### 3. Lógica del consecutivo
+{prefijo}{sep}{codigoTipo}{sep}{YY}{sep}{MM}{sep}{consecutivo}
+
+Condiciones:
+
+- Si NEW.nombre viene con valor, el trigger lo respeta.
+- Si NEW.nombre viene vacío o nulo, el trigger genera el valor automáticamente.
+- La lógica debe leer la configuración oficial desde niveles_formacion.config_codigo_estudiante.
+- El consecutivo no debe calcularse con COUNT(*) + 1.
+
+---
+
+### **2. Crear una tabla de consecutivos mensuales por nivel**
+
+En lugar de contar cursos existentes, crear una tabla dedicada para manejar el consecutivo de forma segura.
+
+Ejemplo conceptual:
 
 ```
-cursosExistentes = await cursoService.countByNivelAndMonth(nivelId, 2026, 4);
-// Si hay 4 cursos previos → consecutivo = 05
-consecutivo = String(cursosExistentes + 1).padStart(2, '0');
+CREATE TABLE public.curso_consecutivos (
+  nivel_formacion_id uuid NOT NULL,
+  anio smallint NOT NULL,
+  mes smallint NOT NULL,
+  ultimo_consecutivo integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (nivel_formacion_id, anio, mes)
+);
 ```
 
-### 4. Ejemplo de resultado
+Esta tabla permitirá:
 
-Nivel con config: `prefijo="FIH"`, `codigoTipoFormacion="TA"`, `separador="-"`
-Fecha inicio: 2026-04-09, 4 cursos previos ese mes → `FIH-TA-26-04-05`
+- llevar el consecutivo real por nivel_formacion + año + mes,
+- evitar colisiones por concurrencia,
+- separar claramente la lógica de secuencia del resto de la tabla cursos.
 
-## Lo que NO se afecta
+---
 
-- La lógica del código de estudiante (`generarCodigoEstudiante`) permanece intacta
-- El `numeroCurso` se persiste en el campo `nombre` del curso como ya ocurre
-- La `ConfiguracionCodigoEstudiante` del nivel sigue usándose también para el código de estudiante
+### **3. Generar el consecutivo de forma transaccional**
 
-## Archivos afectados
+Dentro del trigger, el consecutivo debe obtenerse actualizando la tabla curso_consecutivos con una operación atómica.
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/services/cursoService.ts` | Nuevo método `countByNivelAndMonth` |
-| `src/pages/cursos/CursoFormPage.tsx` | Auto-generar código, campo readonly, recalcular en cambio de nivel/fecha |
+Lógica esperada:
 
-**Total: 2 archivos editados, 0 migraciones**
+- identificar nivel_formacion_id, año y mes de fecha_inicio,
+- crear el registro si no existe,
+- incrementar ultimo_consecutivo en una operación segura,
+- usar ese valor para construir NEW.nombre.
 
+Esto evita que dos transacciones lean el mismo valor al mismo tiempo.
+
+---
+
+### **4. Agregar restricción de unicidad**
+
+Además del trigger, la base de datos debe impedir duplicados reales.
+
+Opciones recomendadas:
+
+- índice único sobre nombre, si ese campo debe ser globalmente único,
+- o una restricción más específica si el negocio permite reutilización en otros contextos.
+  &nbsp;
+
+Ejemplo:
+
+```
+CREATE UNIQUE INDEX ux_cursos_nombre
+ON public.cursos (nombre)
+WHERE deleted_at IS NULL;
+```
+
+Esto actúa como blindaje adicional ante cualquier fallo inesperado.
+
+---
+
+### **5. Ajustar** 
+
+### **cursoService.create**
+
+En src/services/cursoService.ts:
+
+- no enviar nombre cuando el valor sea automático y solo sirva como vista previa,
+- enviar nombre únicamente cuando el usuario lo haya editado manualmente,
+- si nombre va vacío, la base de datos lo genera.
+  &nbsp;
+
+Regla práctica:
+
+- nombre manual: se envía.
+- nombre automático no confirmado manualmente: no se envía, o se envía vacío.
+- la base de datos asigna el valor oficial final.
+
+---
+
+### **6. Ajustar** 
+
+### **CursoFormPage.tsx**
+
+En src/pages/cursos/CursoFormPage.tsx:
+
+- mantener el campo visible y editable,
+- mostrar una vista previa del número del curso,
+- dejar claro que es una referencia visual y que el valor oficial lo define la base de datos al guardar,
+- no depender de countByNivelAndMonth como fuente real de generación.
+- &nbsp;
+
+Importante:
+
+- la vista previa puede conservarse para UX,
+- pero no debe asumirse como el valor definitivo,
+- por concurrencia, el valor final podría variar en el momento del guardado.
+
+---
+
+### **7. Revisar el uso de** 
+
+### **countByNivelAndMonth**
+
+countByNivelAndMonth ya no debe usarse para lógica de negocio.
+
+Opciones:
+
+- eliminarlo por completo,
+- o conservarlo solo como apoyo visual para una vista previa aproximada.
+
+Si se conserva, debe quedar explícito que no define el consecutivo oficial.
+
+---
+
+&nbsp;
+
+## **Resumen de cambios**
+
+&nbsp;
+
+
+| **Recurso**                        | **Cambio**                                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------- |
+| Migración SQL 1                    | Crear tabla curso_consecutivos                                              |
+| Migración SQL 2                    | Reescribir trigger autogenerar_nombre_curso con la regla oficial            |
+| Migración SQL 3                    | Crear índice único para cursos.nombre                                       |
+| src/services/cursoService.ts       | Enviar nombre solo si fue editado manualmente                               |
+| src/pages/cursos/CursoFormPage.tsx | Mantener campo editable y tratar el valor automático solo como vista previa |
+
+
+---
+
+&nbsp;
+
+## **Resultado esperado**
+
+- El número del curso se genera con una única lógica oficial.
+- La base de datos es la fuente de verdad.
+- Se evita duplicar reglas entre frontend y backend.
+- Se respeta la edición manual del campo.
+- El consecutivo mensual se genera de forma segura, incluso con inserciones simultáneas.
+- Se evita la creación de códigos duplicados.
+
+&nbsp;

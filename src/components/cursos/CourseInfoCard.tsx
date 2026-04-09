@@ -21,7 +21,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
   const { data: niveles = [] } = useNivelesFormacion();
 
   const tipoFormacionOptions = useMemo(
-    () => niveles.map((n) => ({ value: n.id, label: n.nombre })),
+    () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
     [niveles]
   );
 
@@ -85,7 +85,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             displayValue={resolveNivelCursoLabel(curso.nivelFormacionId || getValue("tipoFormacion"))}
             onChange={(v) => onFieldChange("tipoFormacion", v)}
             type="select"
-            options={TIPO_FORMACION_OPTIONS}
+            options={tipoFormacionOptions}
             editable={!readOnly}
           />
           <EditableField

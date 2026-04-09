@@ -261,6 +261,23 @@ export const cursoService = {
     return { total: 0, completas: 0, pendientes: 0, certificadas: 0 };
   },
 
+  async countByNivelAndMonth(nivelFormacionId: string, year: number, month: number): Promise<number> {
+    const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endOfMonth = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const { count, error } = await supabase
+      .from('cursos')
+      .select('id', { count: 'exact', head: true })
+      .eq('nivel_formacion_id', nivelFormacionId)
+      .is('deleted_at', null)
+      .gte('fecha_inicio', startOfMonth)
+      .lte('fecha_inicio', endOfMonth);
+
+    if (error) handleSupabaseError(error);
+    return count ?? 0;
+  },
+
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from('cursos')

@@ -56,8 +56,8 @@ export default function NivelesPage() {
     try {
       await deleteNivel.mutateAsync(deleteId);
       toast({ title: "Nivel eliminado correctamente" });
-    } catch {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Error al eliminar el nivel", variant: "destructive" });
     }
     setDeleteId(null);
   };

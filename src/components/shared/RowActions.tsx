@@ -33,7 +33,7 @@ export function RowActions({ actions, showOnHover = true }: RowActionsProps) {
         {actions.map((action) => (
           <DropdownMenuItem
             key={action.label}
-            onClick={action.onClick}
+            onClick={(e) => { e.stopPropagation(); action.onClick(); }}
             className={action.variant === "destructive" ? "text-destructive" : ""}
           >
             <action.icon className="h-4 w-4 mr-2" />
@@ -56,7 +56,7 @@ export function RowActions({ actions, showOnHover = true }: RowActionsProps) {
           key={action.label}
           tooltip={action.label}
           className="h-7 w-7"
-          onClick={action.onClick}
+          onClick={(e) => { e.stopPropagation(); action.onClick(); }}
         >
           <action.icon
             className={`h-3.5 w-3.5 ${

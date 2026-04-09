@@ -47,8 +47,8 @@ export default function NivelDetallePage() {
       await deleteNivel.mutateAsync(nivel.id);
       toast({ title: "Nivel eliminado correctamente" });
       navigate("/niveles");
-    } catch {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Error al eliminar el nivel", variant: "destructive" });
     }
   };
 

@@ -2,12 +2,11 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
 import { Curso, CursoFormData } from "@/types/curso";
-import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
-
-const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
 interface CourseInfoCardProps {
   curso: Curso;
@@ -19,6 +18,12 @@ interface CourseInfoCardProps {
 export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: CourseInfoCardProps) {
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
+  const { data: niveles = [] } = useNivelesFormacion();
+
+  const tipoFormacionOptions = useMemo(
+    () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
+    [niveles]
+  );
 
   const entrenadorOptions = useMemo(() =>
     entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),
@@ -80,7 +85,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             displayValue={resolveNivelCursoLabel(curso.nivelFormacionId || getValue("tipoFormacion"))}
             onChange={(v) => onFieldChange("tipoFormacion", v)}
             type="select"
-            options={TIPO_FORMACION_OPTIONS}
+            options={tipoFormacionOptions}
             editable={!readOnly}
           />
           <EditableField

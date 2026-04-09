@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -14,8 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { Curso, CursoFormData } from "@/types/curso";
-import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,8 +30,6 @@ interface CursoDetailSheetProps {
   onNavigate: (direction: "prev" | "next") => void;
 }
 
-const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
-
 export function CursoDetailSheet({
   open,
   onOpenChange,
@@ -43,8 +42,14 @@ export function CursoDetailSheet({
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
   const { data: personas = [] } = usePersonas();
+  const { data: niveles = [] } = useNivelesFormacion();
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
+
+  const tipoFormacionOptions = useMemo(
+    () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
+    [niveles]
+  );
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
 
@@ -55,7 +60,7 @@ export function CursoDetailSheet({
 
   if (!curso) return null;
 
-  const title = `${resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)} — #${curso.numeroCurso}`;
+  const title = `${curso.numeroCurso}—${resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)}`;
   const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
@@ -132,7 +137,7 @@ export function CursoDetailSheet({
               displayValue={resolveNivelCursoLabel(getValue("tipoFormacion"))}
               onChange={(v) => handleFieldChange("tipoFormacion", v)}
               type="select"
-              options={TIPO_FORMACION_OPTIONS}
+              options={tipoFormacionOptions}
             />
             <EditableField
               label="Número del Curso"

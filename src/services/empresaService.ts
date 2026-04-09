@@ -89,23 +89,30 @@ export const empresaService = {
   async getAll(): Promise<Empresa[]> {
     const { data, error } = await supabase
       .from('empresas')
-      .select('*')
+      .select('*, contactos_empresa(*)')
       .is('deleted_at', null)
       .order('nombre_empresa');
 
     if (error) handleSupabaseError(error);
-    return (data || []).map(mapEmpresaRow);
+    return (data || []).map(row => {
+      const empresa = mapEmpresaRow(row);
+      empresa.contactos = ((row as any).contactos_empresa || []).map(mapContactoRow);
+      return empresa;
+    });
   },
 
   async getById(id: string): Promise<Empresa | null> {
     const { data, error } = await supabase
       .from('empresas')
-      .select('*')
+      .select('*, contactos_empresa(*)')
       .eq('id', id)
       .maybeSingle();
 
     if (error) handleSupabaseError(error);
-    return data ? mapEmpresaRow(data) : null;
+    if (!data) return null;
+    const empresa = mapEmpresaRow(data);
+    empresa.contactos = ((data as any).contactos_empresa || []).map(mapContactoRow);
+    return empresa;
   },
 
   async search(query: string): Promise<Empresa[]> {

@@ -122,6 +122,8 @@ export default function CursoFormPage() {
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const [camposAdicionales, setCamposAdicionales] = useState<CampoAdicional[]>([]);
+  const [numeroCursoManual, setNumeroCursoManual] = useState(false);
+  const numeroCursoAutoRef = useRef("");
 
   const schema = useMemo(
     () => z.object({ ...baseSchema, ...buildDynamicSchema(camposAdicionales) }),

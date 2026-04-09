@@ -1,63 +1,25 @@
 
 
-# Plan: Impedir eliminación de personas con matrículas asociadas
+# Plan: Calcular duración de curso de forma inclusiva (inicio y fin cuentan)
 
 ## Problema
 
-El servicio `personaService.delete` ejecuta un soft-delete sin verificar si la persona tiene matrículas activas. Además, el `catch` en `PersonasPage` muestra un mensaje genérico "Error al eliminar".
+`differenceInCalendarDays(fin, inicio)` retorna 0 cuando ambas fechas son iguales. La regla de negocio requiere conteo inclusivo: mismo día = 1 día, dos días consecutivos = 2 días. La corrección es sumar 1 al resultado en todos los puntos de cálculo.
 
 ## Solución
 
-Agregar una verificación en `personaService.delete` que consulte la tabla `matriculas` antes de proceder. Si existen matrículas asociadas (no eliminadas), lanzar un `ApiError` con mensaje descriptivo. Luego, en `PersonasPage`, mostrar `err.message` en el toast (mismo patrón ya aplicado en niveles y tarifas).
+Cambiar `dias` a `dias + 1` en los 3 lugares donde se calcula:
 
-## Cambios
-
-### 1. `src/services/personaService.ts` — Verificar matrículas antes de eliminar
-
-```typescript
-async delete(id: string): Promise<void> {
-  // Verificar si tiene matrículas asociadas
-  const { count, error: countError } = await supabase
-    .from('matriculas')
-    .select('id', { count: 'exact', head: true })
-    .eq('persona_id', id)
-    .is('deleted_at', null);
-
-  if (countError) handleSupabaseError(countError);
-  if ((count ?? 0) > 0) {
-    throw new ApiError(
-      'No se puede eliminar: esta persona tiene matrículas asociadas',
-      400,
-      'PERSONA_CON_MATRICULAS'
-    );
-  }
-
-  // Soft delete
-  const { error } = await supabase
-    .from('personas')
-    .update({ deleted_at: new Date().toISOString(), activo: false })
-    .eq('id', id);
-
-  if (error) handleSupabaseError(error);
-},
-```
-
-### 2. `src/pages/personas/PersonasPage.tsx` — Mostrar mensaje específico en ambos catch
-
-En `handleDelete` y `handleBulkDelete`, cambiar el catch genérico por:
-
-```typescript
-} catch (err: any) {
-  toast({ title: err?.message || "Error al eliminar", variant: "destructive" });
-}
-```
+1. **`CursoFormPage.tsx` línea 163-164**: `if (dias >= 0) form.setValue("duracionDias", dias + 1);`
+2. **`CursoFormPage.tsx` línea 380-381**: `return dias >= 0 ? dias + 1 : 0;`
+3. **`CourseInfoCard.tsx` línea 57-58**: `return dias >= 0 ? dias + 1 : 0;`
 
 ## Archivos afectados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/services/personaService.ts` | Verificar matrículas antes del soft-delete |
-| `src/pages/personas/PersonasPage.tsx` | Usar `err.message` en catch de delete individual y masivo |
+| `src/pages/cursos/CursoFormPage.tsx` | `+ 1` en ambos cálculos de duración |
+| `src/components/cursos/CourseInfoCard.tsx` | `+ 1` en cálculo de duración |
 
 **Total: 2 archivos editados, 0 migraciones**
 

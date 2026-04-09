@@ -210,8 +210,9 @@ export default function EmpresaDetallePage() {
         toast({ title: "Tarifa creada" });
       }
       setTarifaDialogOpen(false);
-    } catch {
-      toast({ title: "Error al guardar tarifa", variant: "destructive" });
+    } catch (err: any) {
+      const msg = err?.message || "Error al guardar: ya existe una tarifa para este nivel...";
+      toast({ title: msg, variant: "destructive" });
     }
   };
 

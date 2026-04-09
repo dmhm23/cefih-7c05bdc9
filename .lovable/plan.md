@@ -1,40 +1,23 @@
 
 
-# Plan: Mejorar date picker de fecha de nacimiento
+# Plan: Aplicar diseño moderno del Calendar al BirthDateField
 
 ## Problema
 
-El `DateField` actual usa dropdowns nativos del navegador para mes/año (sin localización), permite cualquier rango de años (1950-2040), no restringe fechas futuras ni aplica la lógica de edad mínima 18 / máxima 90 años.
+El `BirthDateField` usa `DayPicker` directamente sin los estilos del componente `Calendar.tsx`. El `Calendar` tiene classNames detallados para celdas, encabezados, días seleccionados, etc. que le dan el aspecto moderno. El `BirthDateField` solo pasa `caption: "hidden"` y `nav: "hidden"`, dejando el resto con estilos por defecto de `react-day-picker` que se ven desalineados y sin pulir.
 
 ## Solución
 
-Crear un componente especializado `BirthDateField` que extienda la experiencia del `DateField` con las restricciones específicas para fecha de nacimiento, sin modificar el `DateField` compartido que usan otros módulos.
+Copiar los `classNames` del componente `Calendar.tsx` al `DayPicker` dentro de `BirthDateField`, manteniendo `caption: "hidden"` y `nav: "hidden"` (ya que se usa la barra custom). Además, ajustar el estilo de la barra de navegación custom (mes/año) para que sea más limpia y alineada con la referencia:
 
-### Características del nuevo componente
+- Aplicar los mismos classNames de `Calendar` (months, month, table, head_row, head_cell, row, cell, day, day_selected, day_today, day_outside, day_disabled)
+- Limpiar el padding y bordes de la barra de navegación para que se integre mejor
 
-1. **Rango**: solo fechas entre `hoy - 90 años` y `hoy - 18 años`
-2. **Localización**: pasar `locale={es}` al `DayPicker` para meses y días en español
-3. **Selector de año custom**: reemplazar el dropdown nativo por un popover con input de búsqueda que filtra solo años válidos del rango permitido; al seleccionar un año, el calendario navega a ese año
-4. **Selector de mes custom**: dropdown estilizado con los 12 meses en español
-5. **Sin botón "Hoy"**: no aplica para fecha de nacimiento (hoy está fuera del rango)
-6. **`disabled` en DayPicker**: bloquear fechas fuera del rango
-
-### Implementación
-
-El componente usará `DayPicker` directamente (sin pasar por `Calendar.tsx`) para tener control total sobre `caption` y dropdowns, renderizando componentes custom para la navegación mes/año con Lucide icons (`ChevronLeft`, `ChevronRight`) y un popover con `Input` para buscar años.
-
-### Uso en PersonaFormPage
-
-```tsx
-<BirthDateField value={field.value} onChange={field.onChange} />
-```
-
-## Archivos afectados
+## Archivo afectado
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/shared/BirthDateField.tsx` | Nuevo componente especializado |
-| `src/pages/personas/PersonaFormPage.tsx` | Reemplazar `DateField` por `BirthDateField` en fecha de nacimiento |
+| `src/components/shared/BirthDateField.tsx` | Agregar classNames completos del Calendar al DayPicker |
 
-**Total: 1 archivo nuevo, 1 archivo editado, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
 

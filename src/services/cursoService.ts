@@ -141,7 +141,11 @@ export const cursoService = {
       observaciones: null,
     };
 
-    // Don't set nombre — let the trigger auto-generate it
+    // Solo enviar nombre si el usuario lo editó manualmente; si vacío, el trigger lo genera
+    if (data.nombre && data.nombre.trim() !== '') {
+      dbData.nombre = data.nombre;
+    }
+
     const { data: row, error } = await supabase
       .from('cursos')
       .insert(dbData as any)

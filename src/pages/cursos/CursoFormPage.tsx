@@ -161,7 +161,7 @@ export default function CursoFormPage() {
   const recalcularDuracion = (inicio: string, fin: string) => {
     if (!inicio || !fin) return;
     const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
-    if (dias >= 1) form.setValue("duracionDias", dias);
+    if (dias >= 0) form.setValue("duracionDias", dias + 1);
   };
 
   const handleTipoFormacionChange = (value: string) => {
@@ -378,7 +378,7 @@ export default function CursoFormPage() {
                       const fin = form.watch("fechaFin");
                       if (inicio && fin) {
                         const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
-                        return dias >= 0 ? dias : 0;
+                        return dias >= 0 ? dias + 1 : 0;
                       }
                       return form.watch("duracionDias") || 0;
                     })()}

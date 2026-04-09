@@ -42,8 +42,14 @@ export function CursoDetailSheet({
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
   const { data: personas = [] } = usePersonas();
+  const { data: niveles = [] } = useNivelesFormacion();
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
+
+  const tipoFormacionOptions = useMemo(
+    () => niveles.map((n) => ({ value: n.id, label: n.nombre })),
+    [niveles]
+  );
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
 
@@ -54,7 +60,7 @@ export function CursoDetailSheet({
 
   if (!curso) return null;
 
-  const title = `${resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)} — #${curso.numeroCurso}`;
+  const title = `${curso.numeroCurso}—${resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)}`;
   const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {

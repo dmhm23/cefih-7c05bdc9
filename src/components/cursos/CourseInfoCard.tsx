@@ -18,6 +18,12 @@ interface CourseInfoCardProps {
 export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: CourseInfoCardProps) {
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
+  const { data: niveles = [] } = useNivelesFormacion();
+
+  const tipoFormacionOptions = useMemo(
+    () => niveles.map((n) => ({ value: n.id, label: n.nombre })),
+    [niveles]
+  );
 
   const entrenadorOptions = useMemo(() =>
     entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),

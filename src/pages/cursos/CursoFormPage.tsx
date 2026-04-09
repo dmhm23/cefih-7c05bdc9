@@ -323,10 +323,11 @@ export default function CursoFormPage() {
                   name="numeroCurso"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número del Curso *</FormLabel>
+                      <FormLabel>Número del Curso</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Ej: TA-2026-001" />
+                        <Input {...field} value={field.value || ""} disabled className="bg-muted" placeholder="Calculado automáticamente" />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground">Generado desde nivel y fecha de inicio</p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -344,6 +345,8 @@ export default function CursoFormPage() {
                           onChange={(v) => {
                             field.onChange(v);
                             recalcularDuracion(v, form.getValues("fechaFin"));
+                            const nivelId = form.getValues("tipoFormacion");
+                            if (nivelId && v) generarNumeroCurso(nivelId, v);
                           }}
                         />
                       </FormControl>

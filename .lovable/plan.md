@@ -1,59 +1,69 @@
 
 
-# Plan: Corregir contactos en vista de edición y nombre de nivel en tarifas
+# Plan: Crear tabla relacional `contactos_empresa` para persistir múltiples contactos
 
-## Problema 1: Contactos desaparecen en el formulario de edición
+## Problema
 
-La tabla `empresas` no tiene una columna `contactos`. Los datos de contacto se almacenan en los campos legacy (`persona_contacto`, `email_contacto`, `telefono_contacto`). El servicio `empresaService.getById` siempre retorna `contactos: []`.
+La UI permite agregar, editar y eliminar múltiples contactos por empresa, pero la base de datos solo tiene 3 campos planos en `empresas` (`persona_contacto`, `email_contacto`, `telefono_contacto`). Solo se persiste el contacto marcado como "Principal" y los demás se pierden al recargar.
 
-- En `EmpresaDetallePage` y `EmpresaDetailSheet`, hay lógica de fallback que reconstruye los contactos desde los campos legacy cuando `contactos` está vacío (líneas 73-75).
-- En `EmpresaFormPage`, el `useEffect` (línea 81) solo ejecuta `setContactos(empresa.contactos)` si `empresa.contactos.length > 0`. Como siempre es `[]`, nunca entra, y los contactos quedan con el valor inicial vacío del `useState` (línea 51-53): un contacto en blanco.
+## Solución
 
-### Solución
+Crear una tabla `contactos_empresa` con relación a `empresas`, y actualizar el servicio para leer/escribir contactos desde esa tabla en lugar de los campos legacy.
 
-En `EmpresaFormPage.tsx`, líneas 81-83: agregar el mismo fallback que usa `EmpresaDetallePage`, reconstruyendo el contacto desde los campos legacy cuando `empresa.contactos` está vacío.
+### Paso 1: Migración SQL
 
-```typescript
-if (empresa.contactos && empresa.contactos.length > 0) {
-  setContactos(empresa.contactos);
-} else if (empresa.personaContacto || empresa.emailContacto || empresa.telefonoContacto) {
-  setContactos([{
-    id: uuid(),
-    nombre: empresa.personaContacto || "",
-    telefono: empresa.telefonoContacto || "",
-    email: empresa.emailContacto || "",
-    esPrincipal: true,
-  }]);
-}
+```sql
+CREATE TABLE public.contactos_empresa (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id UUID NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
+  nombre TEXT NOT NULL DEFAULT '',
+  telefono TEXT NOT NULL DEFAULT '',
+  email TEXT NOT NULL DEFAULT '',
+  es_principal BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.contactos_empresa ENABLE ROW LEVEL SECURITY;
+
+-- Políticas RLS (mismas que empresas)
+CREATE POLICY "Admin gestiona contactos_empresa" ON public.contactos_empresa
+  FOR ALL TO authenticated
+  USING (get_my_rol() = ANY(ARRAY['superadministrador','administrador']))
+  WITH CHECK (get_my_rol() = ANY(ARRAY['superadministrador','administrador']));
+
+CREATE POLICY "Autenticados leen contactos_empresa" ON public.contactos_empresa
+  FOR SELECT TO authenticated USING (true);
+
+-- Migrar datos existentes de campos legacy
+INSERT INTO public.contactos_empresa (empresa_id, nombre, telefono, email, es_principal)
+SELECT id, persona_contacto, telefono_contacto, email_contacto, true
+FROM public.empresas
+WHERE deleted_at IS NULL
+  AND (persona_contacto != '' OR email_contacto != '' OR telefono_contacto != '');
 ```
 
-## Problema 2: Nivel de formación vacío en tarifas
+### Paso 2: Actualizar `src/services/empresaService.ts`
 
-En `empresaService.getTarifas` (línea ~125), el query solo hace `select('*')` de `tarifas_empresa`. El campo `nivelFormacionNombre` se asigna como `''` (hardcoded). No se hace join con `niveles_formacion` para obtener el nombre.
+- En `getAll()` y `getById()`: hacer join con `contactos_empresa` o query separado para cargar los contactos en el array `contactos` del modelo
+- En `create()`: después de insertar la empresa, insertar los contactos en `contactos_empresa`
+- En `update()`: al guardar, eliminar contactos existentes y reinsertar los nuevos (replace strategy)
+- Mantener sincronización de campos legacy (`persona_contacto`, etc.) con el contacto principal para compatibilidad con triggers existentes como `snapshot_empresa_matricula`
 
-### Solución
+### Paso 3: Eliminar fallbacks de contactos legacy en la UI
 
-Cambiar el query en `empresaService.getTarifas` para hacer un join con `niveles_formacion`:
-
-```typescript
-const { data, error } = await supabase
-  .from('tarifas_empresa')
-  .select('*, niveles_formacion!inner(nombre)')
-  .eq('empresa_id', empresaId);
-```
-
-Y mapear el nombre:
-
-```typescript
-nivelFormacionNombre: row.niveles_formacion?.nombre || '',
-```
+- `EmpresaFormPage.tsx`: eliminar la lógica de fallback que reconstruye contactos desde campos legacy (ya vendrán de la tabla)
+- `EmpresaDetallePage.tsx`: igual, eliminar fallback
+- `EmpresaDetailSheet.tsx`: igual, eliminar fallback
 
 ## Archivos afectados
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/empresas/EmpresaFormPage.tsx` | Agregar fallback de contactos desde campos legacy |
-| `src/services/empresaService.ts` | Join con `niveles_formacion` en `getTarifas` |
+| Paso | Archivo | Cambio |
+|------|---------|--------|
+| 1 | 1 migración SQL | Crear tabla `contactos_empresa` + migrar datos legacy |
+| 2 | `src/services/empresaService.ts` | CRUD de contactos desde nueva tabla |
+| 3 | `src/pages/empresas/EmpresaFormPage.tsx` | Eliminar fallback legacy |
+| 3 | `src/pages/empresas/EmpresaDetallePage.tsx` | Eliminar fallback legacy |
+| 3 | `src/components/empresas/EmpresaDetailSheet.tsx` | Eliminar fallback legacy |
 
-**Total: 2 archivos editados, 0 migraciones**
+**Total: 1 migración, 3 archivos editados, 1 servicio actualizado**
 

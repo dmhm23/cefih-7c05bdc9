@@ -330,9 +330,19 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Número del Curso</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} disabled className="bg-muted" placeholder="Calculado automáticamente" />
+                        <Input
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Se genera automáticamente al guardar"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setNumeroCursoManual(e.target.value !== "" && e.target.value !== numeroCursoAutoRef.current);
+                          }}
+                        />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">Generado desde nivel y fecha de inicio</p>
+                      <p className="text-xs text-muted-foreground">
+                        {numeroCursoManual ? "Valor manual — se usará tal cual" : "Vista previa — el valor oficial se asigna al guardar"}
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}

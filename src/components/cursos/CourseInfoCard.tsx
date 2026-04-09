@@ -55,7 +55,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
     const fin = formData.fechaFin ?? curso.fechaFin;
     if (inicio && fin) {
       const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
-      return dias >= 0 ? dias : 0;
+      return dias >= 0 ? dias + 1 : 0;
     }
     return curso.duracionDias ?? 0;
   }, [formData.fechaInicio, formData.fechaFin, curso.fechaInicio, curso.fechaFin, curso.duracionDias]);

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { DateField } from "@/components/shared/DateField";
+import { BirthDateField } from "@/components/shared/BirthDateField";
 import {
   Form,
   FormControl,
@@ -309,7 +309,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Fecha de Nacimiento *</FormLabel>
                     <FormControl>
-                      <DateField value={field.value} onChange={field.onChange} />
+                      <BirthDateField value={field.value} onChange={field.onChange} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -1,6 +1,50 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Empresa, EmpresaFormData, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
+import { Empresa, EmpresaFormData, ContactoEmpresa, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
 import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
+
+function mapContactoRow(row: any): ContactoEmpresa {
+  return {
+    id: row.id,
+    nombre: row.nombre || '',
+    telefono: row.telefono || '',
+    email: row.email || '',
+    esPrincipal: row.es_principal || false,
+  };
+}
+
+async function loadContactos(empresaId: string): Promise<ContactoEmpresa[]> {
+  const { data, error } = await supabase
+    .from('contactos_empresa')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('es_principal', { ascending: false });
+  if (error) handleSupabaseError(error);
+  return (data || []).map(mapContactoRow);
+}
+
+async function saveContactos(empresaId: string, contactos: ContactoEmpresa[]): Promise<void> {
+  // Delete existing
+  const { error: delError } = await supabase
+    .from('contactos_empresa')
+    .delete()
+    .eq('empresa_id', empresaId);
+  if (delError) handleSupabaseError(delError);
+
+  if (contactos.length === 0) return;
+
+  // Insert new
+  const rows = contactos.map(c => ({
+    empresa_id: empresaId,
+    nombre: c.nombre,
+    telefono: c.telefono,
+    email: c.email,
+    es_principal: c.esPrincipal,
+  }));
+  const { error: insError } = await supabase
+    .from('contactos_empresa')
+    .insert(rows as any);
+  if (insError) handleSupabaseError(insError);
+}
 
 function mapEmpresaRow(row: any): Empresa {
   return {

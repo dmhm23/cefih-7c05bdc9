@@ -1,28 +1,63 @@
 
 
-# Plan: Reordenar campos de contacto — Teléfono antes de Email
+# Plan: Impedir eliminación de personas con matrículas asociadas
 
 ## Problema
 
-En todas las vistas de personas, el campo Email aparece primero y Teléfono segundo. El usuario quiere el orden inverso: Teléfono primero, Email después.
-
-## Vistas afectadas
-
-1. **`PersonaFormPage.tsx`** (líneas 376-399): En la card "Datos de Contacto", el `FormField` de `email` está antes del de `telefono`.
-2. **`PersonaDetallePage.tsx`** (líneas 219-228): En la sección de contacto, `EditableField` de Email va antes del de Teléfono.
-3. **`PersonaDetailSheet.tsx`** (líneas 250-261): Mismo orden invertido en el panel lateral.
+El servicio `personaService.delete` ejecuta un soft-delete sin verificar si la persona tiene matrículas activas. Además, el `catch` en `PersonasPage` muestra un mensaje genérico "Error al eliminar".
 
 ## Solución
 
-En cada archivo, intercambiar el orden de los bloques de Email y Teléfono (mover el bloque de Teléfono arriba del de Email). Sin cambios de lógica ni de datos.
+Agregar una verificación en `personaService.delete` que consulte la tabla `matriculas` antes de proceder. Si existen matrículas asociadas (no eliminadas), lanzar un `ApiError` con mensaje descriptivo. Luego, en `PersonasPage`, mostrar `err.message` en el toast (mismo patrón ya aplicado en niveles y tarifas).
+
+## Cambios
+
+### 1. `src/services/personaService.ts` — Verificar matrículas antes de eliminar
+
+```typescript
+async delete(id: string): Promise<void> {
+  // Verificar si tiene matrículas asociadas
+  const { count, error: countError } = await supabase
+    .from('matriculas')
+    .select('id', { count: 'exact', head: true })
+    .eq('persona_id', id)
+    .is('deleted_at', null);
+
+  if (countError) handleSupabaseError(countError);
+  if ((count ?? 0) > 0) {
+    throw new ApiError(
+      'No se puede eliminar: esta persona tiene matrículas asociadas',
+      400,
+      'PERSONA_CON_MATRICULAS'
+    );
+  }
+
+  // Soft delete
+  const { error } = await supabase
+    .from('personas')
+    .update({ deleted_at: new Date().toISOString(), activo: false })
+    .eq('id', id);
+
+  if (error) handleSupabaseError(error);
+},
+```
+
+### 2. `src/pages/personas/PersonasPage.tsx` — Mostrar mensaje específico en ambos catch
+
+En `handleDelete` y `handleBulkDelete`, cambiar el catch genérico por:
+
+```typescript
+} catch (err: any) {
+  toast({ title: err?.message || "Error al eliminar", variant: "destructive" });
+}
+```
 
 ## Archivos afectados
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/pages/personas/PersonaFormPage.tsx` | Intercambiar orden: Teléfono antes de Email |
-| `src/pages/personas/PersonaDetallePage.tsx` | Intercambiar orden: Teléfono antes de Email |
-| `src/components/personas/PersonaDetailSheet.tsx` | Intercambiar orden: Teléfono antes de Email |
+| `src/services/personaService.ts` | Verificar matrículas antes del soft-delete |
+| `src/pages/personas/PersonasPage.tsx` | Usar `err.message` en catch de delete individual y masivo |
 
-**Total: 3 archivos editados, 0 migraciones**
+**Total: 2 archivos editados, 0 migraciones**
 

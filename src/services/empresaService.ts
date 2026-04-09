@@ -139,7 +139,15 @@ export const empresaService = {
       if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
       handleSupabaseError(error);
     }
-    return mapEmpresaRow(row);
+    const empresa = mapEmpresaRow(row);
+
+    // Save contactos
+    if (data.contactos?.length) {
+      await saveContactos(empresa.id, data.contactos);
+      empresa.contactos = data.contactos;
+    }
+
+    return empresa;
   },
 
   async update(id: string, data: Partial<EmpresaFormData>): Promise<Empresa> {
@@ -155,7 +163,15 @@ export const empresaService = {
       if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
       handleSupabaseError(error);
     }
-    return mapEmpresaRow(row);
+    const empresa = mapEmpresaRow(row);
+
+    // Save contactos if provided
+    if (data.contactos) {
+      await saveContactos(id, data.contactos);
+      empresa.contactos = data.contactos;
+    }
+
+    return empresa;
   },
 
   async delete(id: string): Promise<void> {

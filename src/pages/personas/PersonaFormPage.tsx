@@ -216,7 +216,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>No. Documento *</FormLabel>
                     <FormControl>
-                      <Input {...field} disabled={isEditing} placeholder="1234567890" />
+                      <Input {...field} placeholder="1234567890" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

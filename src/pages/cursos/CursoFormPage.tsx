@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { differenceInCalendarDays } from "date-fns";
+import { cursoService } from "@/services/cursoService";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
@@ -164,6 +165,27 @@ export default function CursoFormPage() {
     if (dias >= 0) form.setValue("duracionDias", dias + 1);
   };
 
+  const generarNumeroCurso = async (nivelId: string, fechaInicio: string) => {
+    if (!nivelId || !fechaInicio) return;
+    const nivel = niveles.find((n) => n.id === nivelId);
+    if (!nivel) return;
+    const config = nivel.configuracionCodigoEstudiante;
+    if (!config || !config.activo) {
+      form.setValue("numeroCurso", "");
+      return;
+    }
+    const date = new Date(fechaInicio);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const anio2d = String(year).slice(-2);
+    const mes2d = String(month).padStart(2, '0');
+    const count = await cursoService.countByNivelAndMonth(nivelId, year, month);
+    const consecutivo = String(count + 1).padStart(2, '0');
+    const sep = config.separadorCodigo || '-';
+    const codigo = `${config.prefijoCodigo}${sep}${config.codigoTipoFormacion}${sep}${anio2d}${sep}${mes2d}${sep}${consecutivo}`;
+    form.setValue("numeroCurso", codigo);
+  };
+
   const handleTipoFormacionChange = (value: string) => {
     form.setValue("tipoFormacion", value);
     const nivel = niveles.find((n) => n.id === value);
@@ -180,8 +202,14 @@ export default function CursoFormPage() {
 
       const defaults = getDefaults(campos);
       Object.entries(defaults).forEach(([k, v]) => form.setValue(k, v));
+
+      // Regenerar número de curso
+      const fechaInicio = form.getValues("fechaInicio");
+      if (fechaInicio) generarNumeroCurso(value, fechaInicio);
+      else form.setValue("numeroCurso", "");
     } else {
       setCamposAdicionales([]);
+      form.setValue("numeroCurso", "");
     }
   };
 

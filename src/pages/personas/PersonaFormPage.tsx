@@ -375,12 +375,12 @@ export default function PersonaFormPage() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="telefono"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Teléfono *</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} placeholder="correo@email.com" />
+                      <Input {...field} placeholder="3001234567" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -388,12 +388,12 @@ export default function PersonaFormPage() {
               />
               <FormField
                 control={form.control}
-                name="telefono"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Teléfono *</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="3001234567" />
+                      <Input type="email" {...field} placeholder="correo@email.com" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

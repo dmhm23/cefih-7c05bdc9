@@ -217,16 +217,16 @@ export default function PersonaDetallePage() {
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <EditableField
-                label="Email"
-                value={getValue("email")}
-                onChange={(v) => handleFieldChange("email", v)}
-                icon={Mail}
-              />
-              <EditableField
                 label="Teléfono"
                 value={getValue("telefono")}
                 onChange={(v) => handleFieldChange("telefono", v)}
                 icon={Phone}
+              />
+              <EditableField
+                label="Email"
+                value={getValue("email")}
+                onChange={(v) => handleFieldChange("email", v)}
+                icon={Mail}
               />
             </div>
           </div>

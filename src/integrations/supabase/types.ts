@@ -262,6 +262,44 @@ export type Database = {
         }
         Relationships: []
       }
+      contactos_empresa: {
+        Row: {
+          created_at: string
+          email: string
+          empresa_id: string
+          es_principal: boolean
+          id: string
+          nombre: string
+          telefono: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          empresa_id: string
+          es_principal?: boolean
+          id?: string
+          nombre?: string
+          telefono?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          empresa_id?: string
+          es_principal?: boolean
+          id?: string
+          nombre?: string
+          telefono?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contactos_empresa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cursos: {
         Row: {
           activo: boolean

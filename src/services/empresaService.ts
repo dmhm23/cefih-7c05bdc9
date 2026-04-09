@@ -1,6 +1,50 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Empresa, EmpresaFormData, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
+import { Empresa, EmpresaFormData, ContactoEmpresa, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
 import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
+
+function mapContactoRow(row: any): ContactoEmpresa {
+  return {
+    id: row.id,
+    nombre: row.nombre || '',
+    telefono: row.telefono || '',
+    email: row.email || '',
+    esPrincipal: row.es_principal || false,
+  };
+}
+
+async function loadContactos(empresaId: string): Promise<ContactoEmpresa[]> {
+  const { data, error } = await supabase
+    .from('contactos_empresa')
+    .select('*')
+    .eq('empresa_id', empresaId)
+    .order('es_principal', { ascending: false });
+  if (error) handleSupabaseError(error);
+  return (data || []).map(mapContactoRow);
+}
+
+async function saveContactos(empresaId: string, contactos: ContactoEmpresa[]): Promise<void> {
+  // Delete existing
+  const { error: delError } = await supabase
+    .from('contactos_empresa')
+    .delete()
+    .eq('empresa_id', empresaId);
+  if (delError) handleSupabaseError(delError);
+
+  if (contactos.length === 0) return;
+
+  // Insert new
+  const rows = contactos.map(c => ({
+    empresa_id: empresaId,
+    nombre: c.nombre,
+    telefono: c.telefono,
+    email: c.email,
+    es_principal: c.esPrincipal,
+  }));
+  const { error: insError } = await supabase
+    .from('contactos_empresa')
+    .insert(rows as any);
+  if (insError) handleSupabaseError(insError);
+}
 
 function mapEmpresaRow(row: any): Empresa {
   return {
@@ -45,23 +89,30 @@ export const empresaService = {
   async getAll(): Promise<Empresa[]> {
     const { data, error } = await supabase
       .from('empresas')
-      .select('*')
+      .select('*, contactos_empresa(*)')
       .is('deleted_at', null)
       .order('nombre_empresa');
 
     if (error) handleSupabaseError(error);
-    return (data || []).map(mapEmpresaRow);
+    return (data || []).map(row => {
+      const empresa = mapEmpresaRow(row);
+      empresa.contactos = ((row as any).contactos_empresa || []).map(mapContactoRow);
+      return empresa;
+    });
   },
 
   async getById(id: string): Promise<Empresa | null> {
     const { data, error } = await supabase
       .from('empresas')
-      .select('*')
+      .select('*, contactos_empresa(*)')
       .eq('id', id)
       .maybeSingle();
 
     if (error) handleSupabaseError(error);
-    return data ? mapEmpresaRow(data) : null;
+    if (!data) return null;
+    const empresa = mapEmpresaRow(data);
+    empresa.contactos = ((data as any).contactos_empresa || []).map(mapContactoRow);
+    return empresa;
   },
 
   async search(query: string): Promise<Empresa[]> {
@@ -88,7 +139,15 @@ export const empresaService = {
       if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
       handleSupabaseError(error);
     }
-    return mapEmpresaRow(row);
+    const empresa = mapEmpresaRow(row);
+
+    // Save contactos
+    if (data.contactos?.length) {
+      await saveContactos(empresa.id, data.contactos);
+      empresa.contactos = data.contactos;
+    }
+
+    return empresa;
   },
 
   async update(id: string, data: Partial<EmpresaFormData>): Promise<Empresa> {
@@ -104,7 +163,15 @@ export const empresaService = {
       if (error.code === '23505') throw new ApiError('Ya existe una empresa con este NIT', 400, 'NIT_DUPLICADO');
       handleSupabaseError(error);
     }
-    return mapEmpresaRow(row);
+    const empresa = mapEmpresaRow(row);
+
+    // Save contactos if provided
+    if (data.contactos) {
+      await saveContactos(id, data.contactos);
+      empresa.contactos = data.contactos;
+    }
+
+    return empresa;
   },
 
   async delete(id: string): Promise<void> {

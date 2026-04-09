@@ -70,9 +70,7 @@ export default function EmpresaDetallePage() {
     setFormData({});
     setIsDirty(false);
     if (empresa) {
-      setContactos(empresa.contactos?.length ? [...empresa.contactos] : [
-        { id: uuid(), nombre: empresa.personaContacto || "", telefono: empresa.telefonoContacto || "", email: empresa.emailContacto || "", esPrincipal: true }
-      ]);
+      setContactos(empresa.contactos?.length ? [...empresa.contactos] : []);
     }
   }, [empresa?.id]);
 

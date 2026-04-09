@@ -300,6 +300,35 @@ export type Database = {
           },
         ]
       }
+      curso_consecutivos: {
+        Row: {
+          anio: number
+          mes: number
+          nivel_formacion_id: string
+          ultimo_consecutivo: number
+        }
+        Insert: {
+          anio: number
+          mes: number
+          nivel_formacion_id: string
+          ultimo_consecutivo?: number
+        }
+        Update: {
+          anio?: number
+          mes?: number
+          nivel_formacion_id?: string
+          ultimo_consecutivo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curso_consecutivos_nivel_formacion_id_fkey"
+            columns: ["nivel_formacion_id"]
+            isOneToOne: false
+            referencedRelation: "niveles_formacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cursos: {
         Row: {
           activo: boolean

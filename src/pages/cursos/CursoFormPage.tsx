@@ -122,6 +122,8 @@ export default function CursoFormPage() {
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const [camposAdicionales, setCamposAdicionales] = useState<CampoAdicional[]>([]);
+  const [numeroCursoManual, setNumeroCursoManual] = useState(false);
+  const numeroCursoAutoRef = useRef("");
 
   const schema = useMemo(
     () => z.object({ ...baseSchema, ...buildDynamicSchema(camposAdicionales) }),
@@ -171,7 +173,8 @@ export default function CursoFormPage() {
     if (!nivel) return;
     const config = nivel.configuracionCodigoEstudiante;
     if (!config || !config.activo) {
-      form.setValue("numeroCurso", "");
+      numeroCursoAutoRef.current = "";
+      if (!numeroCursoManual) form.setValue("numeroCurso", "");
       return;
     }
     const date = new Date(fechaInicio);
@@ -183,7 +186,8 @@ export default function CursoFormPage() {
     const consecutivo = String(count + 1).padStart(2, '0');
     const sep = config.separadorCodigo || '-';
     const codigo = `${config.prefijoCodigo}${sep}${config.codigoTipoFormacion}${sep}${anio2d}${sep}${mes2d}${sep}${consecutivo}`;
-    form.setValue("numeroCurso", codigo);
+    numeroCursoAutoRef.current = codigo;
+    if (!numeroCursoManual) form.setValue("numeroCurso", codigo);
   };
 
   const handleTipoFormacionChange = (value: string) => {
@@ -245,10 +249,10 @@ export default function CursoFormPage() {
 
       const nivel = niveles.find((n) => n.id === data.tipoFormacion);
       const tipoFormacionDb = nivel?.tipoFormacion || 'formacion_inicial';
-      const label = nivel?.nombreNivel || data.tipoFormacion;
-      const numeroCurso = data.numeroCurso || '';
+      // Solo enviar nombre si el usuario lo editó manualmente
+      const nombreFinal = numeroCursoManual ? (data.numeroCurso || '') : '';
       await createCurso.mutateAsync({
-        nombre: numeroCurso,
+        nombre: nombreFinal,
         descripcion: "",
         tipoFormacion: tipoFormacionDb as any,
         nivelFormacionId: data.tipoFormacion,
@@ -326,9 +330,19 @@ export default function CursoFormPage() {
                     <FormItem>
                       <FormLabel>Número del Curso</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value || ""} disabled className="bg-muted" placeholder="Calculado automáticamente" />
+                        <Input
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Se genera automáticamente al guardar"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            setNumeroCursoManual(e.target.value !== "" && e.target.value !== numeroCursoAutoRef.current);
+                          }}
+                        />
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">Generado desde nivel y fecha de inicio</p>
+                      <p className="text-xs text-muted-foreground">
+                        {numeroCursoManual ? "Valor manual — se usará tal cual" : "Vista previa — el valor oficial se asigna al guardar"}
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}

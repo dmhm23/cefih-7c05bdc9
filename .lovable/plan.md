@@ -1,77 +1,77 @@
 
 
-# Plan: Corregir persistencia de nivel de formación y horas en cursos
+# Plan: Corregir formato del nombre del curso y dropdown vacío de niveles
 
-## Diagnóstico
+## Problemas identificados
 
-Analicé los datos en base de datos y el código completo del flujo. Los dos problemas tienen causas raíz distintas pero conectadas:
+### 1. Orden del nombre del curso
+En `CursosListView.tsx` (línea 107) y `CursoDetailSheet.tsx` (línea 58), el label se construye como:
+```
+{nivelNombre} — #{numeroCurso}
+```
+El usuario necesita:
+```
+{numeroCurso}—{nivelNombre}
+```
 
-### Problema 1: "Siempre muestra el primer nivel"
-
-**No es un problema de guardado, sino de visualización.** Los datos en la base de datos confirman que el `nivel_formacion_id` sí se guarda correctamente con el UUID del nivel seleccionado. Sin embargo, todos los niveles existentes comparten el mismo `tipo_formacion: formacion_inicial` en la base de datos.
-
-El panel lateral (`CursoDetailSheet`) y la lista muestran el label llamando a `resolveNivelCursoLabel(curso.tipoFormacion)`, donde `curso.tipoFormacion` es siempre `trabajador_autorizado` (el mapeo frontend de `formacion_inicial`). Esto hace que el label siempre resuelva a **"Trabajador Autorizado"**, sin importar qué nivel se seleccionó.
-
-**Causa raíz**: Las vistas usan `tipoFormacion` (el enum genérico) en lugar de `nivelFormacionId` (el UUID específico del nivel) para mostrar el nombre.
-
-### Problema 2: "Horas se guardan en 0"
-
-La tabla `cursos` no tiene columna para horas totales. En el formulario, las horas se leen del nivel seleccionado y se muestran correctamente. Pero al guardar, `cursoService.create` nunca envía ese valor, y `mapCursoRow` hardcodea `horasTotales: 0` y `duracionDias: 0`.
-
-**Causa raíz**: No existe persistencia ni lectura de las horas del curso.
+### 2. Dropdown de niveles vacío
+En `CursoDetailSheet.tsx` (línea 32) y `CourseInfoCard.tsx` (línea 10), las opciones se calculan **una sola vez al cargar el módulo**:
+```typescript
+const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
+```
+`getNivelesAsOptions()` lee de `_cache`, que se llena de forma asíncrona. Si el módulo se importa antes de que la cache esté lista, `_cache` es `null` y retorna `[]`. Como es una constante a nivel de módulo, nunca se recalcula.
 
 ---
 
 ## Solución
 
-### 1. Migración SQL: Agregar columnas `duracion_horas` y `duracion_dias` a `cursos`
+### 1. Invertir el orden del label (3 archivos)
 
-```sql
-ALTER TABLE public.cursos
-  ADD COLUMN duracion_horas integer NOT NULL DEFAULT 0,
-  ADD COLUMN duracion_dias integer NOT NULL DEFAULT 0;
-```
-
-Esto permite persistir ambos valores sin depender de recalcularlos desde el nivel o las fechas cada vez que se lee un curso.
-
-### 2. `src/services/cursoService.ts` — Persistir horas y días, y leerlos
-
-**En `create`**: incluir `duracion_horas` y `duracion_dias` en el objeto `dbData`.
-
-**En `mapCursoRow`**: leer `row.duracion_horas` y `row.duracion_dias` en lugar de hardcodear 0. También mapear `nivelFormacionId` correctamente (ya se hace).
-
-### 3. `src/pages/cursos/CursoFormPage.tsx` — Enviar horas y días al guardar
-
-En `onSubmit`, asegurar que `horasTotales` y `duracionDias` se incluyan en el payload que va a `createCurso.mutateAsync`.
-
-### 4. Vistas de detalle — Usar `nivelFormacionId` para el label
-
-En `CursoDetailSheet.tsx` y `CourseInfoCard.tsx`, cambiar:
+En `CursosListView.tsx`, `CursoDetailSheet.tsx` y `CursosCalendarioView.tsx`, cambiar el formato de:
 ```typescript
-// Antes:
-resolveNivelCursoLabel(curso.tipoFormacion)
-// Después:
-resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)
+`${resolveNivelCursoLabel(...)} — #${curso.numeroCurso}`
+```
+a:
+```typescript
+`${curso.numeroCurso}—${resolveNivelCursoLabel(...)}`
 ```
 
-La función `resolve` ya busca por UUID primero, así que al pasarle el `nivelFormacionId` resolverá al nombre correcto del nivel ("Coordinador de trabajo en alturas", "Reentrenamiento Trabajador Autorizado", etc.).
+### 2. Mover las opciones del dropdown dentro del componente (2 archivos)
 
-### 5. Lista de cursos — Mismo ajuste de label
+En `CursoDetailSheet.tsx` y `CourseInfoCard.tsx`, mover `getNivelesAsOptions()` de constante de módulo a un `useMemo` dentro del componente, recalculándose cuando la cache de niveles cambie:
 
-Verificar y ajustar `CursosListView.tsx` y `CursosCalendarioView.tsx` para que usen `nivelFormacionId` al mostrar el tipo/nivel.
+```typescript
+// Antes (nivel de módulo, se ejecuta 1 vez):
+const TIPO_FORMACION_OPTIONS = getNivelesAsOptions();
+
+// Después (dentro del componente, se recalcula):
+const tipoFormacionOptions = useMemo(() => getNivelesAsOptions(), [nivelesLoaded]);
+```
+
+Para detectar cuándo la cache está lista, usar `useNivelesFormacion()` (que ya existe y hace la query con React Query) y derivar las opciones de esos datos, o simplemente llamar `getNivelesAsOptions()` dentro del render (ya que para ese momento la cache estará poblada por la precarga que ocurre en la app).
+
+La solución más simple y robusta: usar el hook `useNivelesFormacion` que ya existe y derivar las opciones directamente de sus datos:
+
+```typescript
+const { data: niveles = [] } = useNivelesFormacion();
+const tipoFormacionOptions = useMemo(
+  () => niveles.map(n => ({ value: n.id, label: n.nombre })),
+  [niveles]
+);
+```
+
+Esto elimina la dependencia de la cache síncrona y siempre tendrá datos actualizados.
 
 ---
 
 ## Resumen de cambios
 
-| Recurso | Cambio |
+| Archivo | Cambio |
 |---------|--------|
-| Migración SQL | Agregar columnas `duracion_horas` y `duracion_dias` a `cursos` |
-| `src/services/cursoService.ts` | Persistir y leer horas/días; ya no hardcodear 0 |
-| `src/pages/cursos/CursoFormPage.tsx` | Enviar `horasTotales` y `duracionDias` en el submit |
-| `src/components/cursos/CursoDetailSheet.tsx` | Usar `nivelFormacionId` para resolver el label |
-| `src/components/cursos/CourseInfoCard.tsx` | Usar `nivelFormacionId` para resolver el label |
-| `src/components/cursos/CursosListView.tsx` | Usar `nivelFormacionId` para resolver el label |
+| `src/components/cursos/CursosListView.tsx` | Invertir orden del label a `{numero}—{nivel}` |
+| `src/components/cursos/CursoDetailSheet.tsx` | Invertir orden del label + mover opciones a `useNivelesFormacion` |
+| `src/components/cursos/CourseInfoCard.tsx` | Mover opciones a `useNivelesFormacion` |
+| `src/components/cursos/CursosCalendarioView.tsx` | Invertir orden del label (si aplica) |
 
-**Total: 1 migración, 4-5 archivos editados**
+**Total: 3-4 archivos editados, 0 migraciones**
 

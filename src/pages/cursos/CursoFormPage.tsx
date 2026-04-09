@@ -35,7 +35,7 @@ import { CampoAdicional } from "@/types/nivelFormacion";
 
 const baseSchema = {
   tipoFormacion: z.string().min(1, "Seleccione el tipo de formación"),
-  numeroCurso: z.string().min(1, "Ingrese el número del curso"),
+  numeroCurso: z.string().optional(),
   fechaInicio: z.string().min(1, "Seleccione la fecha de inicio"),
   fechaFin: z.string().optional(),
   duracionDias: z.coerce.number().min(1, "Mínimo 1 día"),

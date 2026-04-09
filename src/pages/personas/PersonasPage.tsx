@@ -111,8 +111,8 @@ export default function PersonasPage() {
     try {
       await deletePersona.mutateAsync(deleteId);
       toast({ title: "Persona eliminada correctamente" });
-    } catch {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Error al eliminar", variant: "destructive" });
     }
     setDeleteId(null);
   };
@@ -124,8 +124,8 @@ export default function PersonasPage() {
       }
       toast({ title: `${selectedIds.length} personas eliminadas` });
       setSelectedIds([]);
-    } catch {
-      toast({ title: "Error al eliminar", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: err?.message || "Error al eliminar", variant: "destructive" });
     }
     setBulkDeleteConfirm(false);
   };

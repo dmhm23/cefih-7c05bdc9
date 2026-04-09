@@ -146,6 +146,22 @@ export const personaService = {
   },
 
   async delete(id: string): Promise<void> {
+    // Verificar si tiene matrículas asociadas
+    const { count, error: countError } = await supabase
+      .from('matriculas')
+      .select('id', { count: 'exact', head: true })
+      .eq('persona_id', id)
+      .is('deleted_at', null);
+
+    if (countError) handleSupabaseError(countError);
+    if ((count ?? 0) > 0) {
+      throw new ApiError(
+        'No se puede eliminar: esta persona tiene matrículas asociadas',
+        400,
+        'PERSONA_CON_MATRICULAS'
+      );
+    }
+
     // Soft delete
     const { error } = await supabase
       .from('personas')

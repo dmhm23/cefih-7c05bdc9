@@ -335,6 +335,8 @@ export type Database = {
           capacidad_maxima: number
           created_at: string
           deleted_at: string | null
+          duracion_dias: number
+          duracion_horas: number
           entrenador_id: string | null
           estado: Database["public"]["Enums"]["estado_curso"]
           fecha_fin: string | null
@@ -353,6 +355,8 @@ export type Database = {
           capacidad_maxima?: number
           created_at?: string
           deleted_at?: string | null
+          duracion_dias?: number
+          duracion_horas?: number
           entrenador_id?: string | null
           estado?: Database["public"]["Enums"]["estado_curso"]
           fecha_fin?: string | null
@@ -371,6 +375,8 @@ export type Database = {
           capacidad_maxima?: number
           created_at?: string
           deleted_at?: string | null
+          duracion_dias?: number
+          duracion_horas?: number
           entrenador_id?: string | null
           estado?: Database["public"]["Enums"]["estado_curso"]
           fecha_fin?: string | null

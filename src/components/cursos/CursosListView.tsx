@@ -104,7 +104,7 @@ export default function CursosListView() {
   }).length;
 
   const getCursoLabel = (c: Curso) =>
-    `${resolveNivelCursoLabel(c.tipoFormacion)} — #${c.numeroCurso}`;
+    `${resolveNivelCursoLabel(c.nivelFormacionId || c.tipoFormacion)} — #${c.numeroCurso}`;
 
   const filteredCursos = cursos.filter((c) => {
     const label = getCursoLabel(c).toLowerCase();
@@ -260,7 +260,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       header: "Tipo Formación",
-      render: (c: Curso) => resolveNivelCursoLabel(c.tipoFormacion),
+      render: (c: Curso) => resolveNivelCursoLabel(c.nivelFormacionId || c.tipoFormacion),
     },
     {
       key: "minTrabajoRegistro",

@@ -251,6 +251,12 @@ export default function CursoFormPage() {
       const tipoFormacionDb = nivel?.tipoFormacion || 'formacion_inicial';
       // Solo enviar nombre si el usuario lo editó manualmente
       const nombreFinal = numeroCursoManual ? (data.numeroCurso || '') : '';
+      // Calcular duración real desde fechas
+      let duracionDiasReal = data.duracionDias || 0;
+      if (data.fechaInicio && data.fechaFin) {
+        const dias = differenceInCalendarDays(new Date(data.fechaFin), new Date(data.fechaInicio));
+        if (dias >= 0) duracionDiasReal = dias + 1;
+      }
       await createCurso.mutateAsync({
         nombre: nombreFinal,
         descripcion: "",
@@ -259,7 +265,7 @@ export default function CursoFormPage() {
         numeroCurso: data.numeroCurso,
         fechaInicio: data.fechaInicio,
         fechaFin: data.fechaFin ?? "",
-        duracionDias: data.duracionDias,
+        duracionDias: duracionDiasReal,
         horasTotales: data.horasTotales,
         entrenadorId: data.entrenadorId,
         entrenadorNombre: data.entrenadorNombre,

@@ -41,8 +41,8 @@ function mapCursoRow(row: any): Curso {
     numeroCurso: row.nombre || '',
     fechaInicio: row.fecha_inicio || '',
     fechaFin: row.fecha_fin || '',
-    duracionDias: 0,
-    horasTotales: 0,
+    duracionDias: row.duracion_dias ?? 0,
+    horasTotales: row.duracion_horas ?? 0,
     entrenadorId: row.entrenador_id || '',
     entrenadorNombre: (row as any).entrenador?.nombres 
       ? `${(row as any).entrenador.nombres} ${(row as any).entrenador.apellidos || ''}`
@@ -139,6 +139,8 @@ export const cursoService = {
       entrenador_id: data.entrenadorId || null,
       supervisor_id: data.supervisorId || null,
       observaciones: null,
+      duracion_horas: data.horasTotales || 0,
+      duracion_dias: data.duracionDias || 0,
     };
 
     // Solo enviar nombre si el usuario lo editó manualmente; si vacío, el trigger lo genera
@@ -166,6 +168,8 @@ export const cursoService = {
     if (data.entrenadorId !== undefined) dbData.entrenador_id = data.entrenadorId || null;
     if (data.supervisorId !== undefined) dbData.supervisor_id = data.supervisorId || null;
     if (data.estado !== undefined) dbData.estado = ESTADO_FE_TO_DB[data.estado] || data.estado;
+    if (data.horasTotales !== undefined) dbData.duracion_horas = data.horasTotales;
+    if (data.duracionDias !== undefined) dbData.duracion_dias = data.duracionDias;
     if (data.nombre !== undefined) dbData.nombre = data.nombre;
 
     const { data: row, error } = await supabase

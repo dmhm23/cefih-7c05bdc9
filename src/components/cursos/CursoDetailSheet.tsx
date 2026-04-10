@@ -44,12 +44,24 @@ export function CursoDetailSheet({
   const updateCurso = useUpdateCurso();
   const { data: personas = [] } = usePersonas();
   const { data: niveles = [] } = useNivelesFormacion();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+  const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
   const tipoFormacionOptions = useMemo(
     () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
     [niveles]
+  );
+
+  const entrenadorOptions = useMemo(() =>
+    entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),
+    [entrenadores]
+  );
+
+  const supervisorOptions = useMemo(() =>
+    supervisores.map((s) => ({ value: s.id, label: `${s.nombres} ${s.apellidos}` })),
+    [supervisores]
   );
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");

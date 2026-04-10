@@ -1,46 +1,47 @@
 
 
-# Plan: Crear componente CurrencyInput y aplicarlo globalmente
+# Plan: Corregir sección Vinculación Laboral en detalle de matrícula
 
-## Diagnóstico
+## Problemas identificados
 
-El campo `valorCupo` en `MatriculaFormPage` usa `<Input type="number">` con `onChange={(e) => field.onChange(Number(e.target.value) || 0)}`. El `|| 0` impide borrar el valor (siempre vuelve a 0), y `type="number"` no permite formato con separador de miles.
+1. **Cambio de tipo de vinculación no limpia campos**: `handleFieldChange` solo actualiza un campo a la vez. Al cambiar `tipoVinculacion` de "empresa" a "independiente", los campos `empresaNombre`, `empresaNit`, `empresaId`, etc. conservan los valores anteriores.
 
-Este mismo patrón se repite en todos los campos monetarios de la aplicación.
+2. **Campo Empresa es texto libre**: Actualmente es un `EditableField` de tipo `text`. Debería ser un dropdown con las empresas del directorio, y al seleccionar una, autocompletar NIT, Representante legal, Sector económico, ARL y contacto.
 
-## Solución
+3. **Regla de negocio Independiente**: Cuando `tipoVinculacion === "independiente"`, Empresa debe mostrar el nombre completo del estudiante y NIT su número de documento, automáticamente.
 
-Crear un componente reutilizable `CurrencyInput` que:
-- Use `type="text"` (no `number`) para permitir formateo visual
-- Formatee automáticamente con separador de miles (punto) al estilo colombiano: `95.000`
-- Permita borrar el campo completamente (valor vacío = `undefined` o `0` según contexto)
-- Internamente maneje solo dígitos, ignorando caracteres no numéricos
-- Exponga `value: number | undefined` y `onChange: (value: number | undefined) => void`
-
-## Campos afectados (7 instancias en 5 archivos)
-
-| Archivo | Campo(s) |
-|---------|----------|
-| `src/pages/matriculas/MatriculaFormPage.tsx` | `valorCupo` (línea 1263) |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | `valorCupo` y `abono` via `EditableField` (líneas 772-780) |
-| `src/components/cartera/RegistrarPagoDialog.tsx` | `valorPago` (línea 106) |
-| `src/components/cartera/EditarPagoDialog.tsx` | `valorPago` (línea 106) |
-| `src/components/cartera/CrearFacturaDialog.tsx` | `totalFactura` (línea 115) |
-| `src/components/cartera/EditarFacturaDialog.tsx` | `editTotal` (línea 113) |
-| `src/pages/empresas/EmpresaDetallePage.tsx` | tarifa `Valor` (línea 526) |
+4. **Layout roto en grid de 3 columnas**: Campos con contenido largo (Nivel de formación, Sector económico) desbordan su celda. El botón "Ver empresa en directorio" ocupa una celda sin alineación.
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/shared/CurrencyInput.tsx` | **Nuevo.** Componente que acepta `value: number | undefined`, `onChange(v: number | undefined)`, y opcionalmente `placeholder`. Usa `type="text"`, formatea con `toLocaleString('es-CO')` al mostrar, y parsea solo dígitos al editar. Permite vaciar el campo. |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar `<Input type="number">` por `<CurrencyInput>` en `valorCupo`. Ajustar `onChange` para pasar `value ?? 0`. |
-| `src/components/cartera/RegistrarPagoDialog.tsx` | Reemplazar `<Input type="number">` por `<CurrencyInput>` en `valorPago`. |
-| `src/components/cartera/EditarPagoDialog.tsx` | Ídem para `valorPago`. |
-| `src/components/cartera/CrearFacturaDialog.tsx` | Ídem para `totalFactura`. |
-| `src/components/cartera/EditarFacturaDialog.tsx` | Ídem para `editTotal`. |
-| `src/pages/empresas/EmpresaDetallePage.tsx` | Ídem para tarifa valor. |
-| `src/components/shared/EditableField.tsx` | Agregar soporte para `type="currency"` que use `CurrencyInput` internamente, para que los campos editables de detalle de matrícula (`valorCupo`, `abono`) se beneficien automáticamente. |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | **1)** Importar `useEmpresas` y cargar la lista de empresas. **2)** Crear función `handleTipoVinculacionChange(nuevoTipo)` que: si `independiente` → setear `empresaNombre` con nombre+apellidos del estudiante, `empresaNit` con su documento, limpiar `empresaId`, `empresaRepresentanteLegal`, contacto empresa; si `empresa`/`arl` → limpiar campos empresa para forzar nueva selección; invoca `handleFieldChange` para cada campo afectado. **3)** Reemplazar el `EditableField` de "Empresa" (línea 644-648) por un `EditableField type="select"` con las opciones de empresas del directorio (value=id, label=nombreEmpresa). **4)** Crear función `handleEmpresaSelect(empresaId)` que busca la empresa en la lista y autocompleta: `empresaId`, `empresaNombre`, `empresaNit`, `empresaRepresentanteLegal`, `sectorEconomico`, `arl`, `empresaContactoNombre`, `empresaContactoTelefono`. **5)** Cuando `tipoVinculacion === "independiente"`, mostrar los campos Empresa y NIT como `editable={false}` (solo lectura, ya que se autocompletaron). **6)** Mover "Ver empresa en directorio" debajo de la grilla como un enlace de texto alineado, fuera de las celdas del grid. **7)** Agregar `min-w-0` a las celdas del grid y `truncate` a campos con texto largo para evitar desborde visual. |
 
-**Total: 1 componente nuevo, 7 archivos editados, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
+
+## Detalle técnico
+
+### Lógica de `handleTipoVinculacionChange`
+```
+switch (nuevoTipo):
+  "independiente":
+    empresaNombre = `${persona.nombres} ${persona.apellidos}`
+    empresaNit = persona.numeroDocumento
+    empresaId = ""
+    empresaRepresentanteLegal = ""
+    empresaContactoNombre = ""
+    empresaContactoTelefono = ""
+  "empresa" | "arl":
+    empresaNombre = ""
+    empresaNit = ""
+    empresaId = ""
+    empresaRepresentanteLegal = ""
+    empresaContactoNombre = ""
+    empresaContactoTelefono = ""
+```
+
+### Layout fix
+- Grid: `grid grid-cols-2 md:grid-cols-3 gap-3` → agregar clase `[&>*]:min-w-0` para que los hijos respeten el ancho de columna.
+- El botón "Ver empresa en directorio" sale del grid y va como elemento independiente debajo, con `mt-2`.
 

@@ -128,6 +128,7 @@ export function EditableField({
         return (
           <Input
             ref={inputRef}
+            autoFocus
             value={localValue}
             onChange={(e) => setLocalValue(e.target.value)}
             onBlur={handleBlur}
@@ -188,15 +189,36 @@ export function EditableField({
         ? `$${numValue.toLocaleString("es-CO")}`
         : effectivePlaceholder;
 
+      const [localNumValue, setLocalNumValue] = useState(numValue);
+
+      useEffect(() => {
+        setLocalNumValue(numValue);
+      }, [value]);
+
+      const handleCurrencyBlur = () => {
+        onChange(String(localNumValue ?? 0));
+        setIsEditing(false);
+      };
+
+      const handleCurrencyKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+          handleCurrencyBlur();
+        }
+        if (e.key === "Escape") {
+          setLocalNumValue(numValue);
+          setIsEditing(false);
+        }
+      };
+
       return (
         <div className="space-y-0">
           {isEditing ? (
             <CurrencyInput
-              value={numValue || undefined}
-              onChange={(v) => {
-                onChange(String(v ?? 0));
-                setIsEditing(false);
-              }}
+              autoFocus
+              value={localNumValue}
+              onChange={(v) => setLocalNumValue(v)}
+              onBlur={handleCurrencyBlur}
+              onKeyDown={handleCurrencyKeyDown}
               placeholder="0"
               className="h-8 text-sm"
             />

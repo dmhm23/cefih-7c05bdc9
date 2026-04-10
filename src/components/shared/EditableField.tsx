@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Calendar, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -27,7 +28,7 @@ interface EditableFieldProps {
   value: string;
   displayValue?: string;
   onChange: (value: string) => void;
-  type?: "text" | "select" | "date";
+  type?: "text" | "select" | "date" | "currency";
   options?: { value: string; label: string }[];
   icon?: React.ElementType;
   editable?: boolean;
@@ -178,6 +179,38 @@ export function EditableField({
             ))}
           </SelectContent>
         </Select>
+      );
+    }
+
+    if (type === "currency") {
+      const numValue = value ? Number(value) : undefined;
+      const displayCurrency = numValue != null && numValue > 0
+        ? `$${numValue.toLocaleString("es-CO")}`
+        : effectivePlaceholder;
+
+      return (
+        <div className="space-y-0">
+          {isEditing ? (
+            <CurrencyInput
+              value={numValue || undefined}
+              onChange={(v) => {
+                onChange(String(v ?? 0));
+                setIsEditing(false);
+              }}
+              placeholder="0"
+              className="h-8 text-sm"
+            />
+          ) : (
+            <div
+              onClick={() => setIsEditing(true)}
+              className="cursor-pointer hover:bg-accent hover:text-accent-foreground rounded px-2 py-1 -mx-2 -my-1 transition-colors ring-1 ring-transparent hover:ring-border"
+            >
+              <span className={cn(!value || value === "0" ? "text-muted-foreground italic" : "")}>
+                {displayCurrency}
+              </span>
+            </div>
+          )}
+        </div>
       );
     }
 

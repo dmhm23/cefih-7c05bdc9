@@ -53,7 +53,7 @@ function mapCursoRow(row: any): Curso {
       : undefined,
     capacidadMaxima: row.capacidad_maxima || 30,
     estado: ESTADO_DB_TO_FE[row.estado] || 'abierto',
-    matriculasIds: [],
+    matriculasIds: (row.matriculas || []).filter((m: any) => m.id).map((m: any) => m.id),
     minTrabajoRegistro: undefined,
     minTrabajoResponsable: undefined,
     minTrabajoFechaCierrePrincipal: undefined,
@@ -68,7 +68,7 @@ export const cursoService = {
   async getAll(): Promise<Curso[]> {
     const { data, error } = await supabase
       .from('cursos')
-      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
+      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -79,7 +79,7 @@ export const cursoService = {
   async getById(id: string): Promise<Curso | null> {
     const { data: row, error } = await supabase
       .from('cursos')
-      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
+      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
       .eq('id', id)
       .maybeSingle();
 
@@ -110,7 +110,7 @@ export const cursoService = {
     const dbEstado = ESTADO_FE_TO_DB[estado] || estado;
     const { data, error } = await supabase
       .from('cursos')
-      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
+      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
       .eq('estado', dbEstado as any)
       .is('deleted_at', null);
 
@@ -121,7 +121,7 @@ export const cursoService = {
   async search(query: string): Promise<Curso[]> {
     const { data, error } = await supabase
       .from('cursos')
-      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos)')
+      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
       .is('deleted_at', null)
       .ilike('nombre', `%${query}%`);
 

@@ -159,14 +159,32 @@ export function CursoDetailSheet({
             />
             <EditableField
               label="Entrenador"
-              value={getValue("entrenadorNombre")}
-              onChange={(v) => handleFieldChange("entrenadorNombre", v)}
+              value={getValue("entrenadorId") ?? ""}
+              displayValue={getValue("entrenadorNombre")}
+              onChange={(v) => {
+                const selected = entrenadores.find((e) => e.id === v);
+                if (selected) {
+                  handleFieldChange("entrenadorId", v);
+                  handleFieldChange("entrenadorNombre", `${selected.nombres} ${selected.apellidos}`);
+                }
+              }}
+              type="select"
+              options={entrenadorOptions}
               icon={User}
             />
             <EditableField
               label="Supervisor"
-              value={getValue("supervisorNombre") ?? ""}
-              onChange={(v) => handleFieldChange("supervisorNombre", v)}
+              value={getValue("supervisorId") ?? ""}
+              displayValue={getValue("supervisorNombre") ?? ""}
+              onChange={(v) => {
+                const selected = supervisores.find((s) => s.id === v);
+                if (selected) {
+                  handleFieldChange("supervisorId", v);
+                  handleFieldChange("supervisorNombre", `${selected.nombres} ${selected.apellidos}`);
+                }
+              }}
+              type="select"
+              options={supervisorOptions}
               icon={User}
             />
           </div>

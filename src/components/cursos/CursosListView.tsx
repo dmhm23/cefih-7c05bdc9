@@ -90,7 +90,7 @@ export default function CursosListView() {
       key: "tipoFormacion",
       label: "Nivel de Formación",
       type: "select",
-      options: niveles.map(n => ({ value: n.id, label: n.nombre })),
+      options: niveles.map(n => ({ value: n.id, label: n.nombreNivel })),
     },
     {
       key: "entrenador",

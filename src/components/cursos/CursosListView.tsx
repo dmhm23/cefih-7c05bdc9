@@ -156,14 +156,50 @@ export default function CursosListView() {
     setSelectedIndex(index);
   };
 
+  const handleBulkDelete = (ids: string[]) => {
+    const selected = cursos.filter(c => ids.includes(c.id));
+    const conInscritos = selected.filter(c => c.matriculasIds.length > 0);
+    const sinInscritos = selected.filter(c => c.matriculasIds.length === 0);
+
+    if (sinInscritos.length === 0) {
+      toast({
+        title: "No se pueden eliminar",
+        description: `${conInscritos.length === 1 ? "El curso seleccionado tiene" : "Todos los cursos seleccionados tienen"} estudiantes inscritos y no ${conInscritos.length === 1 ? "puede" : "pueden"} ser eliminado${conInscritos.length === 1 ? "" : "s"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (conInscritos.length > 0) {
+      toast({
+        title: "Algunos cursos no se pueden eliminar",
+        description: `${conInscritos.length} curso(s) con inscritos fueron excluidos. Se procederá con ${sinInscritos.length} curso(s) sin estudiantes.`,
+      });
+    }
+
+    setCursosToDelete(sinInscritos);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await Promise.all(cursosToDelete.map(c => deleteCurso(c.id)));
+      toast({ title: `${cursosToDelete.length} curso(s) eliminado(s) correctamente` });
+      setSelectedIds([]);
+    } catch {
+      toast({ title: "Error al eliminar cursos", variant: "destructive" });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setCursosToDelete([]);
+    }
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
       icon: Trash2,
       variant: "destructive",
-      onClick: (ids) => {
-        toast({ title: `Eliminar ${ids.length} cursos (pendiente)` });
-      },
+      onClick: handleBulkDelete,
     },
     {
       label: "Exportar",

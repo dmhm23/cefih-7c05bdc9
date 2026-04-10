@@ -1,27 +1,32 @@
 
 
-# Plan: Convertir Entrenador y Supervisor a dropdowns en el panel lateral de cursos
+# Plan: Corregir contador de estudiantes inscritos en Cursos
 
 ## Diagnóstico
 
-En `CursoDetailSheet.tsx` (líneas 147-157), los campos "Entrenador" y "Supervisor" usan `EditableField` sin `type="select"` ni `options`, por lo que se renderizan como inputs de texto libre. Esto contrasta con `CourseInfoCard.tsx`, donde ya se implementó correctamente usando `usePersonalByTipoCargo` para obtener las opciones del dropdown.
+El problema es sistémico y afecta **todos** los cursos, no solo los mencionados. En `cursoService.ts` línea 56, el campo `matriculasIds` está hardcodeado como array vacío:
+
+```typescript
+matriculasIds: [],  // ← siempre vacío, nunca se consulta la BD
+```
+
+La BD confirma que sí hay matrículas asignadas (FI-0001 tiene 1, FIH-C-26-04-03 tiene 1), pero el servicio nunca las consulta.
 
 ## Solución
 
-Replicar el mismo patrón que ya funciona en `CourseInfoCard.tsx`:
+Enriquecer `mapCursoRow` con un conteo real de matrículas desde la BD. Hay dos enfoques:
 
-1. Importar `usePersonalByTipoCargo` desde `@/hooks/usePersonal`
-2. Obtener entrenadores y supervisores con el hook
-3. Crear opciones con `useMemo`
-4. Cambiar ambos `EditableField` a `type="select"` con las opciones correspondientes
-5. Usar `value={getValue("entrenadorId")}` / `getValue("supervisorId")` en lugar de los campos `*Nombre`
-6. Al cambiar, actualizar tanto el `Id` como el `Nombre` (igual que en `CourseInfoCard`)
+**Enfoque elegido**: Agregar una subconsulta en `getAll()` y `getById()` que traiga los IDs de matrículas asociadas al curso, y poblar `matriculasIds` con esos datos reales.
 
-## Cambio
+Concretamente, en las queries de `cursoService.ts`:
+1. Agregar un join/select a `matriculas` filtrando por `curso_id` y `deleted_at IS NULL`
+2. Mapear los IDs resultantes al campo `matriculasIds` en `mapCursoRow`
+
+## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/cursos/CursoDetailSheet.tsx` | Importar `usePersonalByTipoCargo`, agregar hooks + memos para opciones, convertir Entrenador y Supervisor a `type="select"` con handlers que actualicen id y nombre |
+| `src/services/cursoService.ts` | En `getAll()` y `getById()`, agregar select de `matriculas(id)` al query de Supabase. En `mapCursoRow`, poblar `matriculasIds` con los IDs reales en lugar de `[]` |
 
 **Total: 1 archivo, 0 migraciones**
 

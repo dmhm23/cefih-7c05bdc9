@@ -230,14 +230,3 @@ export default function CursoDetallePage() {
       />
     </div>
   );
-}
-        onOpenChange={setJustificacionDialogOpen}
-        onConfirm={(justificacion) => {
-          setJustificacionDialogOpen(false);
-          handleSave(justificacion);
-        }}
-        isPending={updateCurso.isPending}
-      />
-    </div>
-  );
-}

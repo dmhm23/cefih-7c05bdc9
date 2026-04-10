@@ -776,20 +776,27 @@ export default function MatriculaFormPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Curso</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar curso (opcional)..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {cursosAbiertos.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.nombre} ({c.fechaInicio})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-1">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar curso (opcional)..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {cursosAbiertos.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.nombre} ({c.fechaInicio})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {field.value && (
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => field.onChange("")}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1287,20 +1294,27 @@ export default function MatriculaFormPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nivel Previo</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {NIVELES_PREVIOS.map((n) => (
-                            <SelectItem key={n.value} value={n.value}>
-                              {n.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center gap-1">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {NIVELES_PREVIOS.map((n) => (
+                              <SelectItem key={n.value} value={n.value}>
+                                {n.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {field.value && (
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => field.onChange("")}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

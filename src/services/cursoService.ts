@@ -216,7 +216,7 @@ export const cursoService = {
     return mapCursoRow(row);
   },
 
-  async actualizarMinTrabajo(id: string, data: { minTrabajoRegistro?: string; minTrabajoResponsable?: string; minTrabajoFechaCierrePrincipal?: string }): Promise<Curso> {
+  async actualizarMinTrabajo(id: string, data: { minTrabajoRegistro?: string; minTrabajoFechaCierrePrincipal?: string }): Promise<Curso> {
     // MinTrabajo fields stored as observaciones JSON for now (until dedicated columns exist)
     const { data: current } = await supabase
       .from('cursos')
@@ -230,8 +230,18 @@ export const cursoService = {
     } catch { obs = {}; }
 
     if (data.minTrabajoRegistro !== undefined) obs.minTrabajoRegistro = data.minTrabajoRegistro;
-    if (data.minTrabajoResponsable !== undefined) obs.minTrabajoResponsable = data.minTrabajoResponsable;
     if (data.minTrabajoFechaCierrePrincipal !== undefined) obs.minTrabajoFechaCierrePrincipal = data.minTrabajoFechaCierrePrincipal;
+
+    // Auto-resolve responsable from authenticated user
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user?.id) {
+      const { data: perfil } = await supabase
+        .from('perfiles')
+        .select('nombres, email')
+        .eq('id', userData.user.id)
+        .single();
+      obs.minTrabajoResponsable = perfil?.nombres || perfil?.email || 'Usuario del sistema';
+    }
 
     const { data: row, error } = await supabase
       .from('cursos')

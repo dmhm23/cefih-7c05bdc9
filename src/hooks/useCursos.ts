@@ -120,7 +120,7 @@ export const useActualizarMinTrabajo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { minTrabajoRegistro?: string; minTrabajoResponsable?: string; minTrabajoFechaCierrePrincipal?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { minTrabajoRegistro?: string; minTrabajoFechaCierrePrincipal?: string } }) =>
       cursoService.actualizarMinTrabajo(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['cursos'] });

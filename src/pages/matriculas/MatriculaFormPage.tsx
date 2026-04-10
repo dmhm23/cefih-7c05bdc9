@@ -1260,12 +1260,10 @@ export default function MatriculaFormPage() {
                     <FormItem>
                       <FormLabel>Valor del cupo ($)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
+                        <CurrencyInput
+                          value={field.value || undefined}
+                          onChange={(v) => field.onChange(v ?? 0)}
                           placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                         />
                       </FormControl>
                       <FormMessage />

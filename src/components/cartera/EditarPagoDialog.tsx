@@ -103,11 +103,10 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="editValorPago">Valor *</Label>
-                <Input
+                <CurrencyInput
                   id="editValorPago"
-                  type="number"
-                  value={valorPago}
-                  onChange={e => setValorPago(e.target.value)}
+                  value={valorPagoNum}
+                  onChange={(v) => setValorPagoNum(v)}
                 />
               </div>
               <div className="space-y-1.5">

@@ -110,11 +110,10 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
 
             <div className="space-y-1.5">
               <Label htmlFor="editTotal">Total *</Label>
-              <Input
+              <CurrencyInput
                 id="editTotal"
-                type="number"
-                value={total}
-                onChange={e => setTotal(e.target.value)}
+                value={totalNum}
+                onChange={(v) => setTotalNum(v)}
               />
             </div>
 

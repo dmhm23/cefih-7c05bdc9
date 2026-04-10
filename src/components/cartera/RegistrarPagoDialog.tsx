@@ -103,11 +103,10 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="valorPago">Valor *</Label>
-              <Input
+              <CurrencyInput
                 id="valorPago"
-                type="number"
-                value={valorPago}
-                onChange={e => setValorPago(e.target.value)}
+                value={valorPagoNum}
+                onChange={(v) => setValorPagoNum(v)}
                 placeholder="0"
                 max={saldoPendiente}
               />

@@ -112,11 +112,10 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="totalFactura">Total *</Label>
-              <Input
+              <CurrencyInput
                 id="totalFactura"
-                type="number"
-                value={totalManual}
-                onChange={e => handleTotalChange(e.target.value)}
+                value={totalManualNum}
+                onChange={(v) => handleTotalChange(v)}
                 placeholder="0"
               />
             </div>

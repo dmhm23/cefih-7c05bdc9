@@ -523,11 +523,10 @@ export default function EmpresaDetallePage() {
             </div>
             <div className="space-y-2">
               <Label>Valor ($)</Label>
-              <Input
-                type="number"
-                value={tarifaValor}
-                onChange={e => setTarifaValor(e.target.value)}
-                placeholder="350000"
+              <CurrencyInput
+                value={tarifaValorNum}
+                onChange={(v) => setTarifaValorNum(v)}
+                placeholder="350.000"
               />
             </div>
           </div>

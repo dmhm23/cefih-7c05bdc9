@@ -10,6 +10,9 @@ interface CurrencyInputProps {
   className?: string;
   max?: number;
   disabled?: boolean;
+  autoFocus?: boolean;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 function formatCO(v: number): string {
@@ -17,7 +20,7 @@ function formatCO(v: number): string {
 }
 
 export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
-  ({ value, onChange, placeholder = "0", id, className, max, disabled }, ref) => {
+  ({ value, onChange, placeholder = "0", id, className, max, disabled, autoFocus, onBlur, onKeyDown }, ref) => {
     const [display, setDisplay] = React.useState(() =>
       value != null && value > 0 ? formatCO(value) : ""
     );
@@ -51,6 +54,9 @@ export const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputPro
         placeholder={placeholder}
         className={className}
         disabled={disabled}
+        autoFocus={autoFocus}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
       />
     );
   }

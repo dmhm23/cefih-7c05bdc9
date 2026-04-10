@@ -15,6 +15,7 @@ import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso, CursoFormData } from "@/types/curso";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";

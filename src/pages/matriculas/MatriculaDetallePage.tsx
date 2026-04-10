@@ -98,6 +98,8 @@ export default function MatriculaDetallePage() {
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+  const { data: empresasList = [] } = useEmpresas();
+  const empresasOptions = empresasList.map((e) => ({ value: e.id, label: e.nombreEmpresa }));
   const [hasGrupoCartera, setHasGrupoCartera] = useState<boolean | null>(null);
   const [syncingCartera, setSyncingCartera] = useState(false);
 

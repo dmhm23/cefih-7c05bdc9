@@ -31,7 +31,13 @@ const TIPO_FE_TO_DB: Record<string, string> = {
   coordinador_ta: 'coordinador_alturas',
 };
 
+function parseObsMinTrabajo(obs: string | null | undefined) {
+  if (!obs) return {};
+  try { return JSON.parse(obs); } catch { return {}; }
+}
+
 function mapCursoRow(row: any): Curso {
+  const obs = parseObsMinTrabajo(row.observaciones);
   return {
     id: row.id,
     nombre: row.nombre || '',
@@ -54,9 +60,9 @@ function mapCursoRow(row: any): Curso {
     capacidadMaxima: row.capacidad_maxima || 30,
     estado: ESTADO_DB_TO_FE[row.estado] || 'abierto',
     matriculasIds: (row.matriculas || []).filter((m: any) => m.id).map((m: any) => m.id),
-    minTrabajoRegistro: undefined,
-    minTrabajoResponsable: undefined,
-    minTrabajoFechaCierrePrincipal: undefined,
+    minTrabajoRegistro: obs.minTrabajoRegistro || undefined,
+    minTrabajoResponsable: obs.minTrabajoResponsable || undefined,
+    minTrabajoFechaCierrePrincipal: obs.minTrabajoFechaCierrePrincipal || undefined,
     minTrabajoFechasAdicionales: [],
     camposAdicionalesValores: undefined,
     createdAt: row.created_at,
@@ -95,11 +101,24 @@ export const cursoService = {
       .eq('curso_id', id)
       .order('fecha');
 
+    // Resolve created_by UUIDs to names
+    const creatorIds = (fechas || []).map(f => f.created_by).filter(Boolean) as string[];
+    let creatorMap: Record<string, string> = {};
+    if (creatorIds.length > 0) {
+      const { data: perfiles } = await supabase
+        .from('perfiles')
+        .select('id, nombres, email')
+        .in('id', creatorIds);
+      for (const p of perfiles || []) {
+        creatorMap[p.id] = p.nombres || p.email;
+      }
+    }
+
     curso.minTrabajoFechasAdicionales = (fechas || []).map(f => ({
       id: f.id,
       fecha: f.fecha,
       motivo: f.motivo || '',
-      createdBy: '',
+      createdBy: f.created_by ? (creatorMap[f.created_by] || '') : '',
       createdAt: f.created_at,
     }));
 
@@ -230,18 +249,32 @@ export const cursoService = {
   },
 
   async agregarFechaAdicional(id: string, data: { fecha: string; motivo: string }): Promise<Curso> {
+    const { data: userData } = await supabase.auth.getUser();
     const { error } = await supabase
       .from('cursos_fechas_mintrabajo')
       .insert({
         curso_id: id,
         fecha: data.fecha,
         motivo: data.motivo,
+        created_by: userData?.user?.id || null,
       });
 
     if (error) handleSupabaseError(error);
 
-    // Return updated curso
     const curso = await cursoService.getById(id);
+    if (!curso) throw new ApiError('Curso no encontrado', 404);
+    return curso;
+  },
+
+  async editarFechaAdicional(cursoId: string, fechaId: string, data: { fecha: string; motivo: string }): Promise<Curso> {
+    const { error } = await supabase
+      .from('cursos_fechas_mintrabajo')
+      .update({ fecha: data.fecha, motivo: data.motivo })
+      .eq('id', fechaId);
+
+    if (error) handleSupabaseError(error);
+
+    const curso = await cursoService.getById(cursoId);
     if (!curso) throw new ApiError('Curso no encontrado', 404);
     return curso;
   },

@@ -1,16 +1,20 @@
 
 
-# Plan: Usar BirthDateField en el modal de crear persona desde matrícula
+# Plan: Agregar opción de limpiar selección en campos Curso y Nivel Previo
 
 ## Diagnóstico
 
-En `CrearPersonaModal.tsx` línea 245, el campo de fecha de nacimiento usa `DateField` (calendario genérico) en lugar de `BirthDateField` (el componente especializado con restricción 18-90 años, buscador de años y navegación optimizada).
+Ambos campos (`cursoId` línea 779 y `nivelPrevio` línea 1290) usan el componente `Select` de Radix, que no permite deseleccionar un valor una vez elegido. No existe un mecanismo de "limpiar" ni una opción vacía.
+
+## Solución
+
+Agregar un botón de limpiar (icono X) junto a cada `Select` cuando tiene un valor seleccionado. Al hacer clic, se resetea el campo a `""`.
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/matriculas/CrearPersonaModal.tsx` | Reemplazar `import { DateField }` por `import { BirthDateField }` y cambiar `<DateField>` por `<BirthDateField>` en el campo `fechaNacimiento` (línea 245). |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Para los campos `cursoId` (línea 773-796) y `nivelPrevio` (línea 1284-1307): envolver cada `Select` en un contenedor `relative` y agregar un botón con icono `X` que aparezca condicionalmente cuando `field.value` tiene valor. Al hacer clic, ejecutar `field.onChange("")`. |
 
-**Total: 1 archivo, 1 línea de cambio, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
 

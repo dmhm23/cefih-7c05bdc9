@@ -37,7 +37,6 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
         id: curso.id,
         data: {
           minTrabajoRegistro: registro,
-          minTrabajoResponsable: responsable,
           minTrabajoFechaCierrePrincipal: fechaPrincipal,
         },
       });

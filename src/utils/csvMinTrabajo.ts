@@ -105,6 +105,56 @@ export function generateDummyCsv(): string {
 }
 
 /**
+ * Generate a CSV with headers for the student list export.
+ */
+export function generateListadoEstudiantesCsv(
+  matriculas: Matricula[],
+  personas: Persona[],
+  curso: Curso
+): string {
+  const personaMap = new Map(personas.map((p) => [p.id, p]));
+
+  const header = [
+    "Tipo Doc",
+    "Número Documento",
+    "Nombres",
+    "Apellidos",
+    "Género",
+    "Email",
+    "Teléfono",
+    "Empresa",
+    "Cargo",
+    "Estado Matrícula",
+    "ARL",
+    "EPS",
+  ].join(";");
+
+  const rows = matriculas
+    .map((m) => {
+      const persona = personaMap.get(m.personaId);
+      if (!persona) return null;
+      const cols = [
+        persona.tipoDocumento,
+        cleanDocumento(persona.numeroDocumento),
+        capitalize(persona.nombres),
+        capitalize(persona.apellidos),
+        persona.genero,
+        persona.email || "",
+        persona.telefono || "",
+        capitalize(m.empresaNombre || "Independiente"),
+        capitalize(m.empresaCargo ?? ""),
+        m.estado,
+        m.arl || "",
+        m.eps || "",
+      ];
+      return cols.join(";");
+    })
+    .filter(Boolean);
+
+  return [header, ...rows].join("\n");
+}
+
+/**
  * Trigger a browser download of a CSV string.
  */
 export function downloadCsv(content: string, filename: string): void {

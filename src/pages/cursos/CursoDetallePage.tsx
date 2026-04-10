@@ -15,7 +15,7 @@ import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
-import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv } from "@/utils/csvMinTrabajo";
+import { generateMinTrabajoCsv, generateDummyCsv, generateListadoEstudiantesCsv, downloadCsv } from "@/utils/csvMinTrabajo";
 
 export default function CursoDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -130,6 +130,7 @@ export default function CursoDetallePage() {
         onBack={() => navigate("/cursos")}
         onCloseCourse={() => setCloseDialogOpen(true)}
         onDownloadCsvMinTrabajo={handleDownloadCsvMinTrabajo}
+        onExportarListado={handleExportarListado}
       />
 
 

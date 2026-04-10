@@ -1,29 +1,46 @@
 
 
-# Plan: Eliminar toggle `activo` redundante en empresas y corregir filtro del dropdown
+# Plan: Crear componente CurrencyInput y aplicarlo globalmente
 
 ## Diagnóstico
 
-El log de auditoría confirma que `activo` se está estableciendo en `false` cuando se edita una empresa desde `EmpresaFormPage`. El formulario tiene un Switch para "Estado" (`activo`) que siempre envía su valor en cada guardado (`activo: data.activo`). Si el usuario lo deja en OFF (intencionalmente o no), la empresa queda con `activo = false`.
+El campo `valorCupo` en `MatriculaFormPage` usa `<Input type="number">` con `onChange={(e) => field.onChange(Number(e.target.value) || 0)}`. El `|| 0` impide borrar el valor (siempre vuelve a 0), y `type="number"` no permite formato con separador de miles.
 
-El campo `activo` en empresas es redundante: el sistema ya usa `deleted_at IS NULL` para filtrar empresas eliminadas (soft delete). La función `empresaService.delete()` ya establece `deleted_at` Y `activo = false` juntos. Tener un toggle manual adicional solo introduce inconsistencias.
-
-Las 3 empresas no eliminadas actualmente tienen `activo = false` por esta causa, y `MatriculaFormPage` las filtra con `.filter(e => e.activo !== false)`, dejando el dropdown vacío.
+Este mismo patrón se repite en todos los campos monetarios de la aplicación.
 
 ## Solución
 
-1. Eliminar el Switch de "Estado" (`activo`) del formulario `EmpresaFormPage` para evitar que el usuario cambie este campo manualmente.
-2. Dejar de enviar `activo` en las operaciones de creación y edición (excepto en soft delete).
-3. Eliminar el filtro `e.activo !== false` de `MatriculaFormPage`, ya que `empresaService.getAll()` ya filtra por `deleted_at IS NULL`.
-4. Corregir las 3 empresas afectadas restaurando `activo = true`.
+Crear un componente reutilizable `CurrencyInput` que:
+- Use `type="text"` (no `number`) para permitir formateo visual
+- Formatee automáticamente con separador de miles (punto) al estilo colombiano: `95.000`
+- Permita borrar el campo completamente (valor vacío = `undefined` o `0` según contexto)
+- Internamente maneje solo dígitos, ignorando caracteres no numéricos
+- Exponga `value: number | undefined` y `onChange: (value: number | undefined) => void`
+
+## Campos afectados (7 instancias en 5 archivos)
+
+| Archivo | Campo(s) |
+|---------|----------|
+| `src/pages/matriculas/MatriculaFormPage.tsx` | `valorCupo` (línea 1263) |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | `valorCupo` y `abono` via `EditableField` (líneas 772-780) |
+| `src/components/cartera/RegistrarPagoDialog.tsx` | `valorPago` (línea 106) |
+| `src/components/cartera/EditarPagoDialog.tsx` | `valorPago` (línea 106) |
+| `src/components/cartera/CrearFacturaDialog.tsx` | `totalFactura` (línea 115) |
+| `src/components/cartera/EditarFacturaDialog.tsx` | `editTotal` (línea 113) |
+| `src/pages/empresas/EmpresaDetallePage.tsx` | tarifa `Valor` (línea 526) |
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/pages/empresas/EmpresaFormPage.tsx` | Eliminar el campo `activo` del schema Zod, de `defaultValues`, de `useEffect` reset, del `onSubmit`, y eliminar el bloque JSX del Switch (líneas 278-294). |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Eliminar `.filter(e => e.activo !== false)` en línea 1039; usar la lista completa de empresas (ya filtrada por `deleted_at IS NULL` desde el servicio). |
-| Migración SQL | `UPDATE empresas SET activo = true WHERE deleted_at IS NULL AND activo = false;` para restaurar las empresas afectadas. |
+| `src/components/shared/CurrencyInput.tsx` | **Nuevo.** Componente que acepta `value: number | undefined`, `onChange(v: number | undefined)`, y opcionalmente `placeholder`. Usa `type="text"`, formatea con `toLocaleString('es-CO')` al mostrar, y parsea solo dígitos al editar. Permite vaciar el campo. |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Reemplazar `<Input type="number">` por `<CurrencyInput>` en `valorCupo`. Ajustar `onChange` para pasar `value ?? 0`. |
+| `src/components/cartera/RegistrarPagoDialog.tsx` | Reemplazar `<Input type="number">` por `<CurrencyInput>` en `valorPago`. |
+| `src/components/cartera/EditarPagoDialog.tsx` | Ídem para `valorPago`. |
+| `src/components/cartera/CrearFacturaDialog.tsx` | Ídem para `totalFactura`. |
+| `src/components/cartera/EditarFacturaDialog.tsx` | Ídem para `editTotal`. |
+| `src/pages/empresas/EmpresaDetallePage.tsx` | Ídem para tarifa valor. |
+| `src/components/shared/EditableField.tsx` | Agregar soporte para `type="currency"` que use `CurrencyInput` internamente, para que los campos editables de detalle de matrícula (`valorCupo`, `abono`) se beneficien automáticamente. |
 
-**Total: 2 archivos editados, 1 operación de datos**
+**Total: 1 componente nuevo, 7 archivos editados, 0 migraciones**
 

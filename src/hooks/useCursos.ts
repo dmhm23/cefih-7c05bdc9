@@ -142,6 +142,19 @@ export const useAgregarFechaAdicional = () => {
   });
 };
 
+export const useEditarFechaAdicional = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ cursoId, fechaId, data }: { cursoId: string; fechaId: string; data: { fecha: string; motivo: string } }) =>
+      cursoService.editarFechaAdicional(cursoId, fechaId, data),
+    onSuccess: (_, { cursoId }) => {
+      queryClient.invalidateQueries({ queryKey: ['cursos'] });
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId] });
+    },
+  });
+};
+
 export const useEliminarFechaAdicional = () => {
   const queryClient = useQueryClient();
 

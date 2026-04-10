@@ -52,6 +52,8 @@ export default function CursosListView() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [cursosToDelete, setCursosToDelete] = useState<Curso[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     tipoFormacion: "todos",
@@ -68,6 +70,7 @@ export default function CursosListView() {
   });
 
   const { data: cursos = [], isLoading } = useCursos();
+  const { mutateAsync: deleteCurso } = useDeleteCurso();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: niveles = [] } = useNivelesFormacion();
 

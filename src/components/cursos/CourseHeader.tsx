@@ -17,9 +17,10 @@ interface CourseHeaderProps {
   onBack: () => void;
   onCloseCourse: () => void;
   onDownloadCsvMinTrabajo: () => void;
+  onExportarListado: () => void;
 }
 
-export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo }: CourseHeaderProps) {
+export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo, onExportarListado }: CourseHeaderProps) {
   const { toast } = useToast();
 
   const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
@@ -63,7 +64,7 @@ export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTra
               <FileText className="h-4 w-4 mr-2" />
               Generar PDFs
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast({ title: "Exportar listado (pendiente)" })}>
+            <DropdownMenuItem onClick={onExportarListado}>
               <Download className="h-4 w-4 mr-2" />
               Exportar listado
             </DropdownMenuItem>

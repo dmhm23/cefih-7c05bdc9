@@ -15,7 +15,7 @@ import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
-import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv } from "@/utils/csvMinTrabajo";
+import { generateMinTrabajoCsv, generateDummyCsv, generateListadoEstudiantesCsv, downloadCsv } from "@/utils/csvMinTrabajo";
 
 export default function CursoDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -113,6 +113,17 @@ export default function CursoDetallePage() {
     });
   };
 
+  const handleExportarListado = () => {
+    if (matriculas.length === 0) {
+      toast({ title: "Sin estudiantes", description: "No hay matrículas para exportar.", variant: "destructive" });
+      return;
+    }
+    const content = generateListadoEstudiantesCsv(matriculas, personas, curso);
+    const filename = `Curso_${curso.numeroCurso}_Listado.csv`;
+    downloadCsv(content, filename);
+    toast({ title: "Listado exportado", description: `${matriculas.length} registro(s) exportados.` });
+  };
+
   const handleCambiarEstado = async (nuevoEstado: "abierto" | "en_progreso") => {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });
@@ -130,6 +141,7 @@ export default function CursoDetallePage() {
         onBack={() => navigate("/cursos")}
         onCloseCourse={() => setCloseDialogOpen(true)}
         onDownloadCsvMinTrabajo={handleDownloadCsvMinTrabajo}
+        onExportarListado={handleExportarListado}
       />
 
 

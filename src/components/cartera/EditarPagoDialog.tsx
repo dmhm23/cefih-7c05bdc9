@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +30,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   const deletePago = useDeletePago();
 
   const [fechaPago, setFechaPago] = useState("");
-  const [valorPago, setValorPago] = useState("");
+  const [valorPagoNum, setValorPagoNum] = useState<number | undefined>(undefined);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia_bancaria");
   const [metodoOtro, setMetodoOtro] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -41,7 +42,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   useEffect(() => {
     if (pago) {
       setFechaPago(pago.fechaPago);
-      setValorPago(String(pago.valorPago));
+      setValorPagoNum(pago.valorPago);
       setMetodoPago(pago.metodoPago);
       setObservaciones(pago.observaciones || "");
       setSoporteUrl(pago.soportePago);
@@ -70,7 +71,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       id: pago.id,
       data: {
         fechaPago,
-        valorPago: parseFloat(valorPago),
+        valorPago: valorPagoNum,
         metodoPago,
         observaciones: obsConMetodo,
         soportePago: newSoporteUrl,

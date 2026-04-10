@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -33,7 +34,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
   const [numeroFactura, setNumeroFactura] = useState("");
   const [fechaEmision, setFechaEmision] = useState(() => todayLocalString());
   const [fechaVencimiento, setFechaVencimiento] = useState("");
-  const [totalManual, setTotalManual] = useState("");
+  const [totalManualNum, setTotalManualNum] = useState<number | undefined>(undefined);
   const [totalEditedManually, setTotalEditedManually] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [vincularMatriculas, setVincularMatriculas] = useState(false);
@@ -50,7 +51,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
   // Auto-fill total when selection changes (unless manually edited)
   useEffect(() => {
     if (vincularMatriculas && !totalEditedManually && selectedIds.length > 0) {
-      setTotalManual(String(subtotal));
+      setTotalManualNum(subtotal);
     }
   }, [subtotal, vincularMatriculas, selectedIds, totalEditedManually]);
 
@@ -58,13 +59,13 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  const handleTotalChange = (value: string) => {
-    setTotalManual(value);
+  const handleTotalChange = (value: number | undefined) => {
+    setTotalManualNum(value);
     setTotalEditedManually(true);
   };
 
   const handleSubmit = async () => {
-    if (!numeroFactura || !fechaVencimiento || !totalManual) {
+    if (!numeroFactura || !fechaVencimiento || !totalManualNum) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }
@@ -75,7 +76,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
       fechaEmision,
       fechaVencimiento,
       matriculaIds: vincularMatriculas ? selectedIds : [],
-      total: parseFloat(totalManual),
+      total: totalManualNum,
       archivoFactura: archivo ? URL.createObjectURL(archivo) : undefined,
     });
 
@@ -85,7 +86,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
     setSelectedIds([]);
     setNumeroFactura("");
     setFechaVencimiento("");
-    setTotalManual("");
+    setTotalManualNum(undefined);
     setTotalEditedManually(false);
     setArchivo(null);
     setVincularMatriculas(false);

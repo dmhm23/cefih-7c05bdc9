@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { DateField } from "@/components/shared/DateField";
 import {
   Form,

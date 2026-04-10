@@ -88,12 +88,9 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Responsable del Registro</label>
-              <Input
-                value={responsable}
-                onChange={(e) => { setResponsable(e.target.value); setDirty(true); }}
-                placeholder="Nombre del responsable"
-                disabled={readOnly}
-              />
+              <p className="text-sm pt-1.5 min-h-[36px] flex items-center">
+                {curso.minTrabajoResponsable || <span className="text-muted-foreground italic">Se asignará automáticamente al guardar</span>}
+              </p>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground">Fecha Cierre Principal *</label>

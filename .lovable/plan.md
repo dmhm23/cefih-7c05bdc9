@@ -1,32 +1,24 @@
 
 
-# Plan: Corregir contador de estudiantes inscritos en Cursos
+# Plan: Implementar "Exportar listado" de estudiantes en CSV
 
 ## Diagnóstico
 
-El problema es sistémico y afecta **todos** los cursos, no solo los mencionados. En `cursoService.ts` línea 56, el campo `matriculasIds` está hardcodeado como array vacío:
+En `CourseHeader.tsx` línea 66, la opción "Exportar listado" es un placeholder que solo muestra un toast con el texto "(pendiente)". No hay lógica de exportación implementada.
 
-```typescript
-matriculasIds: [],  // ← siempre vacío, nunca se consulta la BD
-```
-
-La BD confirma que sí hay matrículas asignadas (FI-0001 tiene 1, FIH-C-26-04-03 tiene 1), pero el servicio nunca las consulta.
+A diferencia de "Descargar CSV MinTrabajo" (que ya funciona con `generateMinTrabajoCsv`), esta opción no tiene handler ni función asociada.
 
 ## Solución
 
-Enriquecer `mapCursoRow` con un conteo real de matrículas desde la BD. Hay dos enfoques:
-
-**Enfoque elegido**: Agregar una subconsulta en `getAll()` y `getById()` que traiga los IDs de matrículas asociadas al curso, y poblar `matriculasIds` con esos datos reales.
-
-Concretamente, en las queries de `cursoService.ts`:
-1. Agregar un join/select a `matriculas` filtrando por `curso_id` y `deleted_at IS NULL`
-2. Mapear los IDs resultantes al campo `matriculasIds` en `mapCursoRow`
+Implementar la exportación del listado de estudiantes inscritos como CSV, reutilizando los datos que ya se cargan en `CursoDetallePage` (`matriculas` y `personas`).
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/services/cursoService.ts` | En `getAll()` y `getById()`, agregar select de `matriculas(id)` al query de Supabase. En `mapCursoRow`, poblar `matriculasIds` con los IDs reales en lugar de `[]` |
+| `src/utils/csvMinTrabajo.ts` | Agregar función `generateListadoEstudiantesCsv(matriculas, personas, curso)` que genere un CSV con encabezados y columnas relevantes (documento, nombre, apellido, empresa, estado, etc.) |
+| `src/components/cursos/CourseHeader.tsx` | Agregar prop `onExportarListado` al componente y conectar el `DropdownMenuItem` a ese callback en lugar del toast placeholder |
+| `src/pages/cursos/CursoDetallePage.tsx` | Crear handler `handleExportarListado` que invoque la nueva función y pasarlo como prop a `CourseHeader` |
 
-**Total: 1 archivo, 0 migraciones**
+**Total: 3 archivos, 0 migraciones**
 

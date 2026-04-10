@@ -25,7 +25,6 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
   const eliminarFecha = useEliminarFechaAdicional();
 
   const [registro, setRegistro] = useState(curso.minTrabajoRegistro || "");
-  const [responsable, setResponsable] = useState(curso.minTrabajoResponsable || "");
   const [fechaPrincipal, setFechaPrincipal] = useState(curso.minTrabajoFechaCierrePrincipal || "");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [fechaToEdit, setFechaToEdit] = useState<FechaAdicionalMinTrabajo | null>(null);

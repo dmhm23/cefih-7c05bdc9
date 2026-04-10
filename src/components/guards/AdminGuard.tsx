@@ -16,7 +16,7 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/admin" replace />;
   }
 
-  if (perfil && perfil.rol_nombre !== "superadministrador") {
+  if (perfil && perfil.rol_nombre !== "superadministrador" && perfil.rol_nombre !== "administrador") {
     return <Navigate to="/admin" replace />;
   }
 

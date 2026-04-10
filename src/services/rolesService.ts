@@ -63,6 +63,18 @@ export const rolesService = {
     return this.invokeGestionRoles("assign-role-to-user", { userId, rolId });
   },
 
+  async updateUser(userId: string, nombres: string) {
+    return this.invokeGestionRoles("update-user", { userId, nombres });
+  },
+
+  async resetPassword(userId: string) {
+    return this.invokeGestionRoles("reset-password", { userId });
+  },
+
+  async deleteUser(userId: string) {
+    return this.invokeGestionRoles("delete-user", { userId });
+  },
+
   async getUsuarios() {
     const { data, error } = await supabase
       .from("perfiles")

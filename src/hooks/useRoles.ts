@@ -68,5 +68,29 @@ export const useRoles = () => {
     onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
-  return { rolesQuery, usuariosQuery, permisosQuery, createRol, updateRol, deleteRol, assignRole };
+  const updateUser = useMutation({
+    mutationFn: (data: { userId: string; nombres: string }) =>
+      rolesService.updateUser(data.userId, data.nombres),
+    onSuccess: () => {
+      toast({ title: "Usuario actualizado exitosamente" });
+      invalidate();
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: (userId: string) => rolesService.resetPassword(userId),
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: (userId: string) => rolesService.deleteUser(userId),
+    onSuccess: () => {
+      toast({ title: "Usuario eliminado exitosamente" });
+      invalidate();
+    },
+    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  return { rolesQuery, usuariosQuery, permisosQuery, createRol, updateRol, deleteRol, assignRole, updateUser, resetPassword, deleteUser };
 };

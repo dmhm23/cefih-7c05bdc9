@@ -18,9 +18,10 @@ interface CourseHeaderProps {
   onCloseCourse: () => void;
   onDownloadCsvMinTrabajo: () => void;
   onExportarListado: () => void;
+  onGenerarPdfs: () => void;
 }
 
-export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo, onExportarListado }: CourseHeaderProps) {
+export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo, onExportarListado, onGenerarPdfs }: CourseHeaderProps) {
   const { toast } = useToast();
 
   const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
@@ -60,7 +61,7 @@ export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTra
               <Award className="h-4 w-4 mr-2" />
               Generar certificados
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast({ title: "Generar PDFs (pendiente)" })}>
+            <DropdownMenuItem onClick={onGenerarPdfs}>
               <FileText className="h-4 w-4 mr-2" />
               Generar PDFs
             </DropdownMenuItem>

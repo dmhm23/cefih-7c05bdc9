@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, CalendarDays } from "lucide-react";
+import { Plus, Trash2, CalendarDays, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateField } from "@/components/shared/DateField";
@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AddFechaMinTrabajoDialog } from "@/components/cursos/AddFechaMinTrabajoDialog";
-import { Curso } from "@/types/curso";
+import { Curso, FechaAdicionalMinTrabajo } from "@/types/curso";
 import { useActualizarMinTrabajo, useEliminarFechaAdicional } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { parseLocalDate } from "@/utils/dateUtils";
 
 interface MinTrabajoCardProps {
   curso: Curso;
@@ -27,6 +28,7 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
   const [responsable, setResponsable] = useState(curso.minTrabajoResponsable || "");
   const [fechaPrincipal, setFechaPrincipal] = useState(curso.minTrabajoFechaCierrePrincipal || "");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [fechaToEdit, setFechaToEdit] = useState<FechaAdicionalMinTrabajo | null>(null);
   const [fechaToDelete, setFechaToDelete] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
@@ -117,28 +119,41 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
           {curso.minTrabajoFechasAdicionales.length > 0 && (
             <div className="space-y-2 pt-2 border-t">
               <p className="text-xs font-medium text-muted-foreground">Fechas Adicionales de Cierre</p>
-              {curso.minTrabajoFechasAdicionales.map((f) => (
-                <div key={f.id} className="flex items-start justify-between p-2 bg-muted/30 rounded text-sm gap-2">
-                  <div className="flex items-start gap-2 min-w-0">
-                    <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-medium">{format(new Date(f.fecha), "d MMM yyyy", { locale: es })}</p>
-                      <p className="text-xs text-muted-foreground">{f.motivo}</p>
-                      <p className="text-xs text-muted-foreground">Por: {f.createdBy}</p>
+              {curso.minTrabajoFechasAdicionales.map((f) => {
+                const localDate = parseLocalDate(f.fecha);
+                return (
+                  <div key={f.id} className="flex items-start justify-between p-2 bg-muted/30 rounded text-sm gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium">{localDate ? format(localDate, "d MMM yyyy", { locale: es }) : f.fecha}</p>
+                        <p className="text-xs text-muted-foreground">{f.motivo}</p>
+                        {f.createdBy && <p className="text-xs text-muted-foreground">Agregada por: {f.createdBy}</p>}
+                      </div>
                     </div>
+                    {!readOnly && (
+                      <div className="flex gap-0.5 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => { setFechaToEdit(f); setAddDialogOpen(true); }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => setFechaToDelete(f.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {!readOnly && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
-                      onClick={() => setFechaToDelete(f.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -147,7 +162,7 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => setAddDialogOpen(true)}
+              onClick={() => { setFechaToEdit(null); setAddDialogOpen(true); }}
             >
               <Plus className="h-4 w-4 mr-1" />
               Agregar fecha adicional
@@ -158,8 +173,9 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
 
       <AddFechaMinTrabajoDialog
         open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
+        onOpenChange={(open) => { setAddDialogOpen(open); if (!open) setFechaToEdit(null); }}
         cursoId={curso.id}
+        fechaEditar={fechaToEdit}
       />
 
       <ConfirmDialog

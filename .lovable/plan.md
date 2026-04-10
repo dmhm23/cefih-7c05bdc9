@@ -1,19 +1,18 @@
 
 
-# Plan: Auto-diligenciar "Responsable del Registro" con el usuario actual
+# Plan: Implementar eliminación masiva de cursos con validación de inscritos
 
 ## Diagnóstico
 
-El campo "Responsable del Registro" en MinTrabajo es un input manual (`Input` editable), mientras que "Agregada por" en fechas adicionales se resuelve automáticamente desde el `user_id` del usuario autenticado consultando la tabla `perfiles`.
+En `CursosListView.tsx` línea 160-161, la acción masiva "Eliminar" solo muestra un toast con texto `"Eliminar N cursos (pendiente)"` sin ejecutar ninguna lógica real. No valida si los cursos tienen estudiantes inscritos ni pide confirmación.
 
-El campo responsable se guarda como texto plano en `observaciones` JSON (`minTrabajoResponsable`). Para que sea automático, debe capturarse el nombre del usuario logueado al momento de guardar, igual que `created_by` en fechas adicionales.
+Cada curso ya tiene `matriculasIds` (array de UUIDs de matrículas asignadas) disponible en el frontend, por lo que la validación se puede hacer sin consultas adicionales.
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/services/cursoService.ts` | En `actualizarMinTrabajo()`: obtener el usuario autenticado con `supabase.auth.getUser()`, consultar su nombre desde `perfiles`, y asignar automáticamente `obs.minTrabajoResponsable` con ese nombre (ignorando el valor enviado desde el frontend). |
-| `src/components/cursos/MinTrabajoCard.tsx` | Convertir el campo "Responsable del Registro" de `Input` editable a texto de solo lectura que muestre `curso.minTrabajoResponsable` (o "Sin asignar" si está vacío). Eliminar el estado local `responsable` y su lógica de `setDirty`. El valor se llenará automáticamente al guardar el registro/fecha. |
+| `src/components/cursos/CursosListView.tsx` | Reemplazar la acción bulk "Eliminar" con lógica real: (1) Filtrar los cursos seleccionados en dos grupos: los que tienen `matriculasIds.length > 0` (bloqueados) y los que tienen 0 (eliminables). (2) Si todos tienen inscritos, mostrar toast de error indicando que no se pueden eliminar. (3) Si algunos tienen inscritos y otros no, mostrar toast de advertencia con los cursos bloqueados y proceder solo con los eliminables. (4) Para los eliminables, abrir un `ConfirmDialog` pidiendo confirmación antes de ejecutar la eliminación. (5) Al confirmar, llamar a `useDeleteCurso` para cada curso y mostrar toast de éxito. Agregar estado para el diálogo de confirmación (`deleteConfirmOpen`, `cursosToDelete`). Importar `useDeleteCurso` y `ConfirmDialog`. |
 
-**Total: 2 archivos editados, 0 migraciones**
+**Total: 1 archivo editado, 0 migraciones**
 

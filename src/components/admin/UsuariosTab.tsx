@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, RefreshCw } from "lucide-react";
+import { UserPlus, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ export default function UsuariosTab() {
   const [password, setPassword] = useState("");
   const [rolId, setRolId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,8 +77,18 @@ export default function UsuariosTab() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Contraseña *</label>
-            <Input type="password" placeholder="Mínimo 6 caracteres" value={password}
-              onChange={e => setPassword(e.target.value)} required />
+            <div className="relative">
+              <Input type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={password}
+                onChange={e => setPassword(e.target.value)} required className="pr-10" />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Rol</label>

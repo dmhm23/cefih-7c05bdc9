@@ -288,7 +288,7 @@ export default function CursosListView() {
           showOnHover
           actions={[
             createViewAction(() => navigate(`/cursos/${c.id}`)),
-            createEditAction(() => navigate(`/cursos/${c.id}/editar`)),
+            createEditAction(() => navigate(`/cursos/${c.id}`)),
           ]}
         />
       ),

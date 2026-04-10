@@ -106,12 +106,19 @@ export const personaService = {
   },
 
   async search(query: string): Promise<Persona[]> {
-    const { data, error } = await supabase
+    const tokens = query.trim().split(/\s+/).filter(t => t.length > 0);
+    if (tokens.length === 0) return [];
+
+    let dbQuery = supabase
       .from('personas')
       .select('*')
-      .is('deleted_at', null)
-      .or(`numero_documento.ilike.%${query}%,nombres.ilike.%${query}%,apellidos.ilike.%${query}%,email.ilike.%${query}%`)
-      .order('nombres');
+      .is('deleted_at', null);
+
+    for (const token of tokens) {
+      dbQuery = dbQuery.or(`nombres.ilike.%${token}%,apellidos.ilike.%${token}%,numero_documento.ilike.%${token}%,telefono.ilike.%${token}%`);
+    }
+
+    const { data, error } = await dbQuery.order('nombres');
 
     if (error) handleSupabaseError(error);
     return (data || []).map(mapPersonaRow);

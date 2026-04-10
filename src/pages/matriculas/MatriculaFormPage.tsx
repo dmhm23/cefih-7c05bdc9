@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { DateField } from "@/components/shared/DateField";
 import {
   Form,
@@ -1260,12 +1261,10 @@ export default function MatriculaFormPage() {
                     <FormItem>
                       <FormLabel>Valor del cupo ($)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
+                        <CurrencyInput
+                          value={field.value || undefined}
+                          onChange={(v) => field.onChange(v ?? 0)}
                           placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                         />
                       </FormControl>
                       <FormMessage />

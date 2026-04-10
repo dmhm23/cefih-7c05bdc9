@@ -771,11 +771,13 @@ export default function MatriculaDetallePage() {
               )}
               <EditableField
                 label="Valor del cupo"
+                type="currency"
                 value={getValue("valorCupo")}
                 onChange={(v) => handleFieldChange("valorCupo", Number(v) || 0)}
               />
               <EditableField
                 label="Abono"
+                type="currency"
                 value={getValue("abono")}
                 onChange={(v) => handleFieldChange("abono", Number(v) || 0)}
               />

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
   const registrarPago = useRegistrarPagoCartera();
   const { data: pagosExistentes = [] } = usePagosByFactura(factura.id);
 
-  const [valorPago, setValorPago] = useState("");
+  const [valorPagoNum, setValorPagoNum] = useState<number | undefined>(undefined);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia_bancaria");
   const [metodoOtro, setMetodoOtro] = useState("");
   const [fechaPago, setFechaPago] = useState(() => todayLocalString());
@@ -37,8 +38,8 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
   const saldoPendiente = factura.total - totalPagado;
 
   const handleSubmit = async () => {
-    const valor = parseFloat(valorPago);
-    if (!valorPago || valor <= 0) {
+    const valor = valorPagoNum ?? 0;
+    if (!valorPagoNum || valor <= 0) {
       toast({ title: "Ingrese un valor válido", variant: "destructive" });
       return;
     }
@@ -70,7 +71,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
 
     toast({ title: "Pago registrado exitosamente" });
     onOpenChange(false);
-    setValorPago("");
+    setValorPagoNum(undefined);
     setMetodoOtro("");
     setObservaciones("");
     setArchivo(null);
@@ -103,11 +104,10 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="valorPago">Valor *</Label>
-              <Input
+              <CurrencyInput
                 id="valorPago"
-                type="number"
-                value={valorPago}
-                onChange={e => setValorPago(e.target.value)}
+                value={valorPagoNum}
+                onChange={(v) => setValorPagoNum(v)}
                 placeholder="0"
                 max={saldoPendiente}
               />

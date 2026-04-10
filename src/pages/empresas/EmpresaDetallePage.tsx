@@ -6,6 +6,7 @@ import { IconButton } from "@/components/shared/IconButton";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { useEmpresa, useUpdateEmpresa, useTarifasEmpresa, useCreateTarifa, useUpdateTarifa, useDeleteTarifa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
@@ -63,7 +64,7 @@ export default function EmpresaDetallePage() {
   const [tarifaDialogOpen, setTarifaDialogOpen] = useState(false);
   const [editingTarifaId, setEditingTarifaId] = useState<string | null>(null);
   const [tarifaNivelId, setTarifaNivelId] = useState("");
-  const [tarifaValor, setTarifaValor] = useState("");
+  const [tarifaValorNum, setTarifaValorNum] = useState<number | undefined>(undefined);
   const [deleteTarifaId, setDeleteTarifaId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -177,18 +178,18 @@ export default function EmpresaDetallePage() {
       if (tarifa) {
         setEditingTarifaId(tarifaId);
         setTarifaNivelId(tarifa.nivelFormacionId);
-        setTarifaValor(tarifa.valor.toString());
+        setTarifaValorNum(tarifa.valor);
       }
     } else {
       setEditingTarifaId(null);
       setTarifaNivelId("");
-      setTarifaValor("");
+      setTarifaValorNum(undefined);
     }
     setTarifaDialogOpen(true);
   };
 
   const handleSaveTarifa = async () => {
-    if (!tarifaNivelId || !tarifaValor) {
+    if (!tarifaNivelId || !tarifaValorNum) {
       toast({ title: "Complete todos los campos", variant: "destructive" });
       return;
     }
@@ -197,7 +198,7 @@ export default function EmpresaDetallePage() {
       if (editingTarifaId) {
         await updateTarifa.mutateAsync({
           id: editingTarifaId,
-          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombreNivel || "", valor: Number(tarifaValor) },
+          data: { nivelFormacionId: tarifaNivelId, nivelFormacionNombre: nivel?.nombreNivel || "", valor: tarifaValorNum },
         });
         toast({ title: "Tarifa actualizada" });
       } else {
@@ -205,7 +206,7 @@ export default function EmpresaDetallePage() {
           empresaId: empresa.id,
           nivelFormacionId: tarifaNivelId,
           nivelFormacionNombre: nivel?.nombreNivel || "",
-          valor: Number(tarifaValor),
+          valor: tarifaValorNum,
         });
         toast({ title: "Tarifa creada" });
       }
@@ -523,11 +524,10 @@ export default function EmpresaDetallePage() {
             </div>
             <div className="space-y-2">
               <Label>Valor ($)</Label>
-              <Input
-                type="number"
-                value={tarifaValor}
-                onChange={e => setTarifaValor(e.target.value)}
-                placeholder="350000"
+              <CurrencyInput
+                value={tarifaValorNum}
+                onChange={(v) => setTarifaValorNum(v)}
+                placeholder="350.000"
               />
             </div>
           </div>

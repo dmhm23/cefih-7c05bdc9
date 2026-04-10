@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Label } from "@/components/ui/label";
 import { Trash2, Users, Eye } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -32,7 +33,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
   const [numeroFactura, setNumeroFactura] = useState("");
   const [fechaEmision, setFechaEmision] = useState("");
   const [fechaVencimiento, setFechaVencimiento] = useState("");
-  const [total, setTotal] = useState("");
+  const [totalNum, setTotalNum] = useState<number | undefined>(undefined);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [archivoUrl, setArchivoUrl] = useState<string | undefined>(undefined);
@@ -43,7 +44,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
       setNumeroFactura(factura.numeroFactura);
       setFechaEmision(factura.fechaEmision);
       setFechaVencimiento(factura.fechaVencimiento);
-      setTotal(String(factura.total));
+      setTotalNum(factura.total);
       setArchivoUrl(factura.archivoFactura);
       setArchivo(null);
     }
@@ -58,7 +59,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
   const getCurso = (cursoId: string) => cursos.find(c => c.id === cursoId);
 
   const handleSubmit = async () => {
-    if (!factura || !numeroFactura || !fechaVencimiento || !total) {
+    if (!factura || !numeroFactura || !fechaVencimiento || !totalNum) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }
@@ -71,7 +72,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
         numeroFactura,
         fechaEmision,
         fechaVencimiento,
-        total: parseFloat(total),
+        total: totalNum,
         archivoFactura: newArchivoUrl,
       },
     });
@@ -110,11 +111,10 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
 
             <div className="space-y-1.5">
               <Label htmlFor="editTotal">Total *</Label>
-              <Input
+              <CurrencyInput
                 id="editTotal"
-                type="number"
-                value={total}
-                onChange={e => setTotal(e.target.value)}
+                value={totalNum}
+                onChange={(v) => setTotalNum(v)}
               />
             </div>
 

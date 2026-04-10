@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/shared/CurrencyInput";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +30,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   const deletePago = useDeletePago();
 
   const [fechaPago, setFechaPago] = useState("");
-  const [valorPago, setValorPago] = useState("");
+  const [valorPagoNum, setValorPagoNum] = useState<number | undefined>(undefined);
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia_bancaria");
   const [metodoOtro, setMetodoOtro] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -41,7 +42,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   useEffect(() => {
     if (pago) {
       setFechaPago(pago.fechaPago);
-      setValorPago(String(pago.valorPago));
+      setValorPagoNum(pago.valorPago);
       setMetodoPago(pago.metodoPago);
       setObservaciones(pago.observaciones || "");
       setSoporteUrl(pago.soportePago);
@@ -51,7 +52,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   }, [pago]);
 
   const handleSubmit = async () => {
-    if (!pago || !valorPago || parseFloat(valorPago) <= 0) {
+    if (!pago || !valorPagoNum || valorPagoNum <= 0) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }
@@ -70,7 +71,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
       id: pago.id,
       data: {
         fechaPago,
-        valorPago: parseFloat(valorPago),
+        valorPago: valorPagoNum,
         metodoPago,
         observaciones: obsConMetodo,
         soportePago: newSoporteUrl,
@@ -103,11 +104,10 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="editValorPago">Valor *</Label>
-                <Input
+                <CurrencyInput
                   id="editValorPago"
-                  type="number"
-                  value={valorPago}
-                  onChange={e => setValorPago(e.target.value)}
+                  value={valorPagoNum}
+                  onChange={(v) => setValorPagoNum(v)}
                 />
               </div>
               <div className="space-y-1.5">

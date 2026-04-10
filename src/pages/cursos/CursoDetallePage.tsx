@@ -10,6 +10,7 @@ import { CourseStatsChips } from "@/components/cursos/CourseStatsChips";
 import { CourseObservations } from "@/components/cursos/CourseObservations";
 import { CloseCourseDialog } from "@/components/cursos/CloseCourseDialog";
 import { JustificacionEdicionDialog } from "@/components/cursos/JustificacionEdicionDialog";
+import { GenerarPdfsDialog } from "@/components/cursos/GenerarPdfsDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
@@ -33,6 +34,7 @@ export default function CursoDetallePage() {
   const [isDirty, setIsDirty] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
   const [justificacionDialogOpen, setJustificacionDialogOpen] = useState(false);
+  const [generarPdfsOpen, setGenerarPdfsOpen] = useState(false);
 
   const minTrabajoRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +144,7 @@ export default function CursoDetallePage() {
         onCloseCourse={() => setCloseDialogOpen(true)}
         onDownloadCsvMinTrabajo={handleDownloadCsvMinTrabajo}
         onExportarListado={handleExportarListado}
+        onGenerarPdfs={() => setGenerarPdfsOpen(true)}
       />
 
 
@@ -215,6 +218,15 @@ export default function CursoDetallePage() {
           handleSave(justificacion);
         }}
         isPending={updateCurso.isPending}
+      />
+
+      {/* Generate PDFs Dialog */}
+      <GenerarPdfsDialog
+        open={generarPdfsOpen}
+        onOpenChange={setGenerarPdfsOpen}
+        curso={curso}
+        matriculas={matriculas}
+        personas={personas}
       />
     </div>
   );

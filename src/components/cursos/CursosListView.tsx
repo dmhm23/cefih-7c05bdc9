@@ -14,7 +14,8 @@ import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
 import { useCursos } from "@/hooks/useCursos";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
-import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNivelLabel";
+import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -67,6 +68,7 @@ export default function CursosListView() {
 
   const { data: cursos = [], isLoading } = useCursos();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+  const { data: niveles = [] } = useNivelesFormacion();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
@@ -88,7 +90,7 @@ export default function CursosListView() {
       key: "tipoFormacion",
       label: "Nivel de Formación",
       type: "select",
-      options: getNivelesAsOptions(),
+      options: niveles.map(n => ({ value: n.id, label: n.nombre })),
     },
     {
       key: "entrenador",
@@ -114,7 +116,7 @@ export default function CursosListView() {
       c.entrenadorNombre.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesEstado = filters.estado === "todos" || c.estado === filters.estado;
-    const matchesNivel = filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion;
+    const matchesNivel = filters.tipoFormacion === "todos" || c.nivelFormacionId === filters.tipoFormacion;
     const matchesEntrenador = filters.entrenador === "todos" || c.entrenadorId === filters.entrenador;
 
     return matchesSearch && matchesEstado && matchesNivel && matchesEntrenador;

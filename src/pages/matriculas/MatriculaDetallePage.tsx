@@ -310,6 +310,53 @@ export default function MatriculaDetallePage() {
     setIsDirty(true);
   };
 
+  const handleMultiFieldChange = (changes: Record<string, string | number | null>) => {
+    setFormData((prev) => ({ ...prev, ...changes }));
+    setIsDirty(true);
+  };
+
+  const handleTipoVinculacionChange = (nuevoTipo: string) => {
+    if (nuevoTipo === "independiente") {
+      const nombreCompleto = persona ? `${persona.nombres} ${persona.apellidos}` : "";
+      const doc = persona?.numeroDocumento || "";
+      handleMultiFieldChange({
+        tipoVinculacion: nuevoTipo,
+        empresaNombre: nombreCompleto,
+        empresaNit: doc,
+        empresaId: "",
+        empresaRepresentanteLegal: "",
+        empresaContactoNombre: "",
+        empresaContactoTelefono: "",
+      });
+    } else {
+      handleMultiFieldChange({
+        tipoVinculacion: nuevoTipo,
+        empresaNombre: "",
+        empresaNit: "",
+        empresaId: "",
+        empresaRepresentanteLegal: "",
+        empresaContactoNombre: "",
+        empresaContactoTelefono: "",
+      });
+    }
+  };
+
+  const handleEmpresaSelect = (empresaId: string) => {
+    const emp = empresasList.find((e) => e.id === empresaId);
+    if (!emp) return;
+    const contactoPrincipal = emp.contactos?.find((c) => c.esPrincipal) || emp.contactos?.[0];
+    handleMultiFieldChange({
+      empresaId: emp.id,
+      empresaNombre: emp.nombreEmpresa,
+      empresaNit: emp.nit,
+      empresaRepresentanteLegal: emp.representanteLegal || "",
+      sectorEconomico: emp.sectorEconomico || "",
+      arl: emp.arl || "",
+      empresaContactoNombre: contactoPrincipal?.nombre || emp.personaContacto || "",
+      empresaContactoTelefono: contactoPrincipal?.telefono || emp.telefonoContacto || "",
+    });
+  };
+
   const handleSave = async () => {
     try {
       await updateMatricula.mutateAsync({ id: matricula.id, data: formData });

@@ -11,7 +11,8 @@ import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector
 import { RowActions, createViewAction, createEditAction } from "@/components/shared/RowActions";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
-import { useCursos } from "@/hooks/useCursos";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useCursos, useDeleteCurso } from "@/hooks/useCursos";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";

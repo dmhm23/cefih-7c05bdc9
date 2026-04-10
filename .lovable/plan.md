@@ -1,35 +1,27 @@
 
 
-# Plan: Corregir filtro de Nivel de Formación en /cursos
+# Plan: Convertir Entrenador y Supervisor a dropdowns en el panel lateral de cursos
 
 ## Diagnóstico
 
-El filtro de "Nivel de Formación" no funciona porque hay una incompatibilidad entre el valor que se selecciona y el campo contra el que se compara:
-
-- **Opciones del filtro**: usan el UUID del nivel (`n.id`) como `value` (viene de `getNivelesAsOptions()`).
-- **Comparación al filtrar** (línea 117): compara contra `c.tipoFormacion`, que es un enum string (`formacion_inicial`, `reentrenamiento`, etc.), no un UUID.
-
-Resultado: UUID nunca es igual al enum string, por lo que ningún curso coincide al filtrar.
+En `CursoDetailSheet.tsx` (líneas 147-157), los campos "Entrenador" y "Supervisor" usan `EditableField` sin `type="select"` ni `options`, por lo que se renderizan como inputs de texto libre. Esto contrasta con `CourseInfoCard.tsx`, donde ya se implementó correctamente usando `usePersonalByTipoCargo` para obtener las opciones del dropdown.
 
 ## Solución
 
-En `CursosListView.tsx`, línea 117, cambiar la comparación para que use `nivelFormacionId`:
+Replicar el mismo patrón que ya funciona en `CourseInfoCard.tsx`:
 
-```typescript
-// Antes:
-const matchesNivel = filters.tipoFormacion === "todos" || c.tipoFormacion === filters.tipoFormacion;
+1. Importar `usePersonalByTipoCargo` desde `@/hooks/usePersonal`
+2. Obtener entrenadores y supervisores con el hook
+3. Crear opciones con `useMemo`
+4. Cambiar ambos `EditableField` a `type="select"` con las opciones correspondientes
+5. Usar `value={getValue("entrenadorId")}` / `getValue("supervisorId")` en lugar de los campos `*Nombre`
+6. Al cambiar, actualizar tanto el `Id` como el `Nombre` (igual que en `CourseInfoCard`)
 
-// Después:
-const matchesNivel = filters.tipoFormacion === "todos" || c.nivelFormacionId === filters.tipoFormacion;
-```
-
-Adicionalmente, hacer el dropdown reactivo (mismo patrón ya aplicado en `CursoDetailSheet` y `CourseInfoCard`): reemplazar `getNivelesAsOptions()` en `filterConfigs` por opciones derivadas de `useNivelesFormacion`, para evitar que el filtro aparezca vacío si la cache no está lista.
-
-## Cambios
+## Cambio
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/cursos/CursosListView.tsx` | Comparar filtro contra `nivelFormacionId` en lugar de `tipoFormacion`; usar `useNivelesFormacion` para opciones reactivas del filtro |
+| `src/components/cursos/CursoDetailSheet.tsx` | Importar `usePersonalByTipoCargo`, agregar hooks + memos para opciones, convertir Entrenador y Supervisor a `type="select"` con handlers que actualicen id y nombre |
 
-**Total: 1 archivo editado, 0 migraciones**
+**Total: 1 archivo, 0 migraciones**
 

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
 import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
+import { useEmpresas } from "@/hooks/useEmpresas";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
@@ -97,6 +98,8 @@ export default function MatriculaDetallePage() {
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+  const { data: empresasList = [] } = useEmpresas();
+  const empresasOptions = empresasList.map((e) => ({ value: e.id, label: e.nombreEmpresa }));
   const [hasGrupoCartera, setHasGrupoCartera] = useState<boolean | null>(null);
   const [syncingCartera, setSyncingCartera] = useState(false);
 
@@ -305,6 +308,53 @@ export default function MatriculaDetallePage() {
   const handleFieldChange = (field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
+  };
+
+  const handleMultiFieldChange = (changes: Record<string, string | number | null>) => {
+    setFormData((prev) => ({ ...prev, ...changes }));
+    setIsDirty(true);
+  };
+
+  const handleTipoVinculacionChange = (nuevoTipo: string) => {
+    if (nuevoTipo === "independiente") {
+      const nombreCompleto = persona ? `${persona.nombres} ${persona.apellidos}` : "";
+      const doc = persona?.numeroDocumento || "";
+      handleMultiFieldChange({
+        tipoVinculacion: nuevoTipo,
+        empresaNombre: nombreCompleto,
+        empresaNit: doc,
+        empresaId: "",
+        empresaRepresentanteLegal: "",
+        empresaContactoNombre: "",
+        empresaContactoTelefono: "",
+      });
+    } else {
+      handleMultiFieldChange({
+        tipoVinculacion: nuevoTipo,
+        empresaNombre: "",
+        empresaNit: "",
+        empresaId: "",
+        empresaRepresentanteLegal: "",
+        empresaContactoNombre: "",
+        empresaContactoTelefono: "",
+      });
+    }
+  };
+
+  const handleEmpresaSelect = (empresaId: string) => {
+    const emp = empresasList.find((e) => e.id === empresaId);
+    if (!emp) return;
+    const contactoPrincipal = emp.contactos?.find((c) => c.esPrincipal) || emp.contactos?.[0];
+    handleMultiFieldChange({
+      empresaId: emp.id,
+      empresaNombre: emp.nombreEmpresa,
+      empresaNit: emp.nit,
+      empresaRepresentanteLegal: emp.representanteLegal || "",
+      sectorEconomico: emp.sectorEconomico || "",
+      arl: emp.arl || "",
+      empresaContactoNombre: contactoPrincipal?.nombre || emp.personaContacto || "",
+      empresaContactoTelefono: contactoPrincipal?.telefono || emp.telefonoContacto || "",
+    });
   };
 
   const handleSave = async () => {
@@ -607,12 +657,12 @@ export default function MatriculaDetallePage() {
             <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Vinculación Laboral
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 [&>*]:min-w-0">
               <EditableField
                 label="Responsable del pago"
                 value={getValue("tipoVinculacion")}
                 displayValue={getDisplayLabel(getValue("tipoVinculacion"), TIPOS_VINCULACION)}
-                onChange={(v) => handleFieldChange("tipoVinculacion", v)}
+                onChange={(v) => handleTipoVinculacionChange(v)}
                 type="select"
                 options={[...TIPOS_VINCULACION]}
                 badge
@@ -639,38 +689,28 @@ export default function MatriculaDetallePage() {
                 options={[...AREAS_TRABAJO]}
                 badge
               />
-              {(getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "independiente" || getValue("tipoVinculacion") === "arl") && (
+              {(getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "arl") && (
                 <>
                   <EditableField
                     label="Empresa"
-                    value={getValue("empresaNombre")}
-                    onChange={(v) => handleFieldChange("empresaNombre", v)}
+                    value={getValue("empresaId") || getValue("empresaNombre")}
+                    displayValue={getValue("empresaNombre")}
+                    onChange={(v) => handleEmpresaSelect(v)}
+                    type="select"
+                    options={empresasOptions}
                   />
                   <EditableField
                     label="NIT"
                     value={getValue("empresaNit")}
                     onChange={(v) => handleFieldChange("empresaNit", v)}
+                    editable={false}
                   />
                   <EditableField
                     label="Representante Legal"
                     value={getValue("empresaRepresentanteLegal")}
                     onChange={(v) => handleFieldChange("empresaRepresentanteLegal", v)}
+                    editable={false}
                   />
-                  {matricula.empresaId && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="px-0 gap-1 h-auto text-xs"
-                      onClick={() => navigate(`/empresas/${matricula.empresaId}`, { state: { from: `/matriculas/${matricula.id}`, fromLabel: "Matrícula" } })}
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Ver empresa en directorio
-                    </Button>
-                  )}
-                </>
-              )}
-              {(getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "arl") && (
-                <>
                   <EditableField
                     label="Contacto Empresa"
                     value={getValue("empresaContactoNombre")}
@@ -680,6 +720,22 @@ export default function MatriculaDetallePage() {
                     label="Tel. Contacto"
                     value={getValue("empresaContactoTelefono")}
                     onChange={(v) => handleFieldChange("empresaContactoTelefono", v)}
+                  />
+                </>
+              )}
+              {getValue("tipoVinculacion") === "independiente" && (
+                <>
+                  <EditableField
+                    label="Empresa"
+                    value={getValue("empresaNombre")}
+                    onChange={() => {}}
+                    editable={false}
+                  />
+                  <EditableField
+                    label="NIT"
+                    value={getValue("empresaNit")}
+                    onChange={() => {}}
+                    editable={false}
                   />
                 </>
               )}
@@ -732,6 +788,17 @@ export default function MatriculaDetallePage() {
                 />
               )}
             </div>
+            {(getValue("empresaId") || matricula.empresaId) && (getValue("tipoVinculacion") === "empresa" || getValue("tipoVinculacion") === "arl") && (
+              <Button
+                variant="link"
+                size="sm"
+                className="px-0 gap-1 h-auto text-xs mt-2"
+                onClick={() => navigate(`/empresas/${getValue("empresaId") || matricula.empresaId}`, { state: { from: `/matriculas/${matricula.id}`, fromLabel: "Matrícula" } })}
+              >
+                <ExternalLink className="h-3 w-3" />
+                Ver empresa en directorio
+              </Button>
+            )}
           </div>
 
           {/* Documentos */}

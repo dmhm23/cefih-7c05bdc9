@@ -15,6 +15,7 @@ import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
+import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso, CursoFormData } from "@/types/curso";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { Separator } from "@/components/ui/separator";
@@ -43,12 +44,24 @@ export function CursoDetailSheet({
   const updateCurso = useUpdateCurso();
   const { data: personas = [] } = usePersonas();
   const { data: niveles = [] } = useNivelesFormacion();
+  const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
+  const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
   const tipoFormacionOptions = useMemo(
     () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
     [niveles]
+  );
+
+  const entrenadorOptions = useMemo(() =>
+    entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),
+    [entrenadores]
+  );
+
+  const supervisorOptions = useMemo(() =>
+    supervisores.map((s) => ({ value: s.id, label: `${s.nombres} ${s.apellidos}` })),
+    [supervisores]
   );
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
@@ -146,14 +159,32 @@ export function CursoDetailSheet({
             />
             <EditableField
               label="Entrenador"
-              value={getValue("entrenadorNombre")}
-              onChange={(v) => handleFieldChange("entrenadorNombre", v)}
+              value={getValue("entrenadorId") ?? ""}
+              displayValue={getValue("entrenadorNombre")}
+              onChange={(v) => {
+                const selected = entrenadores.find((e) => e.id === v);
+                if (selected) {
+                  handleFieldChange("entrenadorId", v);
+                  handleFieldChange("entrenadorNombre", `${selected.nombres} ${selected.apellidos}`);
+                }
+              }}
+              type="select"
+              options={entrenadorOptions}
               icon={User}
             />
             <EditableField
               label="Supervisor"
-              value={getValue("supervisorNombre") ?? ""}
-              onChange={(v) => handleFieldChange("supervisorNombre", v)}
+              value={getValue("supervisorId") ?? ""}
+              displayValue={getValue("supervisorNombre") ?? ""}
+              onChange={(v) => {
+                const selected = supervisores.find((s) => s.id === v);
+                if (selected) {
+                  handleFieldChange("supervisorId", v);
+                  handleFieldChange("supervisorNombre", `${selected.nombres} ${selected.apellidos}`);
+                }
+              }}
+              type="select"
+              options={supervisorOptions}
               icon={User}
             />
           </div>

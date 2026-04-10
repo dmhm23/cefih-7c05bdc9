@@ -113,6 +113,17 @@ export default function CursoDetallePage() {
     });
   };
 
+  const handleExportarListado = () => {
+    if (matriculas.length === 0) {
+      toast({ title: "Sin estudiantes", description: "No hay matrículas para exportar.", variant: "destructive" });
+      return;
+    }
+    const content = generateListadoEstudiantesCsv(matriculas, personas, curso);
+    const filename = `Curso_${curso.numeroCurso}_Listado.csv`;
+    downloadCsv(content, filename);
+    toast({ title: "Listado exportado", description: `${matriculas.length} registro(s) exportados.` });
+  };
+
   const handleCambiarEstado = async (nuevoEstado: "abierto" | "en_progreso") => {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });

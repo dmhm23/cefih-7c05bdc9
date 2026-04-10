@@ -174,7 +174,7 @@ export const formatoFormacionService = {
       .from('formatos_formacion')
       .select('*')
       .eq('activo', true)
-      .eq('estado', 'activo')
+      .in('estado', ['activo', 'borrador'])
       .is('deleted_at', null)
       .eq('visible_en_matricula', true);
 

@@ -27,7 +27,7 @@ export interface Empresa {
   updatedAt: string;
 }
 
-export type EmpresaFormData = Omit<Empresa, 'id' | 'createdAt' | 'updatedAt'>;
+export type EmpresaFormData = Omit<Empresa, 'id' | 'createdAt' | 'updatedAt' | 'activo'>;
 
 export interface TarifaEmpresa {
   id: string;

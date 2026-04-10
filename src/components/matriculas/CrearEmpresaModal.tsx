@@ -104,7 +104,7 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
         personaContacto: principal?.nombre || "",
         telefonoContacto: principal?.telefono || "",
         emailContacto: principal?.email || "",
-        activo: true,
+        
       });
       toast({ title: "Empresa creada correctamente" });
       form.reset();

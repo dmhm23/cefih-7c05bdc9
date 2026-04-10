@@ -33,7 +33,6 @@ const empresaSchema = z.object({
   arl: z.string().optional().or(z.literal("")),
   direccion: z.string().optional().or(z.literal("")),
   telefonoEmpresa: z.string().optional().or(z.literal("")),
-  activo: z.boolean(),
 });
 
 type EmpresaFormSchema = z.infer<typeof empresaSchema>;
@@ -62,7 +61,6 @@ export default function EmpresaFormPage() {
       arl: "",
       direccion: "",
       telefonoEmpresa: "",
-      activo: true,
     },
   });
 
@@ -76,7 +74,6 @@ export default function EmpresaFormPage() {
         arl: empresa.arl || "",
         direccion: empresa.direccion || "",
         telefonoEmpresa: empresa.telefonoEmpresa || "",
-        activo: empresa.activo,
       });
       if (empresa.contactos && empresa.contactos.length > 0) {
         setContactos(empresa.contactos);
@@ -121,7 +118,6 @@ export default function EmpresaFormPage() {
         personaContacto: principal?.nombre || "",
         telefonoContacto: principal?.telefono || "",
         emailContacto: principal?.email || "",
-        activo: data.activo,
       };
 
       if (isEditing) {
@@ -272,23 +268,6 @@ export default function EmpresaFormPage() {
                       <Input {...field} placeholder="6011234567" />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="activo"
-                render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <FormLabel>Estado</FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        {field.value ? "Empresa activa en el sistema" : "Empresa inactiva"}
-                      </p>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
                   </FormItem>
                 )}
               />

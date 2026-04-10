@@ -78,7 +78,7 @@ function mapEmpresaToDb(data: Partial<EmpresaFormData>): Record<string, any> {
   if ((data as any).telefonoContacto !== undefined) result.telefono_contacto = (data as any).telefonoContacto;
   if (data.representanteLegal !== undefined) result.representante_legal = data.representanteLegal || null;
   if (data.direccion !== undefined) result.direccion = data.direccion;
-  if (data.activo !== undefined) result.activo = data.activo;
+  if ((data as any).activo !== undefined) result.activo = (data as any).activo;
   if ((data as any).observaciones !== undefined) result.observaciones = (data as any).observaciones;
   if ((data as any).ciudad !== undefined) result.ciudad = (data as any).ciudad;
   if ((data as any).departamento !== undefined) result.departamento = (data as any).departamento;

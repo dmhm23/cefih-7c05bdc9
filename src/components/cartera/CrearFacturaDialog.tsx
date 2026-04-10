@@ -161,7 +161,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
                 setVincularMatriculas(checked);
                 if (!checked) {
                   setSelectedIds([]);
-                  if (!totalEditedManually) setTotalManual("");
+                  if (!totalEditedManually) setTotalManualNum(undefined);
                 }
               }}
             />

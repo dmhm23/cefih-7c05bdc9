@@ -52,7 +52,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   }, [pago]);
 
   const handleSubmit = async () => {
-    if (!pago || !valorPago || parseFloat(valorPago) <= 0) {
+    if (!pago || !valorPagoNum || valorPagoNum <= 0) {
       toast({ title: "Complete los campos requeridos", variant: "destructive" });
       return;
     }

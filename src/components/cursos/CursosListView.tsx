@@ -11,7 +11,8 @@ import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector
 import { RowActions, createViewAction, createEditAction } from "@/components/shared/RowActions";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CursoDetailSheet } from "@/components/cursos/CursoDetailSheet";
-import { useCursos } from "@/hooks/useCursos";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useCursos, useDeleteCurso } from "@/hooks/useCursos";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
@@ -51,6 +52,8 @@ export default function CursosListView() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [cursosToDelete, setCursosToDelete] = useState<Curso[]>([]);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estado: "todos",
     tipoFormacion: "todos",
@@ -67,6 +70,7 @@ export default function CursosListView() {
   });
 
   const { data: cursos = [], isLoading } = useCursos();
+  const { mutateAsync: deleteCurso } = useDeleteCurso();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: niveles = [] } = useNivelesFormacion();
 
@@ -152,14 +156,50 @@ export default function CursosListView() {
     setSelectedIndex(index);
   };
 
+  const handleBulkDelete = (ids: string[]) => {
+    const selected = cursos.filter(c => ids.includes(c.id));
+    const conInscritos = selected.filter(c => c.matriculasIds.length > 0);
+    const sinInscritos = selected.filter(c => c.matriculasIds.length === 0);
+
+    if (sinInscritos.length === 0) {
+      toast({
+        title: "No se pueden eliminar",
+        description: `${conInscritos.length === 1 ? "El curso seleccionado tiene" : "Todos los cursos seleccionados tienen"} estudiantes inscritos y no ${conInscritos.length === 1 ? "puede" : "pueden"} ser eliminado${conInscritos.length === 1 ? "" : "s"}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (conInscritos.length > 0) {
+      toast({
+        title: "Algunos cursos no se pueden eliminar",
+        description: `${conInscritos.length} curso(s) con inscritos fueron excluidos. Se procederá con ${sinInscritos.length} curso(s) sin estudiantes.`,
+      });
+    }
+
+    setCursosToDelete(sinInscritos);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await Promise.all(cursosToDelete.map(c => deleteCurso(c.id)));
+      toast({ title: `${cursosToDelete.length} curso(s) eliminado(s) correctamente` });
+      setSelectedIds([]);
+    } catch {
+      toast({ title: "Error al eliminar cursos", variant: "destructive" });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setCursosToDelete([]);
+    }
+  };
+
   const bulkActions: BulkAction[] = [
     {
       label: "Eliminar",
       icon: Trash2,
       variant: "destructive",
-      onClick: (ids) => {
-        toast({ title: `Eliminar ${ids.length} cursos (pendiente)` });
-      },
+      onClick: handleBulkDelete,
     },
     {
       label: "Exportar",
@@ -355,6 +395,16 @@ export default function CursosListView() {
         currentIndex={selectedIndex ?? 0}
         totalCount={filteredCursos.length}
         onNavigate={handleNavigate}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Eliminar cursos"
+        description={`¿Está seguro de que desea eliminar ${cursosToDelete.length} curso(s)? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

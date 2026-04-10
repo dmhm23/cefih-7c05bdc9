@@ -396,6 +396,16 @@ export default function CursosListView() {
         totalCount={filteredCursos.length}
         onNavigate={handleNavigate}
       />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Eliminar cursos"
+        description={`¿Está seguro de que desea eliminar ${cursosToDelete.length} curso(s)? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

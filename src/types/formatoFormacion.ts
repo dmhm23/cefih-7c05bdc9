@@ -90,6 +90,7 @@ export interface BloqueParagraph extends BloqueBase {
 
 export interface BloqueSectionTitle extends BloqueBase {
   type: 'section_title';
+  props?: { collapsible?: boolean; defaultOpen?: boolean };
 }
 
 export interface BloqueText extends BloqueBase {

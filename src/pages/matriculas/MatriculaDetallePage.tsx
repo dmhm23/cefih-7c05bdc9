@@ -15,6 +15,7 @@ import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
+import { useFormatoRespuestas } from "@/hooks/useFormatoRespuestas";
 import { FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
@@ -34,10 +35,6 @@ import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
-import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
-import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
-import EvaluacionReentrenamientoPreviewDialog from "@/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog";
 import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
 import { FormatoFormacion } from "@/types/formatoFormacion";
 import {
@@ -70,7 +67,7 @@ interface ChecklistItem {
 
 type PreviewFormatoId = string | null;
 
-const LEGACY_IDS = new Set(["info_aprendiz", "registro_asistencia", "participacion_pta_ats", "evaluacion_reentrenamiento"]);
+
 
 export default function MatriculaDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -91,6 +88,7 @@ export default function MatriculaDetallePage() {
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
   const { data: formatosDinamicos } = useFormatosMatricula(id);
+  const { data: respuestas = [] } = useFormatoRespuestas(id);
   const updateMatricula = useUpdateMatricula();
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();
@@ -996,26 +994,18 @@ export default function MatriculaDetallePage() {
             </h3>
              <FormatosList
               formatos={(formatosDinamicos ?? []).map((f) => ({
-                id: f.legacyComponentId || f.id,
+                id: f.id,
                 nombre: f.nombre,
                 codigo: f.codigo,
-                estado: resolveFormatoEstado(f, matricula),
+                estado: resolveFormatoEstado(f, respuestas),
               }))}
               onPreview={(id) => {
-                if (LEGACY_IDS.has(id)) {
-                  setPreviewFormato(id);
-                } else {
-                  const fmt = formatosDinamicos?.find((f) => f.id === id);
-                  if (fmt) { setDynamicFormato(fmt); }
-                }
+                const fmt = formatosDinamicos?.find((f) => f.id === id);
+                if (fmt) { setDynamicFormato(fmt); }
               }}
               onDownload={(id) => {
-                if (LEGACY_IDS.has(id)) {
-                  setPreviewFormato(id);
-                } else {
-                  const fmt = formatosDinamicos?.find((f) => f.id === id);
-                  if (fmt) { setDynamicFormato(fmt); }
-                }
+                const fmt = formatosDinamicos?.find((f) => f.id === id);
+                if (fmt) { setDynamicFormato(fmt); }
               }}
             />
           </div>
@@ -1065,34 +1055,6 @@ export default function MatriculaDetallePage() {
 
 
       {/* Preview de formatos */}
-      <InfoAprendizPreviewDialog
-        open={previewFormato === "info_aprendiz"}
-        onOpenChange={(open) => !open && setPreviewFormato(null)}
-        persona={persona ?? null}
-        matricula={matricula}
-        curso={curso ?? null}
-      />
-      <RegistroAsistenciaPreviewDialog
-        open={previewFormato === "registro_asistencia"}
-        onOpenChange={(open) => !open && setPreviewFormato(null)}
-        persona={persona ?? null}
-        matricula={matricula}
-        curso={curso ?? null}
-      />
-      <ParticipacionPtaAtsPreviewDialog
-        open={previewFormato === "participacion_pta_ats"}
-        onOpenChange={(open) => !open && setPreviewFormato(null)}
-        persona={persona ?? null}
-        matricula={matricula}
-        curso={curso ?? null}
-      />
-      <EvaluacionReentrenamientoPreviewDialog
-        open={previewFormato === "evaluacion_reentrenamiento"}
-        onOpenChange={(open) => !open && setPreviewFormato(null)}
-        persona={persona ?? null}
-        matricula={matricula}
-        curso={curso ?? null}
-      />
       <DynamicFormatoPreviewDialog
         open={!!dynamicFormato}
         onOpenChange={(open) => !open && setDynamicFormato(null)}

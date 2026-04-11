@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,9 +7,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download } from "lucide-react";
+import { Download, Save, Pencil, Eye } from "lucide-react";
 import DynamicFormatoDocument from "./DynamicFormatoDocument";
 import { usePersonal } from "@/hooks/usePersonal";
+import { useFormatoRespuesta, useSaveFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
+import { useToast } from "@/hooks/use-toast";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
@@ -36,8 +38,6 @@ const PRINT_STYLES = `
   .doc-header-fecha-cell:first-child { border-right: 1px solid #9ca3af; }
   .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
   .section-title h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
-  .field-cell .text-\\[9px\\] { font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; color: #737373; line-height: 1.2; }
-  .field-cell .text-sm { font-size: 12px; font-weight: 500; line-height: 1.3; }
   table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid #d4d4d4; padding: 4px 8px; font-size: 11px; }
   @media print { body { padding: 5mm; } }
@@ -61,9 +61,50 @@ export default function DynamicFormatoPreviewDialog({
   curso,
 }: Props) {
   const documentRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const { data: entrenador } = usePersonal(curso?.entrenadorId || "");
   const { data: supervisor } = usePersonal(curso?.supervisorId || "");
+
+  // Load saved answers
+  const { data: savedRespuesta } = useFormatoRespuesta(
+    open ? matricula.id : undefined,
+    open ? formato?.id : undefined
+  );
+  const saveMutation = useSaveFormatoRespuesta();
+
+  const [editMode, setEditMode] = useState(false);
+  const [localAnswers, setLocalAnswers] = useState<Record<string, unknown>>({});
+
+  // Sync saved answers when loaded
+  useEffect(() => {
+    if (savedRespuesta?.answers) {
+      setLocalAnswers(savedRespuesta.answers as Record<string, unknown>);
+    } else {
+      setLocalAnswers({});
+    }
+    setEditMode(false);
+  }, [savedRespuesta, formato?.id]);
+
+  const handleAnswerChange = useCallback((key: string, value: unknown) => {
+    setLocalAnswers((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleSave = useCallback(async (estado: 'pendiente' | 'completado' = 'pendiente') => {
+    if (!formato) return;
+    try {
+      await saveMutation.mutateAsync({
+        matriculaId: matricula.id,
+        formatoId: formato.id,
+        answers: localAnswers,
+        estado,
+      });
+      toast({ title: estado === 'completado' ? "Formato completado" : "Borrador guardado" });
+      if (estado === 'completado') setEditMode(false);
+    } catch {
+      toast({ title: "Error al guardar", variant: "destructive" });
+    }
+  }, [formato, matricula.id, localAnswers, saveMutation, toast]);
 
   const handlePrint = useCallback(() => {
     if (!documentRef.current) return;
@@ -87,16 +128,52 @@ export default function DynamicFormatoPreviewDialog({
 
   if (!formato) return null;
 
+  const isCompleted = savedRespuesta?.estado === 'completado';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <div className="flex items-center justify-between pr-8">
             <DialogTitle>Vista Previa — {formato.nombre}</DialogTitle>
-            <Button size="sm" onClick={handlePrint}>
-              <Download className="h-4 w-4 mr-1" />
-              Descargar PDF
-            </Button>
+            <div className="flex gap-2">
+              {!editMode ? (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(true)}>
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <Button size="sm" onClick={handlePrint}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Descargar PDF
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setEditMode(false)}>
+                    <Eye className="h-4 w-4 mr-1" />
+                    Vista previa
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleSave('pendiente')}
+                    disabled={saveMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-1" />
+                    Guardar borrador
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSave('completado')}
+                    disabled={saveMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-1" />
+                    Completar
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
@@ -114,6 +191,9 @@ export default function DynamicFormatoPreviewDialog({
                 curso={curso}
                 entrenador={entrenador ?? null}
                 supervisor={supervisor ?? null}
+                answers={localAnswers}
+                onAnswerChange={editMode ? handleAnswerChange : undefined}
+                readOnly={!editMode}
               />
             </div>
           </div>

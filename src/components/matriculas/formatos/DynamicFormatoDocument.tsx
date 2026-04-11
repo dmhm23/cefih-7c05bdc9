@@ -1,8 +1,6 @@
 import React from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
-import { Badge } from "@/components/ui/badge";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
-import { BLOQUE_TYPE_LABELS } from "@/data/bloqueConstants";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
 import type { FormatoFormacion, Bloque, AutoFieldKey } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
@@ -11,6 +9,10 @@ import type { Curso } from "@/types/curso";
 import type { Personal } from "@/types/personal";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import BloqueHealthConsentRenderer from "./bloques/BloqueHealthConsentRenderer";
+import BloqueDataAuthorizationRenderer from "./bloques/BloqueDataAuthorizationRenderer";
+import BloqueEvaluationQuizRenderer from "./bloques/BloqueEvaluationQuizRenderer";
+import BloqueSatisfactionSurveyRenderer from "./bloques/BloqueSatisfactionSurveyRenderer";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -28,6 +30,23 @@ function FieldCell({ label, value, badge, span }: { label: string; value: string
         )}
       </p>
       <p className="text-sm font-medium leading-snug">{value}</p>
+    </div>
+  );
+}
+
+function EditableFieldCell({
+  label, value, onChange, readOnly, span,
+}: { label: string; value: string; onChange?: (v: string) => void; readOnly?: boolean; span?: boolean }) {
+  if (readOnly || !onChange) return <FieldCell label={label} value={value || "—"} span={span} />;
+  return (
+    <div className="field-cell" style={span ? { gridColumn: "span 2" } : undefined}>
+      <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{label}</p>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full border rounded px-2 py-1 text-sm bg-background"
+      />
     </div>
   );
 }
@@ -54,7 +73,16 @@ function SignatureBox({ label, imageBase64, name }: { label: string; imageBase64
 
 const FIRMA_KEYS = new Set<string>(["aprendiz_firma", "entrenador_firma", "supervisor_firma"]);
 
-function renderBloque(bloque: Bloque, ctx: AutoFieldContext): React.ReactNode {
+interface RenderContext {
+  ctx: AutoFieldContext;
+  answers: Record<string, unknown>;
+  onChange?: (key: string, value: unknown) => void;
+  readOnly: boolean;
+}
+
+function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
+  const { ctx, answers, onChange, readOnly } = rc;
+
   switch (bloque.type) {
     case "section_title":
       return (
@@ -87,25 +115,55 @@ function renderBloque(bloque: Bloque, ctx: AutoFieldContext): React.ReactNode {
       );
 
     case "text":
-      return <FieldCell label={bloque.label || "Campo de texto"} value="—" />;
+      return (
+        <EditableFieldCell
+          label={bloque.label || "Campo de texto"}
+          value={(answers[bloque.id] as string) || ""}
+          onChange={!readOnly && onChange ? (v) => onChange(bloque.id, v) : undefined}
+          readOnly={readOnly}
+        />
+      );
 
     case "date":
-      return <FieldCell label={bloque.label || "Fecha"} value="—" />;
+      return (
+        <EditableFieldCell
+          label={bloque.label || "Fecha"}
+          value={(answers[bloque.id] as string) || ""}
+          onChange={!readOnly && onChange ? (v) => onChange(bloque.id, v) : undefined}
+          readOnly={readOnly}
+        />
+      );
 
     case "number":
-      return <FieldCell label={bloque.label || "Número"} value="—" />;
+      return (
+        <EditableFieldCell
+          label={bloque.label || "Número"}
+          value={(answers[bloque.id] as string) || ""}
+          onChange={!readOnly && onChange ? (v) => onChange(bloque.id, v) : undefined}
+          readOnly={readOnly}
+        />
+      );
 
     case "radio": {
       const options = ("props" in bloque && (bloque as any).props?.options) || [];
+      const selected = answers[bloque.id] as string | undefined;
       return (
         <div className="field-cell">
           <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{bloque.label || "Selección"}</p>
           <div className="flex gap-3 mt-1">
             {options.map((opt: any) => (
-              <div key={opt.value} className="flex items-center gap-1">
-                <div className="h-3.5 w-3.5 rounded-full border border-muted-foreground/40" />
+              <button
+                key={opt.value}
+                type="button"
+                disabled={readOnly}
+                onClick={() => !readOnly && onChange?.(bloque.id, opt.value)}
+                className={`flex items-center gap-1 ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+              >
+                <div className={`h-3.5 w-3.5 rounded-full border ${
+                  selected === opt.value ? 'border-primary bg-primary' : 'border-muted-foreground/40'
+                }`} />
                 <span className="text-xs">{opt.label}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -113,22 +171,32 @@ function renderBloque(bloque: Bloque, ctx: AutoFieldContext): React.ReactNode {
     }
 
     case "select":
-      return <FieldCell label={bloque.label || "Selección"} value="—" />;
+      return <FieldCell label={bloque.label || "Selección"} value={(answers[bloque.id] as string) || "—"} />;
 
-    case "checkbox":
+    case "checkbox": {
+      const checked = answers[bloque.id] as boolean | undefined;
       return (
         <div className="field-cell flex items-center gap-2">
-          <div className="h-4 w-4 border rounded" />
+          <button
+            type="button"
+            disabled={readOnly}
+            onClick={() => !readOnly && onChange?.(bloque.id, !checked)}
+            className={`h-4 w-4 border rounded flex items-center justify-center ${
+              checked ? 'bg-primary border-primary text-primary-foreground' : ''
+            } ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+          >
+            {checked && <span className="text-[10px]">✓</span>}
+          </button>
           <span className="text-sm">{bloque.label || "Opción"}</span>
         </div>
       );
+    }
 
     case "auto_field": {
       const key = ("props" in bloque && (bloque as any).props?.key) as AutoFieldKey | undefined;
       const span = ("props" in bloque && (bloque as any).props?.span) || false;
       if (!key) return <FieldCell label={bloque.label || "Auto"} value="Sin clave" badge="Auto" span={span} />;
 
-      // Signature fields render as images
       if (FIRMA_KEYS.has(key)) {
         const base64 = resolveAutoFieldValue(key, ctx);
         const nameMap: Record<string, string | null> = {
@@ -218,18 +286,43 @@ function renderBloque(bloque: Bloque, ctx: AutoFieldContext): React.ReactNode {
     }
 
     case "health_consent":
+      return (
+        <BloqueHealthConsentRenderer
+          bloque={bloque}
+          answers={answers}
+          onChange={onChange}
+          readOnly={readOnly}
+        />
+      );
+
     case "data_authorization":
+      return (
+        <BloqueDataAuthorizationRenderer
+          bloque={bloque}
+          answers={answers}
+          onChange={onChange}
+          readOnly={readOnly}
+        />
+      );
+
     case "evaluation_quiz":
+      return (
+        <BloqueEvaluationQuizRenderer
+          bloque={bloque}
+          answers={answers}
+          onChange={onChange}
+          readOnly={readOnly}
+        />
+      );
+
     case "satisfaction_survey":
       return (
-        <div style={{ gridColumn: "span 2" }} className="border rounded-lg p-3 bg-muted/20 mt-2">
-          <Badge variant="secondary" className="text-[10px]">
-            {BLOQUE_TYPE_LABELS[bloque.type]}
-          </Badge>
-          <p className="text-xs text-muted-foreground mt-1">
-            Bloque complejo — se renderiza con su componente especializado
-          </p>
-        </div>
+        <BloqueSatisfactionSurveyRenderer
+          bloque={bloque}
+          answers={answers}
+          onChange={onChange}
+          readOnly={readOnly}
+        />
       );
 
     default:
@@ -248,6 +341,9 @@ interface DynamicFormatoDocumentProps {
   curso: Curso | null;
   entrenador: Personal | null;
   supervisor: Personal | null;
+  answers?: Record<string, unknown>;
+  onAnswerChange?: (key: string, value: unknown) => void;
+  readOnly?: boolean;
 }
 
 export default function DynamicFormatoDocument({
@@ -257,10 +353,14 @@ export default function DynamicFormatoDocument({
   curso,
   entrenador,
   supervisor,
+  answers = {},
+  onAnswerChange,
+  readOnly = true,
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
   const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor };
+  const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
   return (
     <div className="bg-white p-6" style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px" }}>
@@ -277,7 +377,7 @@ export default function DynamicFormatoDocument({
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4" style={{ fontSize: "12px" }}>
           {bloques.map((bloque) => (
             <React.Fragment key={bloque.id}>
-              {renderBloque(bloque, ctx)}
+              {renderBloque(bloque, rc)}
             </React.Fragment>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,15 +23,18 @@ import { useRemoverEstudianteCurso } from "@/hooks/useCursos";
 import { useCertificadosByCurso, useGenerarCertificado } from "@/hooks/useCertificados";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 import {
   evaluarElegibilidad,
   construirDiccionarioTokens,
   reemplazarTokens,
 } from "@/utils/certificadoGenerator";
+import type { ElegibilidadContext } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
+import { useQuery } from "@tanstack/react-query";
 
 interface EnrollmentsTableProps {
   curso: Curso;
@@ -50,6 +53,54 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
 
   const { codigos: codigosMapa } = useCodigosCurso(curso);
 
+  // --- Fetch formatos requeridos para el nivel del curso ---
+  const { data: formatosRequeridos = [] } = useQuery({
+    queryKey: ['formatos-requeridos-curso', curso.id, curso.nivelFormacionId, curso.tipoFormacion],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('formatos_formacion')
+        .select('id, nombre')
+        .eq('activo', true)
+        .eq('visible_en_matricula', true)
+        .is('deleted_at', null);
+      if (error || !data) return [];
+      // Filter by nivel if available
+      return data.filter(f => {
+        const niveles = (f as any).niveles_asignados as string[] | null;
+        if (curso.nivelFormacionId && niveles && niveles.length > 0) {
+          return niveles.includes(curso.nivelFormacionId);
+        }
+        return true; // fallback: include all active
+      });
+    },
+  });
+
+  // --- Fetch formato_respuestas completadas por matrícula ---
+  const matriculaIds = matriculas.map(m => m.id);
+  const { data: formatoRespuestas = [] } = useQuery({
+    queryKey: ['formato-respuestas-curso', curso.id, matriculaIds.join(',')],
+    queryFn: async () => {
+      if (matriculaIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('formato_respuestas')
+        .select('matricula_id, formato_id, estado')
+        .in('matricula_id', matriculaIds)
+        .eq('estado', 'completado');
+      return data ?? [];
+    },
+    enabled: matriculaIds.length > 0,
+  });
+
+  // Map: matriculaId -> Set of completed formato IDs
+  const formatosCompletadosPorMatricula = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    for (const r of formatoRespuestas) {
+      if (!map[r.matricula_id]) map[r.matricula_id] = new Set();
+      map[r.matricula_id].add(r.formato_id);
+    }
+    return map;
+  }, [formatoRespuestas]);
+
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     documental: "todos",
@@ -67,6 +118,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     generados: number;
     bloqueados: { nombre: string; motivos: string[] }[];
   } | null>(null);
+
+  // Cartera confirmation states
+  const [carteraConfirmIndividual, setCarteraConfirmIndividual] = useState<Matricula | null>(null);
+  const [masivaAdvertenciasCartera, setMasivaAdvertenciasCartera] = useState<
+    { nombre: string; carteraStatus: EstadoGrupoCartera }[]
+  >([]);
+  const [masivaPendingExecution, setMasivaPendingExecution] = useState(false);
 
   const getPersona = (personaId: string) => personas.find((p) => p.id === personaId);
 
@@ -99,6 +157,12 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     const grupo = grupos.find(g => g.matriculaIds.includes(m.id));
     return grupo?.estado ?? 'sin_facturar';
   };
+
+  const getElegibilidadContext = (m: Matricula): ElegibilidadContext => ({
+    carteraStatus: getCarteraStatus(m),
+    formatosRequeridos: formatosRequeridos as any,
+    formatosCompletadosIds: Array.from(formatosCompletadosPorMatricula[m.id] ?? []),
+  });
 
   const filterConfigs: FilterConfig[] = [
     { key: "documental", label: "Estado Documental", type: "select", options: [
@@ -150,17 +214,28 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     }
   };
 
-  const getCertStatus = (m: Matricula): { estado: "generado" | "elegible" | "bloqueado" | "revocado"; motivos?: string[]; cert?: CertificadoGenerado } => {
+  type CertStatusResult = {
+    estado: "generado" | "elegible" | "bloqueado" | "revocado" | "advertencia_cartera";
+    motivos?: string[];
+    motivosCartera?: string[];
+    cert?: CertificadoGenerado;
+  };
+
+  const getCertStatus = (m: Matricula): CertStatusResult => {
     const cert = certMap[m.id];
     if (cert) {
       if (cert.estado === "revocado") return { estado: "revocado", cert };
       return { estado: "generado", cert };
     }
-    const { elegible, motivos } = evaluarElegibilidad(m);
-    return elegible ? { estado: "elegible" } : { estado: "bloqueado", motivos };
+    const ctx = getElegibilidadContext(m);
+    const { elegible, advertenciaCartera, motivos, motivosCartera } = evaluarElegibilidad(m, undefined, ctx);
+    if (!elegible) return { estado: "bloqueado", motivos };
+    if (advertenciaCartera) return { estado: "advertencia_cartera", motivosCartera };
+    return { estado: "elegible" };
   };
 
-  const handleGenerarIndividual = useCallback(async (m: Matricula) => {
+  // --- Individual generation with cartera confirmation ---
+  const executeGenerarIndividual = useCallback(async (m: Matricula) => {
     const persona = getPersona(m.personaId);
     if (!persona) return;
     try {
@@ -187,19 +262,29 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     } catch {
       toast({ title: "Error al generar certificado", variant: "destructive" });
     }
-  }, [curso, personas, generarCertificado, toast]);
+  }, [curso, personas, generarCertificado, toast, codigosMapa]);
+
+  const handleGenerarIndividual = useCallback((m: Matricula) => {
+    const certStatus = getCertStatus(m);
+    if (certStatus.estado === "advertencia_cartera") {
+      setCarteraConfirmIndividual(m);
+    } else {
+      executeGenerarIndividual(m);
+    }
+  }, [executeGenerarIndividual, certMap, grupos, formatosRequeridos, formatosCompletadosPorMatricula]);
 
   const handleDescargar = (cert: CertificadoGenerado) => {
     descargarCertificadoPdf(cert.svgFinal, cert.codigo);
   };
 
-  const handleGeneracionMasiva = useCallback(async () => {
+  // --- Mass generation with cartera pre-confirmation ---
+  const executeMasiva = useCallback(async () => {
     const selMatriculas = matriculas.filter((m) => selectedIds.has(m.id));
     setMasivaTotal(selMatriculas.length);
     setMasivaProgreso(0);
     setMasivaResultados(null);
     setMasivaGenerating(true);
-    setMasivaDlg(true);
+    setMasivaAdvertenciasCartera([]);
 
     let generados = 0;
     const bloqueados: { nombre: string; motivos: string[] }[] = [];
@@ -222,7 +307,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         continue;
       }
 
-      const { elegible, motivos } = evaluarElegibilidad(m);
+      const ctx = getElegibilidadContext(m);
+      const { elegible, motivos } = evaluarElegibilidad(m, undefined, ctx);
       if (!elegible) {
         bloqueados.push({ nombre, motivos });
         setMasivaProgreso(i + 1);
@@ -254,22 +340,65 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     setMasivaGenerating(false);
     setMasivaResultados({ generados, bloqueados });
     setSelectedIds(new Set());
-  }, [matriculas, selectedIds, certMap, curso, personas, generarCertificado]);
+  }, [matriculas, selectedIds, certMap, curso, personas, generarCertificado, codigosMapa, grupos, formatosRequeridos, formatosCompletadosPorMatricula]);
+
+  const handleGeneracionMasiva = useCallback(() => {
+    const selMatriculas = matriculas.filter((m) => selectedIds.has(m.id));
+    
+    // Check for cartera warnings among selected
+    const advertencias: { nombre: string; carteraStatus: EstadoGrupoCartera }[] = [];
+    for (const m of selMatriculas) {
+      const cartera = getCarteraStatus(m);
+      if (cartera !== 'pagado') {
+        const persona = getPersona(m.personaId);
+        advertencias.push({
+          nombre: persona ? `${persona.nombres} ${persona.apellidos}` : m.id,
+          carteraStatus: cartera,
+        });
+      }
+    }
+
+    if (advertencias.length > 0) {
+      // Show pre-confirmation
+      setMasivaAdvertenciasCartera(advertencias);
+      setMasivaResultados(null);
+      setMasivaDlg(true);
+      setMasivaPendingExecution(true);
+    } else {
+      // No warnings, proceed directly
+      setMasivaDlg(true);
+      executeMasiva();
+    }
+  }, [matriculas, selectedIds, grupos, personas, executeMasiva]);
+
+  const handleConfirmCarteraMasiva = useCallback(() => {
+    setMasivaAdvertenciasCartera([]);
+    setMasivaPendingExecution(false);
+    executeMasiva();
+  }, [executeMasiva]);
+
+  const handleCancelCarteraMasiva = useCallback(() => {
+    setMasivaAdvertenciasCartera([]);
+    setMasivaPendingExecution(false);
+    setMasivaDlg(false);
+  }, []);
 
   const certBadge = (estado: string, motivos?: string[]) => {
     switch (estado) {
       case "generado":
-        return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-200 text-xs">Generado</Badge>;
+        return <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-200 text-xs cursor-default hover:bg-emerald-500/15">Generado</Badge>;
       case "elegible":
-        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs">Listo para certificar</Badge>;
+        return <Badge className="bg-blue-500/15 text-blue-700 border-blue-200 text-xs cursor-default hover:bg-blue-500/15">Listo para certificar</Badge>;
+      case "advertencia_cartera":
+        return <Badge className="bg-amber-500/15 text-amber-700 border-amber-200 text-xs cursor-default hover:bg-amber-500/15">Pendiente de cartera</Badge>;
       case "revocado":
-        return <Badge variant="destructive" className="text-xs">Revocado</Badge>;
+        return <Badge variant="destructive" className="text-xs cursor-default">Revocado</Badge>;
       case "bloqueado":
         return (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge className="bg-amber-500/15 text-amber-700 border-amber-200 text-xs cursor-help">Bloqueado</Badge>
+                <Badge className="bg-amber-500/15 text-amber-700 border-amber-200 text-xs cursor-help hover:bg-amber-500/15">Bloqueado</Badge>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
                 <ul className="text-xs space-y-0.5">
@@ -361,6 +490,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                     const carteraStatus = getCarteraStatus(m);
                     const certInfo = getCertStatus(m);
                     const codigoEstudiante = codigosMapa[m.id] ?? null;
+                    const canGenerate = certInfo.estado === "elegible" || certInfo.estado === "advertencia_cartera";
                     return (
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         {!readOnly && (
@@ -394,8 +524,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           <Badge
                             variant={docStatus === "completo" ? "default" : "secondary"}
                             className={docStatus === "completo"
-                              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-xs"
-                              : "bg-amber-500/10 text-amber-600 text-xs"}
+                              ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/10 text-xs cursor-default"
+                              : "bg-amber-500/10 text-amber-600 hover:bg-amber-500/10 text-xs cursor-default"}
                           >
                             {docStatus === "completo" ? "Completo" : "Pendiente"}
                           </Badge>
@@ -406,7 +536,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         <td className="py-2 pr-3">
                           <div className="flex items-center gap-1.5">
                             {certBadge(certInfo.estado, certInfo.motivos)}
-                            {certInfo.estado === "elegible" && !readOnly && (
+                            {canGenerate && !readOnly && (
                               <IconButton
                                 tooltip="Generar certificado"
                                 className="h-6 w-6"
@@ -491,6 +621,21 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         }}
       />
 
+      {/* Individual cartera confirmation */}
+      <ConfirmDialog
+        open={!!carteraConfirmIndividual}
+        onOpenChange={(open) => !open && setCarteraConfirmIndividual(null)}
+        title="Cartera pendiente"
+        description="Este estudiante tiene la cartera pendiente o sin facturar. ¿Desea generar el certificado de todas formas?"
+        confirmText="Sí, generar certificado"
+        onConfirm={async () => {
+          if (carteraConfirmIndividual) {
+            await executeGenerarIndividual(carteraConfirmIndividual);
+          }
+          setCarteraConfirmIndividual(null);
+        }}
+      />
+
       <GeneracionMasivaDialog
         open={masivaDlg}
         onOpenChange={setMasivaDlg}
@@ -498,6 +643,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         isGenerating={masivaGenerating}
         total={masivaTotal}
         progreso={masivaProgreso}
+        advertenciasCartera={masivaAdvertenciasCartera.length > 0 ? masivaAdvertenciasCartera : undefined}
+        onConfirmCartera={handleConfirmCarteraMasiva}
+        onCancelCartera={handleCancelCarteraMasiva}
       />
 
       <ConfirmDialog

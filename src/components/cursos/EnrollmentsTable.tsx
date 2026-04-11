@@ -91,6 +91,21 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     enabled: matriculaIds.length > 0,
   });
 
+  // --- Fetch documentos_portal completados por matrícula ---
+  const { data: portalDocs = [] } = useQuery({
+    queryKey: ['portal-docs-curso', curso.id, matriculaIds.join(',')],
+    queryFn: async () => {
+      if (matriculaIds.length === 0) return [];
+      const { data } = await supabase
+        .from('documentos_portal')
+        .select('matricula_id, documento_key, estado')
+        .in('matricula_id', matriculaIds)
+        .eq('estado', 'completado');
+      return data ?? [];
+    },
+    enabled: matriculaIds.length > 0,
+  });
+
   // Map: matriculaId -> Set of completed formato IDs
   const formatosCompletadosPorMatricula = useMemo(() => {
     const map: Record<string, Set<string>> = {};
@@ -100,6 +115,16 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     }
     return map;
   }, [formatoRespuestas]);
+
+  // Map: matriculaId -> Set of completed portal document keys
+  const portalDocsCompletadosPorMatricula = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    for (const r of portalDocs) {
+      if (!map[r.matricula_id]) map[r.matricula_id] = new Set();
+      map[r.matricula_id].add(r.documento_key);
+    }
+    return map;
+  }, [portalDocs]);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({

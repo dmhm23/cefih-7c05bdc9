@@ -1,73 +1,57 @@
 
 
-# Plan: Corregir elegibilidad de certificados y confirmaciones de cartera
+# Plan: Sincronizar formatos de formación con el portal de estudiantes
 
-## Problema
+## Diagnóstico
 
-1. `evaluarElegibilidad()` solo valida `pagado` (booleano) y documentos. No valida estado de cartera ni formatos de formación completados.
-2. No hay confirmación al generar certificados cuando la cartera está pendiente/sin facturar.
-3. El badge "Listo para certificar" cambia color en hover (comportamiento por defecto de `Badge`).
-4. No se validan los formatos de formación completados (la función tiene un `// Future: validate` vacío).
+Existen **dos sistemas completamente desconectados** para registrar el progreso de documentos del estudiante:
 
-## Cambios
+1. **`documentos_portal`** — Usado por el portal de estudiantes (`/estudiante`). Almacena estado de documentos como `info_aprendiz` y `evaluacion`. Cuando el estudiante firma o completa la evaluación, se escribe aquí vía `portalEstudianteService.enviarDocumento()`.
 
-| # | Archivo | Cambio |
-|---|---------|--------|
-| 1 | `src/utils/certificadoGenerator.ts` | Ampliar `evaluarElegibilidad` para recibir `carteraStatus` y `formatosCompletados` como parámetros. Agregar validación de documentos, cartera (`pagado` es el único estado "limpio") y formatos (comparar respuestas completadas vs formatos requeridos). Separar motivos de cartera como "advertencias" (permiten generar con confirmación) vs "bloqueos" (documentos/formatos, impiden generar). |
-| 2 | `src/components/cursos/EnrollmentsTable.tsx` | Pasar `carteraStatus` y datos de formatos a `evaluarElegibilidad`. Agregar estado intermedio "advertencia_cartera" que muestra badge "Pendiente de cartera" en vez de "Listo para certificar". Al hacer clic en generar individual con cartera pendiente, mostrar `ConfirmDialog` con el mensaje solicitado. Para generación masiva, filtrar estudiantes con cartera pendiente y mostrar listado antes de proceder. Quitar hover del badge "Listo para certificar" con `hover:bg-blue-500/15` explícito. |
-| 3 | `src/components/cursos/EnrollmentsTable.tsx` | Consultar `formato_respuestas` para las matrículas del curso y los formatos asignados al nivel, para determinar si cada estudiante completó todos los formatos requeridos. Usar `useFormatosMatricula` o query directa. |
-| 4 | `src/components/cursos/GeneracionMasivaDialog.tsx` | Agregar un paso previo de confirmación cuando hay estudiantes con cartera pendiente: listar los afectados con su estado de cartera (usando las etiquetas de `StatusBadge`) y botones "Sí, generar certificados" / "Cancelar". |
+2. **`formato_respuestas`** — Usado por el lado administrativo (`/matriculas/:id`). Almacena respuestas y estado de los formatos de formación diligenciados desde el admin. Actualmente está **vacío** en la base de datos.
 
-## Detalle de la nueva elegibilidad
+**No existe ningún puente entre ambas tablas.** Cuando un estudiante completa `info_aprendiz` con firma en el portal, eso se guarda en `documentos_portal` pero:
+- No se refleja en `formato_respuestas` (que es lo que consulta `EnrollmentsTable` para elegibilidad de certificados).
+- El admin ve los formatos como "pendientes" aunque el estudiante ya los haya completado.
 
-```typescript
-interface ElegibilidadResult {
-  elegible: boolean;        // true solo si todo está OK
-  advertenciaCartera: boolean; // cartera no pagada pero no es bloqueo duro
-  motivos: string[];        // bloqueos duros (docs, formatos)
-  motivosCartera: string[]; // advertencias de cartera
-}
+Además, la tabla `portal_config_documentos` tiene una columna `formato_id` (que permite vincular un documento del portal con un formato de formación), pero actualmente está en `NULL` para ambos registros (`info_aprendiz` y `evaluacion`).
 
-// Bloqueos duros (impiden generar):
-// - Documentos obligatorios pendientes
-// - Formatos de formación no completados
+## Solución propuesta
 
-// Advertencias (permiten generar con confirmación):
-// - Cartera sin_facturar, facturado, abonado, vencido, por_pagar
-```
+Crear una sincronización bidireccional mediante un trigger de base de datos que, al completar un documento en `documentos_portal`, inserte o actualice el registro correspondiente en `formato_respuestas` si existe un `formato_id` vinculado.
 
-## Badge sin hover
+### Cambios
 
-Reemplazar el badge "Listo para certificar" para que use clases estáticas sin transición hover:
-```tsx
-<Badge className="bg-blue-500/15 text-blue-700 border-blue-200 hover:bg-blue-500/15 text-xs cursor-default">
-```
+| # | Tipo | Cambio |
+|---|------|--------|
+| 1 | **Migración** | Crear función + trigger `sync_portal_to_formato_respuestas`: cuando un registro en `documentos_portal` cambia a `estado = 'completado'` y el `documento_key` tiene un `formato_id` asociado en `portal_config_documentos`, hacer upsert en `formato_respuestas` con `estado = 'completado'`, `completado_at = now()`, y `answers = metadata`. |
+| 2 | **Migración** | Crear función + trigger inverso `sync_formato_respuestas_to_portal`: cuando un `formato_respuestas` cambia a `estado = 'completado'`, buscar si existe un `portal_config_documentos` con ese `formato_id` y hacer upsert en `documentos_portal` con `estado = 'completado'`. |
+| 3 | **Código** | En `portalEstudianteService.enviarDocumento()`, tras el upsert en `documentos_portal`, si el documento tiene `formato_id`, también hacer upsert en `formato_respuestas` desde el cliente (como respaldo del trigger, dado que las escrituras anon podrían no activar triggers con SECURITY DEFINER). |
+| 4 | **Código** | En el servicio que guarda respuestas de formatos desde admin (dentro de `DynamicFormatoDocument` o similar), al completar un formato que está vinculado a `portal_config_documentos`, también actualizar `documentos_portal`. |
+| 5 | **Admin UI** | En `portal_config_documentos`, vincular los documentos existentes con sus formatos correspondientes (actualizar `formato_id` para los registros que tienen formato asociado). Esto requiere identificar qué formatos en `formatos_formacion` corresponden a `info_aprendiz` y `evaluacion`. |
 
-## Flujo individual con cartera pendiente
+### Caso especial: documentos sin formato_id
 
-Al hacer clic en "Generar certificado" si `advertenciaCartera === true`:
-- Mostrar `ConfirmDialog` con mensaje: "Este estudiante tiene la cartera pendiente o sin facturar. ¿Desea generar el certificado de todas formas?"
-- Botones: "Sí, generar certificado" / "Cancelar"
+Los documentos `info_aprendiz` y `evaluacion` actualmente no tienen `formato_id` vinculado. Para estos:
+- `info_aprendiz` es un tipo `firma_autorizacion` que no corresponde a un formato de formación del constructor visual; su completitud se debe leer directamente de `documentos_portal`.
+- `evaluacion` puede estar vinculada a un formato con bloque `evaluation_quiz`.
 
-## Flujo masivo con cartera pendiente
+La sincronización debe funcionar para ambos escenarios:
+1. Documentos del portal **con** `formato_id` → sincronización bidireccional vía DB.
+2. Documentos del portal **sin** `formato_id` → la elegibilidad de certificados debe consultar también `documentos_portal` directamente.
 
-Antes de ejecutar la generación masiva, filtrar los seleccionados que tienen `advertenciaCartera`. Si hay alguno:
-- Mostrar diálogo previo listando cada estudiante afectado con su estado de cartera (label del `StatusBadge`).
-- Mensaje: "Los siguientes estudiantes tienen la cartera pendiente, sin facturar o con pagos incompletos. ¿Desea generar los certificados de todas formas?"
-- Botones: "Sí, generar certificados" / "Cancelar"
-- Si confirma, procede con la generación (excluyendo los que tienen bloqueos duros).
+### Impacto en elegibilidad de certificados
 
-## Validación de formatos de formación
-
-Consultar `formato_respuestas` por `matricula_id` con estado `completado` y comparar contra los formatos asignados al nivel del curso (vía `get_formatos_for_matricula` o similar). Si faltan formatos por completar, agregar motivo "Formatos de formación incompletos" como bloqueo duro.
+El `evaluarElegibilidad` recién implementado en `certificadoGenerator.ts` ya consulta `formato_respuestas`. Con esta sincronización, los datos del portal se reflejarán automáticamente. Para los documentos sin `formato_id` (como `info_aprendiz`), se debe agregar una consulta adicional a `documentos_portal` en `EnrollmentsTable` para verificar completitud.
 
 ## Archivos a modificar
 
 | Archivo | Acción |
 |---------|--------|
-| `src/utils/certificadoGenerator.ts` | Ampliar `evaluarElegibilidad` con cartera y formatos |
-| `src/components/cursos/EnrollmentsTable.tsx` | Integrar nueva elegibilidad, confirmaciones, badges sin hover, consulta de formatos |
-| `src/components/cursos/GeneracionMasivaDialog.tsx` | Agregar paso de confirmación previo para cartera |
+| Nueva migración SQL | Triggers de sincronización bidireccional |
+| `src/services/portalEstudianteService.ts` | Agregar escritura a `formato_respuestas` al enviar documento con formato vinculado |
+| `src/components/cursos/EnrollmentsTable.tsx` | Consultar `documentos_portal` para documentos sin `formato_id` en la validación de elegibilidad |
+| `src/utils/certificadoGenerator.ts` | Ampliar `evaluarElegibilidad` para aceptar estado de documentos del portal |
 
-**Total: 3 archivos editados, 0 migraciones**
+**Total: 2-3 archivos editados, 1 migración**
 

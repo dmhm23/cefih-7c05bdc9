@@ -27,7 +27,6 @@ import {
   evaluarElegibilidad,
   construirDiccionarioTokens,
   reemplazarTokens,
-  generarCodigoCertificado,
 } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";

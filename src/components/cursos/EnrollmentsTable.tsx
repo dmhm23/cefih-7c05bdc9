@@ -32,9 +32,7 @@ import {
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
-import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
-import { generarCodigoEstudiante } from "@/utils/codigoEstudiante";
-import type { ConfiguracionCodigoEstudiante } from "@/types/nivelFormacion";
+import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 
 interface EnrollmentsTableProps {
   curso: Curso;
@@ -51,19 +49,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
-  const { data: niveles } = useNivelesFormacion();
-  const nivelConfig = useMemo(() => {
-    if (!niveles) return null;
-    const tipoToNivel: Record<string, string> = {
-      reentrenamiento: 'Reentrenamiento',
-      jefe_area: 'Jefe de Área',
-      trabajador_autorizado: 'Trabajador Autorizado',
-      coordinador_ta: 'Coordinador T.A.',
-    };
-    const nivelName = tipoToNivel[curso.tipoFormacion];
-    return niveles.find(n => n.nombreNivel === nivelName) || null;
-  }, [niveles, curso.tipoFormacion]);
-  const codigoConfig = nivelConfig?.configuracionCodigoEstudiante;
+  const { codigos: codigosMapa } = useCodigosCurso(curso);
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
@@ -368,14 +354,12 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((m, idx) => {
+                  {filtered.map((m) => {
                     const persona = getPersona(m.personaId);
                     const docStatus = getDocStatus(m);
                     const carteraStatus = getCarteraStatus(m);
                     const certInfo = getCertStatus(m);
-                    const codigoEstudiante = codigoConfig?.activo
-                      ? generarCodigoEstudiante({ config: codigoConfig, curso, indexEstudiante: idx })
-                      : null;
+                    const codigoEstudiante = codigosMapa[m.id] ?? null;
                     return (
                       <tr key={m.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         {!readOnly && (
@@ -392,10 +376,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         <td className="py-2 pr-3">
                           {codigoEstudiante ? (
                             <span className="font-mono text-xs tracking-wide">{codigoEstudiante}</span>
-                          ) : !codigoConfig ? (
-                            <Badge variant="secondary" className="text-[10px]">Sin regla</Badge>
                           ) : (
-                            <Badge variant="secondary" className="text-[10px]">Desactivado</Badge>
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </td>
                         <td className="py-2 pr-3 text-muted-foreground">

@@ -58,6 +58,7 @@ import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { asignarMatriculaACartera } from "@/services/carteraService";
 import { supabase } from "@/integrations/supabase/client";
+import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import type { TipoResponsable } from "@/types/cartera";
 
 interface ChecklistItem {
@@ -948,6 +949,12 @@ export default function MatriculaDetallePage() {
             {curso ? (
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">{curso.nombre}</p>
+                {codigoEstudiante && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Código estudiante</p>
+                    <p className="font-mono text-sm">{codigoEstudiante}</p>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha inicio</p>

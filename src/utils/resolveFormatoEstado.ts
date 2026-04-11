@@ -1,17 +1,12 @@
-import { FormatoFormacion } from '@/types/formatoFormacion';
-import { Matricula } from '@/types/matricula';
+import type { FormatoFormacion, FormatoRespuesta } from '@/types/formatoFormacion';
 import { EstadoFormato } from '@/types/formato';
 
 export function resolveFormatoEstado(
   formato: FormatoFormacion,
-  matricula: Matricula
+  respuestas: FormatoRespuesta[]
 ): EstadoFormato {
-  if (formato.legacyComponentId === 'evaluacion_reentrenamiento') {
-    return matricula.evaluacionCompletada ? 'completo' : 'borrador';
-  }
-  if (formato.legacyComponentId) {
-    return (!matricula.autorizacionDatos || !matricula.firmaCapturada)
-      ? 'borrador' : 'completo';
-  }
+  const respuesta = respuestas.find((r) => r.formatoId === formato.id);
+  if (!respuesta) return 'borrador'; // pendiente = borrador in UI terms
+  if (respuesta.estado === 'completado') return 'completo';
   return 'borrador';
 }

@@ -167,29 +167,13 @@ export const formatoFormacionService = {
     return (data || []).map(rowToFormato);
   },
 
-  /** Obtener formatos aplicables para una matrícula según nivel de formación */
-  getForMatricula: async (nivelFormacionIdOrMatriculaId: string): Promise<FormatoFormacion[]> => {
-    // Try as nivel_formacion_id first (direct filter)
+  /** Obtener formatos aplicables para una matrícula usando el RPC */
+  getForMatricula: async (matriculaId: string): Promise<FormatoFormacion[]> => {
     const { data, error } = await supabase
-      .from('formatos_formacion')
-      .select('*')
-      .eq('activo', true)
-      .in('estado', ['activo', 'borrador'])
-      .is('deleted_at', null)
-      .eq('visible_en_matricula', true);
+      .rpc('get_formatos_for_matricula', { _matricula_id: matriculaId });
 
     if (error) handleSupabaseError(error);
-
-    // Filter client-side by niveles_asignados containing the given ID
-    return (data || [])
-      .filter((f: any) => {
-        if (f.asignacion_scope === 'nivel_formacion') {
-          return (f.niveles_asignados || []).includes(nivelFormacionIdOrMatriculaId);
-        }
-        // For 'tipo_curso' scope, include all (they match by tipo)
-        return true;
-      })
-      .map(rowToFormato);
+    return (data || []).map(rowToFormato);
   },
 
   // --- Versioning ---

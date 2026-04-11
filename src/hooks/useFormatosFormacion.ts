@@ -19,11 +19,11 @@ export function useFormato(id: string | undefined) {
   });
 }
 
-export function useFormatosMatricula(tipoCurso: string | undefined) {
+export function useFormatosMatricula(matriculaId: string | undefined) {
   return useQuery({
-    queryKey: [...QUERY_KEY, 'matricula', tipoCurso],
-    queryFn: () => formatoFormacionService.getForMatricula(tipoCurso!),
-    enabled: !!tipoCurso,
+    queryKey: [...QUERY_KEY, 'matricula', matriculaId],
+    queryFn: () => formatoFormacionService.getForMatricula(matriculaId!),
+    enabled: !!matriculaId,
   });
 }
 

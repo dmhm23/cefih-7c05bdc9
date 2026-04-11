@@ -89,7 +89,7 @@ export default function MatriculaDetallePage() {
   const { data: matricula, isLoading } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
-  const { data: formatosDinamicos } = useFormatosMatricula(curso?.tipoFormacion || matricula?.empresaNivelFormacion);
+  const { data: formatosDinamicos } = useFormatosMatricula(id);
   const updateMatricula = useUpdateMatricula();
   const updateDocumento = useUpdateDocumento();
   const registrarPago = useRegistrarPago();

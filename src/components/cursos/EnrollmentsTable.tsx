@@ -170,8 +170,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         toast({ title: "No hay plantilla activa", variant: "destructive" });
         return;
       }
-      const dict = construirDiccionarioTokens(persona, curso, m);
-      const codigo = generarCodigoCertificado(curso, m);
+      const codigoEst = codigosMapa[m.id] ?? null;
+      const dict = construirDiccionarioTokens(persona, curso, m, codigoEst || undefined);
+      const codigo = codigoEst || `${curso.numeroCurso}-${String(1).padStart(3, '0')}-${new Date().getFullYear()}`;
       dict.codigoCertificado = codigo;
       const svgFinal = reemplazarTokens(plantilla.svgRaw, dict);
       await generarCertificado.mutateAsync({
@@ -230,8 +231,9 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
       }
 
       try {
-        const dict = construirDiccionarioTokens(persona!, curso, m);
-        const codigo = generarCodigoCertificado(curso, m, generados + 1);
+        const codigoEst = codigosMapa[m.id] ?? null;
+        const dict = construirDiccionarioTokens(persona!, curso, m, codigoEst || undefined);
+        const codigo = codigoEst || `${curso.numeroCurso}-${String(generados + 1).padStart(3, '0')}-${new Date().getFullYear()}`;
         dict.codigoCertificado = codigo;
         const svgFinal = reemplazarTokens(plantilla.svgRaw, dict);
         await generarCertificado.mutateAsync({

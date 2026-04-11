@@ -22,6 +22,7 @@ export interface ElegibilidadContext {
   carteraStatus?: EstadoGrupoCartera;
   formatosRequeridos?: FormatoFormacion[];
   formatosCompletadosIds?: string[]; // IDs de formatos con respuesta completada
+  portalDocsCompletados?: string[];  // documento_keys completados en documentos_portal
 }
 
 export function evaluarElegibilidad(

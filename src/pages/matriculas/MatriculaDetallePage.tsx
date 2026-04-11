@@ -1011,25 +1011,6 @@ export default function MatriculaDetallePage() {
             />
           </div>
 
-          {/* Acciones */}
-          <div className="border rounded-lg p-4 shadow-sm space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Acciones
-            </h3>
-            {matricula.estado === "pendiente" && progressPercent === 100 && (
-              <Button size="sm" className="w-full" onClick={() => handleCambiarEstado("completa")}>
-                Marcar como Completa
-              </Button>
-            )}
-            {matricula.estado === "completa" && (
-              <Button size="sm" className="w-full" onClick={() => handleCambiarEstado("certificada")}>
-                Generar Certificado
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="w-full">
-              Ver Historial
-            </Button>
-          </div>
         </div>
       </div>
 

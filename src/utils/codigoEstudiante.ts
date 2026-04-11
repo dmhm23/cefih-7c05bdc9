@@ -33,6 +33,41 @@ export function generarCodigoEstudiante({ config, curso, indexEstudiante, consec
   return parts.join(sep);
 }
 
+/**
+ * Calcula los códigos de todos los estudiantes de un curso.
+ * Fuente de verdad centralizada: ordena por created_at ASC, desempate id ASC.
+ * Retorna Record<matriculaId, código>.
+ */
+export function calcularCodigosCurso(
+  matriculas: { id: string; createdAt: string }[],
+  config: ConfiguracionCodigoEstudiante | undefined | null,
+  curso: Curso,
+  consecutivoCursoMes?: number
+): Record<string, string> {
+  if (!config || !config.activo) return {};
+
+  const ordenadas = [...matriculas].sort((a, b) => {
+    const cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return cmp !== 0 ? cmp : a.id.localeCompare(b.id);
+  });
+
+  const result: Record<string, string> = {};
+  ordenadas.forEach((m, idx) => {
+    result[m.id] = generarCodigoEstudiante({ config, curso, indexEstudiante: idx, consecutivoCursoMes });
+  });
+  return result;
+}
+
+/**
+ * Resuelve el código de un estudiante dado el mapa precalculado.
+ */
+export function resolverCodigoEstudiante(
+  matriculaId: string,
+  mapa: Record<string, string>
+): string | null {
+  return mapa[matriculaId] ?? null;
+}
+
 export function generarPreviewCodigo(config: ConfiguracionCodigoEstudiante): string {
   const sep = config.separadorCodigo;
   const parts: string[] = [config.prefijoCodigo || '???', config.codigoTipoFormacion || '?'];

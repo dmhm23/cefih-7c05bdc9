@@ -14,8 +14,9 @@ import {
 import { useCertificadosByMatricula, useGenerarCertificado, useRevocarCertificado, useReemitirCertificado } from "@/hooks/useCertificados";
 import { usePlantillaActiva } from "@/hooks/usePlantillas";
 import { useSolicitarExcepcion, useExcepcionesByMatricula } from "@/hooks/useExcepcionesCertificado";
-import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens, generarCodigoCertificado } from "@/utils/certificadoGenerator";
+import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
+import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import { useToast } from "@/hooks/use-toast";
 import { ExcepcionesPanel } from "./ExcepcionesPanel";
 import { RevocacionDialog } from "./RevocacionDialog";
@@ -57,6 +58,8 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const revocarCertificado = useRevocarCertificado();
   const reemitirCertificado = useReemitirCertificado();
   const solicitarExcepcion = useSolicitarExcepcion();
+  const { codigos: codigosCurso } = useCodigosCurso(curso);
+  const codigoEstudianteCentralizado = codigosCurso[matricula.id] ?? null;
 
   const certificadoExistente = certificados.find(c => c.estado === 'generado');
   const certificadoRevocado = certificados.find(c => c.estado === 'revocado');
@@ -92,8 +95,8 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
 
     setGenerando(true);
     try {
-      const codigo = generarCodigoCertificado(curso, matricula, certificados.length + 1);
-      const diccionario = construirDiccionarioTokens(persona, curso, matricula);
+      const codigo = codigoEstudianteCentralizado || `${curso.numeroCurso}-${String(certificados.length + 1).padStart(3, '0')}-${new Date().getFullYear()}`;
+      const diccionario = construirDiccionarioTokens(persona, curso, matricula, codigoEstudianteCentralizado || undefined);
       diccionario.codigoCertificado = codigo;
       const svgFinal = reemplazarTokens(plantillaActiva.svgRaw, diccionario);
 
@@ -155,7 +158,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
       const newVersion = ultimoRevocado.version + 1;
       const codigoBase = ultimoRevocado.codigo.replace(/-v\d+$/, '');
       const codigo = `${codigoBase}-v${newVersion}`;
-      const diccionario = construirDiccionarioTokens(persona, curso, matricula);
+      const diccionario = construirDiccionarioTokens(persona, curso, matricula, codigoEstudianteCentralizado || undefined);
       diccionario.codigoCertificado = codigo;
       const svgFinal = reemplazarTokens(plantillaActiva.svgRaw, diccionario);
 

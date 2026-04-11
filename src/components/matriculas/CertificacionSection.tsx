@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Award, Download, ShieldAlert, ShieldCheck, FileWarning, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +15,13 @@ import { useCertificadosByMatricula, useGenerarCertificado, useRevocarCertificad
 import { usePlantillaActiva } from "@/hooks/usePlantillas";
 import { useSolicitarExcepcion, useExcepcionesByMatricula } from "@/hooks/useExcepcionesCertificado";
 import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens } from "@/utils/certificadoGenerator";
+import type { ElegibilidadContext } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
+import { useGruposCartera } from "@/hooks/useCartera";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ExcepcionesPanel } from "./ExcepcionesPanel";
 import { RevocacionDialog } from "./RevocacionDialog";
 import { HistorialVersiones } from "./HistorialVersiones";
@@ -61,9 +65,49 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const { codigos: codigosCurso } = useCodigosCurso(curso);
   const codigoEstudianteCentralizado = codigosCurso[matricula.id] ?? null;
 
+  const { data: grupos = [] } = useGruposCartera();
+  const carteraStatus = useMemo(() => {
+    const grupo = grupos.find(g => g.matriculaIds.includes(matricula.id));
+    return grupo?.estado ?? 'sin_facturar';
+  }, [grupos, matricula.id]);
+
+  // Fetch formatos requeridos y respuestas completadas
+  const { data: formatosRequeridos = [] } = useQuery({
+    queryKey: ['formatos-requeridos-matricula', matricula.id, curso?.id],
+    queryFn: async () => {
+      if (!curso) return [];
+      const { data } = await supabase
+        .from('formatos_formacion')
+        .select('id, nombre')
+        .eq('activo', true)
+        .eq('visible_en_matricula', true)
+        .is('deleted_at', null);
+      return data ?? [];
+    },
+    enabled: !!curso,
+  });
+
+  const { data: formatoRespuestas = [] } = useQuery({
+    queryKey: ['formato-respuestas-matricula', matricula.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('formato_respuestas')
+        .select('formato_id')
+        .eq('matricula_id', matricula.id)
+        .eq('estado', 'completado');
+      return data?.map(r => r.formato_id) ?? [];
+    },
+  });
+
+  const elegibilidadCtx: ElegibilidadContext = useMemo(() => ({
+    carteraStatus,
+    formatosRequeridos: formatosRequeridos as any,
+    formatosCompletadosIds: formatoRespuestas,
+  }), [carteraStatus, formatosRequeridos, formatoRespuestas]);
+
   const certificadoExistente = certificados.find(c => c.estado === 'generado');
   const certificadoRevocado = certificados.find(c => c.estado === 'revocado');
-  const { elegible, motivos } = evaluarElegibilidad(matricula, formatosDinamicos);
+  const { elegible, motivos } = evaluarElegibilidad(matricula, formatosDinamicos, elegibilidadCtx);
   const tieneExcepcionAprobada = excepciones.some(e => e.estado === 'aprobada');
 
   // Determine display state

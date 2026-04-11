@@ -35,10 +35,6 @@ import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import InfoAprendizPreviewDialog from "@/components/matriculas/formatos/InfoAprendizPreviewDialog";
-import RegistroAsistenciaPreviewDialog from "@/components/matriculas/formatos/RegistroAsistenciaPreviewDialog";
-import ParticipacionPtaAtsPreviewDialog from "@/components/matriculas/formatos/ParticipacionPtaAtsPreviewDialog";
-import EvaluacionReentrenamientoPreviewDialog from "@/components/matriculas/formatos/EvaluacionReentrenamientoPreviewDialog";
 import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
 import { FormatoFormacion } from "@/types/formatoFormacion";
 import {

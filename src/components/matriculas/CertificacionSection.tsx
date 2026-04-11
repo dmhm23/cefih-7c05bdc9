@@ -14,8 +14,9 @@ import {
 import { useCertificadosByMatricula, useGenerarCertificado, useRevocarCertificado, useReemitirCertificado } from "@/hooks/useCertificados";
 import { usePlantillaActiva } from "@/hooks/usePlantillas";
 import { useSolicitarExcepcion, useExcepcionesByMatricula } from "@/hooks/useExcepcionesCertificado";
-import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens, generarCodigoCertificado } from "@/utils/certificadoGenerator";
+import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
+import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import { useToast } from "@/hooks/use-toast";
 import { ExcepcionesPanel } from "./ExcepcionesPanel";
 import { RevocacionDialog } from "./RevocacionDialog";

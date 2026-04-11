@@ -40,7 +40,8 @@ export function evaluarElegibilidad(
 export function construirDiccionarioTokens(
   persona: Persona,
   curso: Curso,
-  matricula: Matricula
+  matricula: Matricula,
+  codigoEstudiante?: string
 ): Record<string, string> {
   const fmt = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -69,7 +70,7 @@ export function construirDiccionarioTokens(
     empresaNit: matricula.empresaNit || '',
     empresaCargo: matricula.empresaCargo || '',
     fechaGeneracion: fmt(new Date().toISOString()),
-    codigoCertificado: '', // se rellena después
+    codigoCertificado: codigoEstudiante || '', // populated from centralized student code
   };
 }
 

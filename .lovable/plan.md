@@ -1,84 +1,73 @@
-# Plan: Centralizar código de estudiante como servicio de dominio puro
-
-## Problema raíz
-
-El cálculo del código de estudiante vive inline en `EnrollmentsTable` (línea 376-378), usa el índice del array **filtrado** (`idx` de `filtered.map`), no aparece en `/matriculas/:id`, y `certificadoGenerator.ts` usa una función completamente diferente (`generarCodigoCertificado`) que ignora la configuración del nivel de formación.
-
-## Arquitectura propuesta
-
-```text
-┌─────────────────────────────────────────────────┐
-│  src/utils/codigoEstudiante.ts  (funciones puras)│
-│                                                   │
-│  generarCodigoEstudiante()     ← ya existe, OK    │
-│  calcularCodigosCurso()        ← NUEVA             │
-│    Input: matriculas[], config, curso              │
-│    1. Ordena por created_at ASC, desempate id ASC  │
-│    2. Genera código para cada matrícula             │
-│    3. Retorna Record<matriculaId, string>          │
-│  resolverCodigoEstudiante()    ← NUEVA             │
-│    Wrapper: dado un matriculaId + el mapa,         │
-│    retorna el código o null                        │
-└─────────────────────────────────────────────────┘
-         ▲                    ▲
-         │                    │
-┌────────┴─────────┐  ┌──────┴──────────────────┐
-│  useCodigosCurso │  │  construirDiccionario    │
-│  (hook: solo      │  │  Tokens (certificados)  │
-│   fetch + delega) │  │  consume calcularCodigos│
-└──────────────────┘  └─────────────────────────┘
-    ▲         ▲                    ▲
-    │         │                    │
-Enrollments  Matricula       Certificacion
-Table        DetallePage     Section
-```
-
-## Cambios detallados
 
 
-| #   | Archivo                                              | Cambio                                                                                                                                                                                                                                                                     |
-| --- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `src/utils/codigoEstudiante.ts`                      | Agregar `calcularCodigosCurso(matriculas, config, curso)`: ordena por `created_at ASC, id ASC`, llama a `generarCodigoEstudiante` con el índice resultante, retorna `Record<string, string>`. Agregar `resolverCodigoEstudiante(matriculaId, mapa)` como helper de acceso. |
-| 2   | `src/hooks/useCodigosCurso.ts`                       | **NUEVO**. Hook liviano que: (a) recibe `cursoId`, (b) consume `useMatriculasByCurso` + resolución del nivel, (c) delega a `calcularCodigosCurso`, (d) retorna `{ codigos, isLoading }`. Cero lógica de negocio en el hook.                                                |
-| 3   | `src/components/cursos/EnrollmentsTable.tsx`         | Eliminar resolución local de `nivelConfig`/`codigoConfig` y el cálculo inline. Consumir `useCodigosCurso(curso.id)` y leer `codigos[m.id]`. Reemplazar badges "Sin regla"/"Desactivado" por guion `—`.                                                                     |
-| 4   | `src/pages/matriculas/MatriculaDetallePage.tsx`      | Consumir `useCodigosCurso(matricula.cursoId)` en la tarjeta "Curso" del sidebar. Mostrar `codigos[matricula.id]` como texto `font-mono text-sm`. Si no hay curso: "Sin curso asignado". Si config no activa: no mostrar nada.                                              |
-| 5   | `src/utils/certificadoGenerator.ts`                  | En `construirDiccionarioTokens`: agregar parámetro opcional `codigoEstudiante?: string` y asignarlo al token `codigoCertificado` (o al token que corresponda). Deprecar/eliminar `generarCodigoCertificado` (legacy).                                                      |
-| 6   | `src/components/matriculas/CertificacionSection.tsx` | Consumir `useCodigosCurso` para obtener el código del estudiante y pasarlo a `construirDiccionarioTokens`.                                                                                                                                                                 |
+# Plan: Corregir elegibilidad de certificados y confirmaciones de cartera
 
+## Problema
 
-## Criterio de orden (fuente de verdad)
+1. `evaluarElegibilidad()` solo valida `pagado` (booleano) y documentos. No valida estado de cartera ni formatos de formación completados.
+2. No hay confirmación al generar certificados cuando la cartera está pendiente/sin facturar.
+3. El badge "Listo para certificar" cambia color en hover (comportamiento por defecto de `Badge`).
+4. No se validan los formatos de formación completados (la función tiene un `// Future: validate` vacío).
+
+## Cambios
+
+| # | Archivo | Cambio |
+|---|---------|--------|
+| 1 | `src/utils/certificadoGenerator.ts` | Ampliar `evaluarElegibilidad` para recibir `carteraStatus` y `formatosCompletados` como parámetros. Agregar validación de documentos, cartera (`pagado` es el único estado "limpio") y formatos (comparar respuestas completadas vs formatos requeridos). Separar motivos de cartera como "advertencias" (permiten generar con confirmación) vs "bloqueos" (documentos/formatos, impiden generar). |
+| 2 | `src/components/cursos/EnrollmentsTable.tsx` | Pasar `carteraStatus` y datos de formatos a `evaluarElegibilidad`. Agregar estado intermedio "advertencia_cartera" que muestra badge "Pendiente de cartera" en vez de "Listo para certificar". Al hacer clic en generar individual con cartera pendiente, mostrar `ConfirmDialog` con el mensaje solicitado. Para generación masiva, filtrar estudiantes con cartera pendiente y mostrar listado antes de proceder. Quitar hover del badge "Listo para certificar" con `hover:bg-blue-500/15` explícito. |
+| 3 | `src/components/cursos/EnrollmentsTable.tsx` | Consultar `formato_respuestas` para las matrículas del curso y los formatos asignados al nivel, para determinar si cada estudiante completó todos los formatos requeridos. Usar `useFormatosMatricula` o query directa. |
+| 4 | `src/components/cursos/GeneracionMasivaDialog.tsx` | Agregar un paso previo de confirmación cuando hay estudiantes con cartera pendiente: listar los afectados con su estado de cartera (usando las etiquetas de `StatusBadge`) y botones "Sí, generar certificados" / "Cancelar". |
+
+## Detalle de la nueva elegibilidad
 
 ```typescript
-// En calcularCodigosCurso:
-const ordenadas = [...matriculas]
-  .sort((a, b) => {
-    const cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    return cmp !== 0 ? cmp : a.id.localeCompare(b.id);
-  });
+interface ElegibilidadResult {
+  elegible: boolean;        // true solo si todo está OK
+  advertenciaCartera: boolean; // cartera no pagada pero no es bloqueo duro
+  motivos: string[];        // bloqueos duros (docs, formatos)
+  motivosCartera: string[]; // advertencias de cartera
+}
+
+// Bloqueos duros (impiden generar):
+// - Documentos obligatorios pendientes
+// - Formatos de formación no completados
+
+// Advertencias (permiten generar con confirmación):
+// - Cartera sin_facturar, facturado, abonado, vencido, por_pagar
 ```
 
-Esto garantiza que el consecutivo sea **determinista y estable frente a filtros de UI**, y se auto-compacta al eliminar un estudiante (porque el array se re-ordena sin vacíos).
+## Badge sin hover
 
-## Casos límite
+Reemplazar el badge "Listo para certificar" para que use clases estáticas sin transición hover:
+```tsx
+<Badge className="bg-blue-500/15 text-blue-700 border-blue-200 hover:bg-blue-500/15 text-xs cursor-default">
+```
 
+## Flujo individual con cartera pendiente
 
-| Caso                                 | Comportamiento                                                                            |
-| ------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Matrícula sin curso                  | `useCodigosCurso` no se ejecuta; se muestra "Sin curso asignado"                          |
-| Nivel sin `config_codigo_estudiante` | `calcularCodigosCurso` retorna `{}` (mapa vacío); columna muestra `—`                     |
-| Config con `activo: false`           | Igual que arriba                                                                          |
-| Filtros activos en EnrollmentsTable  | Códigos no cambian (vienen del mapa precalculado sobre el array completo)                 |
-| Estudiante removido del curso        | Query se invalida → `calcularCodigosCurso` se re-ejecuta → consecutivos se compactan      |
-| Curso cambia `fechaInicio` o nivel   | Query se invalida → códigos se recalculan con la nueva config                             |
-| Certificados                         | Usan el mismo código vía `construirDiccionarioTokens` con el parámetro `codigoEstudiante` |
+Al hacer clic en "Generar certificado" si `advertenciaCartera === true`:
+- Mostrar `ConfirmDialog` con mensaje: "Este estudiante tiene la cartera pendiente o sin facturar. ¿Desea generar el certificado de todas formas?"
+- Botones: "Sí, generar certificado" / "Cancelar"
 
+## Flujo masivo con cartera pendiente
 
-## Validaciones post-implementación
+Antes de ejecutar la generación masiva, filtrar los seleccionados que tienen `advertenciaCartera`. Si hay alguno:
+- Mostrar diálogo previo listando cada estudiante afectado con su estado de cartera (label del `StatusBadge`).
+- Mensaje: "Los siguientes estudiantes tienen la cartera pendiente, sin facturar o con pagos incompletos. ¿Desea generar los certificados de todas formas?"
+- Botones: "Sí, generar certificados" / "Cancelar"
+- Si confirma, procede con la generación (excluyendo los que tienen bloqueos duros).
 
-1. En `/cursos/:id`, aplicar filtro de búsqueda → verificar que los códigos NO cambian
-2. En `/matriculas/:id`, verificar que el código coincide con el de la tabla de inscritos
-3. Remover un estudiante → verificar compactación de consecutivos (1,2,3 → quitar 2 → quedan 1,2)
-4. Cambiar `fechaInicio` del curso → verificar que los códigos reflejan el nuevo año/mes
-5. Generar certificado → verificar que el token `codigoCertificado` usa el código del estudiante correcto
+## Validación de formatos de formación
 
-**Total: 1 archivo nuevo, 4 archivos editados, 0 migraciones**
+Consultar `formato_respuestas` por `matricula_id` con estado `completado` y comparar contra los formatos asignados al nivel del curso (vía `get_formatos_for_matricula` o similar). Si faltan formatos por completar, agregar motivo "Formatos de formación incompletos" como bloqueo duro.
+
+## Archivos a modificar
+
+| Archivo | Acción |
+|---------|--------|
+| `src/utils/certificadoGenerator.ts` | Ampliar `evaluarElegibilidad` con cartera y formatos |
+| `src/components/cursos/EnrollmentsTable.tsx` | Integrar nueva elegibilidad, confirmaciones, badges sin hover, consulta de formatos |
+| `src/components/cursos/GeneracionMasivaDialog.tsx` | Agregar paso de confirmación previo para cartera |
+
+**Total: 3 archivos editados, 0 migraciones**
+

@@ -15,9 +15,13 @@ import { useCertificadosByMatricula, useGenerarCertificado, useRevocarCertificad
 import { usePlantillaActiva } from "@/hooks/usePlantillas";
 import { useSolicitarExcepcion, useExcepcionesByMatricula } from "@/hooks/useExcepcionesCertificado";
 import { evaluarElegibilidad, construirDiccionarioTokens, reemplazarTokens } from "@/utils/certificadoGenerator";
+import type { ElegibilidadContext } from "@/utils/certificadoGenerator";
 import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
+import { useGruposCartera } from "@/hooks/useCartera";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ExcepcionesPanel } from "./ExcepcionesPanel";
 import { RevocacionDialog } from "./RevocacionDialog";
 import { HistorialVersiones } from "./HistorialVersiones";

@@ -187,6 +187,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
     carteraStatus: getCarteraStatus(m),
     formatosRequeridos: formatosRequeridos as any,
     formatosCompletadosIds: Array.from(formatosCompletadosPorMatricula[m.id] ?? []),
+    portalDocsCompletados: Array.from(portalDocsCompletadosPorMatricula[m.id] ?? []),
   });
 
   const filterConfigs: FilterConfig[] = [

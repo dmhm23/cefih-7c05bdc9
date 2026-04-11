@@ -15,6 +15,7 @@ import { PersonaFormData } from "@/types/persona";
 import { useCurso } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
+import { useFormatoRespuestas } from "@/hooks/useFormatoRespuestas";
 import { FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
@@ -70,7 +71,7 @@ interface ChecklistItem {
 
 type PreviewFormatoId = string | null;
 
-const LEGACY_IDS = new Set(["info_aprendiz", "registro_asistencia", "participacion_pta_ats", "evaluacion_reentrenamiento"]);
+
 
 export default function MatriculaDetallePage() {
   const { id } = useParams<{ id: string }>();

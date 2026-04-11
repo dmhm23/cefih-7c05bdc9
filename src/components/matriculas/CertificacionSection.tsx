@@ -99,11 +99,25 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
     },
   });
 
+  // Fetch portal documents completed for this matricula
+  const { data: portalDocsCompletados = [] } = useQuery({
+    queryKey: ['portal-docs-matricula', matricula.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('documentos_portal')
+        .select('documento_key')
+        .eq('matricula_id', matricula.id)
+        .eq('estado', 'completado');
+      return data?.map(r => r.documento_key) ?? [];
+    },
+  });
+
   const elegibilidadCtx: ElegibilidadContext = useMemo(() => ({
     carteraStatus,
     formatosRequeridos: formatosRequeridos as any,
     formatosCompletadosIds: formatoRespuestas,
-  }), [carteraStatus, formatosRequeridos, formatoRespuestas]);
+    portalDocsCompletados,
+  }), [carteraStatus, formatosRequeridos, formatoRespuestas, portalDocsCompletados]);
 
   const certificadoExistente = certificados.find(c => c.estado === 'generado');
   const certificadoRevocado = certificados.find(c => c.estado === 'revocado');

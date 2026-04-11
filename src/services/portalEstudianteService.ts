@@ -135,6 +135,33 @@ export const portalEstudianteService = {
       .single();
     if (error) throw error;
 
+    // Client-side sync: if this document has a linked formato_id, also upsert formato_respuestas
+    if (finalEstado === 'completado') {
+      try {
+        const { data: configDoc } = await supabase
+          .from('portal_config_documentos')
+          .select('formato_id')
+          .eq('key', documentoKey)
+          .not('formato_id', 'is', null)
+          .maybeSingle();
+
+        if (configDoc?.formato_id) {
+          await supabase
+            .from('formato_respuestas')
+            .upsert({
+              matricula_id: matriculaId,
+              formato_id: configDoc.formato_id,
+              estado: 'completado',
+              answers: payload.metadata || {},
+              completado_at: now,
+            } as any, { onConflict: 'matricula_id,formato_id' });
+        }
+      } catch {
+        // Non-critical: trigger should handle this; log silently
+        console.warn('Client-side sync to formato_respuestas failed (trigger should handle it)');
+      }
+    }
+
     return {
       key: documentoKey,
       estado: result.estado as any,

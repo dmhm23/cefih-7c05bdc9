@@ -1,21 +1,25 @@
 
+# Plan: Eliminar tarjeta de Acciones vacía en MatriculaDetallePage
 
-# Plan: Mostrar formatos en estado "borrador" en las matrículas
+## Análisis
 
-## Diagnóstico
+La tarjeta "Acciones" (líneas 1014-1032) tiene los siguientes problemas:
 
-En `formatoFormacionService.getForMatricula()` (línea 177), la consulta incluye `.eq('estado', 'activo')`, lo que excluye cualquier formato con `estado = 'borrador'`. 
+1. **Botones condicionales que rara vez aparecen**: Los botones "Marcar como Completa" y "Generar Certificado" dependen de estados específicos (`pendiente` con 100% progreso, o `completa`) que no siempre se cumplen.
 
-El badge "Borrador/Completo" que se muestra en la lista de formatos de una matrícula NO corresponde al estado del formato como plantilla, sino al estado de diligenciamiento del formato por el estudiante (calculado por `resolveFormatoEstado`). Por lo tanto, un formato en estado `borrador` (aún no publicado oficialmente) debería poder mostrarse en la matrícula si cumple las demás condiciones (`activo = true`, `visible_en_matricula = true`).
+2. **Botón sin funcionalidad**: El botón "Ver Historial" siempre aparece pero tiene un handler vacío (`onClick` no definido), lo que lo hace no funcional.
 
-La misma restricción existe en la función de base de datos `get_formatos_for_matricula`, que también filtra `f.estado = 'activo'`.
+3. **Sección vacía en la mayoría de casos**: Para la mayoría de matrículas, esta sección solo muestra un botón sin funcionalidad, ocupando espacio visual innecesario.
 
 ## Cambio
 
-| Archivo / Recurso | Cambio |
-|---|---|
-| `src/services/formatoFormacionService.ts` | Línea 177: reemplazar `.eq('estado', 'activo')` por `.in('estado', ['activo', 'borrador'])` para incluir formatos en ambos estados. |
-| Función SQL `get_formatos_for_matricula` | Cambiar `f.estado = 'activo'` por `f.estado IN ('activo', 'borrador')` para mantener consistencia con el servicio del frontend. Se actualiza vía migración. |
+| Archivo | Líneas | Acción |
+|---------|--------|--------|
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | 1014-1032 | Eliminar el div completo de Acciones (incluyendo el comentario `{/* Acciones */}` y todo el contenido hasta el cierre `</div>`) |
 
-**Total: 1 archivo editado, 1 migración**
+**Total: 1 archivo editado, 0 migraciones**
 
+## Verificación posterior
+
+- Revisar que la estructura de columnas del layout (sidebar + contenido) siga siendo correcta.
+- Confirmar que no hay referencias rotas ni imports sin usar relacionados con `handleCambiarEstado` si es el único uso (se usa también en `MatriculaDetailSheet.tsx`, por lo que debe mantenerse).

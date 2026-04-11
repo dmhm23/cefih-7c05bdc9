@@ -65,9 +65,49 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
   const { codigos: codigosCurso } = useCodigosCurso(curso);
   const codigoEstudianteCentralizado = codigosCurso[matricula.id] ?? null;
 
+  const { data: grupos = [] } = useGruposCartera();
+  const carteraStatus = useMemo(() => {
+    const grupo = grupos.find(g => g.matriculaIds.includes(matricula.id));
+    return grupo?.estado ?? 'sin_facturar';
+  }, [grupos, matricula.id]);
+
+  // Fetch formatos requeridos y respuestas completadas
+  const { data: formatosRequeridos = [] } = useQuery({
+    queryKey: ['formatos-requeridos-matricula', matricula.id, curso?.id],
+    queryFn: async () => {
+      if (!curso) return [];
+      const { data } = await supabase
+        .from('formatos_formacion')
+        .select('id, nombre')
+        .eq('activo', true)
+        .eq('visible_en_matricula', true)
+        .is('deleted_at', null);
+      return data ?? [];
+    },
+    enabled: !!curso,
+  });
+
+  const { data: formatoRespuestas = [] } = useQuery({
+    queryKey: ['formato-respuestas-matricula', matricula.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('formato_respuestas')
+        .select('formato_id')
+        .eq('matricula_id', matricula.id)
+        .eq('estado', 'completado');
+      return data?.map(r => r.formato_id) ?? [];
+    },
+  });
+
+  const elegibilidadCtx: ElegibilidadContext = useMemo(() => ({
+    carteraStatus,
+    formatosRequeridos: formatosRequeridos as any,
+    formatosCompletadosIds: formatoRespuestas,
+  }), [carteraStatus, formatosRequeridos, formatoRespuestas]);
+
   const certificadoExistente = certificados.find(c => c.estado === 'generado');
   const certificadoRevocado = certificados.find(c => c.estado === 'revocado');
-  const { elegible, motivos } = evaluarElegibilidad(matricula, formatosDinamicos);
+  const { elegible, motivos } = evaluarElegibilidad(matricula, formatosDinamicos, elegibilidadCtx);
   const tieneExcepcionAprobada = excepciones.some(e => e.estado === 'aprobada');
 
   // Determine display state

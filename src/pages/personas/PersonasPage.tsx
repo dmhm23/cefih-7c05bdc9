@@ -17,7 +17,7 @@ import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
-import { format } from "date-fns";
+import { fmtDateLocal } from "@/utils/dateUtils";
 
 const STORAGE_KEY = "personas_visible_columns";
 
@@ -236,7 +236,7 @@ export default function PersonasPage() {
       sortable: true,
       render: (p: Persona) =>
         p.fechaNacimiento
-          ? format(new Date(p.fechaNacimiento), "dd/MM/yyyy")
+          ? fmtDateLocal(p.fechaNacimiento)
           : "-",
     },
     { key: "paisNacimiento", header: "País Nacimiento" },

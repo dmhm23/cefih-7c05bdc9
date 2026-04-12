@@ -5,6 +5,7 @@ import { Curso, CursoFormData } from "@/types/curso";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
+import { parseLocalDate } from "@/utils/dateUtils";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
@@ -59,7 +60,9 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
     const inicio = formData.fechaInicio ?? curso.fechaInicio;
     const fin = formData.fechaFin ?? curso.fechaFin;
     if (inicio && fin) {
-      const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+      const dInicio = parseLocalDate(inicio) ?? new Date(inicio);
+      const dFin = parseLocalDate(fin) ?? new Date(fin);
+      const dias = differenceInCalendarDays(dFin, dInicio);
       return dias >= 0 ? dias + 1 : 0;
     }
     return curso.duracionDias ?? 0;

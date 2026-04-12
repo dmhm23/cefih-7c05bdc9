@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { differenceInCalendarDays } from "date-fns";
+import { parseLocalDate } from "@/utils/dateUtils";
 import { cursoService } from "@/services/cursoService";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -163,7 +164,9 @@ export default function CursoFormPage() {
 
   const recalcularDuracion = (inicio: string, fin: string) => {
     if (!inicio || !fin) return;
-    const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+    const dInicio = parseLocalDate(inicio) ?? new Date(inicio);
+    const dFin = parseLocalDate(fin) ?? new Date(fin);
+    const dias = differenceInCalendarDays(dFin, dInicio);
     if (dias >= 0) form.setValue("duracionDias", dias + 1);
   };
 
@@ -177,7 +180,7 @@ export default function CursoFormPage() {
       if (!numeroCursoManual) form.setValue("numeroCurso", "");
       return;
     }
-    const date = new Date(fechaInicio);
+    const date = parseLocalDate(fechaInicio) ?? new Date(fechaInicio);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
     const anio2d = String(year).slice(-2);
@@ -254,7 +257,9 @@ export default function CursoFormPage() {
       // Calcular duración real desde fechas
       let duracionDiasReal = data.duracionDias || 0;
       if (data.fechaInicio && data.fechaFin) {
-        const dias = differenceInCalendarDays(new Date(data.fechaFin), new Date(data.fechaInicio));
+        const dI = parseLocalDate(data.fechaInicio) ?? new Date(data.fechaInicio);
+        const dF = parseLocalDate(data.fechaFin) ?? new Date(data.fechaFin);
+        const dias = differenceInCalendarDays(dF, dI);
         if (dias >= 0) duracionDiasReal = dias + 1;
       }
       await createCurso.mutateAsync({
@@ -429,7 +434,9 @@ export default function CursoFormPage() {
                       const inicio = form.watch("fechaInicio");
                       const fin = form.watch("fechaFin");
                       if (inicio && fin) {
-                        const dias = differenceInCalendarDays(new Date(fin), new Date(inicio));
+                        const dI = parseLocalDate(inicio) ?? new Date(inicio);
+                        const dF = parseLocalDate(fin) ?? new Date(fin);
+                        const dias = differenceInCalendarDays(dF, dI);
                         return dias >= 0 ? dias + 1 : 0;
                       }
                       return form.watch("duracionDias") || 0;

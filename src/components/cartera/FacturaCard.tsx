@@ -26,6 +26,7 @@ import { usePagosByFactura } from "@/hooks/useCartera";
 import { Factura, RegistroPago, METODO_PAGO_LABELS } from "@/types/cartera";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { fmtDateLocal } from "@/utils/dateUtils";
 import type { Matricula } from "@/types/matricula";
 import type { Persona } from "@/types/persona";
 import type { Curso } from "@/types/curso";
@@ -51,7 +52,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
 
   const { data: pagos = [] } = usePagosByFactura(factura.id);
 
-  const isOverdue = factura.estado !== "pagada" && new Date(factura.fechaVencimiento) < new Date();
+  const isOverdue = factura.estado !== "pagada" && (() => { const [y,m,d] = factura.fechaVencimiento.split('-').map(Number); return new Date(y, m-1, d); })() < new Date();
 
   const totalPagado = useMemo(() => pagos.reduce((s, p) => s + p.valorPago, 0), [pagos]);
   const saldoPendiente = factura.total - totalPagado;
@@ -74,12 +75,12 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
               <div className="flex items-center gap-4 text-sm shrink-0">
                 <div className="text-right hidden sm:block">
                   <div className="text-xs text-muted-foreground">Emitida</div>
-                  <div>{format(new Date(factura.fechaEmision), "d MMM yyyy", { locale: es })}</div>
+                  <div>{fmtDateLocal(factura.fechaEmision, "d MMM yyyy", es)}</div>
                 </div>
                 <div className="text-right hidden sm:block">
                   <div className="text-xs text-muted-foreground">Vence</div>
                   <div className={isOverdue ? "text-destructive font-medium" : ""}>
-                    {format(new Date(factura.fechaVencimiento), "d MMM yyyy", { locale: es })}
+                    {fmtDateLocal(factura.fechaVencimiento, "d MMM yyyy", es)}
                   </div>
                 </div>
                 <div className="text-right">
@@ -150,7 +151,7 @@ export function FacturaCard({ factura, grupoCarteraId, matriculas, personas, cur
                         {pagos.map(p => (
                           <TableRow key={p.id} className="cursor-pointer" onClick={() => setEditingPago(p)}>
                             <TableCell className="text-sm">
-                              {format(new Date(p.fechaPago), "d MMM yyyy", { locale: es })}
+                              {fmtDateLocal(p.fechaPago, "d MMM yyyy", es)}
                             </TableCell>
                             <TableCell className="font-medium text-emerald-600">{formatCurrency(p.valorPago)}</TableCell>
                             <TableCell><Badge variant="outline">{METODO_PAGO_LABELS[p.metodoPago]}</Badge></TableCell>

@@ -1,5 +1,6 @@
 import { ConfiguracionCodigoEstudiante } from '@/types/nivelFormacion';
 import { Curso } from '@/types/curso';
+import { parseLocalDate } from '@/utils/dateUtils';
 
 interface CodigoParams {
   config: ConfiguracionCodigoEstudiante;
@@ -13,12 +14,14 @@ export function generarCodigoEstudiante({ config, curso, indexEstudiante, consec
   const parts: string[] = [config.prefijoCodigo, config.codigoTipoFormacion];
 
   if (config.usarAnioCurso) {
-    const anio = new Date(curso.fechaInicio).getFullYear().toString().slice(-2);
+    const d = parseLocalDate(curso.fechaInicio) ?? new Date(curso.fechaInicio);
+    const anio = d.getFullYear().toString().slice(-2);
     parts.push(anio);
   }
 
   if (config.usarMesCurso) {
-    const mes = String(new Date(curso.fechaInicio).getMonth() + 1).padStart(2, '0');
+    const d = parseLocalDate(curso.fechaInicio) ?? new Date(curso.fechaInicio);
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
     parts.push(mes);
   }
 

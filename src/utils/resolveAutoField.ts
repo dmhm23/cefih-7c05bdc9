@@ -16,6 +16,7 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from '@/data/formOptions';
+import { fmtDateLocal } from '@/utils/dateUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -34,11 +35,8 @@ function lookup(value: string | undefined, options: readonly { value: string; la
 
 function fmtDate(dateStr: string | undefined): string | null {
   if (!dateStr) return null;
-  try {
-    return format(new Date(dateStr), 'd/MM/yyyy', { locale: es });
-  } catch {
-    return dateStr;
-  }
+  const result = fmtDateLocal(dateStr, 'd/MM/yyyy', es);
+  return result === "—" ? null : result;
 }
 
 export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext): string | null {

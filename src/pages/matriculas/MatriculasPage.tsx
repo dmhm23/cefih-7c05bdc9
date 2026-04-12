@@ -20,7 +20,7 @@ import { Matricula } from "@/types";
 import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { fmtDateLocal } from "@/utils/dateUtils";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -113,7 +113,7 @@ export default function MatriculasPage() {
     const doc = matricula.documentos?.find((d) => d.tipo === tipo);
     if (!doc) return "-";
     const fecha = doc[campo];
-    return fecha ? format(new Date(fecha), "dd/MM/yyyy") : "-";
+    return fecha ? fmtDateLocal(fecha) : "-";
   };
 
   const getEstadoDocumental = (matricula: Matricula): "Completo" | "Pendiente" => {
@@ -263,7 +263,7 @@ export default function MatriculasPage() {
       sortable: true,
       sortKey: "createdAt",
       sortValue: (m: Matricula) => m.createdAt,
-      render: (m: Matricula) => format(new Date(m.createdAt), "dd/MM/yyyy"),
+      render: (m: Matricula) => fmtDateLocal(m.createdAt?.slice(0, 10)),
     },
     {
       key: "empresa",
@@ -405,7 +405,7 @@ export default function MatriculasPage() {
       key: "fechaPago",
       header: "Fecha Pago",
       render: (m: Matricula) =>
-        m.fechaPago ? format(new Date(m.fechaPago), "dd/MM/yyyy") : "-",
+        m.fechaPago ? fmtDateLocal(m.fechaPago) : "-",
     },
     {
       key: "ctaFactNumero",

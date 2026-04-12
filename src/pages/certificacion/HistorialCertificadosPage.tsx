@@ -137,7 +137,7 @@ export default function HistorialCertificadosPage() {
                     <span className="text-muted-foreground text-xs">No</span>
                   )}
                 </TableCell>
-                <TableCell className="text-xs">{new Date(c.fechaGeneracion).toLocaleDateString()}</TableCell>
+                <TableCell className="text-xs">{c.fechaGeneracion ? new Date(c.fechaGeneracion).toLocaleDateString("es-CO") : "—"}</TableCell>
                 <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                   {c.motivoRevocacion || "—"}
                 </TableCell>

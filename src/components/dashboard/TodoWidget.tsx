@@ -23,8 +23,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("es-CO", { day: "2-digit", month: "2-digit", year: "numeric" });
+import { fmtDateLocal } from "@/utils/dateUtils";
+
+const formatDate = (iso: string) => fmtDateLocal(iso?.slice(0, 10));
 
 interface SortableTodoProps {
   todo: TodoItem;

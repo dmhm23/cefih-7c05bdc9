@@ -96,7 +96,7 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
           .insert({
             key: formato.id,
             label: formato.nombre,
-            tipo: categoriaToPorTipo(formato.categoria),
+            tipo: categoriaToPorTipo(formato.categoria) as any,
             descripcion: formato.descripcion || '',
             orden: nextOrden,
             formato_id: formato.id,
@@ -104,7 +104,7 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
             depende_de: [],
             activo: true,
             obligatorio: true,
-          });
+          } as any);
       }
     } else if (existing && existing.activo) {
       await supabase

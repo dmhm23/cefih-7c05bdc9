@@ -11,6 +11,7 @@ import { Download, Save, Pencil, Eye } from "lucide-react";
 import DynamicFormatoDocument from "./DynamicFormatoDocument";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useFormatoRespuesta, useSaveFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
+import { useNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";

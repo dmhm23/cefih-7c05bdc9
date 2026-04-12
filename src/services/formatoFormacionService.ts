@@ -100,7 +100,7 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
             descripcion: formato.descripcion || '',
             orden: nextOrden,
             formato_id: formato.id,
-            habilitado_por_nivel: {},
+            niveles_habilitados: [],
             depende_de: [],
             activo: true,
             obligatorio: true,

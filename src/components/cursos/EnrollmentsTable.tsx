@@ -541,10 +541,10 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           {m.empresaNombre || "Independiente"}
                         </td>
                         <td className="py-2 pr-3 text-muted-foreground">
-                          {getArlDate(m) !== "—" ? format(new Date(getArlDate(m)), "dd/MM/yyyy") : "—"}
+                          {getArlDate(m) !== "—" ? fmtDateLocal(getArlDate(m)) : "—"}
                         </td>
                         <td className="py-2 pr-3 text-muted-foreground">
-                          {getExamDate(m) !== "—" ? format(new Date(getExamDate(m)), "dd/MM/yyyy") : "—"}
+                          {getExamDate(m) !== "—" ? fmtDateLocal(getExamDate(m)) : "—"}
                         </td>
                         <td className="py-2 pr-3">
                           <Badge

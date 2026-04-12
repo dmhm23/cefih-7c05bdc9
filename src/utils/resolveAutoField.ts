@@ -20,13 +20,24 @@ import { fmtDateLocal } from '@/utils/dateUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+export interface AutoFieldContext {
+  persona: Persona | null;
+  matricula: Matricula | null;
+  curso: Curso | null;
+  entrenador: Personal | null;
+  supervisor: Personal | null;
+}
+
+function lookup(value: string | undefined, options: readonly { value: string; label: string }[]): string | null {
+  if (!value) return null;
+  return options.find((o) => o.value === value)?.label ?? value;
+}
+
 function fmtDate(dateStr: string | undefined): string | null {
   if (!dateStr) return null;
   const result = fmtDateLocal(dateStr, 'd/MM/yyyy', es);
   return result === "—" ? null : result;
 }
-
-export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext): string | null {
   const { persona, matricula, curso, entrenador, supervisor } = ctx;
 
   switch (key) {

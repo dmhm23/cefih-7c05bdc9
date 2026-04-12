@@ -7,7 +7,6 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Combobox } from '@/components/ui/combobox';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion } from '@/types/curso';
 import { TipoDocPortal } from '@/types/portalEstudiante';
 import { useFormatos } from '@/hooks/useFormatosFormacion';
 import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
@@ -41,21 +40,14 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
   const isEdit = !!documento;
   const { data: formatos, isLoading: loadingFormatos } = useFormatos();
   const { data: nivelesData } = useNivelesFormacion();
-  const NIVELES = (nivelesData || []).map((n) => n.id) as unknown as TipoFormacion[];
 
   const [selectedFormatoId, setSelectedFormatoId] = useState('');
   const [nombre, setNombre] = useState(documento?.nombre || '');
   const [tipo, setTipo] = useState<TipoDocPortal>(documento?.tipo || 'formulario');
   const [requiereFirma, setRequiereFirma] = useState(documento?.requiereFirma || false);
   const [dependeDe, setDependeDe] = useState<string[]>(documento?.dependeDe || []);
-  const defaultNiveles: Record<TipoFormacion, boolean> = {
-    reentrenamiento: true,
-    jefe_area: true,
-    trabajador_autorizado: true,
-    coordinador_ta: true,
-  };
-  const [habilitadoPorNivel, setHabilitadoPorNivel] = useState<Record<TipoFormacion, boolean>>(
-    documento?.habilitadoPorNivel || defaultNiveles
+  const [nivelesHabilitados, setNivelesHabilitados] = useState<string[]>(
+    documento?.nivelesHabilitados || []
   );
 
   // Filter formatos: only visible_en_portal_estudiante + activo, exclude already added
@@ -81,7 +73,7 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
       setTipo(documento?.tipo || 'formulario');
       setRequiereFirma(documento?.requiereFirma || false);
       setDependeDe(documento?.dependeDe || []);
-      setHabilitadoPorNivel(documento?.habilitadoPorNivel || defaultNiveles);
+      setNivelesHabilitados(documento?.nivelesHabilitados || []);
     }
   }, [open, documento]);
 
@@ -106,7 +98,7 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
       requiereFirma,
       dependeDe,
       orden: documento?.orden || existingKeys.length + 1,
-      habilitadoPorNivel,
+      nivelesHabilitados,
     });
     onOpenChange(false);
   };
@@ -117,14 +109,18 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
     );
   };
 
-  const toggleNivel = (nivel: TipoFormacion) => {
-    setHabilitadoPorNivel(prev => ({ ...prev, [nivel]: !prev[nivel] }));
+  const toggleNivel = (nivelId: string) => {
+    setNivelesHabilitados(prev =>
+      prev.includes(nivelId) ? prev.filter(id => id !== nivelId) : [...prev, nivelId]
+    );
   };
 
   const currentKey = isEdit ? documento!.key : selectedFormatoId;
   const otherDocs = allDocumentos.filter(d => d.key !== currentKey);
 
   const canSave = isEdit ? !!nombre.trim() : !!selectedFormatoId && !!nombre.trim();
+  const niveles = nivelesData || [];
+  const allSelected = nivelesHabilitados.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,19 +193,19 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
 
               <div className="space-y-1.5">
                 <Label>Habilitado por nivel</Label>
+                <p className="text-xs text-muted-foreground">
+                  {allSelected ? 'Sin niveles seleccionados = habilitado para todos' : `${nivelesHabilitados.length} nivel(es) seleccionado(s)`}
+                </p>
                 <div className="space-y-2">
-                  {NIVELES.map(nivel => {
-                    const nivelInfo = (nivelesData || []).find(n => n.id === nivel);
-                    return (
-                      <label key={nivel} className="flex items-center gap-2 text-sm">
-                        <Checkbox
-                          checked={habilitadoPorNivel[nivel]}
-                          onCheckedChange={() => toggleNivel(nivel)}
-                        />
-                        {nivelInfo?.nombreNivel || nivel}
-                      </label>
-                    );
-                  })}
+                  {niveles.map(nivel => (
+                    <label key={nivel.id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={nivelesHabilitados.includes(nivel.id)}
+                        onCheckedChange={() => toggleNivel(nivel.id)}
+                      />
+                      {nivel.nombreNivel}
+                    </label>
+                  ))}
                 </div>
               </div>
             </>

@@ -11,6 +11,7 @@ import { Download, Save, Pencil, Eye } from "lucide-react";
 import DynamicFormatoDocument from "./DynamicFormatoDocument";
 import { usePersonal } from "@/hooks/usePersonal";
 import { useFormatoRespuesta, useSaveFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
+import { useNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
@@ -270,6 +271,7 @@ export default function DynamicFormatoPreviewDialog({
 
   const { data: entrenador } = usePersonal(curso?.entrenadorId || "");
   const { data: supervisor } = usePersonal(curso?.supervisorId || "");
+  const { data: nivelFormacion } = useNivelFormacion(curso?.nivelFormacionId || "");
 
   // Load saved answers
   const { data: savedRespuesta } = useFormatoRespuesta(
@@ -427,6 +429,7 @@ export default function DynamicFormatoPreviewDialog({
                 curso={curso}
                 entrenador={entrenador ?? null}
                 supervisor={supervisor ?? null}
+                nivelFormacionNombre={nivelFormacion?.nombreNivel ?? null}
                 answers={localAnswers}
                 onAnswerChange={editMode ? handleAnswerChange : undefined}
                 readOnly={!editMode}

@@ -1,8 +1,7 @@
 import { DocumentoPortalConfig, TipoDocPortal, DocumentoPortalKey } from './portalEstudiante';
-import { TipoFormacion } from './curso';
 
 export interface PortalDocumentoConfigAdmin extends DocumentoPortalConfig {
-  habilitadoPorNivel: Record<TipoFormacion, boolean>;
+  nivelesHabilitados: string[]; // UUID[] of niveles_formacion
 }
 
 export interface PortalConfigGlobal {

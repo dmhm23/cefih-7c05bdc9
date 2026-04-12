@@ -71,12 +71,12 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
     const curso = mat.cursos as any;
     if (!persona || !curso) return null;
 
-    const tipoFormacion = curso.tipo_formacion as TipoFormacion;
+    const nivelFormacionId = curso.nivel_formacion_id as string | null;
 
-    // Filter config by nivel
+    // Filter config by nivel — empty niveles_habilitados = global (all levels)
     const docsHabilitados = (configDocs || []).filter((d: any) => {
-      const hab = d.habilitado_por_nivel || {};
-      return hab[tipoFormacion] === true;
+      const niveles: string[] = d.niveles_habilitados || [];
+      return niveles.length === 0 || (nivelFormacionId && niveles.includes(nivelFormacionId));
     });
 
     const matPortalDocs = portalDocs.filter(d => d.matricula_id === mat.id);
@@ -100,9 +100,9 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
       personaNombre: `${persona.nombres} ${persona.apellidos}`,
       personaCedula: persona.numero_documento,
       cursoNombre: curso.nombre,
-      cursoNumeroCurso: curso.nombre, // Using nombre as identifier
-      tipoFormacion,
-      tipoFormacionLabel: resolveNivelCursoLabel(tipoFormacion),
+      cursoNumeroCurso: curso.nombre,
+      tipoFormacion: curso.tipo_formacion,
+      tipoFormacionLabel: resolveNivelCursoLabel(curso.tipo_formacion),
       fechaInicio: curso.fecha_inicio || '',
       fechaFin: curso.fecha_fin || '',
       portalHabilitado: portalEstudiante?.habilitado ?? true,

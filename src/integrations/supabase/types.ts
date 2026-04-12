@@ -1579,11 +1579,11 @@ export type Database = {
           depende_de: string[]
           descripcion: string
           formato_id: string | null
-          habilitado_por_nivel: Json
           icono: string
           id: string
           key: string
           label: string
+          niveles_habilitados: string[]
           obligatorio: boolean
           orden: number
           tipo: Database["public"]["Enums"]["tipo_doc_portal"]
@@ -1595,11 +1595,11 @@ export type Database = {
           depende_de?: string[]
           descripcion?: string
           formato_id?: string | null
-          habilitado_por_nivel?: Json
           icono?: string
           id?: string
           key: string
           label: string
+          niveles_habilitados?: string[]
           obligatorio?: boolean
           orden?: number
           tipo?: Database["public"]["Enums"]["tipo_doc_portal"]
@@ -1611,11 +1611,11 @@ export type Database = {
           depende_de?: string[]
           descripcion?: string
           formato_id?: string | null
-          habilitado_por_nivel?: Json
           icono?: string
           id?: string
           key?: string
           label?: string
+          niveles_habilitados?: string[]
           obligatorio?: boolean
           orden?: number
           tipo?: Database["public"]["Enums"]["tipo_doc_portal"]

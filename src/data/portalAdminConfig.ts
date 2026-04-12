@@ -10,12 +10,7 @@ export const portalDocumentosCatalogo: PortalDocumentoConfigAdmin[] = [
     requiereFirma: true,
     dependeDe: [],
     orden: 1,
-    habilitadoPorNivel: {
-      nf1: true,
-      nf2: true,
-      nf3: true,
-      nf5: true,
-    },
+    nivelesHabilitados: [], // empty = all levels
   },
   {
     key: 'evaluacion',
@@ -24,12 +19,7 @@ export const portalDocumentosCatalogo: PortalDocumentoConfigAdmin[] = [
     requiereFirma: false,
     dependeDe: ['info_aprendiz'],
     orden: 2,
-    habilitadoPorNivel: {
-      nf1: true,
-      nf2: true,
-      nf3: true,
-      nf5: true,
-    },
+    nivelesHabilitados: [], // empty = all levels
   },
 ];
 

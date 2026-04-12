@@ -253,7 +253,15 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
       );
 
     case "attendance_by_day": {
-      const days = ctx.curso?.duracionDias || 1;
+      const days = ctx.curso?.duracionDias || 0;
+      if (days <= 0) {
+        return (
+          <div style={{ gridColumn: "span 2" }} className="mt-3">
+            <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Registro de Asistencia por Día"}</p>
+            <p className="text-sm text-muted-foreground italic py-4 text-center">Sin fechas aún — asigne un curso con duración para generar la tabla de asistencia</p>
+          </div>
+        );
+      }
       const startDate = ctx.curso?.fechaInicio ? (parseLocalDate(ctx.curso.fechaInicio) ?? new Date(ctx.curso.fechaInicio)) : new Date();
       const rows = Array.from({ length: days }, (_, i) => {
         const d = addDays(startDate, i);
@@ -342,6 +350,7 @@ interface DynamicFormatoDocumentProps {
   curso: Curso | null;
   entrenador: Personal | null;
   supervisor: Personal | null;
+  nivelFormacionNombre?: string | null;
   answers?: Record<string, unknown>;
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
@@ -354,13 +363,14 @@ export default function DynamicFormatoDocument({
   curso,
   entrenador,
   supervisor,
+  nivelFormacionNombre,
   answers = {},
   onAnswerChange,
   readOnly = true,
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
-  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor };
+  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre };
   const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
   return (

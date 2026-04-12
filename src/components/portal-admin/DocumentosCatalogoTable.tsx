@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { GripVertical, Pencil, Trash2, Plus } from 'lucide-react';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion } from '@/types/curso';
 import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { DocumentoConfigDialog } from './DocumentoConfigDialog';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -54,9 +53,9 @@ function SortableRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: doc.key });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
-  const nivelesActivos = (Object.entries(doc.habilitadoPorNivel) as [TipoFormacion, boolean][])
-    .filter(([, v]) => v)
-    .map(([k]) => resolveNivelCursoLabel(k));
+  const nivelesActivos = doc.nivelesHabilitados.length === 0
+    ? ['Todos']
+    : doc.nivelesHabilitados.map(id => resolveNivelCursoLabel(id));
 
   const depNames = doc.dependeDe
     .map(k => allDocs.find(d => d.key === k)?.nombre || k)
@@ -75,10 +74,8 @@ function SortableRow({
       <TableCell className="text-sm text-muted-foreground">{depNames || '—'}</TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
-          {nivelesActivos.length === 4 ? (
+          {nivelesActivos.includes('Todos') ? (
             <Badge variant="secondary" className="text-xs">Todos</Badge>
-          ) : nivelesActivos.length === 0 ? (
-            <span className="text-xs text-muted-foreground">Ninguno</span>
           ) : (
             nivelesActivos.map(n => <Badge key={n} variant="secondary" className="text-xs">{n}</Badge>)
           )}

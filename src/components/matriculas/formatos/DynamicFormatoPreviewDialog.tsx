@@ -429,6 +429,7 @@ export default function DynamicFormatoPreviewDialog({
                 curso={curso}
                 entrenador={entrenador ?? null}
                 supervisor={supervisor ?? null}
+                nivelFormacionNombre={nivelFormacion?.nombreNivel ?? null}
                 answers={localAnswers}
                 onAnswerChange={editMode ? handleAnswerChange : undefined}
                 readOnly={!editMode}

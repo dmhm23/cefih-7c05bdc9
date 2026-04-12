@@ -350,6 +350,7 @@ interface DynamicFormatoDocumentProps {
   curso: Curso | null;
   entrenador: Personal | null;
   supervisor: Personal | null;
+  nivelFormacionNombre?: string | null;
   answers?: Record<string, unknown>;
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
@@ -362,13 +363,14 @@ export default function DynamicFormatoDocument({
   curso,
   entrenador,
   supervisor,
+  nivelFormacionNombre,
   answers = {},
   onAnswerChange,
   readOnly = true,
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
-  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor };
+  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre };
   const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
   return (

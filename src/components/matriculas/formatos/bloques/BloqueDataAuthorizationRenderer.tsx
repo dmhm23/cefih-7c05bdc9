@@ -1,4 +1,5 @@
 import React from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { BloqueDataAuthorization } from '@/types/formatoFormacion';
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 
 export default function BloqueDataAuthorizationRenderer({ bloque, answers, onChange, readOnly }: Props) {
   const key = `${bloque.id}_authorized`;
-  const value = answers[key] as string | undefined;
+  const checked = !!answers[key];
   const items = bloque.props?.summaryItems || [];
 
   return (
@@ -34,34 +35,18 @@ export default function BloqueDataAuthorizationRenderer({ bloque, answers, onCha
         </details>
       )}
 
-      <div className="flex gap-4">
-        <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-colors ${
-          value === 'acepto' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-border'
-        } ${readOnly ? 'cursor-default' : ''}`}>
-          <input
-            type="radio"
-            name={key}
-            checked={value === 'acepto'}
-            onChange={() => !readOnly && onChange?.(key, 'acepto')}
-            disabled={readOnly}
-            className="sr-only"
-          />
-          <span className="text-sm font-medium">Acepto</span>
-        </label>
-        <label className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition-colors ${
-          value === 'no_acepto' ? 'border-red-500 bg-red-50 text-red-700' : 'border-border'
-        } ${readOnly ? 'cursor-default' : ''}`}>
-          <input
-            type="radio"
-            name={key}
-            checked={value === 'no_acepto'}
-            onChange={() => !readOnly && onChange?.(key, 'no_acepto')}
-            disabled={readOnly}
-            className="sr-only"
-          />
-          <span className="text-sm font-medium">No acepto</span>
-        </label>
-      </div>
+      <label className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+        checked ? 'border-emerald-500 bg-emerald-50' : 'border-border'
+      } ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+        <Checkbox
+          checked={checked}
+          onCheckedChange={(val) => !readOnly && onChange?.(key, !!val)}
+          disabled={readOnly}
+        />
+        <span className="text-sm font-medium">
+          Acepto y autorizo el uso de mis datos personales
+        </span>
+      </label>
     </div>
   );
 }

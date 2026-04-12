@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, useEffect } from "react";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +43,58 @@ const PRINT_STYLES = `
   @media print { body { padding: 5mm; } }
 `;
 
+/**
+ * Build initial answers for health_consent blocks from matrícula data.
+ * This pre-fills the consentimiento de salud so the user sees existing data.
+ */
+function buildInitialHealthAnswers(
+  formato: FormatoFormacion,
+  matricula: Matricula
+): Record<string, unknown> {
+  const initial: Record<string, unknown> = {};
+  const healthBlocks = formato.bloques.filter((b) => b.type === 'health_consent');
+
+  for (const bloque of healthBlocks) {
+    const prefix = bloque.id;
+    // Map matrícula fields to health_consent question IDs
+    const mapping: Record<string, { value: boolean; detail?: string }> = {
+      restriccionMedica: {
+        value: !!matricula.restriccionMedica,
+        detail: matricula.restriccionMedicaDetalle || '',
+      },
+      alergias: {
+        value: !!matricula.alergias,
+        detail: matricula.alergiasDetalle || '',
+      },
+      consumoMedicamentos: {
+        value: !!matricula.consumoMedicamentos,
+        detail: matricula.consumoMedicamentosDetalle || '',
+      },
+      embarazo: {
+        value: !!matricula.embarazo,
+      },
+      lectoescritura: {
+        value: !!matricula.nivelLectoescritura,
+      },
+    };
+
+    for (const [qId, data] of Object.entries(mapping)) {
+      initial[`${prefix}_${qId}`] = data.value;
+      if (data.detail) {
+        initial[`${prefix}_${qId}_detalle`] = data.detail;
+      }
+    }
+  }
+
+  // Also pre-fill data_authorization from matrícula
+  const authBlocks = formato.bloques.filter((b) => b.type === 'data_authorization');
+  for (const bloque of authBlocks) {
+    initial[`${bloque.id}_authorized`] = !!matricula.autorizacionDatos;
+  }
+
+  return initial;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,15 +128,23 @@ export default function DynamicFormatoPreviewDialog({
   const [editMode, setEditMode] = useState(false);
   const [localAnswers, setLocalAnswers] = useState<Record<string, unknown>>({});
 
-  // Sync saved answers when loaded
+  // Build initial answers from matrícula data for health/authorization blocks
+  const initialFromMatricula = useMemo(() => {
+    if (!formato) return {};
+    return buildInitialHealthAnswers(formato, matricula);
+  }, [formato?.id, matricula.id]);
+
+  // Sync saved answers when loaded — merge matrícula defaults with saved answers
   useEffect(() => {
-    if (savedRespuesta?.answers) {
-      setLocalAnswers(savedRespuesta.answers as Record<string, unknown>);
+    if (savedRespuesta?.answers && Object.keys(savedRespuesta.answers).length > 0) {
+      // Saved answers take precedence over matrícula defaults
+      setLocalAnswers({ ...initialFromMatricula, ...(savedRespuesta.answers as Record<string, unknown>) });
     } else {
-      setLocalAnswers({});
+      // No saved answers yet — use matrícula defaults
+      setLocalAnswers(initialFromMatricula);
     }
     setEditMode(false);
-  }, [savedRespuesta, formato?.id]);
+  }, [savedRespuesta, formato?.id, initialFromMatricula]);
 
   const handleAnswerChange = useCallback((key: string, value: unknown) => {
     setLocalAnswers((prev) => ({ ...prev, [key]: value }));
@@ -101,8 +161,9 @@ export default function DynamicFormatoPreviewDialog({
       });
       toast({ title: estado === 'completado' ? "Formato completado" : "Borrador guardado" });
       if (estado === 'completado') setEditMode(false);
-    } catch {
-      toast({ title: "Error al guardar", variant: "destructive" });
+    } catch (e: any) {
+      console.error('Error saving formato respuesta:', e);
+      toast({ title: "Error al guardar", description: e?.message || "Intente nuevamente", variant: "destructive" });
     }
   }, [formato, matricula.id, localAnswers, saveMutation, toast]);
 

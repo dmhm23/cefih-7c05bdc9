@@ -44,6 +44,8 @@ import {
   NIVEL_PREVIO_LABELS, TIPO_VINCULACION_LABELS, FORMA_PAGO_LABELS, FormaPago,
 } from "@/types/matricula";
 import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { fmtDateLocal } from "@/utils/dateUtils";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";

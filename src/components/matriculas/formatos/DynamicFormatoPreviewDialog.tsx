@@ -320,12 +320,34 @@ export default function DynamicFormatoPreviewDialog({
     }
   }, [formato, matricula.id, localAnswers, saveMutation, toast]);
 
-  const handlePrint = useCallback(() => {
+  const handlePrint = useCallback(async () => {
     if (!documentRef.current) return;
+    const clone = documentRef.current.cloneNode(true) as HTMLElement;
+
+    // Convert external images (logo) to inline data URIs so they render in the print window
+    const images = clone.querySelectorAll("img");
+    await Promise.all(
+      Array.from(images).map(async (img) => {
+        const src = img.src;
+        if (!src || src.startsWith("data:")) return; // already inline
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUrl;
+        } catch {
+          // leave original src
+        }
+      })
+    );
+
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
-    const clone = documentRef.current.cloneNode(true) as HTMLElement;
     const filename = `${formato?.nombre || "formato"}-preview.pdf`
       .toLowerCase()
       .normalize("NFD")
@@ -337,7 +359,7 @@ export default function DynamicFormatoPreviewDialog({
       `<!DOCTYPE html><html><head><title>${filename}</title><style>${PRINT_STYLES}</style></head><body><div class="doc-root">${clone.innerHTML}</div></body></html>`
     );
     printWindow.document.close();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
   }, [formato?.nombre]);
 
   if (!formato) return null;

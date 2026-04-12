@@ -54,9 +54,9 @@ function SortableRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: doc.key });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
-  const nivelesActivos = (Object.entries(doc.habilitadoPorNivel) as [TipoFormacion, boolean][])
-    .filter(([, v]) => v)
-    .map(([k]) => resolveNivelCursoLabel(k));
+  const nivelesActivos = doc.nivelesHabilitados.length === 0
+    ? ['Todos']
+    : doc.nivelesHabilitados.map(id => resolveNivelCursoLabel(id));
 
   const depNames = doc.dependeDe
     .map(k => allDocs.find(d => d.key === k)?.nombre || k)

@@ -4,14 +4,15 @@ import { Curso } from '@/types/curso';
 import { PortalEstudianteData, DocumentoPortalEstado } from '@/types/portalEstudiante';
 
 /**
- * Initializes portalEstudiante for a matricula based on the course's tipoFormacion.
+ * Initializes portalEstudiante for a matricula based on the course's nivel de formación.
  * Idempotent: does nothing if already initialized.
  */
 export function initPortalEstudiante(matricula: Matricula, curso: Curso): void {
   if (matricula.portalEstudiante) return;
 
+  const nivelId = curso.nivelFormacionId;
   const docsForNivel = portalDocumentosCatalogo
-    .filter(d => d.habilitadoPorNivel[curso.tipoFormacion])
+    .filter(d => d.nivelesHabilitados.length === 0 || (nivelId && d.nivelesHabilitados.includes(nivelId)))
     .sort((a, b) => a.orden - b.orden);
 
   const documentos: DocumentoPortalEstado[] = docsForNivel.map(doc => ({

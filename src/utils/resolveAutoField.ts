@@ -38,6 +38,8 @@ function fmtDate(dateStr: string | undefined): string | null {
   const result = fmtDateLocal(dateStr, 'd/MM/yyyy', es);
   return result === "—" ? null : result;
 }
+
+export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext): string | null {
   const { persona, matricula, curso, entrenador, supervisor } = ctx;
 
   switch (key) {

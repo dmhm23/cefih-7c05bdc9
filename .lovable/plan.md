@@ -1,52 +1,65 @@
 
 
-# Plan: Corregir PDF descargable para conservar el formato estructurado
+# Plan: Corregir desfase de fechas por zona horaria en toda la aplicación
 
 ## Problema
 
-El `handlePrint` en `DynamicFormatoPreviewDialog` clona el `innerHTML` del documento y lo inyecta en una ventana nueva con `PRINT_STYLES`. Pero el documento usa **clases de Tailwind CSS** (grid, spacing, borders, font sizes, colors) que no existen en la ventana de impresión. El resultado: todo colapsa en una columna plana sin estructura.
+Cuando la base de datos devuelve una fecha como `"2026-04-10"`, JavaScript la interpreta como **UTC midnight** (`2026-04-10T00:00:00Z`). En Colombia (UTC-5), eso se convierte en `2026-04-09T19:00:00`, mostrando **un día menos**.
 
-Los componentes legacy no tenían este problema porque usaban **inline styles** directamente (como `DocumentHeader` que ya usa el objeto `styles`).
+El proyecto ya tiene `parseLocalDate()` en `src/utils/dateUtils.ts` que parsea correctamente sin desfase UTC, pero solo se usa en 5 archivos. El resto de la aplicación (~26 archivos) usa `new Date(dateStr)` directamente.
 
 ## Solución
 
-Reescribir `PRINT_STYLES` para incluir reglas CSS que repliquen fielmente todas las clases de Tailwind usadas por `DynamicFormatoDocument` y sus bloques hijos. Esto cubre:
+Crear una función auxiliar `fmtDateLocal(dateStr, formatStr)` en `dateUtils.ts` que combine `parseLocalDate` con `date-fns/format`, y reemplazar todas las instancias de `format(new Date(dateStr), ...)` y `new Date(dateStr).toLocaleDateString(...)` donde `dateStr` es una fecha sin hora (YYYY-MM-DD).
 
-1. **Layout principal**: grid de 2 columnas, gaps, spans
-2. **Field cells**: labels en uppercase 9px, valores en 14px, badges
-3. **Section titles**: bordes, márgenes, uppercase
-4. **Firmas**: boxes con borde dashed, imágenes centradas
-5. **Health consent**: cards con bordes, botones Sí/No con colores
-6. **Data authorization**: checkbox + label
-7. **Evaluation quiz**: preguntas con opciones, badge de resultado
-8. **Satisfaction survey**: escala, botones
-9. **Attendance table**: tabla con bordes y padding
-10. **Signatures**: dashed border boxes
+**No se tocan** las fechas con timestamp completo (ISO con hora), como `createdAt` o `updatedAt`, ya que esas incluyen zona horaria y se parsean correctamente.
 
 ## Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/components/matriculas/formatos/DynamicFormatoPreviewDialog.tsx` | Reescribir `PRINT_STYLES` con CSS completo que replica el layout Tailwind. Mejorar `handlePrint` para convertir imágenes (logo, firmas) a data URLs antes de clonar. |
+| `src/utils/dateUtils.ts` | Agregar `fmtDateLocal(dateStr, formatStr, locale?)` |
+| `src/utils/resolveAutoField.ts` | `fmtDate` → usar `parseLocalDate` en vez de `new Date` |
+| `src/utils/certificadoGenerator.ts` | Igual |
+| `src/utils/codigoEstudiante.ts` | Usar `parseLocalDate` para extraer año/mes |
+| `src/components/cursos/CursosListView.tsx` | `fechaInicio`, `fechaFin` → `fmtDateLocal` |
+| `src/components/cursos/CursosCalendarioView.tsx` | `fechaInicio`, `fechaFin` → `parseLocalDate` |
+| `src/components/cursos/CursoDetailSheet.tsx` | Fechas de curso → `fmtDateLocal` |
+| `src/components/cursos/CourseInfoCard.tsx` | Fechas de curso → `fmtDateLocal` |
+| `src/pages/cursos/CursoFormPage.tsx` | `new Date(fechaInicio/Fin)` → `parseLocalDate` |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | `fechaInicio`, `fechaFin` del curso → `fmtDateLocal` |
+| `src/pages/matriculas/MatriculasPage.tsx` | Fechas de matrícula → `fmtDateLocal` |
+| `src/pages/personas/PersonasPage.tsx` | `fechaNacimiento` → `fmtDateLocal` |
+| `src/pages/empresas/EmpresaDetallePage.tsx` | Fechas de matrícula |
+| `src/components/cartera/FacturaCard.tsx` | `fechaEmision`, `fechaVencimiento`, `fechaPago` |
+| `src/pages/cartera/GrupoCarteraDetallePage.tsx` | `fechaVencimiento` comparación |
+| `src/components/cursos/EnrollmentsTable.tsx` | Fechas ARL/examen |
+| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Fechas auto-resueltas del curso |
+| `src/components/portal-admin/MonitoreoDetalleDialog.tsx` | Fechas del curso |
+| `src/components/dashboard/TodoWidget.tsx` | `toLocaleDateString` → `fmtDateLocal` |
+| `src/pages/certificacion/HistorialCertificadosPage.tsx` | `fechaGeneracion` |
+| `src/components/matriculas/ExcepcionesPanel.tsx` | `fechaSolicitud` |
+| `src/components/matriculas/HistorialVersiones.tsx` | `fechaGeneracion` |
 
-## Detalle técnico
+## Criterio de distinción
 
-El `PRINT_STYLES` expandido incluirá:
+- **Fechas date-only** (YYYY-MM-DD): `fechaInicio`, `fechaFin`, `fechaNacimiento`, `fechaPago`, `fechaEmision`, `fechaVencimiento`, `fechaCarga`, `fechaDocumento` → usar `parseLocalDate` / `fmtDateLocal`
+- **Timestamps con hora** (ISO completo): `createdAt`, `updatedAt`, `fechaGeneracion` (certificados) → **no tocar**, `new Date()` funciona bien con estos
 
-```text
-/* Layout principal del documento */
-.bg-white          → background: white; padding: 24px;
-grid grid-cols-2    → display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px;
+## Nueva función en dateUtils.ts
 
-/* Field cells */
-.field-cell         → padding, font sizes for label/value
-.text-\[9px\]      → font-size: 9px
-.text-sm            → font-size: 14px
-
-/* Section titles, signatures, tables */
-/* Health consent cards, quiz options, survey scales */
-/* Badges (umbral, auto) */
+```typescript
+export function fmtDateLocal(
+  dateStr: string | undefined | null,
+  formatStr: string = "dd/MM/yyyy",
+  locale?: Locale
+): string {
+  if (!dateStr) return "—";
+  const d = parseLocalDate(dateStr);
+  if (!d) return dateStr;
+  return format(d, formatStr, { locale });
+}
 ```
 
-Se mantendrá el enfoque `window.print()` (consistente con la arquitectura del proyecto) pero con CSS suficiente para que el documento impreso sea fiel a la vista en pantalla.
+Esto centraliza el parseo seguro y el formateo en una sola llamada, minimizando cambios en cada archivo.
 

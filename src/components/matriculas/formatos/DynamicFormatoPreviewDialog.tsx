@@ -20,7 +20,11 @@ import type { Curso } from "@/types/curso";
 const PRINT_STYLES = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 6mm; font-size: 12px; }
-  .doc-root { max-width: 210mm; margin: 0 auto; padding: 16px; background: white; }
+
+  /* ── Main document root ── */
+  .doc-root { max-width: 210mm; margin: 0 auto; padding: 24px; background: white; font-size: 12px; }
+
+  /* ── DocumentHeader (inline styles handle most, but print CSS backs up) ── */
   .doc-header { display: grid; grid-template-columns: 120px 1fr 1fr; border: 1px solid #9ca3af; break-inside: avoid; font-size: 11px; line-height: 1.4; margin-bottom: 8px; }
   .doc-header-logo { display: flex; align-items: center; justify-content: center; padding: 8px; border-right: 1px solid #9ca3af; }
   .doc-header-logo img { max-width: 105px; max-height: 73px; object-fit: contain; }
@@ -36,11 +40,160 @@ const PRINT_STYLES = `
   .doc-header-fechas { display: grid; grid-template-columns: 1fr 1fr; }
   .doc-header-fecha-cell { padding: 4px 8px; font-size: 10px; font-weight: 500; }
   .doc-header-fecha-cell:first-child { border-right: 1px solid #9ca3af; }
-  .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d4d4d4; padding-bottom: 4px; margin-bottom: 10px; margin-top: 18px; }
-  .section-title h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ── Tailwind layout replicas ── */
+  .bg-white { background: white; }
+  .p-6 { padding: 24px; }
+  .grid { display: grid; }
+  .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+  .gap-x-6 { column-gap: 24px; }
+  .gap-y-2 { row-gap: 8px; }
+  .mt-2 { margin-top: 8px; }
+  .mt-3 { margin-top: 12px; }
+  .mt-4 { margin-top: 16px; }
+  .mt-5 { margin-top: 20px; }
+  .mb-2 { margin-top: 8px; }
+  .mb-3 { margin-bottom: 12px; }
+  .pb-1 { padding-bottom: 4px; }
+  .p-2 { padding: 8px; }
+  .p-3 { padding: 12px; }
+  .p-4 { padding: 16px; }
+  .px-2 { padding-left: 8px; padding-right: 8px; }
+  .px-3 { padding-left: 12px; padding-right: 12px; }
+  .px-4 { padding-left: 16px; padding-right: 16px; }
+  .py-1 { padding-top: 4px; padding-bottom: 4px; }
+  .py-2 { padding-top: 8px; padding-bottom: 8px; }
+  .pl-2 { padding-left: 8px; }
+  .space-y-1 > * + * { margin-top: 4px; }
+  .space-y-2 > * + * { margin-top: 8px; }
+  .space-y-3 > * + * { margin-top: 12px; }
+  .space-y-4 > * + * { margin-top: 16px; }
+  .flex { display: flex; }
+  .flex-1 { flex: 1; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-center { justify-content: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-1 { gap: 4px; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 16px; }
+  .shrink-0 { flex-shrink: 0; }
+  .w-full { width: 100%; }
+  .h-24 { height: 96px; }
+  .max-h-16 { max-height: 64px; }
+  .w-5 { width: 20px; }
+  .h-5 { height: 20px; }
+  .w-6 { width: 24px; }
+  .h-6 { height: 24px; }
+  .h-4 { width: 16px; height: 16px; }
+  .w-4 { width: 16px; }
+  .h-3\\.5 { height: 14px; }
+  .w-3\\.5 { width: 14px; }
+
+  /* ── Typography ── */
+  .text-\\[8px\\] { font-size: 8px; }
+  .text-\\[9px\\] { font-size: 9px; }
+  .text-\\[10px\\] { font-size: 10px; }
+  .text-xs { font-size: 12px; }
+  .text-sm { font-size: 14px; }
+  .text-base { font-size: 16px; }
+  .text-lg { font-size: 18px; }
+  .font-medium { font-weight: 500; }
+  .font-semibold { font-weight: 600; }
+  .font-bold { font-weight: 700; }
+  .uppercase { text-transform: uppercase; }
+  .italic { font-style: italic; }
+  .leading-tight { line-height: 1.25; }
+  .leading-snug { line-height: 1.375; }
+  .leading-relaxed { line-height: 1.625; }
+  .tracking-wide { letter-spacing: 0.025em; }
+  .tracking-\\[0\\.1em\\] { letter-spacing: 0.1em; }
+  .text-left { text-align: left; }
+  .text-center { text-align: center; }
+  .text-justify { text-align: justify; }
+  .whitespace-pre-wrap { white-space: pre-wrap; }
+  .underline { text-decoration: underline; }
+
+  /* ── Colors (resolve CSS vars to real values) ── */
+  .text-muted-foreground { color: #6b7280; }
+  .text-muted-foreground\\/60 { color: rgba(107, 114, 128, 0.6); }
+  .text-red-700 { color: #b91c1c; }
+  .text-emerald-700 { color: #047857; }
+  .text-blue-700 { color: #1d4ed8; }
+  .text-primary-foreground { color: white; }
+
+  /* ── Borders & Backgrounds ── */
+  .border { border: 1px solid #e5e7eb; }
+  .border-2 { border: 2px solid #e5e7eb; }
+  .border-b { border-bottom: 1px solid #e5e7eb; }
+  .border-border { border-color: #e5e7eb; }
+  .border-border\\/50 { border-color: rgba(229, 231, 235, 0.5); }
+  .border-dashed { border-style: dashed; }
+  .border-muted { border-color: #e5e7eb; }
+  .border-muted-foreground\\/40 { border-color: rgba(107, 114, 128, 0.4); }
+  .border-primary { border-color: #2563eb; }
+  .border-red-300 { border-color: #fca5a5; }
+  .border-red-500 { border-color: #ef4444; }
+  .border-emerald-300 { border-color: #6ee7b7; }
+  .border-emerald-500 { border-color: #10b981; }
+  .border-blue-200 { border-color: #bfdbfe; }
+  .rounded { border-radius: 4px; }
+  .rounded-lg { border-radius: 8px; }
+  .rounded-full { border-radius: 9999px; }
+  .bg-background { background: white; }
+  .bg-white { background: white; }
+  .bg-primary { background: #2563eb; }
+  .bg-primary\\/5 { background: rgba(37, 99, 235, 0.05); }
+  .bg-primary\\/10 { background: rgba(37, 99, 235, 0.1); }
+  .bg-red-50 { background: #fef2f2; }
+  .bg-red-100 { background: #fee2e2; }
+  .bg-emerald-50 { background: #ecfdf5; }
+  .bg-emerald-50\\/50 { background: rgba(236, 253, 245, 0.5); }
+  .bg-emerald-100 { background: #d1fae5; }
+  .bg-blue-50 { background: #eff6ff; }
+  .object-contain { object-fit: contain; }
+
+  /* ── Tables ── */
   table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #d4d4d4; padding: 4px 8px; font-size: 11px; }
+  th, td { border: 1px solid #e5e7eb; padding: 4px 8px; font-size: 11px; }
+  th { font-weight: 600; }
+  .border-collapse { border-collapse: collapse; }
+  .overflow-x-auto { overflow-x: auto; }
+  .w-1\\/3 { width: 33.333%; }
+
+  /* ── Field cells ── */
+  .field-cell { padding: 4px 0; }
+  .field-cell p:first-child { font-size: 9px; text-transform: uppercase; letter-spacing: 0.025em; color: #6b7280; line-height: 1.25; display: flex; align-items: center; gap: 4px; }
+  .field-cell p:last-child { font-size: 14px; font-weight: 500; line-height: 1.375; }
+  .field-span { grid-column: span 2; }
+
+  /* ── Section titles ── */
+  .section-title { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-top: 20px; margin-bottom: 12px; }
+  .section-title h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ── Signature boxes ── */
+  .border-2.border-dashed { border: 2px dashed #e5e7eb; border-radius: 4px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ── Inline badge (auto) ── */
+  .inline-flex { display: inline-flex; }
+  .inline-flex.items-center { align-items: center; }
+
+  /* ── Checkbox (data authorization) ── */
+  button[role="checkbox"], [data-state] { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; background: white; }
+  button[role="checkbox"][data-state="checked"], [data-state="checked"] { background: #2563eb; border-color: #2563eb; color: white; }
+
+  /* ── List ── */
+  .list-disc { list-style-type: disc; }
+  .list-inside { list-style-position: inside; }
+
+  /* ── Details/summary ── */
+  details { font-size: 12px; color: #6b7280; }
+  summary { cursor: pointer; text-decoration: underline; }
+
+  /* ── Print-specific ── */
   @media print { body { padding: 5mm; } }
+  input, button { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 `;
 
 /**
@@ -167,12 +320,34 @@ export default function DynamicFormatoPreviewDialog({
     }
   }, [formato, matricula.id, localAnswers, saveMutation, toast]);
 
-  const handlePrint = useCallback(() => {
+  const handlePrint = useCallback(async () => {
     if (!documentRef.current) return;
+    const clone = documentRef.current.cloneNode(true) as HTMLElement;
+
+    // Convert external images (logo) to inline data URIs so they render in the print window
+    const images = clone.querySelectorAll("img");
+    await Promise.all(
+      Array.from(images).map(async (img) => {
+        const src = img.src;
+        if (!src || src.startsWith("data:")) return; // already inline
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUrl;
+        } catch {
+          // leave original src
+        }
+      })
+    );
+
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
-    const clone = documentRef.current.cloneNode(true) as HTMLElement;
     const filename = `${formato?.nombre || "formato"}-preview.pdf`
       .toLowerCase()
       .normalize("NFD")
@@ -184,7 +359,7 @@ export default function DynamicFormatoPreviewDialog({
       `<!DOCTYPE html><html><head><title>${filename}</title><style>${PRINT_STYLES}</style></head><body><div class="doc-root">${clone.innerHTML}</div></body></html>`
     );
     printWindow.document.close();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 400);
   }, [formato?.nombre]);
 
   if (!formato) return null;

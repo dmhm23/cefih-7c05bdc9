@@ -22,7 +22,7 @@ import { Persona } from "@/types/persona";
 import { useRemoverEstudianteCurso } from "@/hooks/useCursos";
 import { useCertificadosByCurso, useGenerarCertificado } from "@/hooks/useCertificados";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { fmtDateLocal } from "@/utils/dateUtils";
 import { supabase } from "@/integrations/supabase/client";
 import {
   evaluarElegibilidad,

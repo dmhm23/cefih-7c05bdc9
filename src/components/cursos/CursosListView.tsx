@@ -18,7 +18,7 @@ import { Curso } from "@/types";
 import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { fmtDateLocal } from "@/utils/dateUtils";
 
 const STORAGE_KEY = "cursos_visible_columns";
 
@@ -218,7 +218,7 @@ export default function CursosListView() {
       className: "min-w-[120px]",
       sortable: true,
       sortKey: "createdAt",
-      render: (c: Curso) => format(new Date(c.createdAt), "dd/MM/yyyy"),
+      render: (c: Curso) => fmtDateLocal(c.createdAt?.slice(0, 10)),
     },
     {
       key: "curso",
@@ -248,8 +248,8 @@ export default function CursosListView() {
       sortKey: "fechaInicio",
       render: (c: Curso) => (
         <div className="text-sm">
-          <span>{format(new Date(c.fechaInicio), "dd/MM/yyyy")}</span>
-          <span className="text-muted-foreground"> - {format(new Date(c.fechaFin), "dd/MM/yyyy")}</span>
+          <span>{fmtDateLocal(c.fechaInicio)}</span>
+          <span className="text-muted-foreground"> - {fmtDateLocal(c.fechaFin)}</span>
         </div>
       ),
     },

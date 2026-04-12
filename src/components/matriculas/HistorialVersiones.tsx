@@ -59,7 +59,7 @@ export function HistorialVersiones({ matriculaId }: Props) {
                 )}
               </div>
               <div className="text-muted-foreground">
-                {new Date(cert.fechaGeneracion).toLocaleDateString()}
+                {new Date(cert.fechaGeneracion).toLocaleDateString("es-CO")}
                 {cert.motivoRevocacion && (
                   <> · Motivo: {cert.motivoRevocacion}</>
                 )}

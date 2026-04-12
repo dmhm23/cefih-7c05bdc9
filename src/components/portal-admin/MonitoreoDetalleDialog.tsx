@@ -15,6 +15,7 @@ import { MonitoreoRow } from '@/services/portalMonitoreoService';
 import { useTogglePortalMatricula, useResetDocumentoMatricula } from '@/hooks/usePortalMonitoreo';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { fmtDateLocal } from '@/utils/dateUtils';
 import { CheckCircle2, Clock, Lock, FileText, Award, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -99,11 +100,11 @@ export function MonitoreoDetalleDialog({ row, open, onOpenChange, onDataChange }
             </div>
             <div>
               <span className="text-muted-foreground text-xs">Inicio</span>
-              <p>{format(new Date(row.fechaInicio), 'dd MMM yyyy', { locale: es })}</p>
+              <p>{fmtDateLocal(row.fechaInicio, 'dd MMM yyyy', es)}</p>
             </div>
             <div>
               <span className="text-muted-foreground text-xs">Fin</span>
-              <p>{format(new Date(row.fechaFin), 'dd MMM yyyy', { locale: es })}</p>
+              <p>{fmtDateLocal(row.fechaFin, 'dd MMM yyyy', es)}</p>
             </div>
           </div>
 

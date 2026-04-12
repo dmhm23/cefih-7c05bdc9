@@ -77,7 +77,7 @@ export function ExcepcionesPanel({ matriculaId, onExcepcionAprobada }: Props) {
                 </Badge>
               </div>
               <div className="text-muted-foreground">
-                Solicitado por: {exc.solicitadoPor} · {new Date(exc.fechaSolicitud).toLocaleDateString()}
+                Solicitado por: {exc.solicitadoPor} · {new Date(exc.fechaSolicitud).toLocaleDateString("es-CO")}
                 {exc.resueltoPor && (
                   <> · Resuelto por: {exc.resueltoPor}</>
                 )}

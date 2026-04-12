@@ -5,6 +5,7 @@ import type { FormatoFormacion } from '@/types/formatoFormacion';
 import type { EstadoGrupoCartera } from '@/types/cartera';
 import { ESTADO_GRUPO_CARTERA_LABELS } from '@/types/cartera';
 import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
+import { fmtDateLocal } from '@/utils/dateUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -76,11 +77,7 @@ export function construirDiccionarioTokens(
 ): Record<string, string> {
   const fmt = (dateStr?: string) => {
     if (!dateStr) return '';
-    try {
-      return format(new Date(dateStr), 'dd/MM/yyyy', { locale: es });
-    } catch {
-      return dateStr;
-    }
+    return fmtDateLocal(dateStr, 'dd/MM/yyyy', es);
   };
 
   return {

@@ -9,6 +9,7 @@ import type { Curso } from "@/types/curso";
 import type { Personal } from "@/types/personal";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
+import { parseLocalDate } from "@/utils/dateUtils";
 import BloqueHealthConsentRenderer from "./bloques/BloqueHealthConsentRenderer";
 import BloqueDataAuthorizationRenderer from "./bloques/BloqueDataAuthorizationRenderer";
 import BloqueEvaluationQuizRenderer from "./bloques/BloqueEvaluationQuizRenderer";
@@ -253,7 +254,7 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
 
     case "attendance_by_day": {
       const days = ctx.curso?.duracionDias || 1;
-      const startDate = ctx.curso?.fechaInicio ? new Date(ctx.curso.fechaInicio) : new Date();
+      const startDate = ctx.curso?.fechaInicio ? (parseLocalDate(ctx.curso.fechaInicio) ?? new Date(ctx.curso.fechaInicio)) : new Date();
       const rows = Array.from({ length: days }, (_, i) => {
         const d = addDays(startDate, i);
         return format(d, "dd/MM/yyyy", { locale: es });

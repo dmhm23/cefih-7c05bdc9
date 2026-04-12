@@ -8,6 +8,7 @@ import {
   startOfDay, endOfDay,
 } from "date-fns";
 import { es } from "date-fns/locale";
+import { parseLocalDate } from "@/utils/dateUtils";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -134,8 +135,8 @@ export default function CursosCalendarioView() {
   // Get cursos for a specific day
   const getCursosForDay = (day: Date) => {
     return filteredCursos.filter((c) => {
-      const start = new Date(c.fechaInicio);
-      const end = new Date(c.fechaFin);
+      const start = parseLocalDate(c.fechaInicio) ?? new Date(c.fechaInicio);
+      const end = parseLocalDate(c.fechaFin) ?? new Date(c.fechaFin);
       return isWithinInterval(day, { start: startOfDay(start), end: endOfDay(end) });
     });
   };
@@ -148,7 +149,7 @@ export default function CursosCalendarioView() {
       const trainerCursos = cursos.filter(
         (c) =>
           c.entrenadorId === t.id &&
-          isWithinInterval(new Date(c.fechaInicio), { start: monthStart, end: monthEnd })
+          isWithinInterval(parseLocalDate(c.fechaInicio) ?? new Date(c.fechaInicio), { start: monthStart, end: monthEnd })
       );
       return {
         ...t,

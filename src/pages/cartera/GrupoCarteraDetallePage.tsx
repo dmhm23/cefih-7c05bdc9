@@ -58,7 +58,11 @@ export default function GrupoCarteraDetallePage() {
 
   const facturasVencidas = useMemo(() => {
     const now = new Date();
-    return facturas.filter(f => f.estado !== 'pagada' && new Date(f.fechaVencimiento) < now);
+    return facturas.filter(f => {
+      if (f.estado === 'pagada') return false;
+      const [y, m, d] = f.fechaVencimiento.split('-').map(Number);
+      return new Date(y, m - 1, d) < now;
+    });
   }, [facturas]);
 
   const getPersona = (personaId: string) => personas.find(p => p.id === personaId);

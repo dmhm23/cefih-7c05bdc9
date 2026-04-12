@@ -10,12 +10,12 @@ import {
   PAISES,
   TIPOS_VINCULACION,
   NIVELES_PREVIOS,
-  NIVELES_FORMACION_EMPRESA,
   SECTORES_ECONOMICOS,
   AREAS_TRABAJO,
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from '@/data/formOptions';
+import { resolveNivelFormacionLabel } from '@/utils/resolveNivelLabel';
 import { fmtDateLocal } from '@/utils/dateUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

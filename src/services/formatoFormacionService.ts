@@ -119,7 +119,12 @@ export const formatoFormacionService = {
       .single();
 
     if (error) handleSupabaseError(error);
-    return rowToFormato(updated);
+    const formato = rowToFormato(updated);
+
+    // Phase 5: Auto-sync portal_config_documentos
+    await syncPortalConfig(formato);
+
+    return formato;
   },
 
   toggleActivo: async (id: string): Promise<FormatoFormacion> => {

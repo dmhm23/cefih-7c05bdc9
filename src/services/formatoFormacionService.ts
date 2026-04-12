@@ -54,6 +54,70 @@ function formToRow(data: Record<string, any>): Record<string, any> {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 5: Auto-sync portal_config_documentos when visibility changes
+// ---------------------------------------------------------------------------
+
+function categoriaToPorTipo(categoria: string): string {
+  switch (categoria) {
+    case 'evaluacion': return 'evaluacion';
+    case 'seguridad': return 'firma_autorizacion';
+    default: return 'formulario';
+  }
+}
+
+async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
+  try {
+    const { data: existing } = await supabase
+      .from('portal_config_documentos')
+      .select('id, activo')
+      .eq('formato_id', formato.id)
+      .maybeSingle();
+
+    if (formato.visibleEnPortalEstudiante && formato.activo) {
+      if (existing) {
+        if (!existing.activo) {
+          await supabase
+            .from('portal_config_documentos')
+            .update({ activo: true, label: formato.nombre })
+            .eq('id', existing.id);
+        }
+      } else {
+        const { data: maxOrden } = await supabase
+          .from('portal_config_documentos')
+          .select('orden')
+          .order('orden', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const nextOrden = ((maxOrden?.orden as number) || 0) + 1;
+
+        await supabase
+          .from('portal_config_documentos')
+          .insert({
+            key: formato.id,
+            label: formato.nombre,
+            tipo: categoriaToPorTipo(formato.categoria),
+            descripcion: formato.descripcion || '',
+            orden: nextOrden,
+            formato_id: formato.id,
+            habilitado_por_nivel: {},
+            depende_de: [],
+            activo: true,
+            obligatorio: true,
+          });
+      }
+    } else if (existing && existing.activo) {
+      await supabase
+        .from('portal_config_documentos')
+        .update({ activo: false })
+        .eq('id', existing.id);
+    }
+  } catch (e) {
+    console.warn('Error syncing portal config:', e);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Plantillas base (estáticas en frontend)
 // ---------------------------------------------------------------------------
 

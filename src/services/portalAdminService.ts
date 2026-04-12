@@ -1,6 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
 import { PortalConfigGlobal, PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
-import { TipoFormacion } from '@/types/curso';
 
 function mapDocConfig(row: any): PortalDocumentoConfigAdmin {
   return {
@@ -10,7 +9,7 @@ function mapDocConfig(row: any): PortalDocumentoConfigAdmin {
     requiereFirma: row.tipo === 'firma_autorizacion',
     dependeDe: row.depende_de || [],
     orden: row.orden,
-    habilitadoPorNivel: row.habilitado_por_nivel || {},
+    nivelesHabilitados: row.niveles_habilitados || [],
   };
 }
 
@@ -24,7 +23,7 @@ export const portalAdminService = {
     if (error) throw error;
 
     return {
-      portalActivoPorDefecto: true, // Managed at matrícula level via portal_estudiante JSONB
+      portalActivoPorDefecto: true,
       documentos: (data || []).map(mapDocConfig),
     };
   },
@@ -43,10 +42,10 @@ export const portalAdminService = {
       descripcion: '',
       orden: doc.orden,
       depende_de: doc.dependeDe,
-      habilitado_por_nivel: doc.habilitadoPorNivel,
+      niveles_habilitados: doc.nivelesHabilitados,
       obligatorio: true,
       activo: true,
-      formato_id: doc.key, // key now stores the formato UUID
+      formato_id: doc.key,
     };
 
     if (existing) {
@@ -58,7 +57,7 @@ export const portalAdminService = {
     } else {
       const { error } = await supabase
         .from('portal_config_documentos')
-        .insert(upsertData);
+        .insert(upsertData as any);
       if (error) throw error;
     }
 
@@ -72,7 +71,6 @@ export const portalAdminService = {
       .eq('key', key);
     if (error) throw error;
 
-    // Remove from dependencies of other docs
     const { data: others } = await supabase
       .from('portal_config_documentos')
       .select('key, depende_de')
@@ -90,7 +88,6 @@ export const portalAdminService = {
   },
 
   async togglePortalGlobal(activo: boolean): Promise<boolean> {
-    // This is now handled at matrícula level, no-op at global
     return activo;
   },
 
@@ -111,19 +108,26 @@ export const portalAdminService = {
     if (error) throw error;
   },
 
-  async updateHabilitacionNivel(key: string, nivel: TipoFormacion, activo: boolean): Promise<void> {
-    // Get current config
+  async updateHabilitacionNivel(key: string, nivelId: string, activo: boolean): Promise<void> {
     const { data: current, error: getErr } = await supabase
       .from('portal_config_documentos')
-      .select('habilitado_por_nivel')
+      .select('niveles_habilitados')
       .eq('key', key)
       .single();
     if (getErr) throw getErr;
 
-    const habilitado = { ...(current.habilitado_por_nivel as Record<string, boolean>), [nivel]: activo };
+    let niveles: string[] = (current.niveles_habilitados as string[]) || [];
+    if (activo) {
+      if (!niveles.includes(nivelId)) {
+        niveles = [...niveles, nivelId];
+      }
+    } else {
+      niveles = niveles.filter((id: string) => id !== nivelId);
+    }
+
     const { error } = await supabase
       .from('portal_config_documentos')
-      .update({ habilitado_por_nivel: habilitado })
+      .update({ niveles_habilitados: niveles })
       .eq('key', key);
     if (error) throw error;
   },

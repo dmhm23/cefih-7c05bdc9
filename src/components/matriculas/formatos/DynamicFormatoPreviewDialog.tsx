@@ -271,6 +271,7 @@ export default function DynamicFormatoPreviewDialog({
 
   const { data: entrenador } = usePersonal(curso?.entrenadorId || "");
   const { data: supervisor } = usePersonal(curso?.supervisorId || "");
+  const { data: nivelFormacion } = useNivelFormacion(curso?.nivelFormacionId || "");
 
   // Load saved answers
   const { data: savedRespuesta } = useFormatoRespuesta(

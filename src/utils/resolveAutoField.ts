@@ -26,6 +26,7 @@ export interface AutoFieldContext {
   curso: Curso | null;
   entrenador: Personal | null;
   supervisor: Personal | null;
+  nivelFormacionNombre?: string | null;
 }
 
 function lookup(value: string | undefined, options: readonly { value: string; label: string }[]): string | null {
@@ -93,7 +94,14 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'centro_formacion_previo':
       return matricula?.centroFormacionPrevio ?? null;
     case 'empresa_nivel_formacion':
-      return lookup(matricula?.empresaNivelFormacion, NIVELES_FORMACION_EMPRESA);
+      // Use dynamically resolved nivel name from context, fall back to resolveNivelLabel
+      if (ctx.nivelFormacionNombre) return ctx.nivelFormacionNombre;
+      // Try resolving from cache (covers UUID and legacy keys)
+      if (matricula?.empresaNivelFormacion) {
+        const resolved = resolveNivelFormacionLabel(matricula.empresaNivelFormacion);
+        return resolved || matricula.empresaNivelFormacion;
+      }
+      return null;
 
     // --- Curso ---
     case 'nombre_curso':

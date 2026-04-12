@@ -100,9 +100,9 @@ export async function getMonitoreoData(filtros?: MonitoreoFiltros): Promise<Moni
       personaNombre: `${persona.nombres} ${persona.apellidos}`,
       personaCedula: persona.numero_documento,
       cursoNombre: curso.nombre,
-      cursoNumeroCurso: curso.nombre, // Using nombre as identifier
-      tipoFormacion,
-      tipoFormacionLabel: resolveNivelCursoLabel(tipoFormacion),
+      cursoNumeroCurso: curso.nombre,
+      tipoFormacion: curso.tipo_formacion,
+      tipoFormacionLabel: resolveNivelCursoLabel(curso.tipo_formacion),
       fechaInicio: curso.fecha_inicio || '',
       fechaFin: curso.fecha_fin || '',
       portalHabilitado: portalEstudiante?.habilitado ?? true,

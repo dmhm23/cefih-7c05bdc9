@@ -46,6 +46,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { fmtDateLocal } from "@/utils/dateUtils";
 import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
@@ -319,11 +320,11 @@ export function MatriculaDetailSheet({
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha inicio</p>
-                  <p>{format(new Date(curso.fechaInicio), "d MMM yyyy", { locale: es })}</p>
+                  <p>{fmtDateLocal(curso.fechaInicio, "d MMM yyyy")}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Fecha fin</p>
-                  <p>{format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}</p>
+                  <p>{fmtDateLocal(curso.fechaFin, "d MMM yyyy")}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Duración</p>

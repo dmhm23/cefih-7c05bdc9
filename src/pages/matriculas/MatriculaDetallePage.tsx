@@ -20,6 +20,7 @@ import { FORMA_PAGO_LABELS } from "@/types";
 import { Matricula } from "@/types/matricula";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { fmtDateLocal } from "@/utils/dateUtils";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -958,11 +959,11 @@ export default function MatriculaDetallePage() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha inicio</p>
-                    <p>{format(new Date(curso.fechaInicio), "d MMM yyyy", { locale: es })}</p>
+                    <p>{fmtDateLocal(curso.fechaInicio, "d MMM yyyy")}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Fecha fin</p>
-                    <p>{format(new Date(curso.fechaFin), "d MMM yyyy", { locale: es })}</p>
+                    <p>{fmtDateLocal(curso.fechaFin, "d MMM yyyy")}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Duración</p>

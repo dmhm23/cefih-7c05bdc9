@@ -526,7 +526,7 @@ export function MatriculaDetailSheet({
         {/* Documentos */}
         <DetailSection title="Requisitos documentales">
           <DocumentosCarga
-            documentos={matricula.documentos}
+            documentos={fullMatricula?.documentos || matricula.documentos}
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
             onFechaChange={handleDocFechaChange}

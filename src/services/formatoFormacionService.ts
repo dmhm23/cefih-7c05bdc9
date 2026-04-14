@@ -14,6 +14,8 @@ function rowToFormato(row: any): FormatoFormacion {
     nivelFormacionIds: f.nivelesAsignados || [],
     bloques: f.bloques || [],
     tokensUsados: f.tokensUsados || [],
+    dependencias: f.dependencias || [],
+    eventosDisparadores: f.eventosDisparadores || [],
   } as FormatoFormacion;
 }
 
@@ -49,6 +51,8 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   if (data.documentMeta !== undefined) row.document_meta = data.documentMeta;
   if (data.legacyComponentId !== undefined) row.legacy_component_id = data.legacyComponentId;
   if (data.plantillaBaseId !== undefined) row.plantilla_base_id = data.plantillaBaseId;
+  if (data.dependencias !== undefined) row.dependencias = data.dependencias;
+  if (data.eventosDisparadores !== undefined) row.eventos_disparadores = data.eventosDisparadores;
 
   return row;
 }

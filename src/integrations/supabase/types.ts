@@ -2066,6 +2066,10 @@ export type Database = {
         | "certificado_alturas"
         | "carta_autorizacion"
         | "otro"
+        | "arl"
+        | "planilla_seguridad_social"
+        | "curso_previo"
+        | "consolidado"
       tipo_entidad_audit:
         | "persona"
         | "empresa"
@@ -2360,6 +2364,10 @@ export const Constants = {
         "certificado_alturas",
         "carta_autorizacion",
         "otro",
+        "arl",
+        "planilla_seguridad_social",
+        "curso_previo",
+        "consolidado",
       ],
       tipo_entidad_audit: [
         "persona",

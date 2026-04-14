@@ -260,6 +260,42 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       );
 
+    case 'checkbox':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Descripción</Label>
+            <Textarea
+              value={b.props?.description ?? ''}
+              onChange={(e) => onChange({ props: { ...b.props, description: e.target.value } } as any)}
+              placeholder="Texto descriptivo antes de la casilla..."
+              className="min-h-[60px] text-sm"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Popover con texto extenso</Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Muestra "Ver más" con el texto completo</p>
+            </div>
+            <Switch
+              checked={b.props?.hasPopover ?? false}
+              onCheckedChange={(v) => onChange({ props: { ...b.props, hasPopover: v } } as any)}
+            />
+          </div>
+          {b.props?.hasPopover && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Texto completo del popover</Label>
+              <Textarea
+                value={b.props?.popoverText ?? ''}
+                onChange={(e) => onChange({ props: { ...b.props, popoverText: e.target.value } } as any)}
+                placeholder="Texto legal o informativo extenso..."
+                className="min-h-[100px] text-sm"
+              />
+            </div>
+          )}
+        </div>
+      );
+
     /* Legacy signature blocks removed — use signature_capture instead */
 
     case 'signature_capture':

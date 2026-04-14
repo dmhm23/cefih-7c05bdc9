@@ -1,69 +1,92 @@
-# Plan: Corregir carga de requisitos documentales en matrículas
 
-## Diagnóstico
 
-El problema es que **nunca se crean las filas de `documentos_matricula**` en la base de datos. La función `crearDocumentosMatricula` y `sincronizarDocumentos` existen en `src/services/documentoService.ts` pero **no se invocan desde ningún lugar**:
+# Plan: Nivel de Formación como fuente directa en Matrícula
 
-1. **Al crear matrícula** (`MatriculaFormPage.tsx`): se llama `createMatricula.mutateAsync()` pero nunca se ejecuta `crearDocumentosMatricula()` después.
-2. **Al abrir detalle** (`MatriculaDetallePage.tsx`): no se llama `sincronizarDocumentos()` para verificar/crear documentos faltantes.
+## Problema actual
 
-Resultado: `matricula.documentos` siempre es `[]`, por lo que `DocumentosCarga` no renderiza ningún documento ni botón de carga.
+La tabla `matriculas` no tiene columna `nivel_formacion_id`. El nivel se resuelve indirectamente vía `curso → nivel_formacion_id`, lo que significa que:
+- Si no hay curso asignado, no hay nivel → no hay documentos
+- El estudiante no puede completar requisitos documentales antes de ser asignado a un curso
+- La sincronización depende de que el query del curso haya cargado
 
-Para la matrícula actual (`6a65ed3a...`), además `curso_id` es `null`, lo que significa que no hay nivel de formación asociado — en ese caso el sistema debería al menos crear el requisito mínimo (Cédula) y un mensaje con buen UX y claro, como ej. asignar nivel de formación para carga de requisitos.
+## Cambio conceptual
+
+Agregar `nivel_formacion_id` directamente a la tabla `matriculas` como la **fuente de verdad** para requisitos documentales. El curso sigue siendo una asignación operativa independiente.
 
 ## Cambios propuestos
 
-### 1. Crear documentos al crear matrícula
+### 1. Migración de base de datos
 
-**Archivo**: `src/hooks/useMatriculas.ts` → `useCreateMatricula`
+Agregar columna `nivel_formacion_id UUID` a `matriculas`. Poblar las matrículas existentes con el nivel de su curso actual:
 
-En el `onSuccess` del mutation, llamar `crearDocumentosMatricula(matricula.id, nivelFormacionId)`. Alternativamente, encadenar la llamada dentro del `mutationFn` después de `matriculaService.create()`.
+```sql
+ALTER TABLE public.matriculas ADD COLUMN nivel_formacion_id UUID;
 
-```
-mutationFn: async (data) => {
-  const matricula = await matriculaService.create(data);
-  // Obtener nivel del curso si existe
-  let nivelId = undefined;
-  if (data.cursoId) {
-    const curso = await cursoService.getById(data.cursoId); // o query directa
-    nivelId = curso?.nivelFormacionId;
-  }
-  await crearDocumentosMatricula(matricula.id, nivelId);
-  return matricula;
-}
+-- Backfill desde cursos existentes
+UPDATE public.matriculas m
+SET nivel_formacion_id = c.nivel_formacion_id
+FROM public.cursos c
+WHERE m.curso_id = c.id AND c.nivel_formacion_id IS NOT NULL;
 ```
 
-### 2. Sincronizar documentos al cargar detalle
+### 2. Formulario de creación de matrícula
 
-**Archivo**: `src/pages/matriculas/MatriculaDetallePage.tsx`
+**Archivo**: `src/pages/matriculas/MatriculaFormPage.tsx`
 
-Agregar un `useEffect` que al cargar la matrícula llame `sincronizarDocumentos()` si el curso tiene un nivel de formación. Esto cubre matrículas existentes que no tienen documentos creados y también detecta nuevos requisitos añadidos al nivel.
+- Agregar campo **Nivel de Formación** (obligatorio) al formulario, antes del campo de curso
+- Al seleccionar un nivel, filtrar los cursos disponibles a los que correspondan a ese nivel
+- Guardar `nivel_formacion_id` directamente en la matrícula
+- Cuando se selecciona un curso, auto-rellenar el nivel si está vacío
 
-```
-useEffect(() => {
-  if (matricula && curso?.nivelFormacionId) {
-    sincronizarDocumentos(matricula.id, curso.nivelFormacionId)
-      .then(({ huboCambios }) => {
-        if (huboCambios) refetchMatricula();
-      });
-  }
-}, [matricula?.id, curso?.nivelFormacionId]);
-```
+### 3. Hook de creación
 
-### 3. Fallback para matrículas sin curso
+**Archivo**: `src/hooks/useMatriculas.ts`
 
-Cuando `curso_id` es `null`, llamar `sincronizarDocumentos(matriculaId, undefined)` para que al menos se cree el requisito mínimo (Cédula) y mostrar un mensaje con buen UX y claro, como ej. asignar nivel de formación para carga de requisitos.
+- En `useCreateMatricula`, usar `data.nivelFormacionId` directamente (no resolver desde curso)
+- Pasar ese ID a `crearDocumentosMatricula`
+
+### 4. Sincronización en vistas de detalle
+
+**Archivos**: `MatriculaDetallePage.tsx`, `MatriculaDetailSheet.tsx`
+
+- Cambiar `curso?.nivelFormacionId` → `matricula.nivelFormacionId` en el `useEffect` de sincronización
+- Eliminar la dependencia de esperar a que cargue el curso
+- Sincronización inmediata al cargar la matrícula
+
+### 5. Tipos TypeScript
+
+**Archivo**: `src/types/matricula.ts`
+
+- Agregar `nivelFormacionId?: string` a la interfaz `Matricula`
+
+### 6. Servicio de matrícula
+
+**Archivo**: `src/services/matriculaService.ts`
+
+- Incluir `nivel_formacion_id` en las operaciones de lectura/escritura
+
+### 7. MatriculaDetailSheet (panel lateral)
+
+**Archivo**: `src/components/matriculas/MatriculaDetailSheet.tsx`
+
+- Agregar sincronización de documentos usando `matricula.nivelFormacionId`
+- Cargar documentos individuales via `useMatricula(id)` en vez de depender de la lista
 
 ## Archivos a modificar
 
-
-| Archivo                                         | Cambio                                                       |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `src/hooks/useMatriculas.ts`                    | Encadenar `crearDocumentosMatricula` en `useCreateMatricula` |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Agregar `useEffect` con `sincronizarDocumentos`              |
-
+| Archivo | Cambio |
+|---------|--------|
+| Migración SQL | Agregar columna `nivel_formacion_id` + backfill |
+| `src/types/matricula.ts` | Agregar campo `nivelFormacionId` |
+| `src/services/matriculaService.ts` | Incluir campo en lectura/escritura |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Campo de nivel de formación obligatorio |
+| `src/hooks/useMatriculas.ts` | Usar `nivelFormacionId` directo |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Sincronizar con `matricula.nivelFormacionId` |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Agregar sync + mostrar documentos |
 
 ## Impacto
 
-- **Ningún cambio** en `DocumentosCarga.tsx`, `driveService.ts`, `matriculaService.ts` ni storage — todo el pipeline de subida ya funciona correctamente.
-- Las matrículas existentes sin documentos se reparan automáticamente al abrir su detalle.
+- `DocumentosCarga.tsx`, `documentoService.ts`, storage: sin cambios
+- La función `get_formatos_for_matricula` ya tiene fallback por `empresa_nivel_formacion`, ahora también podrá usar `nivel_formacion_id` directo
+- Las matrículas existentes se llenan automáticamente via backfill en la migración
+

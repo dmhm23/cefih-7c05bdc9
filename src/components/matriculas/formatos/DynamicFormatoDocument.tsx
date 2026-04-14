@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
-import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta } from "@/types/formatoFormacion";
+import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta, BloqueSignatureCapture, SignatureCaptureMode } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";

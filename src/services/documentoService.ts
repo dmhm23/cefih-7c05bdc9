@@ -118,7 +118,7 @@ export async function sincronizarDocumentos(
 
   // 2. Remove documents that are no longer required AND still pending (no file uploaded)
   const sobrantes = existentes.filter(
-    d => !tiposRequeridos.has(d.tipo) && d.estado === 'pendiente' && !d.storagePath
+    d => !tiposRequeridos.has(d.tipo) && d.estado === 'pendiente' && !d.archivoNombre
   );
   if (sobrantes.length > 0) {
     const ids = sobrantes.map(d => d.id);

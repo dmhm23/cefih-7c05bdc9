@@ -69,7 +69,7 @@ export function FilterPopover({
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="max-h-[60vh]">
           <div className="p-4 space-y-4">
             {filters.map((filter) => (
               <div key={filter.key} className="space-y-2">

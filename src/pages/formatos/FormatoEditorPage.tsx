@@ -119,6 +119,7 @@ export default function FormatoEditorPage() {
         },
         dependencias: existing.dependencias || [],
         eventosDisparadores: existing.eventosDisparadores || [],
+        esOrigenFirma: existing.esOrigenFirma ?? false,
       };
       store.loadFromFormato(existing.bloques as EditorItem[], config, existing.nombre);
     }
@@ -167,9 +168,9 @@ export default function FormatoEditorPage() {
       requiereFirmaEntrenador: config.requiereFirmaEntrenador,
       requiereFirmaSupervisor: config.requiereFirmaSupervisor,
       bloques: items as Bloque[], // Store all items including row2
-      dependencias: existing?.dependencias || [],
-      eventosDisparadores: existing?.eventosDisparadores || [],
-      esOrigenFirma: existing?.esOrigenFirma ?? false,
+      dependencias: config.dependencias || [],
+      eventosDisparadores: config.eventosDisparadores || [],
+      esOrigenFirma: config.esOrigenFirma ?? false,
       documentMeta: existing?.documentMeta,
     };
 

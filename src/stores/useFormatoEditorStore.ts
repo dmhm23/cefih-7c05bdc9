@@ -47,6 +47,7 @@ export interface FormatoConfig {
   encabezadoConfig: EncabezadoConfig;
   dependencias: FormatoDependencia[];
   eventosDisparadores: EventoDisparador[];
+  esOrigenFirma: boolean;
 }
 
 const DEFAULT_ENCABEZADO: EncabezadoConfig = {
@@ -79,6 +80,7 @@ export const DEFAULT_CONFIG: FormatoConfig = {
   encabezadoConfig: DEFAULT_ENCABEZADO,
   dependencias: [],
   eventosDisparadores: [],
+  esOrigenFirma: false,
 };
 
 // ---------------------------------------------------------------------------

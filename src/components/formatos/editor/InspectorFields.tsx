@@ -287,6 +287,29 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'document_header':
       return <DocumentHeaderInspector bloque={bloque} onChange={onChange} />;
 
+    case 'section_title': {
+      return (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Colapsable</Label>
+            <Switch
+              checked={b.props?.collapsible ?? false}
+              onCheckedChange={(v) => onChange({ props: { ...b.props, collapsible: v } } as any)}
+            />
+          </div>
+          {b.props?.collapsible && (
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Abierto por defecto</Label>
+              <Switch
+                checked={b.props?.defaultOpen !== false}
+                onCheckedChange={(v) => onChange({ props: { ...b.props, defaultOpen: v } } as any)}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -820,5 +843,105 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Visibility Rule Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function VisibilityRuleInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const items = useFormatoEditorStore((s) => s.items);
+  const rule = (bloque as any).visibilityRule as VisibilityRule | undefined;
+  const hasRule = !!rule?.field;
+
+  // Get all field blocks that could be referenced
+  const fieldBlocks: { id: string; label: string }[] = [];
+  for (const item of items) {
+    if ('type' in item && item.type !== 'row2') {
+      const b = item as Bloque;
+      if (['text', 'number', 'radio', 'select', 'checkbox', 'date', 'email', 'textarea'].includes(b.type) && b.id !== bloque.id) {
+        fieldBlocks.push({ id: b.id, label: b.label || b.id });
+      }
+    } else if ('cols' in item) {
+      for (const col of (item as any).cols) {
+        if (col && ['text', 'number', 'radio', 'select', 'checkbox', 'date', 'email', 'textarea'].includes(col.type) && col.id !== bloque.id) {
+          fieldBlocks.push({ id: col.id, label: col.label || col.id });
+        }
+      }
+    }
+  }
+
+  if (fieldBlocks.length === 0) return null;
+
+  return (
+    <Collapsible>
+      <CollapsibleTrigger asChild>
+        <Button variant="ghost" size="sm" className="w-full justify-between text-xs h-8">
+          Visibilidad condicional
+          <ChevronDown className="h-3 w-3" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-2 pt-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Activar regla</Label>
+          <Switch
+            checked={hasRule}
+            onCheckedChange={(v) => {
+              if (v) {
+                onChange({ visibilityRule: { field: '', operator: 'is_filled' } } as any);
+              } else {
+                onChange({ visibilityRule: undefined } as any);
+              }
+            }}
+          />
+        </div>
+
+        {hasRule && (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Campo a evaluar</Label>
+              <Select
+                value={rule?.field || ''}
+                onValueChange={(v) => onChange({ visibilityRule: { ...rule, field: v } } as any)}
+              >
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Seleccionar campo..." /></SelectTrigger>
+                <SelectContent>
+                  {fieldBlocks.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Condición</Label>
+              <Select
+                value={rule?.operator || 'is_filled'}
+                onValueChange={(v) => onChange({ visibilityRule: { ...rule, operator: v } } as any)}
+              >
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="is_filled">Tiene valor</SelectItem>
+                  <SelectItem value="is_empty">Está vacío</SelectItem>
+                  <SelectItem value="equals">Es igual a</SelectItem>
+                  <SelectItem value="not_equals">Es diferente de</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(rule?.operator === 'equals' || rule?.operator === 'not_equals') && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Valor</Label>
+                <Input
+                  value={String(rule?.value ?? '')}
+                  onChange={(e) => onChange({ visibilityRule: { ...rule, value: e.target.value } } as any)}
+                  className="h-8 text-xs"
+                  placeholder="Valor a comparar"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

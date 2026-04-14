@@ -346,6 +346,64 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
 }
 
 // ---------------------------------------------------------------------------
+// Collapsible section — groups blocks until next section_title
+// ---------------------------------------------------------------------------
+
+function CollapsibleSection({ bloque, rc }: { bloque: Bloque; rc: RenderContext }) {
+  const defaultOpen = ("props" in bloque && (bloque as any).props?.defaultOpen) !== false;
+  const [open, setOpen] = useState(defaultOpen);
+
+  // Find child blocks: all blocks between this section_title and the next one
+  // This component renders just the header; children are rendered by the parent
+  // using the grouping logic below. Here we only render the toggle header.
+  return (
+    <div style={{ gridColumn: "span 2" }} className="mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 border-b border-border pb-1 mb-2 cursor-pointer hover:bg-muted/30 transition-colors rounded-t px-1"
+      >
+        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.1em] flex-1 text-left">
+          {bloque.label || "Sección sin título"}
+        </h2>
+      </button>
+      {!open && (
+        <p className="text-xs text-muted-foreground italic px-1">Sección contraída — clic para expandir</p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Visibility rule evaluation
+// ---------------------------------------------------------------------------
+
+function evaluateVisibilityRule(
+  bloque: Bloque,
+  answers: Record<string, unknown>
+): boolean {
+  const rule = (bloque as any).visibilityRule;
+  if (!rule || !rule.field || !rule.operator) return true;
+
+  const fieldValue = answers[rule.field];
+  const ruleValue = rule.value;
+
+  switch (rule.operator) {
+    case 'equals':
+      return fieldValue === ruleValue;
+    case 'not_equals':
+      return fieldValue !== ruleValue;
+    case 'is_filled':
+      return fieldValue != null && fieldValue !== '' && fieldValue !== false;
+    case 'is_empty':
+      return fieldValue == null || fieldValue === '' || fieldValue === false;
+    default:
+      return true;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -403,11 +461,15 @@ export default function DynamicFormatoDocument({
 
       {bloques.length > 0 ? (
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4" style={{ fontSize: "12px" }}>
-          {bloques.map((bloque) => (
-            <React.Fragment key={bloque.id}>
-              {renderBloque(bloque, rc)}
-            </React.Fragment>
-          ))}
+          {bloques.map((bloque) => {
+            // Conditional visibility
+            if (!evaluateVisibilityRule(bloque, answers)) return null;
+            return (
+              <React.Fragment key={bloque.id}>
+                {renderBloque(bloque, rc)}
+              </React.Fragment>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">

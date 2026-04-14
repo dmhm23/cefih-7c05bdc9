@@ -36,3 +36,12 @@ export function useSaveFormatoRespuesta() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 }
+
+export function useReopenFormatoRespuesta() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ respuestaId, userId }: { respuestaId: string; userId: string }) =>
+      formatoRespuestaService.reopen(respuestaId, userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}

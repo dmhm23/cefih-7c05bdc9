@@ -149,7 +149,7 @@ export default function MatriculasPage() {
       key: "nivelFormacion",
       label: "Nivel de Formación",
       type: "select" as const,
-      options: niveles.map(n => ({ value: n.id, label: n.nombre })),
+      options: niveles.map(n => ({ value: n.id, label: n.nombreNivel })),
     },
     {
       key: "estadoCurso",

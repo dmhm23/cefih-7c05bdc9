@@ -10,6 +10,9 @@ function rowToRespuesta(row: any): FormatoRespuesta {
     answers: row.answers || {},
     estado: row.estado,
     completadoAt: row.completado_at,
+    reabiertoPor: row.reabierto_por,
+    reabiertoAt: row.reabierto_at,
+    intentosEvaluacion: row.intentos_evaluacion || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

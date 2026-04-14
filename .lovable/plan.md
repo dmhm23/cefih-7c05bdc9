@@ -1,99 +1,60 @@
 
 
-# Plan: Sincronización real de documentos por nivel y correcciones de UI
+# Plan: Filtros dinámicos en el módulo de Matrículas
 
-## Problemas identificados
+## Contexto actual
 
-### Problema 1: Los documentos no se ajustan al cambiar de nivel
-`sincronizarDocumentos()` solo **agrega** documentos faltantes, nunca **elimina** los que ya no corresponden al nivel. Además, cuando el usuario cambia el nivel de formación en la vista de detalle, la sincronización no se vuelve a ejecutar porque el flag `docsSynced` ya está en `true`.
+La página `MatriculasPage.tsx` tiene solo 2 filtros estáticos (Estado Documental y Estado de Cartera) definidos en `filterConfigs`. Se necesitan 3 filtros adicionales que reflejen datos reales del sistema:
+- **Tipo de Vinculación**: empresa, independiente, ARL, sin asignación
+- **Nivel de Formación**: lista dinámica desde la tabla `niveles_formacion`
+- **Estado de Curso**: si la matrícula tiene curso asignado o no
 
-### Problema 2: El subtítulo muestra el ID en vez del nombre
-`resolveNivelFormacionLabel()` usa un caché en memoria que no se invalida cuando se crea un nivel nuevo. Si el caché no contiene el nivel recién creado, retorna el UUID crudo.
+## Cambios
 
-### Problema 3: El texto del nivel se desborda visualmente
-El componente `Combobox` no aplica `truncate` al texto del botón, lo que permite que nombres largos desborden el contenedor.
+### Archivo único: `src/pages/matriculas/MatriculasPage.tsx`
 
----
+**1. Importar el hook de niveles**
+Agregar `useNivelesFormacion` para obtener la lista de niveles en tiempo real.
 
-## Fase 1: Sincronización completa de documentos (archivo: `src/services/documentoService.ts`)
+**2. Agregar estado inicial de filtros**
+Extender el estado `filters` con las 3 claves nuevas: `tipoVinculacion`, `nivelFormacion`, `estadoCurso`, todas inicializadas en `"todos"`.
 
-Refactorizar `sincronizarDocumentos` para que realice una **sincronización bidireccional**:
-- Agregar documentos que faltan según el nivel actual
-- **Eliminar** documentos que ya no están en los requisitos del nivel **solo si están en estado `pendiente`** (sin archivo cargado). Los documentos que ya fueron cargados o aprobados se conservan para no perder trabajo del usuario.
+**3. Construir `filterConfigs` dinámicamente**
+En vez de un array constante, construir `filterConfigs` con un `useMemo` que incluya:
+
+- **Tipo de Vinculación** (select): opciones fijas `sin_asignar`, `empresa`, `independiente`, `arl`
+- **Nivel de Formación** (select): opciones generadas dinámicamente desde `useNivelesFormacion().data`, mapeando `id → nombre`. Esto garantiza que cualquier nivel nuevo aparezca automáticamente.
+- **Estado de Curso** (select): dos opciones — `asignado` (tiene `cursoId`) y `sin_asignar` (no tiene `cursoId`)
+- Los 2 filtros existentes (Estado Documental, Estado de Cartera) se mantienen sin cambios.
+
+**4. Actualizar la lógica de filtrado en `filteredMatriculas`**
+Agregar 3 condiciones al `.filter()`:
 
 ```text
-Antes:  solo inserta faltantes
-Después: inserta faltantes + elimina sobrantes pendientes
+tipoVinculacion:
+  - "sin_asignar" → !m.tipoVinculacion
+  - otro valor    → m.tipoVinculacion === valor
+
+nivelFormacion:
+  - "todos" → pasa
+  - UUID    → m.nivelFormacionId === valor
+
+estadoCurso:
+  - "asignado"    → !!m.cursoId
+  - "sin_asignar" → !m.cursoId
 ```
 
-### Verificación Fase 1
-Cambiar el nivel de formación de una matrícula existente → los documentos deben ajustarse automáticamente al abrir el detalle.
+**5. Actualizar `handleClearFilters`**
+Agregar las 3 claves nuevas con valor `"todos"` al reset.
 
----
-
-## Fase 2: Re-sincronizar al cambiar nivel en detalle (archivos: `MatriculaDetallePage.tsx`, `MatriculaDetailSheet.tsx`)
-
-Actualmente `docsSynced` es un flag que se pone en `true` una sola vez. Cuando el usuario cambia el nivel de formación y guarda, el efecto no se vuelve a disparar.
-
-**Solución**: Resetear `docsSynced` a `false` cuando `matricula.nivelFormacionId` cambie (ya está en las dependencias del `useEffect`, pero `docsSynced` bloquea la re-ejecución). Agregar lógica para detectar cambio efectivo del nivel y forzar re-sync.
-
-### Verificación Fase 2
-1. Abrir detalle de una matrícula
-2. Cambiar el nivel de formación y guardar
-3. Los documentos deben actualizarse sin necesidad de recargar la página
-
----
-
-## Fase 3: Corregir visualización del nombre del nivel
-
-### 3.1 Invalidar caché al crear/editar niveles (`src/hooks/useNivelesFormacion.ts`)
-Llamar a `invalidateNivelesCache()` en los `onSuccess` de `useCreateNivelFormacion` y `useUpdateNivelFormacion`, y también invocar `preloadNiveles()` al inicio de la aplicación para que el caché esté disponible desde el primer render.
-
-### 3.2 Precargar caché en `App.tsx` o en el layout principal
-Invocar `preloadNiveles()` una vez al montar la aplicación para que `resolveNivelFormacionLabel` tenga datos disponibles sincrónicamente.
-
-### Verificación Fase 3
-Crear un nuevo nivel de formación → al asignarlo a una matrícula, el panel lateral debe mostrar el nombre (no el UUID) en el subtítulo del encabezado.
-
----
-
-## Fase 4: Corregir desbordamiento de texto
-
-### 4.1 Combobox (`src/components/ui/combobox.tsx`)
-Agregar `truncate` y `min-w-0` al contenedor del texto del botón (línea 63):
-```tsx
-<span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
-```
-
-### 4.2 EditableField — renderValue (`src/components/shared/EditableField.tsx`)
-En el `renderValue` (línea 114-118), agregar `truncate` al `<span>`:
-```tsx
-<span className={cn("truncate", isEmpty && "text-muted-foreground italic")}>
-```
-
-### Verificación Fase 4
-Asignar un nivel con nombre largo (ej. "Jefes de área para trabajos en alturas") → el texto debe cortarse con puntos suspensivos tanto en el selector como en la vista estática, en ambas vistas (panel lateral y página completa).
-
----
-
-## Archivos a modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/services/documentoService.ts` | Sincronización bidireccional (agregar + eliminar pendientes sobrantes) |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Resetear `docsSynced` al cambiar nivel |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Resetear `docsSynced` al cambiar nivel |
-| `src/hooks/useNivelesFormacion.ts` | Invalidar caché en `onSuccess` de create/update |
-| `src/components/ui/combobox.tsx` | Truncate en botón |
-| `src/components/shared/EditableField.tsx` | Truncate en renderValue |
-| `src/App.tsx` o `src/components/layout/MainLayout.tsx` | Precargar niveles al montar |
+## Verificación
+- Crear matrículas con distintos tipos de vinculación → verificar que el filtro las segmenta correctamente.
+- Crear un nivel de formación nuevo → verificar que aparece en el filtro sin recargar.
+- Filtrar por "Sin curso asignado" → solo deben aparecer matrículas sin `cursoId`.
+- Combinar múltiples filtros → deben funcionar en conjunto.
 
 ## Impacto
-- Sin cambios en la estructura de BD, storage, ni edge functions
-- Sin cambios en `DocumentosCarga.tsx` ni `driveService.ts`
-- Los documentos con archivos cargados nunca se eliminan automáticamente (protección de datos)
-- La lógica de creación de matrículas nuevas no se afecta
-
-## Respuesta sobre almacenamiento de documentos
-Los archivos cargados se almacenan en el bucket de Storage llamado **`documentos-matricula`** (privado). Las referencias se guardan en la tabla `documentos_matricula` con los campos `storage_path`, `archivo_nombre` y `archivo_tamano`.
+- Cambios limitados a un solo archivo (`MatriculasPage.tsx`).
+- Sin cambios en BD, servicios, tipos ni otros componentes.
+- Los datos se obtienen de hooks existentes (`useNivelesFormacion`, datos ya cargados de matrículas).
 

@@ -529,7 +529,7 @@ export default function EvaluacionReentrenamientoDocument({
           />
           <FieldCell
             label="Nivel de formación"
-            value={resolveNivelFormacionLabel(matricula.empresaNivelFormacion)}
+            value={resolveNivelFormacionLabel(matricula.nivelFormacionId)}
           />
           <FieldCell label="Empresa" value={matricula.empresaNombre || "Independiente"} />
         </div>

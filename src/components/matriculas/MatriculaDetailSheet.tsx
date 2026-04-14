@@ -263,8 +263,8 @@ export function MatriculaDetailSheet({
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "Sin curso asignado";
-  const nivelFormacionLabel = matricula.empresaNivelFormacion 
-    ? resolveNivelFormacionLabel(matricula.empresaNivelFormacion) 
+  const nivelFormacionLabel = matricula.nivelFormacionId 
+    ? resolveNivelFormacionLabel(matricula.nivelFormacionId) 
     : undefined;
 
   const handleFullScreen = () => {
@@ -414,9 +414,9 @@ export function MatriculaDetailSheet({
             />
             <EditableField
               label="Nivel de Formación"
-              value={getValue("empresaNivelFormacion") || ""}
-              displayValue={getValue("empresaNivelFormacion") ? resolveNivelFormacionLabel(getValue("empresaNivelFormacion") as string) : undefined}
-              onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+              value={getValue("nivelFormacionId") || ""}
+              displayValue={getValue("nivelFormacionId") ? resolveNivelFormacionLabel(getValue("nivelFormacionId") as string) : undefined}
+              onChange={(v) => handleFieldChange("nivelFormacionId", v)}
               type="select"
               options={nivelesOptions}
               icon={GraduationCap}

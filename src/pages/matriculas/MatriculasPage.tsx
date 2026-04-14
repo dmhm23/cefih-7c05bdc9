@@ -356,8 +356,8 @@ export default function MatriculasPage() {
       key: "nivelFormacion",
       header: "Nivel Formación",
       render: (m: Matricula) =>
-        m.empresaNivelFormacion
-          ? resolveNivelFormacionLabel(m.empresaNivelFormacion)
+        m.nivelFormacionId
+          ? resolveNivelFormacionLabel(m.nivelFormacionId)
           : "-",
     },
     {

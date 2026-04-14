@@ -30,7 +30,7 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   delete row.empresa_contacto_id; // not a DB column
 
   // Sanitize empty strings to null for UUID columns
-  const uuidFields = ['curso_id', 'empresa_id', 'persona_id'];
+  const uuidFields = ['curso_id', 'empresa_id', 'persona_id', 'nivel_formacion_id'];
   for (const f of uuidFields) {
     if (row[f] === '') row[f] = null;
   }

@@ -96,10 +96,11 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'empresa_nivel_formacion':
       // Use dynamically resolved nivel name from context, fall back to resolveNivelLabel
       if (ctx.nivelFormacionNombre) return ctx.nivelFormacionNombre;
-      // Try resolving from cache (covers UUID and legacy keys)
-      if (matricula?.empresaNivelFormacion) {
-        const resolved = resolveNivelFormacionLabel(matricula.empresaNivelFormacion);
-        return resolved || matricula.empresaNivelFormacion;
+      // Use nivelFormacionId as source of truth
+      const nivelId = matricula?.nivelFormacionId || matricula?.empresaNivelFormacion;
+      if (nivelId) {
+        const resolved = resolveNivelFormacionLabel(nivelId);
+        return resolved || nivelId;
       }
       return null;
 

@@ -95,8 +95,9 @@ export function MatriculaDetailSheet({
 }: MatriculaDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const updateMatricula = useUpdateMatricula();
-  
+  const reopenMutation = useReopenFormatoRespuesta();
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
   const updateDocumento = useUpdateDocumento();
@@ -552,6 +553,7 @@ export function MatriculaDetailSheet({
               nombre: f.nombre,
               codigo: f.codigo,
               estado: resolveFormatoEstado(f, respuestas),
+              estadoRespuesta: resolveFormatoEstado(f, respuestas),
             }))}
             onPreview={(id) => {
               const fmt = formatosDinamicos?.find((f) => f.id === id);
@@ -560,6 +562,18 @@ export function MatriculaDetailSheet({
             onDownload={(id) => {
               const fmt = formatosDinamicos?.find((f) => f.id === id);
               if (fmt) { setDynamicFormato(fmt); }
+            }}
+            onReopen={(formatoId) => {
+              const resp = respuestas.find(r => r.formatoId === formatoId);
+              if (resp && user?.id) {
+                reopenMutation.mutate(
+                  { respuestaId: resp.id, userId: user.id },
+                  {
+                    onSuccess: () => toast({ title: 'Formato reabierto' }),
+                    onError: (e: any) => toast({ title: 'Error', description: e?.message, variant: 'destructive' }),
+                  }
+                );
+              }
             }}
           />
         </DetailSection>

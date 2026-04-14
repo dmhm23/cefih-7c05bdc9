@@ -129,7 +129,7 @@ export default function MatriculaDetallePage() {
       .catch(() => setDocsSynced(true));
   }, [matricula?.id, curso?.nivelFormacionId, docsSynced, refetchMatricula]);
 
-
+  const handleSyncCartera = async () => {
     if (!matricula || !id) return;
     setSyncingCartera(true);
     try {

@@ -1,86 +1,78 @@
 
 
-# Plan: Unificar nivel de formación y corregir creación de documentos
+# Plan: Sincronización real de documentos por nivel y correcciones de UI
 
-## Diagnóstico confirmado
+## Problemas identificados
 
-Se identificaron **dos problemas raíz**:
+### Problema 1: Los documentos no se ajustan al cambiar de nivel
+`sincronizarDocumentos()` solo **agrega** documentos faltantes, nunca **elimina** los que ya no corresponden al nivel. Además, cuando el usuario cambia el nivel de formación en la vista de detalle, la sincronización no se vuelve a ejecutar porque el flag `docsSynced` ya está en `true`.
 
-### Problema 1: Enum desalineado con la configuración de niveles
-La tabla `niveles_formacion` tiene `documentos_requeridos` con valores como `arl` y `planilla_seguridad_social`, pero el enum `tipo_documento_matricula` usa `certificado_arl` (no `arl`) y no incluye `planilla_seguridad_social`. Cuando `crearDocumentosMatricula` intenta insertar estos documentos, el INSERT falla silenciosamente y no se crea ningún documento (ni siquiera los válidos como `cedula`).
+### Problema 2: El subtítulo muestra el ID en vez del nombre
+`resolveNivelFormacionLabel()` usa un caché en memoria que no se invalida cuando se crea un nivel nuevo. Si el caché no contiene el nivel recién creado, retorna el UUID crudo.
 
-**Evidencia**: Las 3 matrículas más recientes tienen 0 documentos en `documentos_matricula`, a pesar de tener `nivel_formacion_id` correctamente persistido.
-
-### Problema 2: Duplicidad `empresa_nivel_formacion` / `nivel_formacion_id`
-Ambos campos almacenan el mismo UUID. Las vistas leen de `empresaNivelFormacion` mientras la lógica de documentos lee de `nivelFormacionId`. Esto genera confusión y riesgo de desincronización.
+### Problema 3: El texto del nivel se desborda visualmente
+El componente `Combobox` no aplica `truncate` al texto del botón, lo que permite que nombres largos desborden el contenedor.
 
 ---
 
-## Fase 1: Corregir enum y datos de niveles (base de datos)
+## Fase 1: Sincronización completa de documentos (archivo: `src/services/documentoService.ts`)
 
-### 1.1 Ampliar el enum `tipo_documento_matricula`
-Agregar los valores faltantes: `arl`, `planilla_seguridad_social`, `curso_previo`, `consolidado`.
+Refactorizar `sincronizarDocumentos` para que realice una **sincronización bidireccional**:
+- Agregar documentos que faltan según el nivel actual
+- **Eliminar** documentos que ya no están en los requisitos del nivel **solo si están en estado `pendiente`** (sin archivo cargado). Los documentos que ya fueron cargados o aprobados se conservan para no perder trabajo del usuario.
 
-### 1.2 Normalizar `documentos_requeridos` en niveles existentes
-Si algún nivel usa `arl` como clave pero el catálogo espera `certificado_arl`, decidir cuál es la fuente correcta. Dado que el enum ahora incluirá `arl`, no es necesario renombrar los datos existentes.
+```text
+Antes:  solo inserta faltantes
+Después: inserta faltantes + elimina sobrantes pendientes
+```
 
 ### Verificación Fase 1
-Consultar `SELECT unnest(enum_range(NULL::tipo_documento_matricula))` y confirmar que incluye todos los valores usados en `niveles_formacion.documentos_requeridos`.
+Cambiar el nivel de formación de una matrícula existente → los documentos deben ajustarse automáticamente al abrir el detalle.
 
 ---
 
-## Fase 2: Unificar en `nivel_formacion_id` (código)
+## Fase 2: Re-sincronizar al cambiar nivel en detalle (archivos: `MatriculaDetallePage.tsx`, `MatriculaDetailSheet.tsx`)
 
-### 2.1 `src/services/matriculaService.ts`
-- Agregar `nivel_formacion_id` a `uuidFields` en `formToRow`.
-- En `rowToMatricula`: asegurar que `nivelFormacionId` se mapee desde `nivel_formacion_id` del row (ya lo hace `snakeToCamel`, solo confirmar).
+Actualmente `docsSynced` es un flag que se pone en `true` una sola vez. Cuando el usuario cambia el nivel de formación y guarda, el efecto no se vuelve a disparar.
 
-### 2.2 `src/pages/matriculas/MatriculaFormPage.tsx`
-- En el `onSubmit`, dejar de enviar `empresaNivelFormacion` como campo independiente. En su lugar, enviar solo `nivelFormacionId` con el valor seleccionado del nivel. El campo `empresa_nivel_formacion` en BD se seguirá llenando temporalmente para compatibilidad (mismo valor), hasta que se retire.
-
-### 2.3 Vistas que leen `empresaNivelFormacion` — cambiar a `nivelFormacionId`
-Archivos a actualizar (lectura del campo para mostrar el label del nivel):
-- `src/components/matriculas/MatriculaDetailSheet.tsx` (líneas 266-268 y 417-419)
-- `src/pages/matriculas/MatriculasPage.tsx` (líneas 358-361)
-- `src/pages/personas/PersonaDetallePage.tsx` (línea 290)
-- `src/components/personas/PersonaDetailSheet.tsx` (línea 321)
-- `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` (línea 532)
-- `src/components/matriculas/formatos/InfoAprendizDocument.tsx`
-- `src/utils/resolveAutoField.ts` (líneas 100-102)
-- `src/components/cursos/AgregarEstudiantesModal.tsx` (líneas 79-80)
-
-En cada caso, cambiar `m.empresaNivelFormacion` → `m.nivelFormacionId`.
-
-### 2.4 Función de BD `get_formatos_for_matricula`
-Actualizar para leer `nivel_formacion_id` como fuente primaria en vez de resolver desde `empresa_nivel_formacion`. Mantener fallback temporal.
+**Solución**: Resetear `docsSynced` a `false` cuando `matricula.nivelFormacionId` cambie (ya está en las dependencias del `useEffect`, pero `docsSynced` bloquea la re-ejecución). Agregar lógica para detectar cambio efectivo del nivel y forzar re-sync.
 
 ### Verificación Fase 2
-- Crear una matrícula nueva desde el formulario y verificar que `nivel_formacion_id` se persiste correctamente.
-- Confirmar que las vistas (lista, detalle, panel lateral) muestran el nivel de formación.
+1. Abrir detalle de una matrícula
+2. Cambiar el nivel de formación y guardar
+3. Los documentos deben actualizarse sin necesidad de recargar la página
 
 ---
 
-## Fase 3: Corregir creación de documentos
+## Fase 3: Corregir visualización del nombre del nivel
 
-### 3.1 `src/services/documentoService.ts`
-En `getDocumentosRequeridos`, el catálogo `CATALOGO_LABELS` no incluye `arl` ni `planilla_seguridad_social`. Agregar las entradas faltantes para que el mapeo tipo→nombre funcione correctamente.
+### 3.1 Invalidar caché al crear/editar niveles (`src/hooks/useNivelesFormacion.ts`)
+Llamar a `invalidateNivelesCache()` en los `onSuccess` de `useCreateNivelFormacion` y `useUpdateNivelFormacion`, y también invocar `preloadNiveles()` al inicio de la aplicación para que el caché esté disponible desde el primer render.
 
-### 3.2 Sincronización al abrir detalle
-Ya implementada en `MatriculaDetallePage.tsx` y `MatriculaDetailSheet.tsx`. Solo confirmar que usa `matricula.nivelFormacionId` (ya lo hace).
+### 3.2 Precargar caché en `App.tsx` o en el layout principal
+Invocar `preloadNiveles()` una vez al montar la aplicación para que `resolveNivelFormacionLabel` tenga datos disponibles sincrónicamente.
 
 ### Verificación Fase 3
-- Abrir el detalle de la matrícula de Camilo Galeano → la sincronización debe crear los documentos faltantes (examen_medico, certificado_eps, arl, planilla_seguridad_social).
-- Crear una matrícula nueva con nivel "Trabajador autorizado" → debe tener 5 documentos desde el inicio.
+Crear un nuevo nivel de formación → al asignarlo a una matrícula, el panel lateral debe mostrar el nombre (no el UUID) en el subtítulo del encabezado.
 
 ---
 
-## Fase 4: Limpieza (opcional, sin riesgo)
+## Fase 4: Corregir desbordamiento de texto
 
-### 4.1 Backfill de matrículas sin documentos
-Ejecutar la sincronización para las matrículas existentes que tienen `nivel_formacion_id` pero 0 documentos. Esto ocurre automáticamente al abrir cada detalle, pero puede hacerse proactivamente.
+### 4.1 Combobox (`src/components/ui/combobox.tsx`)
+Agregar `truncate` y `min-w-0` al contenedor del texto del botón (línea 63):
+```tsx
+<span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+```
+
+### 4.2 EditableField — renderValue (`src/components/shared/EditableField.tsx`)
+En el `renderValue` (línea 114-118), agregar `truncate` al `<span>`:
+```tsx
+<span className={cn("truncate", isEmpty && "text-muted-foreground italic")}>
+```
 
 ### Verificación Fase 4
-Consultar `SELECT m.id FROM matriculas m WHERE m.nivel_formacion_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM documentos_matricula dm WHERE dm.matricula_id = m.id)` → debe retornar 0 filas.
+Asignar un nivel con nombre largo (ej. "Jefes de área para trabajos en alturas") → el texto debe cortarse con puntos suspensivos tanto en el selector como en la vista estática, en ambas vistas (panel lateral y página completa).
 
 ---
 
@@ -88,21 +80,20 @@ Consultar `SELECT m.id FROM matriculas m WHERE m.nivel_formacion_id IS NOT NULL 
 
 | Archivo | Cambio |
 |---------|--------|
-| Migración SQL | Ampliar enum `tipo_documento_matricula` + actualizar `get_formatos_for_matricula` |
-| `src/services/matriculaService.ts` | Agregar `nivel_formacion_id` a `uuidFields` |
-| `src/services/documentoService.ts` | Ampliar `CATALOGO_LABELS` con claves faltantes |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Usar `nivelFormacionId` en submit |
-| `src/pages/matriculas/MatriculasPage.tsx` | Leer `nivelFormacionId` |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Leer `nivelFormacionId` |
-| `src/pages/personas/PersonaDetallePage.tsx` | Leer `nivelFormacionId` |
-| `src/components/personas/PersonaDetailSheet.tsx` | Leer `nivelFormacionId` |
-| `src/components/cursos/AgregarEstudiantesModal.tsx` | Leer `nivelFormacionId` |
-| `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` | Leer `nivelFormacionId` |
-| `src/components/matriculas/formatos/InfoAprendizDocument.tsx` | Leer `nivelFormacionId` |
-| `src/utils/resolveAutoField.ts` | Leer `nivelFormacionId` |
+| `src/services/documentoService.ts` | Sincronización bidireccional (agregar + eliminar pendientes sobrantes) |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Resetear `docsSynced` al cambiar nivel |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Resetear `docsSynced` al cambiar nivel |
+| `src/hooks/useNivelesFormacion.ts` | Invalidar caché en `onSuccess` de create/update |
+| `src/components/ui/combobox.tsx` | Truncate en botón |
+| `src/components/shared/EditableField.tsx` | Truncate en renderValue |
+| `src/App.tsx` o `src/components/layout/MainLayout.tsx` | Precargar niveles al montar |
 
 ## Impacto
-- Sin cambios en `DocumentosCarga.tsx`, `driveService.ts`, storage ni estructura de `documentos_matricula`.
-- La columna `empresa_nivel_formacion` sigue existiendo en BD pero deja de ser la fuente de lectura en el frontend.
-- Todas las matrículas existentes ya tienen `nivel_formacion_id` poblado (verificado en BD).
+- Sin cambios en la estructura de BD, storage, ni edge functions
+- Sin cambios en `DocumentosCarga.tsx` ni `driveService.ts`
+- Los documentos con archivos cargados nunca se eliminan automáticamente (protección de datos)
+- La lógica de creación de matrículas nuevas no se afecta
+
+## Respuesta sobre almacenamiento de documentos
+Los archivos cargados se almacenan en el bucket de Storage llamado **`documentos-matricula`** (privado). Las referencias se guardan en la tabla `documentos_matricula` con los campos `storage_path`, `archivo_nombre` y `archivo_tamano`.
 

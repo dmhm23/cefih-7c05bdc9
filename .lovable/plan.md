@@ -1,92 +1,108 @@
 
 
-# Plan: Nivel de Formación como fuente directa en Matrícula
+# Plan: Unificar nivel de formación y corregir creación de documentos
 
-## Problema actual
+## Diagnóstico confirmado
 
-La tabla `matriculas` no tiene columna `nivel_formacion_id`. El nivel se resuelve indirectamente vía `curso → nivel_formacion_id`, lo que significa que:
-- Si no hay curso asignado, no hay nivel → no hay documentos
-- El estudiante no puede completar requisitos documentales antes de ser asignado a un curso
-- La sincronización depende de que el query del curso haya cargado
+Se identificaron **dos problemas raíz**:
 
-## Cambio conceptual
+### Problema 1: Enum desalineado con la configuración de niveles
+La tabla `niveles_formacion` tiene `documentos_requeridos` con valores como `arl` y `planilla_seguridad_social`, pero el enum `tipo_documento_matricula` usa `certificado_arl` (no `arl`) y no incluye `planilla_seguridad_social`. Cuando `crearDocumentosMatricula` intenta insertar estos documentos, el INSERT falla silenciosamente y no se crea ningún documento (ni siquiera los válidos como `cedula`).
 
-Agregar `nivel_formacion_id` directamente a la tabla `matriculas` como la **fuente de verdad** para requisitos documentales. El curso sigue siendo una asignación operativa independiente.
+**Evidencia**: Las 3 matrículas más recientes tienen 0 documentos en `documentos_matricula`, a pesar de tener `nivel_formacion_id` correctamente persistido.
 
-## Cambios propuestos
+### Problema 2: Duplicidad `empresa_nivel_formacion` / `nivel_formacion_id`
+Ambos campos almacenan el mismo UUID. Las vistas leen de `empresaNivelFormacion` mientras la lógica de documentos lee de `nivelFormacionId`. Esto genera confusión y riesgo de desincronización.
 
-### 1. Migración de base de datos
+---
 
-Agregar columna `nivel_formacion_id UUID` a `matriculas`. Poblar las matrículas existentes con el nivel de su curso actual:
+## Fase 1: Corregir enum y datos de niveles (base de datos)
 
-```sql
-ALTER TABLE public.matriculas ADD COLUMN nivel_formacion_id UUID;
+### 1.1 Ampliar el enum `tipo_documento_matricula`
+Agregar los valores faltantes: `arl`, `planilla_seguridad_social`, `curso_previo`, `consolidado`.
 
--- Backfill desde cursos existentes
-UPDATE public.matriculas m
-SET nivel_formacion_id = c.nivel_formacion_id
-FROM public.cursos c
-WHERE m.curso_id = c.id AND c.nivel_formacion_id IS NOT NULL;
-```
+### 1.2 Normalizar `documentos_requeridos` en niveles existentes
+Si algún nivel usa `arl` como clave pero el catálogo espera `certificado_arl`, decidir cuál es la fuente correcta. Dado que el enum ahora incluirá `arl`, no es necesario renombrar los datos existentes.
 
-### 2. Formulario de creación de matrícula
+### Verificación Fase 1
+Consultar `SELECT unnest(enum_range(NULL::tipo_documento_matricula))` y confirmar que incluye todos los valores usados en `niveles_formacion.documentos_requeridos`.
 
-**Archivo**: `src/pages/matriculas/MatriculaFormPage.tsx`
+---
 
-- Agregar campo **Nivel de Formación** (obligatorio) al formulario, antes del campo de curso
-- Al seleccionar un nivel, filtrar los cursos disponibles a los que correspondan a ese nivel
-- Guardar `nivel_formacion_id` directamente en la matrícula
-- Cuando se selecciona un curso, auto-rellenar el nivel si está vacío
+## Fase 2: Unificar en `nivel_formacion_id` (código)
 
-### 3. Hook de creación
+### 2.1 `src/services/matriculaService.ts`
+- Agregar `nivel_formacion_id` a `uuidFields` en `formToRow`.
+- En `rowToMatricula`: asegurar que `nivelFormacionId` se mapee desde `nivel_formacion_id` del row (ya lo hace `snakeToCamel`, solo confirmar).
 
-**Archivo**: `src/hooks/useMatriculas.ts`
+### 2.2 `src/pages/matriculas/MatriculaFormPage.tsx`
+- En el `onSubmit`, dejar de enviar `empresaNivelFormacion` como campo independiente. En su lugar, enviar solo `nivelFormacionId` con el valor seleccionado del nivel. El campo `empresa_nivel_formacion` en BD se seguirá llenando temporalmente para compatibilidad (mismo valor), hasta que se retire.
 
-- En `useCreateMatricula`, usar `data.nivelFormacionId` directamente (no resolver desde curso)
-- Pasar ese ID a `crearDocumentosMatricula`
+### 2.3 Vistas que leen `empresaNivelFormacion` — cambiar a `nivelFormacionId`
+Archivos a actualizar (lectura del campo para mostrar el label del nivel):
+- `src/components/matriculas/MatriculaDetailSheet.tsx` (líneas 266-268 y 417-419)
+- `src/pages/matriculas/MatriculasPage.tsx` (líneas 358-361)
+- `src/pages/personas/PersonaDetallePage.tsx` (línea 290)
+- `src/components/personas/PersonaDetailSheet.tsx` (línea 321)
+- `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` (línea 532)
+- `src/components/matriculas/formatos/InfoAprendizDocument.tsx`
+- `src/utils/resolveAutoField.ts` (líneas 100-102)
+- `src/components/cursos/AgregarEstudiantesModal.tsx` (líneas 79-80)
 
-### 4. Sincronización en vistas de detalle
+En cada caso, cambiar `m.empresaNivelFormacion` → `m.nivelFormacionId`.
 
-**Archivos**: `MatriculaDetallePage.tsx`, `MatriculaDetailSheet.tsx`
+### 2.4 Función de BD `get_formatos_for_matricula`
+Actualizar para leer `nivel_formacion_id` como fuente primaria en vez de resolver desde `empresa_nivel_formacion`. Mantener fallback temporal.
 
-- Cambiar `curso?.nivelFormacionId` → `matricula.nivelFormacionId` en el `useEffect` de sincronización
-- Eliminar la dependencia de esperar a que cargue el curso
-- Sincronización inmediata al cargar la matrícula
+### Verificación Fase 2
+- Crear una matrícula nueva desde el formulario y verificar que `nivel_formacion_id` se persiste correctamente.
+- Confirmar que las vistas (lista, detalle, panel lateral) muestran el nivel de formación.
 
-### 5. Tipos TypeScript
+---
 
-**Archivo**: `src/types/matricula.ts`
+## Fase 3: Corregir creación de documentos
 
-- Agregar `nivelFormacionId?: string` a la interfaz `Matricula`
+### 3.1 `src/services/documentoService.ts`
+En `getDocumentosRequeridos`, el catálogo `CATALOGO_LABELS` no incluye `arl` ni `planilla_seguridad_social`. Agregar las entradas faltantes para que el mapeo tipo→nombre funcione correctamente.
 
-### 6. Servicio de matrícula
+### 3.2 Sincronización al abrir detalle
+Ya implementada en `MatriculaDetallePage.tsx` y `MatriculaDetailSheet.tsx`. Solo confirmar que usa `matricula.nivelFormacionId` (ya lo hace).
 
-**Archivo**: `src/services/matriculaService.ts`
+### Verificación Fase 3
+- Abrir el detalle de la matrícula de Camilo Galeano → la sincronización debe crear los documentos faltantes (examen_medico, certificado_eps, arl, planilla_seguridad_social).
+- Crear una matrícula nueva con nivel "Trabajador autorizado" → debe tener 5 documentos desde el inicio.
 
-- Incluir `nivel_formacion_id` en las operaciones de lectura/escritura
+---
 
-### 7. MatriculaDetailSheet (panel lateral)
+## Fase 4: Limpieza (opcional, sin riesgo)
 
-**Archivo**: `src/components/matriculas/MatriculaDetailSheet.tsx`
+### 4.1 Backfill de matrículas sin documentos
+Ejecutar la sincronización para las matrículas existentes que tienen `nivel_formacion_id` pero 0 documentos. Esto ocurre automáticamente al abrir cada detalle, pero puede hacerse proactivamente.
 
-- Agregar sincronización de documentos usando `matricula.nivelFormacionId`
-- Cargar documentos individuales via `useMatricula(id)` en vez de depender de la lista
+### Verificación Fase 4
+Consultar `SELECT m.id FROM matriculas m WHERE m.nivel_formacion_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM documentos_matricula dm WHERE dm.matricula_id = m.id)` → debe retornar 0 filas.
+
+---
 
 ## Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| Migración SQL | Agregar columna `nivel_formacion_id` + backfill |
-| `src/types/matricula.ts` | Agregar campo `nivelFormacionId` |
-| `src/services/matriculaService.ts` | Incluir campo en lectura/escritura |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Campo de nivel de formación obligatorio |
-| `src/hooks/useMatriculas.ts` | Usar `nivelFormacionId` directo |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Sincronizar con `matricula.nivelFormacionId` |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Agregar sync + mostrar documentos |
+| Migración SQL | Ampliar enum `tipo_documento_matricula` + actualizar `get_formatos_for_matricula` |
+| `src/services/matriculaService.ts` | Agregar `nivel_formacion_id` a `uuidFields` |
+| `src/services/documentoService.ts` | Ampliar `CATALOGO_LABELS` con claves faltantes |
+| `src/pages/matriculas/MatriculaFormPage.tsx` | Usar `nivelFormacionId` en submit |
+| `src/pages/matriculas/MatriculasPage.tsx` | Leer `nivelFormacionId` |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Leer `nivelFormacionId` |
+| `src/pages/personas/PersonaDetallePage.tsx` | Leer `nivelFormacionId` |
+| `src/components/personas/PersonaDetailSheet.tsx` | Leer `nivelFormacionId` |
+| `src/components/cursos/AgregarEstudiantesModal.tsx` | Leer `nivelFormacionId` |
+| `src/components/matriculas/formatos/EvaluacionReentrenamientoDocument.tsx` | Leer `nivelFormacionId` |
+| `src/components/matriculas/formatos/InfoAprendizDocument.tsx` | Leer `nivelFormacionId` |
+| `src/utils/resolveAutoField.ts` | Leer `nivelFormacionId` |
 
 ## Impacto
-
-- `DocumentosCarga.tsx`, `documentoService.ts`, storage: sin cambios
-- La función `get_formatos_for_matricula` ya tiene fallback por `empresa_nivel_formacion`, ahora también podrá usar `nivel_formacion_id` directo
-- Las matrículas existentes se llenan automáticamente via backfill en la migración
+- Sin cambios en `DocumentosCarga.tsx`, `driveService.ts`, storage ni estructura de `documentos_matricula`.
+- La columna `empresa_nivel_formacion` sigue existiendo en BD pero deja de ser la fuente de lectura en el frontend.
+- Todas las matrículas existentes ya tienen `nivel_formacion_id` poblado (verificado en BD).
 

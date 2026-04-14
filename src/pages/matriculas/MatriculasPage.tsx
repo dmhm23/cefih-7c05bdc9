@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailShe
 import { useMatriculas, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
+import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { Matricula } from "@/types";
 import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
 import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
@@ -71,6 +72,9 @@ export default function MatriculasPage() {
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
     estadoCartera: "todos",
+    tipoVinculacion: "todos",
+    nivelFormacion: "todos",
+    estadoCurso: "todos",
   });
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -85,6 +89,7 @@ export default function MatriculasPage() {
   const { data: matriculas = [], isLoading } = useMatriculas();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
+  const { data: niveles = [] } = useNivelesFormacion();
   const deleteMatricula = useDeleteMatricula();
 
   // Load cartera status from DB
@@ -128,20 +133,46 @@ export default function MatriculasPage() {
     return carteraMap[matricula.id] ?? "sin_facturar";
   };
 
-  const filterConfigs: FilterConfig[] = [
+  const filterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      key: "tipoVinculacion",
+      label: "Tipo de Vinculación",
+      type: "select" as const,
+      options: [
+        { value: "sin_asignar", label: "Sin asignación" },
+        { value: "empresa", label: "Empresa" },
+        { value: "independiente", label: "Independiente" },
+        { value: "arl", label: "ARL" },
+      ],
+    },
+    {
+      key: "nivelFormacion",
+      label: "Nivel de Formación",
+      type: "select" as const,
+      options: niveles.map(n => ({ value: n.id, label: n.nombreNivel })),
+    },
+    {
+      key: "estadoCurso",
+      label: "Estado de Curso",
+      type: "select" as const,
+      options: [
+        { value: "asignado", label: "Asignado a curso" },
+        { value: "sin_asignar", label: "Sin curso asignado" },
+      ],
+    },
     {
       key: "estadoDocumental",
       label: "Estado Documental",
-      type: "select",
+      type: "select" as const,
       options: ESTADO_DOCUMENTAL_OPTIONS,
     },
     {
       key: "estadoCartera",
       label: "Estado de Cartera",
-      type: "select",
+      type: "select" as const,
       options: ESTADO_CARTERA_OPTIONS,
     },
-  ];
+  ], [niveles]);
 
   const activeFilterCount = Object.entries(filters).filter(([, value]) => {
     if (Array.isArray(value)) return value.length > 0;
@@ -180,7 +211,18 @@ export default function MatriculasPage() {
     const estadoCartera = getEstadoCartera(m);
     const matchesCartera = filters.estadoCartera === "todos" || estadoCartera === filters.estadoCartera;
 
-    return matchesSearch && matchesEstadoDoc && matchesCartera;
+    const matchesTipoVinculacion =
+      filters.tipoVinculacion === "todos" ||
+      (filters.tipoVinculacion === "sin_asignar" ? !m.tipoVinculacion : m.tipoVinculacion === filters.tipoVinculacion);
+
+    const matchesNivelFormacion =
+      filters.nivelFormacion === "todos" || m.nivelFormacionId === filters.nivelFormacion;
+
+    const matchesEstadoCurso =
+      filters.estadoCurso === "todos" ||
+      (filters.estadoCurso === "asignado" ? !!m.cursoId : !m.cursoId);
+
+    return matchesSearch && matchesEstadoDoc && matchesCartera && matchesTipoVinculacion && matchesNivelFormacion && matchesEstadoCurso;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -191,6 +233,9 @@ export default function MatriculasPage() {
     setFilters({
       estadoDocumental: "todos",
       estadoCartera: "todos",
+      tipoVinculacion: "todos",
+      nivelFormacion: "todos",
+      estadoCurso: "todos",
     });
   };
 

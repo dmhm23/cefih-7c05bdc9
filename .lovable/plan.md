@@ -1,176 +1,299 @@
+# Plan ajustado: Migración funcional del renderer dinámico y firma dinámica
 
+## Resumen
 
-# Analisis de brechas: Documento de Requerimientos vs. Implementacion actual
+Implementar el renderer dinámico del portal, el nuevo bloque `signature_capture`, y la lógica de firma reutilizable gobernada por configuración, **sin eliminar archivos legacy todavía**.
 
-## Resumen ejecutivo
-
-El modulo actual tiene un constructor visual funcional (canvas + catalogo + inspector + config), persistencia en BD via `formatos_formacion` y `formato_respuestas`, sincronizacion basica con portal, y un motor de autocompletado con ~40 campos fijos. Sin embargo, existen brechas significativas frente al documento de requerimientos en 7 ejes principales.
-
----
-
-## 1. Motor de Dependencias (Secciones 10, 9.3-9.5 del doc)
-
-**Estado actual:** No existe. No hay ningun campo, tabla ni logica para definir dependencias entre formatos.
-
-**Brechas:**
-- No hay campo `depende_de` en `formatos_formacion` para dependencias entre formatos
-- No hay dependencias de activacion (un formato desbloquea otro)
-- No hay dependencias de datos (heredar respuestas/firma de otro formato)
-- No hay dependencias de precondicion (exigir que otro formato este firmado/completado)
-- No hay reglas compuestas de asignacion (nivel + dependencia + estado matricula + consentimiento previo)
-- La funcion `get_formatos_for_matricula` solo evalua nivel y scope, sin considerar precondiciones
-
-**Cambios necesarios:**
-- Agregar columna `dependencias` (jsonb) a `formatos_formacion` con estructura tipo `[{formatoId, tipo: 'activacion'|'datos'|'precondicion', condicion: 'completado'|'firmado'|'aprobado'}]`
-- Modificar `get_formatos_for_matricula` para evaluar dependencias contra `formato_respuestas`
-- Agregar UI en `FormatoConfigSheet` para configurar dependencias
-- Implementar logica de estado derivado: bloqueado/pendiente/completado segun dependencias
+La validación se hará primero con un formato dinámico nuevo, de punta a punta, antes de cualquier borrado. El objetivo es asegurar que el portal quede gobernado por `portal_config_documentos` + `formatos_formacion` + reglas dinámicas, y no por keys o páginas legacy hardcodeadas.
 
 ---
 
-## 2. Motor de Firma Reutilizable (Seccion 11)
+## Qué estamos haciendo con este plan
 
-**Estado actual:** La firma se captura en el portal (info_aprendiz) y se almacena como base64 en `personas.firma_storage_path`. El bloque `signature_aprendiz` simplemente muestra la firma de la persona. No hay concepto de firma por matricula ni evidencia compuesta.
+Con este plan estamos quitándole al portal las reglas fijas viejas y haciendo que funcione de forma realmente configurable.
 
-**Brechas:**
-- La firma es global de la persona, no por matricula como exige el doc
-- No hay metadatos de evidencia (timestamp, IP, user-agent, hash de integridad)
-- No hay control de autorizacion explicita para reutilizacion
-- No hay logica de "firma valida dentro de esta matricula"
-- No hay manejo de firma faltante del entrenador que se incorpore despues
+En términos simples:
 
-**Cambios necesarios:**
-- Crear tabla `firmas_matricula` con campos: `matricula_id`, `tipo` (aprendiz/entrenador/supervisor), `firma_base64`, `timestamp`, `ip`, `user_agent`, `hash`, `formato_origen_id`
-- Modificar bloque `signature_aprendiz` para leer/escribir desde `firmas_matricula` en vez de `personas`
-- Agregar campo en config del formato para indicar si puede reutilizar firma de otro formato
-- Implementar logica de incorporacion tardia de firma de entrenador/supervisor
+- hoy el portal todavía depende de pantallas y nombres fijos, como si ya supiera de antemano cuáles formatos mostrar;
+- con este plan, queremos que el portal ya no tenga formatos amarrados por defecto;
+- en cambio, queremos que muestre el formato que se configure, en el orden que se defina;
+- también queremos que la firma del estudiante ya no dependa de un formato fijo, sino del formato que se marque como origen;
+- y que después esa firma pueda reutilizarse en otros formatos, pero solo si eso quedó autorizado y configurado.
 
----
+La idea es dejar el sistema para que se pueda arrancar desde cero, crear formatos propios y decidir cuál será el primero, cuál recoge la firma y cuáles dependen de ese.
 
-## 3. Motor de Autocompletado Abierto (Seccion 8)
-
-**Estado actual:** Catalogo fijo de ~40 campos en `autoFieldCatalog.ts` con tipo `AutoFieldKey` cerrado. Resolucion en `resolveAutoField.ts` con switch case estatico.
-
-**Brechas:**
-- El catalogo es cerrado y hardcodeado — el doc exige acceso a "cualquier dato disponible y relacionado"
-- No se pueden consumir datos de documentos/formatos previos
-- No se pueden consumir campos adicionales dinamicos del nivel de formacion
-- La UX obliga a pensar en "tokens tecnicos" en vez de datos navegables del sistema (seccion 16.4)
-- No hay distincion clara entre datos solo lectura y editables en la interfaz del configurador
-
-**Cambios necesarios:**
-- Refactorizar `AutoFieldKey` de union literal a string abierto con validacion en runtime
-- Agregar categoria "Formatos previos" al catalogo, que liste dinamicamente campos de otros formatos completados
-- Agregar categoria "Campos adicionales" que lea `campos_adicionales` del nivel de formacion
-- Mejorar la UX del selector de auto_field con busqueda, categorias expandibles y preview del dato
-- Agregar propiedad `editable` al bloque para distinguir campos prellenados editables vs solo lectura
+Y se hará sin borrar todavía lo viejo, para primero probar que el flujo nuevo sí funciona completo y no romper el portal antes de tiempo.
 
 ---
 
-## 4. Estados del Formato-Respuesta y Permisos de Edicion (Secciones 12, 13)
+## Decisiones de diseño (firma)
 
-**Estado actual:** `formato_respuestas.estado` solo tiene `pendiente` | `completado`. No hay estado `bloqueado`, `firmado`, ni logica de reapertura. No hay control de quien puede editar despues del envio.
+### 1. Regla para marcar un formato como origen de firma reutilizable
 
-**Brechas:**
-- Falta estado `bloqueado` (por dependencia no cumplida)
-- Falta estado `firmado` (diferente a completado)
-- No hay mecanismo de reapertura por admin
-- No hay permisos granulares: quien edita que campo y en que momento
-- El estudiante podria en teoria editar despues del envio (no hay bloqueo real)
-- No hay reintentos de evaluacion configurables
+Se agrega un campo booleano `es_origen_firma` al modelo `FormatoFormacion`.
 
-**Cambios necesarios:**
-- Extender enum `estado_formato_respuesta` en BD: agregar `bloqueado`, `firmado`, `reabierto`
-- Agregar columna `reabierto_por` y `reabierto_at` a `formato_respuestas`
-- Agregar campo `intentos_evaluacion` (jsonb) para historial de reintentos
-- Implementar logica de bloqueo post-envio en el renderer del portal
-- Agregar boton "Reabrir" en la vista de matricula para admins
+Este campo **no implica por sí solo** que la firma quede autorizada para reutilización.
 
----
+Solo indica que el formato **puede actuar como formato origen de firma**.
 
-## 5. Formatos Automaticos e Hibridos (Seccion 14)
+### 2. Regla de autorización explícita
 
-**Estado actual:** Existe el campo `esAutomatico` y `modoDiligenciamiento: 'automatico_sistema'` pero no hay logica de generacion automatica por eventos. El unico formato "automatico" es `attendance_by_day` que genera su estructura en render, no en persistencia.
+La firma solo podrá persistirse en `firmas_matricula` como reutilizable si, además de existir una captura válida, el formato diligenciado contiene una autorización explícita del estudiante para reutilizar su firma dentro de esa matrícula.
 
-**Brechas:**
-- No hay triggers ni listeners de eventos del proceso (cierre de curso, asignacion, etc.)
-- No hay generacion automatica de instancias de formato_respuestas
-- No hay concepto de formato hibrido (datos prellenados + campos editables mezclados)
-- No hay configuracion de "eventos disparadores" en el formato
+Condición final para persistir una firma reutilizable:
 
-**Cambios necesarios:**
-- Agregar campo `eventos_disparadores` (jsonb) a `formatos_formacion`: `['asignacion_curso', 'cierre_curso', 'firma_completada']`
-- Crear funcion de BD o edge function que escuche cambios en matriculas/cursos y genere formato_respuestas automaticamente
-- Implementar logica de prellenado automatico al crear la instancia
+- el formato tiene `es_origen_firma = true`,
+- el estudiante capturó una firma válida,
+- y el estudiante aceptó explícitamente la reutilización.
 
----
+En ese caso se hace persistencia en `firmas_matricula` con:
 
-## 6. Sincronizacion Portal-Matricula (Seccion 15)
+- `matricula_id`
+- `formato_origen_id = formato.id`
+- `autoriza_reutilizacion = true`
+- `tipo_firmante`
+- evidencia de contexto correspondiente
 
-**Estado actual:** Existe sincronizacion basica via triggers `sync_formato_respuestas_to_portal` y `sync_portal_to_formato_respuestas`. El `syncPortalConfig` en el servicio crea/desactiva entradas en `portal_config_documentos`.
+### 3. Regla para múltiples firmas posibles
 
-**Brechas:**
-- Si cambia el entrenador, supervisor o fechas del curso, los formatos ya generados no se actualizan (seccion 15.3)
-- Si el estudiante es removido del curso, los campos dependientes del curso no pasan a "Sin datos" (seccion 15.4)
-- No hay logica unificada de lectura — portal y matricula resuelven datos por caminos distintos
-- La sincronizacion de `niveles_habilitados` en portal_config_documentos siempre es `[]` (global), no respeta los niveles del formato
+No se usará `tipo` documental ni keys fijas.
 
-**Cambios necesarios:**
-- Modificar `syncPortalConfig` para propagar `niveles_asignados` del formato a `niveles_habilitados` del portal
-- Agregar trigger que detecte cambio de entrenador/supervisor en curso y actualice formatos afectados
-- Implementar logica de "Sin datos" cuando `curso_id` es null en la matricula
-- Unificar la resolucion de datos en un servicio compartido entre portal y matricula
+La firma reutilizable se resolverá con esta jerarquía:
 
----
+1. Si el bloque indica explícitamente un `formatoOrigenId`, se reutiliza solo la firma de ese formato origen.
+2. Si no lo indica, se busca una firma reutilizable activa por:
+  - `matricula_id`
+  - `tipo_firmante`
+  - `autoriza_reutilizacion = true`
+3. Si existen varias firmas válidas para el mismo `tipo_firmante`, se tomará la **más reciente**, salvo que exista dependencia explícita hacia un formato origen concreto.
 
-## 7. UX del Configurador (Seccion 16)
+### 4. Regla de no acoplamiento
 
-**Estado actual:** Constructor funcional con 3 paneles (catalogo, canvas, inspector), drag & drop, columnas, undo/redo.
+No se usará:
 
-**Brechas:**
-- No hay secciones colapsables configurables (solo `section_title` con `collapsible` no implementado en render)
-- No hay logica condicional visual (mostrar/ocultar bloques segun respuestas)
-- No hay configuracion de dependencias en el inspector
-- No hay preview de como se ve el formato con datos reales de una matricula especifica
-- La experiencia de tokens sigue siendo tecnica — la pestana "Tokens" muestra codigos como `{{persona.nombreCompleto}}`
+- `tipo` del documento,
+- `documento_key`,
+- nombres como `info_aprendiz`,
+- ni tipos predefinidos del portal
 
-**Cambios necesarios:**
-- Implementar render de secciones colapsables en el documento
-- Agregar panel de "Reglas" en el inspector para logica condicional por bloque
-- Agregar selector de matricula de prueba en el preview para ver datos reales
-- Reemplazar tokens de texto por selector visual de datos del sistema
+como criterio de reutilización de firma.
+
+La reutilización dependerá únicamente de:
+
+- `matricula_id`,
+- configuración del bloque,
+- configuración del formato,
+- autorización explícita,
+- y opcionalmente `formato_origen_id`.
 
 ---
 
-## Prioridades sugeridas para la refactorizacion
+## Fase 1: Nuevo bloque `signature_capture`
 
-```text
-Prioridad   | Eje                          | Impacto
-────────────┼──────────────────────────────┼──────────────────────────
-   1        | Dependencias entre formatos  | Desbloquea flujos criticos
-   2        | Estados y permisos           | Seguridad y control de edicion
-   3        | Sincronizacion portal        | Consistencia de datos
-   4        | Firma por matricula          | Cumplimiento legal
-   5        | Autocompletado abierto       | Flexibilidad del configurador
-   6        | Formatos automaticos         | Automatizacion de procesos
-   7        | UX del configurador          | Usabilidad avanzada
+### Tipos (`formatoFormacion.ts`)
+
+- Agregar `'signature_capture'` a `TipoBloque`
+- Agregar interfaz `BloqueSignatureCapture`
+- Agregar a la unión `Bloque`
+- Agregar `esOrigenFirma?: boolean` a `FormatoFormacion`
+
+### Props sugeridas para `BloqueSignatureCapture`
+
+```tsx
+{
+  mode?: 'capture' | 'reuse_if_available' | 'reuse_required' | 'display_only';
+  tipoFirmante?: 'aprendiz' | 'entrenador' | 'supervisor';
+  formatoOrigenId?: string;
+  requiereAutorizacionReutilizacion?: boolean;
+}
+
 ```
 
+### Regla funcional de los modos
+
+- `capture`: siempre captura firma nueva
+- `reuse_if_available`: reutiliza si existe una firma válida; si no existe, permite capturar
+- `reuse_required`: solo reutiliza; si no existe firma válida, muestra estado bloqueado o error controlado
+- `display_only`: solo muestra firma existente, sin permitir captura
+
+### Catálogo de bloques (`BlockCatalog.tsx`)
+
+- Agregar `signature_capture` en la categoría de firmas
+
+### Renderer (`DynamicFormatoDocument.tsx`)
+
+Agregar case `signature_capture` con esta lógica:
+
+- Si el bloque está en modo reutilizable, consultar `firmasMatricula` del contexto
+- Resolver firma según:
+  - `formatoOrigenId`, si existe
+  - o `matricula_id + tipo_firmante + autoriza_reutilizacion = true`
+- Si la firma existe y el modo permite reutilización, mostrarla como solo lectura
+- Si el modo permite captura nueva, renderizar canvas de captura
+- Si el modo exige reutilización y no existe firma válida, mostrar estado controlado de bloqueo
+
 ---
 
-## Lo que ya esta bien implementado
+## Fase 2: Migración del renderer del portal
 
-- Constructor visual por bloques con drag & drop
-- Catalogo de bloques organizado por categorias
-- Inspector de propiedades por bloque
-- Configuracion de formato (nombre, categoria, scope, visibilidad, firmas)
-- Asignacion por nivel de formacion (scope)
-- Persistencia en BD con motor de bloques
-- Autocompletado de ~40 campos del sistema
-- Sincronizacion basica portal (triggers bidireccionales)
-- Versionado de formatos
-- Duplicacion de formatos
-- Undo/redo en el editor
-- Encabezado institucional configurable
-- Bloques especiales (evaluacion, encuesta, salud, autorizacion, asistencia)
+### `DocumentoRendererPage.tsx` — cambio principal
 
+- **Mantener temporalmente** el diccionario `RENDERERS` como fallback únicamente para documentos legacy sin `formato_id`
+- **Agregar lógica prioritaria**: si `docConfig` tiene `formato_id`, renderizar `DynamicFormatoDocument` directamente
+- El despacho por componente legacy solo debe ocurrir si no existe `formato_id`
+
+### Flujo del renderer dinámico en portal
+
+1. Consultar `portal_config_documentos` para obtener `formato_id` del `documentoKey`
+2. Validar que el registro sea publicable y tenga `formato_id` válido
+3. Cargar `formatos_formacion` por ese `formato_id`
+4. Cargar datos de contexto:
+  - persona
+  - matrícula
+  - curso
+  - nivel de formación
+  - firmas reutilizables
+  - respuestas previas si aplican
+5. Renderizar `DynamicFormatoDocument` en modo interactivo
+6. Al enviar, persistir usando una única lógica transaccional
+
+### Nuevos hooks/queries necesarios
+
+- `useFormatoById(formatoId)`
+- `useFirmasMatricula(matriculaId)`
+- `useFormatoRespuesta(matriculaId, formatoId)` si aplica para reanudación o edición controlada
+
+### Regla de navegación segura
+
+Si el documento portal no tiene `formato_id` válido:
+
+- no debe navegarse funcionalmente en portal estudiante,
+- o debe mostrar un error controlado de “documento no configurado”,
+- nunca intentar renderizar un flujo incompleto.
+
+---
+
+## Fase 3: Lógica de envío desde portal dinámico
+
+### Nuevo servicio: `portalDinamicoService.ts`
+
+Crear un flujo de persistencia con **una sola fuente de verdad**.
+
+### Método
+
+`enviarFormatoDinamico(matriculaId, formatoId, answers, firmaPayload?)`
+
+### Operación esperada
+
+La persistencia debe resolverse de forma **atómica**, idealmente desde backend/RPC/función de BD, no con mezcla ambigua entre trigger y fallback client-side.
+
+Debe contemplar en una sola operación:
+
+1. Upsert en `formato_respuestas`
+2. Persistencia o actualización en `documentos_portal` si corresponde
+3. Persistencia en `firmas_matricula` si:
+  - el formato tiene `es_origen_firma = true`
+  - existe firma válida
+  - existe autorización explícita para reutilización
+
+### Regla importante
+
+No depender de fallback client-side para consistencia entre:
+
+- `formato_respuestas`
+- `documentos_portal`
+- `firmas_matricula`
+
+La lógica de guardado debe quedar centralizada y consistente.
+
+---
+
+## Fase 4: Migración de BD
+
+### Migración SQL
+
+- Agregar columna `es_origen_firma boolean default false` a `formatos_formacion`
+- Si aplica, agregar campos auxiliares o estructura equivalente para soportar la política de firma reutilizable
+- Definir una forma clara de identificar documentos no publicables cuando `formato_id` sea null:
+  - ya sea con columna calculada `valido`
+  - o mediante vista/query de validación
+
+### Regla de integridad
+
+Los registros en `portal_config_documentos` sin `formato_id` no deben quedar funcionalmente activos en el portal.
+
+---
+
+## Fase 5: Validación de registros inválidos en portal_config
+
+### `PortalAdminPage.tsx` / `DocumentosCatalogoTable.tsx`
+
+- Mostrar badge rojo: **“Sin formato vinculado”**
+- Bloquear publicación si `formato_id` es null
+- Bloquear navegación funcional en portal estudiante a documentos inválidos
+- Permitir identificarlos fácilmente para limpieza posterior
+
+---
+
+## Archivos que se modifican
+
+
+| Archivo                                                         | Cambio                                                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `src/types/formatoFormacion.ts`                                 | Nuevo bloque, `esOrigenFirma`, props ampliadas                        |
+| `src/components/formatos/editor/BlockCatalog.tsx`               | Agregar `signature_capture`                                           |
+| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Soporte para modos de firma                                           |
+| `src/pages/estudiante/DocumentoRendererPage.tsx`                | Priorizar renderer dinámico cuando hay `formato_id`                   |
+| `src/services/portalDinamicoService.ts`                         | Nuevo servicio para persistencia dinámica                             |
+| `src/hooks/usePortalEstudiante.ts`                              | Agregar `useFormatoById`, `useFirmasMatricula` y queries relacionadas |
+| `src/components/portal-admin/DocumentosCatalogoTable.tsx`       | Badge “Sin formato” y bloqueo de publicación                          |
+| Migración SQL                                                   | `es_origen_firma` y validación de registros publicables               |
+
+
+### Archivos que NO se tocan todavía
+
+Se mantienen hasta validar el flujo end-to-end:
+
+- `InfoAprendizPage.tsx`
+- `EvaluacionPage.tsx`
+- `portalAdminConfig.ts`
+- `portalEstudianteConfig.ts`
+- `portalInitService.ts`
+
+---
+
+## Criterio de éxito para proceder con eliminación legacy
+
+Antes de eliminar cualquier circuito legacy, se debe validar que un formato dinámico nuevo:
+
+1. aparece en el panel de documentos del portal;
+2. se renderiza desde `formato_id` y no desde un renderer hardcodeado;
+3. captura firma mediante `signature_capture`;
+4. guarda respuesta correctamente en `formato_respuestas`;
+5. sincroniza correctamente con `documentos_portal`;
+6. persiste firma reutilizable en `firmas_matricula` solo cuando existe autorización explícita;
+7. un segundo formato reutiliza la firma sin depender de keys fijas;
+8. la reutilización se resuelve correctamente cuando existe más de una firma posible;
+9. el portal no permite navegación funcional a documentos sin `formato_id` válido.
+
+Solo después de validar estos puntos se procede a:
+
+- eliminar componentes legacy,
+- eliminar catálogos hardcodeados,
+- limpiar rutas y tipos legacy,
+- y borrar formatos mock si ya no son necesarios.
+
+---
+
+## Resultado esperado
+
+Al finalizar esta migración funcional, el portal debe quedar preparado para operar así:
+
+1. `portal_config_documentos` define qué documentos aparecen y en qué orden;
+2. cada documento portal se vincula a un `formato_id`;
+3. `formatos_formacion` define la estructura visual y lógica del documento;
+4. `DynamicFormatoDocument` renderiza el formato de manera interactiva;
+5. la firma se captura o reutiliza según configuración del bloque y del formato;
+6. la reutilización depende de autorización explícita y reglas dinámicas;
+7. el sistema puede convivir temporalmente con legacy hasta validar el flujo nuevo;
+8. una vez validado, lo legacy podrá eliminarse sin romper el portal.

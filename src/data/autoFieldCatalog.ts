@@ -59,6 +59,57 @@ export const AUTO_FIELD_CATALOG: AutoFieldOption[] = [
 
 export const AUTO_FIELD_CATEGORIES = [...new Set(AUTO_FIELD_CATALOG.map(f => f.category))];
 
+/**
+ * Build dynamic auto-field options from previous format responses.
+ * Returns options with keys like "formato_prev:{formatoId}:{fieldKey}"
+ */
+export function buildFormatoPrevioOptions(
+  formatos: { id: string; nombre: string; bloques: any[] }[],
+  respuestas: { formatoId: string; answers: Record<string, unknown> }[]
+): AutoFieldOption[] {
+  const options: AutoFieldOption[] = [];
+
+  for (const resp of respuestas) {
+    const formato = formatos.find(f => f.id === resp.formatoId);
+    if (!formato) continue;
+
+    for (const [fieldKey, value] of Object.entries(resp.answers || {})) {
+      if (value == null) continue;
+      // Find the corresponding block label
+      const bloque = formato.bloques?.find((b: any) => b.id === fieldKey);
+      const label = bloque?.label || fieldKey;
+
+      options.push({
+        key: `formato_prev:${formato.id}:${fieldKey}`,
+        label: `${label}`,
+        category: `Formato: ${formato.nombre}`,
+        source: 'Formato previo',
+        description: `Respuesta del formato "${formato.nombre}"`,
+      });
+    }
+  }
+
+  return options;
+}
+
+/**
+ * Build dynamic options from nivel de formación campos_adicionales.
+ * Returns options with keys like "nivel_campo:{key}"
+ */
+export function buildNivelCamposOptions(
+  camposAdicionales: { key: string; label: string; tipo?: string }[] | null
+): AutoFieldOption[] {
+  if (!camposAdicionales || camposAdicionales.length === 0) return [];
+
+  return camposAdicionales.map(campo => ({
+    key: `nivel_campo:${campo.key}`,
+    label: campo.label,
+    category: 'Campos del Nivel',
+    source: 'Nivel de Formación',
+    description: `Campo adicional del nivel de formación`,
+  }));
+}
+
 export function getAutoFieldLabel(key: string): string {
   return AUTO_FIELD_CATALOG.find(f => f.key === key)?.label ?? key;
 }

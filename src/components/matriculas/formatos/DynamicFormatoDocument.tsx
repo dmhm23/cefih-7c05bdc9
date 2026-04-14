@@ -354,6 +354,9 @@ interface DynamicFormatoDocumentProps {
   answers?: Record<string, unknown>;
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
+  firmasMatricula?: FirmaMatricula[];
+  respuestasPrevias?: FormatoRespuesta[];
+  camposAdicionalesNivel?: { key: string; label: string; value?: string }[];
 }
 
 export default function DynamicFormatoDocument({

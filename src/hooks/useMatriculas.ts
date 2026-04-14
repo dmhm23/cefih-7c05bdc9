@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { matriculaService } from '@/services/matriculaService';
 import { driveService } from '@/services/driveService';
 import { crearDocumentosMatricula } from '@/services/documentoService';
-import { supabase } from '@/integrations/supabase/client';
+
 import { EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 
 export const useMatriculas = () => {

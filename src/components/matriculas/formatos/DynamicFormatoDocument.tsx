@@ -370,10 +370,18 @@ export default function DynamicFormatoDocument({
   answers = {},
   onAnswerChange,
   readOnly = true,
+  firmasMatricula,
+  respuestasPrevias,
+  camposAdicionalesNivel,
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
-  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre };
+  const ctx: AutoFieldContext = {
+    persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre,
+    firmasMatricula,
+    respuestasPrevias,
+    camposAdicionalesNivel,
+  };
   const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
   return (

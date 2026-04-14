@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
 import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
+import { sincronizarDocumentos } from "@/services/documentoService";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { PersonaFormData } from "@/types/persona";
@@ -85,7 +86,7 @@ export default function MatriculaDetallePage() {
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
 
-  const { data: matricula, isLoading } = useMatricula(id || "");
+  const { data: matricula, isLoading, refetch: refetchMatricula } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
   const { data: formatosDinamicos } = useFormatosMatricula(id);
@@ -115,7 +116,20 @@ export default function MatriculaDetallePage() {
       .then(({ data }) => setHasGrupoCartera(!!data));
   }, [matricula?.id]);
 
-  const handleSyncCartera = async () => {
+  // Sync document requirements: create missing docs for existing enrollments
+  const [docsSynced, setDocsSynced] = useState(false);
+  useEffect(() => {
+    if (!matricula?.id || docsSynced) return;
+    const nivelId = curso?.nivelFormacionId;
+    sincronizarDocumentos(matricula.id, nivelId)
+      .then(({ huboCambios }) => {
+        setDocsSynced(true);
+        if (huboCambios) refetchMatricula();
+      })
+      .catch(() => setDocsSynced(true));
+  }, [matricula?.id, curso?.nivelFormacionId, docsSynced, refetchMatricula]);
+
+
     if (!matricula || !id) return;
     setSyncingCartera(true);
     try {

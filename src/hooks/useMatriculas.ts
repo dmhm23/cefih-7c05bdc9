@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { matriculaService } from '@/services/matriculaService';
 import { driveService } from '@/services/driveService';
+import { crearDocumentosMatricula } from '@/services/documentoService';
+import { supabase } from '@/integrations/supabase/client';
 import { EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 
 export const useMatriculas = () => {
@@ -53,8 +55,25 @@ export const useCreateMatricula = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Parameters<typeof matriculaService.create>[0]) =>
-      matriculaService.create(data),
+    mutationFn: async (data: Parameters<typeof matriculaService.create>[0]) => {
+      const matricula = await matriculaService.create(data);
+
+      // Resolve nivel_formacion_id from the curso if available
+      let nivelId: string | undefined;
+      if (data.cursoId) {
+        const { data: curso } = await supabase
+          .from('cursos')
+          .select('nivel_formacion_id')
+          .eq('id', data.cursoId)
+          .maybeSingle();
+        nivelId = curso?.nivel_formacion_id ?? undefined;
+      }
+
+      // Create document requirements for this enrollment
+      await crearDocumentosMatricula(matricula.id, nivelId);
+
+      return matricula;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['matriculas'] });
       queryClient.invalidateQueries({ queryKey: ['cursos'] });

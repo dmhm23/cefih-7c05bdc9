@@ -165,6 +165,8 @@ export default function FormatoEditorPage() {
       requiereFirmaEntrenador: config.requiereFirmaEntrenador,
       requiereFirmaSupervisor: config.requiereFirmaSupervisor,
       bloques: items as Bloque[], // Store all items including row2
+      dependencias: existing?.dependencias || [],
+      eventosDisparadores: existing?.eventosDisparadores || [],
       documentMeta: existing?.documentMeta,
     };
 

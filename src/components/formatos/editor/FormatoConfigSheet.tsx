@@ -331,6 +331,22 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
               </>
             )}
 
+            {/* Signature Origin */}
+            <div className="space-y-3">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Firma Reutilizable</Label>
+              <div className="flex items-start gap-3">
+                <Switch checked={config.esOrigenFirma ?? false} onCheckedChange={(v) => setConfig({ esOrigenFirma: v } as any)} className="mt-0.5" />
+                <div>
+                  <Label className="text-sm">Es origen de firma</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    La firma capturada en este formato podrá reutilizarse en otros formatos de la misma matrícula, si el estudiante autoriza explícitamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Signatures */}
             <div className="space-y-3">
               <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Firmas Requeridas</Label>

@@ -25,6 +25,7 @@ interface InspectorFieldsProps {
 const HIDE_REQUIRED: TipoBloque[] = [
   'section_title', 'heading', 'paragraph', 'divider',
   'signature_aprendiz', 'signature_entrenador_auto', 'signature_supervisor_auto',
+  'signature_capture',
   'health_consent', 'data_authorization', 'evaluation_quiz', 'satisfaction_survey',
   'attendance_by_day', 'document_header',
 ];
@@ -268,6 +269,44 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
 
     case 'signature_supervisor_auto':
       return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (supervisor del curso).</p>;
+
+    case 'signature_capture':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Modo</Label>
+            <Select value={b.props?.mode || 'capture'} onValueChange={(v) => onChange({ props: { ...b.props, mode: v } } as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="capture">Captura nueva</SelectItem>
+                <SelectItem value="reuse_if_available">Reutilizar si disponible</SelectItem>
+                <SelectItem value="reuse_required">Solo reutilizar</SelectItem>
+                <SelectItem value="display_only">Solo mostrar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo de firmante</Label>
+            <Select value={b.props?.tipoFirmante || 'aprendiz'} onValueChange={(v) => onChange({ props: { ...b.props, tipoFirmante: v } } as any)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aprendiz">Aprendiz</SelectItem>
+                <SelectItem value="entrenador">Entrenador</SelectItem>
+                <SelectItem value="supervisor">Supervisor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+            {b.props?.mode === 'reuse_if_available'
+              ? 'Reutiliza una firma existente; si no hay, permite capturar.'
+              : b.props?.mode === 'reuse_required'
+              ? 'Solo muestra una firma reutilizada. Si no existe, queda bloqueado.'
+              : b.props?.mode === 'display_only'
+              ? 'Solo muestra la firma existente, sin captura.'
+              : 'Captura una firma nueva del firmante.'}
+          </p>
+        </div>
+      );
 
     case 'evaluation_quiz':
       return <EvaluationQuizInspector bloque={bloque} onChange={onChange} />;

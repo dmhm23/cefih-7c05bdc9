@@ -38,11 +38,19 @@ export type TipoBloque =
  * Las claves conocidas se documentan en autoFieldCatalog.ts.
  */
 export type AutoFieldKey = string;
+export interface VisibilityRule {
+  field: string;       // bloqueId to evaluate
+  operator: 'equals' | 'not_equals' | 'is_filled' | 'is_empty';
+  value?: unknown;     // comparison value for equals/not_equals
+}
+
 export interface BloqueBase {
   id: string;
   type: TipoBloque;
   label: string;
   required?: boolean;
+  editable?: boolean;
+  visibilityRule?: VisibilityRule;
 }
 
 export interface BloqueHeading extends BloqueBase {

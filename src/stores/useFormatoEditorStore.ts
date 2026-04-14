@@ -6,6 +6,8 @@ import type {
   CategoriaFormato,
   AsignacionScope,
   EncabezadoConfig,
+  FormatoDependencia,
+  EventoDisparador,
 } from '@/types/formatoFormacion';
 
 
@@ -43,6 +45,8 @@ export interface FormatoConfig {
   requiereFirmaSupervisor: boolean;
   usaEncabezadoInstitucional: boolean;
   encabezadoConfig: EncabezadoConfig;
+  dependencias: FormatoDependencia[];
+  eventosDisparadores: EventoDisparador[];
 }
 
 const DEFAULT_ENCABEZADO: EncabezadoConfig = {
@@ -73,6 +77,8 @@ export const DEFAULT_CONFIG: FormatoConfig = {
   requiereFirmaSupervisor: false,
   usaEncabezadoInstitucional: true,
   encabezadoConfig: DEFAULT_ENCABEZADO,
+  dependencias: [],
+  eventosDisparadores: [],
 };
 
 // ---------------------------------------------------------------------------

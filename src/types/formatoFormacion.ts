@@ -27,7 +27,8 @@ export type TipoBloque =
   | 'section_title'
   | 'divider'
   | 'file'
-  | 'document_header';
+  | 'document_header'
+  | 'signature_capture';
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
@@ -194,6 +195,18 @@ export interface BloqueDocumentHeader extends BloqueBase {
   };
 }
 
+export type SignatureCaptureMode = 'capture' | 'reuse_if_available' | 'reuse_required' | 'display_only';
+
+export interface BloqueSignatureCapture extends BloqueBase {
+  type: 'signature_capture';
+  props?: {
+    mode?: SignatureCaptureMode;
+    tipoFirmante?: 'aprendiz' | 'entrenador' | 'supervisor';
+    formatoOrigenId?: string;
+    requiereAutorizacionReutilizacion?: boolean;
+  };
+}
+
 export type Bloque =
   | BloqueHeading
   | BloqueParagraph
@@ -217,7 +230,8 @@ export type Bloque =
   | BloqueSatisfactionSurvey
   | BloqueDivider
   | BloqueFile
-  | BloqueDocumentHeader;
+  | BloqueDocumentHeader
+  | BloqueSignatureCapture;
 
 // ---------------------------------------------------------------------------
 // Scope de asignación
@@ -349,6 +363,9 @@ export interface FormatoFormacion {
 
   // Legacy: si este formato tiene componente hardcodeado asociado
   legacyComponentId?: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats' | 'evaluacion_reentrenamiento';
+
+  // Marca si este formato actúa como origen de firma reutilizable
+  esOrigenFirma: boolean;
 
   createdAt: string;
   updatedAt: string;

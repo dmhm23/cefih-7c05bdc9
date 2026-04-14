@@ -38,7 +38,8 @@ import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
-import { useFormatoRespuestas } from "@/hooks/useFormatoRespuestas";
+import { useFormatoRespuestas, useReopenFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
+import { useAuth } from "@/contexts/AuthContext";
 import { PersonaFormData } from "@/types/persona";
 import {
   Matricula,

@@ -347,24 +347,7 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* Signatures */}
-            <div className="space-y-3">
-              <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Firmas Requeridas</Label>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={config.requiereFirmaAprendiz} onCheckedChange={(c) => setConfig({ requiereFirmaAprendiz: !!c })} />
-                  <Label className="text-sm">Aprendiz</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={config.requiereFirmaEntrenador} onCheckedChange={(c) => setConfig({ requiereFirmaEntrenador: !!c })} />
-                  <Label className="text-sm">Entrenador</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={config.requiereFirmaSupervisor} onCheckedChange={(c) => setConfig({ requiereFirmaSupervisor: !!c })} />
-                  <Label className="text-sm">Supervisor</Label>
-                </div>
-              </div>
-            </div>
+            {/* Legacy "Firmas Requeridas" section removed — signature requirements are now determined by signature_capture blocks */}
           </div>
         </ScrollArea>
       </SheetContent>

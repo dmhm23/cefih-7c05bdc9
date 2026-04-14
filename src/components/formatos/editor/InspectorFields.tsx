@@ -24,9 +24,8 @@ interface InspectorFieldsProps {
 
 const HIDE_REQUIRED: TipoBloque[] = [
   'section_title', 'heading', 'paragraph', 'divider',
-  'signature_aprendiz', 'signature_entrenador_auto', 'signature_supervisor_auto',
   'signature_capture',
-  'health_consent', 'data_authorization', 'evaluation_quiz', 'satisfaction_survey',
+  'health_consent', 'evaluation_quiz', 'satisfaction_survey',
   'attendance_by_day', 'document_header',
 ];
 
@@ -261,14 +260,43 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       );
 
-    case 'signature_aprendiz':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Reutiliza la firma capturada en Información del Aprendiz.</p>;
+    case 'checkbox':
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Descripción</Label>
+            <Textarea
+              value={b.props?.description ?? ''}
+              onChange={(e) => onChange({ props: { ...b.props, description: e.target.value } } as any)}
+              placeholder="Texto descriptivo antes de la casilla..."
+              className="min-h-[60px] text-sm"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-xs">Popover con texto extenso</Label>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Muestra "Ver más" con el texto completo</p>
+            </div>
+            <Switch
+              checked={b.props?.hasPopover ?? false}
+              onCheckedChange={(v) => onChange({ props: { ...b.props, hasPopover: v } } as any)}
+            />
+          </div>
+          {b.props?.hasPopover && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Texto completo del popover</Label>
+              <Textarea
+                value={b.props?.popoverText ?? ''}
+                onChange={(e) => onChange({ props: { ...b.props, popoverText: e.target.value } } as any)}
+                placeholder="Texto legal o informativo extenso..."
+                className="min-h-[100px] text-sm"
+              />
+            </div>
+          )}
+        </div>
+      );
 
-    case 'signature_entrenador_auto':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (entrenador del curso).</p>;
-
-    case 'signature_supervisor_auto':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (supervisor del curso).</p>;
+    /* Legacy signature blocks removed — use signature_capture instead */
 
     case 'signature_capture':
       return (
@@ -317,8 +345,7 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'health_consent':
       return <HealthConsentInspector bloque={bloque} onChange={onChange} />;
 
-    case 'data_authorization':
-      return <DataAuthorizationInspector bloque={bloque} onChange={onChange} />;
+    /* data_authorization block removed — use paragraph + checkbox instead */
 
     case 'attendance_by_day':
       return <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;

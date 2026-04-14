@@ -95,6 +95,11 @@ export interface BloqueSelect extends BloqueBase {
 
 export interface BloqueCheckbox extends BloqueBase {
   type: 'checkbox';
+  props?: {
+    description?: string;
+    hasPopover?: boolean;
+    popoverText?: string;
+  };
 }
 
 export interface BloqueAutoField extends BloqueBase {

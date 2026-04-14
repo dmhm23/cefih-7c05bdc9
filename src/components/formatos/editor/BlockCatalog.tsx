@@ -2,13 +2,11 @@ import { useState } from 'react';
 import {
   Columns2, Type, AlignLeft, Hash, Mail, Calendar, ChevronDown,
   CheckSquare, CircleDot, Heading, Minus, PenTool, Paperclip,
-  Zap, Heart, ShieldCheck, ClipboardCheck, SmilePlus, CalendarCheck,
+  Zap, Heart, ClipboardCheck, SmilePlus, CalendarCheck,
   Bookmark, Search, LayoutGrid,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 import TokenLibrary from '@/components/formatos/TokenLibrary';
 import type { TipoBloque } from '@/types/formatoFormacion';
@@ -40,13 +38,9 @@ const PALETTE: PaletteItem[] = [
   { type: 'divider', label: 'Divisor', icon: Minus, category: 'fields' },
   { type: 'auto_field', label: 'Automático', icon: Zap, category: 'fields' },
   // Special
-  { type: 'signature_aprendiz', label: 'Firma aprendiz', icon: PenTool, category: 'special' },
-  { type: 'signature_entrenador_auto', label: 'Firma entrenador', icon: PenTool, category: 'special' },
-  { type: 'signature_supervisor_auto', label: 'Firma supervisor', icon: PenTool, category: 'special' },
   { type: 'signature_capture', label: 'Captura firma', icon: PenTool, category: 'special' },
   { type: 'file', label: 'Archivo', icon: Paperclip, category: 'special' },
   { type: 'health_consent', label: 'Consentimiento salud', icon: Heart, category: 'special' },
-  { type: 'data_authorization', label: 'Autorización datos', icon: ShieldCheck, category: 'special' },
   { type: 'evaluation_quiz', label: 'Evaluación', icon: ClipboardCheck, category: 'special' },
   { type: 'satisfaction_survey', label: 'Encuesta', icon: SmilePlus, category: 'special' },
   { type: 'attendance_by_day', label: 'Asistencia diaria', icon: CalendarCheck, category: 'special' },
@@ -104,7 +98,6 @@ export default function BlockCatalog() {
 
   return (
     <div className="w-full min-w-0 bg-background border-r overflow-hidden flex flex-col select-none h-full">
-      {/* Search */}
       <div className="p-2 border-b">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
@@ -119,7 +112,6 @@ export default function BlockCatalog() {
 
       <ScrollArea className="flex-1">
         <div className="pb-4">
-          {/* Toggle: Blocks vs Tokens */}
           <div className="flex border-b">
             <button
               className={`flex-1 py-2 text-sm font-medium transition-colors ${!showTokens ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'}`}

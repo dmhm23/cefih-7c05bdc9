@@ -122,16 +122,22 @@ export function MatriculaDetailSheet({
 
   // Sync document requirements
   const [docsSynced, setDocsSynced] = useState(false);
+  const [lastSyncedNivel, setLastSyncedNivel] = useState<string | undefined>();
   useEffect(() => {
-    if (!matricula?.id || docsSynced || !open) return;
+    if (!matricula?.id || !open) return;
     const nivelId = matricula.nivelFormacionId;
+    if (docsSynced && nivelId === lastSyncedNivel) return;
     sincronizarDocumentos(matricula.id, nivelId)
       .then(({ huboCambios }) => {
         setDocsSynced(true);
+        setLastSyncedNivel(nivelId);
         if (huboCambios) refetchMatricula();
       })
-      .catch(() => setDocsSynced(true));
-  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, open, refetchMatricula]);
+      .catch(() => {
+        setDocsSynced(true);
+        setLastSyncedNivel(nivelId);
+      });
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, lastSyncedNivel, open, refetchMatricula]);
 
   useEffect(() => {
     setFormData({});
@@ -141,6 +147,7 @@ export function MatriculaDetailSheet({
     setPreviewFormato(null);
     setDynamicFormato(null);
     setDocsSynced(false);
+    setLastSyncedNivel(undefined);
   }, [matricula?.id]);
 
   useEffect(() => {

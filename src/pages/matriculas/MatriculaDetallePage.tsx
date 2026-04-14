@@ -118,17 +118,23 @@ export default function MatriculaDetallePage() {
 
   // Sync document requirements: create missing docs for existing enrollments
   const [docsSynced, setDocsSynced] = useState(false);
+  const [lastSyncedNivel, setLastSyncedNivel] = useState<string | undefined>();
   useEffect(() => {
-    if (!matricula?.id || docsSynced) return;
-    // Use nivelFormacionId directly from the enrollment (source of truth)
+    if (!matricula?.id) return;
     const nivelId = matricula.nivelFormacionId;
+    // Re-sync if not yet synced OR if the nivel changed since last sync
+    if (docsSynced && nivelId === lastSyncedNivel) return;
     sincronizarDocumentos(matricula.id, nivelId)
       .then(({ huboCambios }) => {
         setDocsSynced(true);
+        setLastSyncedNivel(nivelId);
         if (huboCambios) refetchMatricula();
       })
-      .catch(() => setDocsSynced(true));
-  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, refetchMatricula]);
+      .catch(() => {
+        setDocsSynced(true);
+        setLastSyncedNivel(nivelId);
+      });
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, lastSyncedNivel, refetchMatricula]);
 
   const handleSyncCartera = async () => {
     if (!matricula || !id) return;

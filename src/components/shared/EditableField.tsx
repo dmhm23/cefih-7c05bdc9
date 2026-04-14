@@ -112,7 +112,7 @@ export function EditableField({
     }
 
     return (
-      <span className={cn(isEmpty && "text-muted-foreground italic")}>
+      <span className={cn("truncate block", isEmpty && "text-muted-foreground italic")}>
         {display}
       </span>
     );

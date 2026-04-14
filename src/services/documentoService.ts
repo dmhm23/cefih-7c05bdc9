@@ -93,29 +93,53 @@ export async function sincronizarDocumentos(
   const tiposExistentes = new Set(existentes.map(d => d.tipo));
 
   const requisitos = await getDocumentosRequeridos(nivelFormacionId);
-  const nuevos = requisitos.filter(r => !tiposExistentes.has(r.tipo));
+  const tiposRequeridos = new Set(requisitos.map(r => r.tipo));
 
-  if (nuevos.length === 0) {
+  let huboCambios = false;
+
+  // 1. Add missing documents
+  const nuevos = requisitos.filter(r => !tiposExistentes.has(r.tipo));
+  if (nuevos.length > 0) {
+    const rows = nuevos.map(r => ({
+      matricula_id: matriculaId,
+      tipo: r.tipo as any,
+      nombre: r.nombre,
+      estado: 'pendiente' as const,
+      opcional: r.opcional || false,
+    }));
+
+    await supabase
+      .from('documentos_matricula')
+      .insert(rows)
+      .select();
+
+    huboCambios = true;
+  }
+
+  // 2. Remove documents that are no longer required AND still pending (no file uploaded)
+  const sobrantes = existentes.filter(
+    d => !tiposRequeridos.has(d.tipo) && d.estado === 'pendiente' && !d.storagePath
+  );
+  if (sobrantes.length > 0) {
+    const ids = sobrantes.map(d => d.id);
+    await supabase
+      .from('documentos_matricula')
+      .delete()
+      .in('id', ids);
+
+    huboCambios = true;
+  }
+
+  if (!huboCambios) {
     return { documentos: existentes, huboCambios: false };
   }
 
-  const rows = nuevos.map(r => ({
-    matricula_id: matriculaId,
-    tipo: r.tipo as any,
-    nombre: r.nombre,
-    estado: 'pendiente' as const,
-    opcional: r.opcional || false,
-  }));
-
-  const { data: insertedDocs } = await supabase
+  // Re-fetch to return the current state
+  const { data: updatedDocs } = await supabase
     .from('documentos_matricula')
-    .insert(rows)
-    .select();
+    .select('*')
+    .eq('matricula_id', matriculaId);
 
-  const nuevosDoc = (insertedDocs || []).map((d: any) => snakeToCamel<DocumentoRequerido>(d));
-
-  return {
-    documentos: [...existentes, ...nuevosDoc],
-    huboCambios: true,
-  };
+  const documentos = (updatedDocs || []).map((d: any) => snakeToCamel<DocumentoRequerido>(d));
+  return { documentos, huboCambios: true };
 }

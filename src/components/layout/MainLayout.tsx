@@ -13,6 +13,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { preloadNiveles } from "@/utils/resolveNivelLabel";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -30,6 +32,10 @@ const routeNames: Record<string, string> = {
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const pathSegments = location.pathname.split("/").filter(Boolean);
+
+  useEffect(() => {
+    preloadNiveles();
+  }, []);
   
   const getCurrentPageName = () => {
     const basePath = `/${pathSegments[0]}`;

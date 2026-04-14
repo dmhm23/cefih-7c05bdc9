@@ -1,299 +1,113 @@
-# Plan ajustado: Migración funcional del renderer dinámico y firma dinámica
+# Plan de correcciones del constructor de formatos (7 problemas)
 
-## Resumen
+## Diagnostico por problema
 
-Implementar el renderer dinámico del portal, el nuevo bloque `signature_capture`, y la lógica de firma reutilizable gobernada por configuración, **sin eliminar archivos legacy todavía**.
+### 1. Error al guardar formato con `signature_capture`
 
-La validación se hará primero con un formato dinámico nuevo, de punta a punta, antes de cualquier borrado. El objetivo es asegurar que el portal quede gobernado por `portal_config_documentos` + `formatos_formacion` + reglas dinámicas, y no por keys o páginas legacy hardcodeadas.
+**Causa raiz**: El `FormatoPreviewDocument.tsx` no tiene un case para `signature_capture` en su `renderBloque()`, lo que no causa el error de guardado directamente. El error de guardado probablemente viene de que el bloque `signature_capture` no tiene `codigo` ni `version` del bloque `document_header` propagados correctamente en `props` al momento del insert, o de la serializacion del logo en base64 dentro de `bloques` (JSONB) que puede exceder limites. Necesito verificar el error exacto en la red. Sin embargo, el preview si falla silenciosamente al no renderizar `signature_capture`.
 
----
+**Solucion**: Agregar case `signature_capture` en `FormatoPreviewDocument.tsx`. Investigar y corregir el error de persistencia al guardar (probablemente el campo `logoUrl` en base64 dentro del JSON de bloques es demasiado grande para Supabase, o hay un tipo incompatible).
 
-## Qué estamos haciendo con este plan
+### 2. Consentimiento de salud guardado en matricula no disponible como token/campo automatico
 
-Con este plan estamos quitándole al portal las reglas fijas viejas y haciendo que funcione de forma realmente configurable.
+**Causa raiz**: Los campos `consentimiento_salud`, `restriccion_medica`, `alergias`, `consumo_medicamentos`, `embarazo` de la tabla `matriculas` no estan en el `AUTO_FIELD_CATALOG` ni en `resolveAutoField.ts`. El bloque `health_consent` es un componente de captura, no un token de lectura de datos ya guardados.
 
-En términos simples:
+**Solucion**: Agregar tokens de autocompletado para los campos de salud de la matricula: `consentimiento_salud`, `restriccion_medica` (si/no + detalle), `alergias` (si/no + detalle), `consumo_medicamentos` (si/no + detalle), `embarazo`. Agregar los cases correspondientes en `resolveAutoField.ts`.
 
-- hoy el portal todavía depende de pantallas y nombres fijos, como si ya supiera de antemano cuáles formatos mostrar;
-- con este plan, queremos que el portal ya no tenga formatos amarrados por defecto;
-- en cambio, queremos que muestre el formato que se configure, en el orden que se defina;
-- también queremos que la firma del estudiante ya no dependa de un formato fijo, sino del formato que se marque como origen;
-- y que después esa firma pueda reutilizarse en otros formatos, pero solo si eso quedó autorizado y configurado.
+### 3. Bloque `data_authorization` demasiado complejo — deberia ser un checkbox simple
 
-La idea es dejar el sistema para que se pueda arrancar desde cero, crear formatos propios y decidir cuál será el primero, cuál recoge la firma y cuáles dependen de ese.
+**Causa raíz**: El bloque data_authorization tiene un inspector con **“Puntos del resumen”** —presentados como una lista ítem por ítem— y un campo de **“Texto completo”**. Sin embargo, el usuario quiere simplificar esta estructura, ya que solo necesita un párrafo para el texto legal y un checkbox para la aceptación.
 
-Y se hará sin borrar todavía lo viejo, para primero probar que el flujo nuevo sí funciona completo y no romper el portal antes de tiempo.
+**Solución**: El usuario decidió eliminar ese bloque y creará las autorizaciones directamente con el bloque **checkbox**. En su lugar, se propone añadir al bloque checkbox, dentro de propiedades, un campo de **descripción** antes del valor de la etiqueta, y también la posibilidad de habilitar mediante un **toggle** un **popover opcional** para incluir un texto más extenso. Esto permitiría mostrar la información completa cuando la descripción funcione solo como un resumen breve.
 
----
+### 4. Cuatro tipos de firma: confusion sobre cual usar
 
-## Decisiones de diseño (firma)
+**Causa raiz**: Coexisten `signature_aprendiz`, `signature_entrenador_auto`, `signature_supervisor_auto` (legacy) y `signature_capture` (nuevo). Los tres primeros son legacy y estan acoplados a nombres fijos. El nuevo `signature_capture` es el correcto y configurable.
 
-### 1. Regla para marcar un formato como origen de firma reutilizable
+**Solucion**: Eliminar los tres bloques legacy del catalogo (`BlockCatalog.tsx`), del inspector, de los tipos y del renderer. Solo debe quedar `signature_capture` con su configuracion de `tipoFirmante` y `mode`. Esto es parte de la eliminacion legacy que ya estaba prevista.
 
-Se agrega un campo booleano `es_origen_firma` al modelo `FormatoFormacion`.
+### 5. "Firmas requeridas" en configuracion del formato: se usa o se elimina?
 
-Este campo **no implica por sí solo** que la firma quede autorizada para reutilización.
+**Causa raiz**: Los tres checkboxes `requiereFirmaAprendiz/Entrenador/Supervisor` en `FormatoConfigSheet.tsx` son metadata legacy que no se conecta con el motor dinamico de bloques. Con `signature_capture`, la informacion de que firmas se requieren ya esta implicita en los bloques del formato.
 
-Solo indica que el formato **puede actuar como formato origen de firma**.
+**Solucion**: Eliminar la seccion "Firmas Requeridas" de `FormatoConfigSheet.tsx` y los campos correspondientes del store/config. La presencia de bloques `signature_capture` en el formato determina que firmas se necesitan. Limpiar tambien las columnas de BD (`requiere_firma_aprendiz`, etc.) en una migracion futura, o simplemente dejar de usarlas.
 
-### 2. Regla de autorización explícita
+### 6. Token `empresa_nivel_formacion` desactualizado
 
-La firma solo podrá persistirse en `firmas_matricula` como reutilizable si, además de existir una captura válida, el formato diligenciado contiene una autorización explícita del estudiante para reutilizar su firma dentro de esa matrícula.
+**Causa raiz**: En `autoFieldCatalog.ts` linea 29, existe `empresa_nivel_formacion` con label "Nivel de formacion empresa" que apunta a `matricula.empresaNivelFormacion` (campo legacy). Deberia apuntar a `matricula.nivelFormacionId` y resolver el nombre del nivel desde la tabla `niveles_formacion`.
 
-Condición final para persistir una firma reutilizable:
+**Solucion**: Renombrar el token a `nivel_formacion` con label "Nivel de formacion", actualizar `resolveAutoField.ts` para resolver desde `nivelFormacionId` consultando el nombre del nivel (ya hay logica parcial con `resolveNivelFormacionLabel`).
 
-- el formato tiene `es_origen_firma = true`,
-- el estudiante capturó una firma válida,
-- y el estudiante aceptó explícitamente la reutilización.
+### 7. Vista previa muestra encabezado por defecto en vez del configurado en el bloque
 
-En ese caso se hace persistencia en `firmas_matricula` con:
+**Causa raiz**: En `FormatoPreviewDocument.tsx` lineas 438-448, si el formato tiene `usaEncabezadoInstitucional` activado Y no detecta un bloque `document_header`, renderiza un `DocumentHeader` por defecto con datos estaticos. PERO: `DocumentHeader.tsx` siempre usa `logoEmpresa` importado de `@/assets/logo-empresa.png` (linea 1), ignorando completamente el `logoUrl` que el usuario configura en el bloque.
 
-- `matricula_id`
-- `formato_origen_id = formato.id`
-- `autoriza_reutilizacion = true`
-- `tipo_firmante`
-- evidencia de contexto correspondiente
+Cuando el usuario SI agrega un bloque `document_header` al canvas, el case en `renderBloque` (linea 401-417) renderiza `DocumentHeader` pasando `hp.empresaNombre`, `hp.sistemaGestion`, etc., pero **no pasa `logoUrl**` — el componente `DocumentHeader` no acepta `logoUrl` como prop, siempre usa el import estatico.
 
-### 3. Regla para múltiples firmas posibles
-
-No se usará `tipo` documental ni keys fijas.
-
-La firma reutilizable se resolverá con esta jerarquía:
-
-1. Si el bloque indica explícitamente un `formatoOrigenId`, se reutiliza solo la firma de ese formato origen.
-2. Si no lo indica, se busca una firma reutilizable activa por:
-  - `matricula_id`
-  - `tipo_firmante`
-  - `autoriza_reutilizacion = true`
-3. Si existen varias firmas válidas para el mismo `tipo_firmante`, se tomará la **más reciente**, salvo que exista dependencia explícita hacia un formato origen concreto.
-
-### 4. Regla de no acoplamiento
-
-No se usará:
-
-- `tipo` del documento,
-- `documento_key`,
-- nombres como `info_aprendiz`,
-- ni tipos predefinidos del portal
-
-como criterio de reutilización de firma.
-
-La reutilización dependerá únicamente de:
-
-- `matricula_id`,
-- configuración del bloque,
-- configuración del formato,
-- autorización explícita,
-- y opcionalmente `formato_origen_id`.
+**Solucion**: Modificar `DocumentHeader.tsx` para aceptar un prop `logoUrl` opcional. Si se proporciona, usarlo en vez del import estatico. Luego en `FormatoPreviewDocument.tsx`, pasar `hp.logoUrl` al renderizar el bloque `document_header`. Tambien pasar `hp.borderColor` para que los bordes personalizados funcionen.
 
 ---
 
-## Fase 1: Nuevo bloque `signature_capture`
+## Fases de implementacion
 
-### Tipos (`formatoFormacion.ts`)
+### Fase 1: Corregir errores criticos (guardado + preview)
 
-- Agregar `'signature_capture'` a `TipoBloque`
-- Agregar interfaz `BloqueSignatureCapture`
-- Agregar a la unión `Bloque`
-- Agregar `esOrigenFirma?: boolean` a `FormatoFormacion`
+1. Agregar case `signature_capture` en `FormatoPreviewDocument.tsx`
+2. Modificar `DocumentHeader.tsx` para aceptar `logoUrl` y `borderColor` como props opcionales
+3. Pasar `logoUrl` y `borderColor` desde el bloque `document_header` en el preview
 
-### Props sugeridas para `BloqueSignatureCapture`
+### Fase 2: Simplificar bloques y eliminar legacy de firmas
 
-```tsx
-{
-  mode?: 'capture' | 'reuse_if_available' | 'reuse_required' | 'display_only';
-  tipoFirmante?: 'aprendiz' | 'entrenador' | 'supervisor';
-  formatoOrigenId?: string;
-  requiereAutorizacionReutilizacion?: boolean;
-}
+1. Eliminar `signature_aprendiz`, `signature_entrenador_auto`, `signature_supervisor_auto` del catalogo, inspector, tipos, preview y renderer dinamico
+2. Eliminar la seccion "Firmas Requeridas" de `FormatoConfigSheet.tsx`
+3. Eliminar `requiereFirmaAprendiz/Entrenador/Supervisor` del store config (mantener en BD sin usar, para no romper datos existentes)
 
-```
+### Fase 3: Simplificar bloque de autorizacion de datos
 
-### Regla funcional de los modos
+1. Eliminar el bloque `data_authorization` del catalogo y tipos
+2. Añadir al inspector  del bloque checkbox, dentro de propiedades, un campo de **descripción** antes del valor de la etiqueta, y también la posibilidad de habilitar mediante un **toggle** un **popover opcional** para incluir un texto más extenso.
 
-- `capture`: siempre captura firma nueva
-- `reuse_if_available`: reutiliza si existe una firma válida; si no existe, permite capturar
-- `reuse_required`: solo reutiliza; si no existe firma válida, muestra estado bloqueado o error controlado
-- `display_only`: solo muestra firma existente, sin permitir captura
+### Fase 4: Tokens de salud y nivel de formacion
 
-### Catálogo de bloques (`BlockCatalog.tsx`)
+1. Agregar tokens de consentimiento de salud al `AUTO_FIELD_CATALOG`: `consentimiento_salud`, `restriccion_medica`, `alergias`, `consumo_medicamentos`, `embarazo` con sus detalles
+2. Agregar los cases en `resolveAutoField.ts`
+3. Actualizar el token `empresa_nivel_formacion` a `nivel_formacion` con resolucion desde `nivelFormacionId`
 
-- Agregar `signature_capture` en la categoría de firmas
+### Fase 5: Investigar y corregir error de guardado
 
-### Renderer (`DynamicFormatoDocument.tsx`)
-
-Agregar case `signature_capture` con esta lógica:
-
-- Si el bloque está en modo reutilizable, consultar `firmasMatricula` del contexto
-- Resolver firma según:
-  - `formatoOrigenId`, si existe
-  - o `matricula_id + tipo_firmante + autoriza_reutilizacion = true`
-- Si la firma existe y el modo permite reutilización, mostrarla como solo lectura
-- Si el modo permite captura nueva, renderizar canvas de captura
-- Si el modo exige reutilización y no existe firma válida, mostrar estado controlado de bloqueo
-
----
-
-## Fase 2: Migración del renderer del portal
-
-### `DocumentoRendererPage.tsx` — cambio principal
-
-- **Mantener temporalmente** el diccionario `RENDERERS` como fallback únicamente para documentos legacy sin `formato_id`
-- **Agregar lógica prioritaria**: si `docConfig` tiene `formato_id`, renderizar `DynamicFormatoDocument` directamente
-- El despacho por componente legacy solo debe ocurrir si no existe `formato_id`
-
-### Flujo del renderer dinámico en portal
-
-1. Consultar `portal_config_documentos` para obtener `formato_id` del `documentoKey`
-2. Validar que el registro sea publicable y tenga `formato_id` válido
-3. Cargar `formatos_formacion` por ese `formato_id`
-4. Cargar datos de contexto:
-  - persona
-  - matrícula
-  - curso
-  - nivel de formación
-  - firmas reutilizables
-  - respuestas previas si aplican
-5. Renderizar `DynamicFormatoDocument` en modo interactivo
-6. Al enviar, persistir usando una única lógica transaccional
-
-### Nuevos hooks/queries necesarios
-
-- `useFormatoById(formatoId)`
-- `useFirmasMatricula(matriculaId)`
-- `useFormatoRespuesta(matriculaId, formatoId)` si aplica para reanudación o edición controlada
-
-### Regla de navegación segura
-
-Si el documento portal no tiene `formato_id` válido:
-
-- no debe navegarse funcionalmente en portal estudiante,
-- o debe mostrar un error controlado de “documento no configurado”,
-- nunca intentar renderizar un flujo incompleto.
-
----
-
-## Fase 3: Lógica de envío desde portal dinámico
-
-### Nuevo servicio: `portalDinamicoService.ts`
-
-Crear un flujo de persistencia con **una sola fuente de verdad**.
-
-### Método
-
-`enviarFormatoDinamico(matriculaId, formatoId, answers, firmaPayload?)`
-
-### Operación esperada
-
-La persistencia debe resolverse de forma **atómica**, idealmente desde backend/RPC/función de BD, no con mezcla ambigua entre trigger y fallback client-side.
-
-Debe contemplar en una sola operación:
-
-1. Upsert en `formato_respuestas`
-2. Persistencia o actualización en `documentos_portal` si corresponde
-3. Persistencia en `firmas_matricula` si:
-  - el formato tiene `es_origen_firma = true`
-  - existe firma válida
-  - existe autorización explícita para reutilización
-
-### Regla importante
-
-No depender de fallback client-side para consistencia entre:
-
-- `formato_respuestas`
-- `documentos_portal`
-- `firmas_matricula`
-
-La lógica de guardado debe quedar centralizada y consistente.
-
----
-
-## Fase 4: Migración de BD
-
-### Migración SQL
-
-- Agregar columna `es_origen_firma boolean default false` a `formatos_formacion`
-- Si aplica, agregar campos auxiliares o estructura equivalente para soportar la política de firma reutilizable
-- Definir una forma clara de identificar documentos no publicables cuando `formato_id` sea null:
-  - ya sea con columna calculada `valido`
-  - o mediante vista/query de validación
-
-### Regla de integridad
-
-Los registros en `portal_config_documentos` sin `formato_id` no deben quedar funcionalmente activos en el portal.
-
----
-
-## Fase 5: Validación de registros inválidos en portal_config
-
-### `PortalAdminPage.tsx` / `DocumentosCatalogoTable.tsx`
-
-- Mostrar badge rojo: **“Sin formato vinculado”**
-- Bloquear publicación si `formato_id` es null
-- Bloquear navegación funcional en portal estudiante a documentos inválidos
-- Permitir identificarlos fácilmente para limpieza posterior
+1. Verificar si el logo en base64 dentro del JSONB de bloques causa problemas de tamano
+2. Si es asi, implementar subida del logo a storage y guardar solo la URL publica en el bloque
+3. Verificar errores de tipo en la serializacion
 
 ---
 
 ## Archivos que se modifican
 
 
-| Archivo                                                         | Cambio                                                                |
-| --------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `src/types/formatoFormacion.ts`                                 | Nuevo bloque, `esOrigenFirma`, props ampliadas                        |
-| `src/components/formatos/editor/BlockCatalog.tsx`               | Agregar `signature_capture`                                           |
-| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Soporte para modos de firma                                           |
-| `src/pages/estudiante/DocumentoRendererPage.tsx`                | Priorizar renderer dinámico cuando hay `formato_id`                   |
-| `src/services/portalDinamicoService.ts`                         | Nuevo servicio para persistencia dinámica                             |
-| `src/hooks/usePortalEstudiante.ts`                              | Agregar `useFormatoById`, `useFirmasMatricula` y queries relacionadas |
-| `src/components/portal-admin/DocumentosCatalogoTable.tsx`       | Badge “Sin formato” y bloqueo de publicación                          |
-| Migración SQL                                                   | `es_origen_firma` y validación de registros publicables               |
+| Archivo                                                 | Cambio                                                                     |
+| ------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `src/components/formatos/FormatoPreviewDocument.tsx`    | Agregar case `signature_capture`, pasar `logoUrl`/`borderColor` al header  |
+| `src/components/shared/DocumentHeader.tsx`              | Aceptar `logoUrl` y `borderColor` opcionales                               |
+| `src/components/formatos/editor/BlockCatalog.tsx`       | Eliminar 3 bloques legacy de firma, eliminar `data_authorization`          |
+| `src/components/formatos/editor/InspectorFields.tsx`    | Eliminar inspectors legacy de firma, eliminar `DataAuthorizationInspector` |
+| `src/components/formatos/editor/FormatoConfigSheet.tsx` | Eliminar seccion "Firmas Requeridas"                                       |
+| `src/stores/useFormatoEditorStore.ts`                   | Eliminar `requiereFirma*` del config default                               |
+| `src/data/autoFieldCatalog.ts`                          | Agregar tokens de salud, actualizar nivel de formacion                     |
+| `src/utils/resolveAutoField.ts`                         | Agregar cases de salud, actualizar nivel                                   |
+| `src/types/formatoFormacion.ts`                         | Eliminar tipos legacy de firma, limpiar `data_authorization`               |
+| `src/data/bloqueConstants.ts`                           | Eliminar entries legacy                                                    |
+| `src/data/tokenSources.ts`                              | Actualizar token de nivel                                                  |
 
 
-### Archivos que NO se tocan todavía
+### Archivos que NO se tocan
 
-Se mantienen hasta validar el flujo end-to-end:
-
-- `InfoAprendizPage.tsx`
-- `EvaluacionPage.tsx`
-- `portalAdminConfig.ts`
-- `portalEstudianteConfig.ts`
-- `portalInitService.ts`
+- Componentes legacy del portal (se mantienen hasta validacion e2e)
+- Migraciones de BD (los campos legacy se dejan, solo se dejan de usar)
 
 ---
 
-## Criterio de éxito para proceder con eliminación legacy
+## Sobre lo legacy
 
-Antes de eliminar cualquier circuito legacy, se debe validar que un formato dinámico nuevo:
+Los problemas 4 y 5 (bloques legacy de firma y "Firmas Requeridas") son directamente deuda legacy. La solucion es eliminarlos del constructor y reemplazarlos con `signature_capture`, que ya esta implementado y es configurable.
 
-1. aparece en el panel de documentos del portal;
-2. se renderiza desde `formato_id` y no desde un renderer hardcodeado;
-3. captura firma mediante `signature_capture`;
-4. guarda respuesta correctamente en `formato_respuestas`;
-5. sincroniza correctamente con `documentos_portal`;
-6. persiste firma reutilizable en `firmas_matricula` solo cuando existe autorización explícita;
-7. un segundo formato reutiliza la firma sin depender de keys fijas;
-8. la reutilización se resuelve correctamente cuando existe más de una firma posible;
-9. el portal no permite navegación funcional a documentos sin `formato_id` válido.
-
-Solo después de validar estos puntos se procede a:
-
-- eliminar componentes legacy,
-- eliminar catálogos hardcodeados,
-- limpiar rutas y tipos legacy,
-- y borrar formatos mock si ya no son necesarios.
-
----
-
-## Resultado esperado
-
-Al finalizar esta migración funcional, el portal debe quedar preparado para operar así:
-
-1. `portal_config_documentos` define qué documentos aparecen y en qué orden;
-2. cada documento portal se vincula a un `formato_id`;
-3. `formatos_formacion` define la estructura visual y lógica del documento;
-4. `DynamicFormatoDocument` renderiza el formato de manera interactiva;
-5. la firma se captura o reutiliza según configuración del bloque y del formato;
-6. la reutilización depende de autorización explícita y reglas dinámicas;
-7. el sistema puede convivir temporalmente con legacy hasta validar el flujo nuevo;
-8. una vez validado, lo legacy podrá eliminarse sin romper el portal.
+El problema 3 (bloque `data_authorization`) tambien es legacy complejo que se puede eliminar y fortalecer el bloque ckeckbox.

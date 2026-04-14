@@ -120,14 +120,15 @@ export default function MatriculaDetallePage() {
   const [docsSynced, setDocsSynced] = useState(false);
   useEffect(() => {
     if (!matricula?.id || docsSynced) return;
-    const nivelId = curso?.nivelFormacionId;
+    // Use nivelFormacionId directly from the enrollment (source of truth)
+    const nivelId = matricula.nivelFormacionId;
     sincronizarDocumentos(matricula.id, nivelId)
       .then(({ huboCambios }) => {
         setDocsSynced(true);
         if (huboCambios) refetchMatricula();
       })
       .catch(() => setDocsSynced(true));
-  }, [matricula?.id, curso?.nivelFormacionId, docsSynced, refetchMatricula]);
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, refetchMatricula]);
 
   const handleSyncCartera = async () => {
     if (!matricula || !id) return;

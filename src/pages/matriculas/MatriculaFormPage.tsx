@@ -408,6 +408,7 @@ export default function MatriculaFormPage() {
         personaId: data.personaId,
         cursoId: data.cursoId || undefined,
         empresaId: data.empresaId || undefined,
+        nivelFormacionId: data.empresaNivelFormacion || undefined,
         nivelPrevio: (data.nivelPrevio as any) || undefined,
         centroFormacionPrevio: data.centroFormacionPrevio || undefined,
         

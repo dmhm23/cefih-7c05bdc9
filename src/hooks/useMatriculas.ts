@@ -58,16 +58,8 @@ export const useCreateMatricula = () => {
     mutationFn: async (data: Parameters<typeof matriculaService.create>[0]) => {
       const matricula = await matriculaService.create(data);
 
-      // Resolve nivel_formacion_id from the curso if available
-      let nivelId: string | undefined;
-      if (data.cursoId) {
-        const { data: curso } = await supabase
-          .from('cursos')
-          .select('nivel_formacion_id')
-          .eq('id', data.cursoId)
-          .maybeSingle();
-        nivelId = curso?.nivel_formacion_id ?? undefined;
-      }
+      // Use nivelFormacionId directly from the enrollment data
+      const nivelId = (data as any).nivelFormacionId || undefined;
 
       // Create document requirements for this enrollment
       await crearDocumentosMatricula(matricula.id, nivelId);

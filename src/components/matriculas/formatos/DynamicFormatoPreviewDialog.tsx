@@ -10,8 +10,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download, Save, Pencil, Eye } from "lucide-react";
 import DynamicFormatoDocument from "./DynamicFormatoDocument";
 import { usePersonal } from "@/hooks/usePersonal";
-import { useFormatoRespuesta, useSaveFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
+import { useFormatoRespuesta, useFormatoRespuestas, useSaveFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
 import { useNivelFormacion } from "@/hooks/useNivelesFormacion";
+import { firmaMatriculaService } from "@/services/firmaMatriculaService";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
@@ -271,7 +273,17 @@ export default function DynamicFormatoPreviewDialog({
 
   const { data: entrenador } = usePersonal(curso?.entrenadorId || "");
   const { data: supervisor } = usePersonal(curso?.supervisorId || "");
-  const { data: nivelFormacion } = useNivelFormacion(curso?.nivelFormacionId || "");
+  const { data: nivelFormacion } = useNivelFormacion(matricula.nivelFormacionId || curso?.nivelFormacionId || "");
+
+  // Load firmas per matrícula
+  const { data: firmasMatricula } = useQuery({
+    queryKey: ['firmas-matricula', matricula.id],
+    queryFn: () => firmaMatriculaService.getByMatricula(matricula.id),
+    enabled: open,
+  });
+
+  // Load all respuestas for this matrícula (for data inheritance)
+  const { data: allRespuestas } = useFormatoRespuestas(open ? matricula.id : undefined);
 
   // Load saved answers
   const { data: savedRespuesta } = useFormatoRespuesta(
@@ -433,6 +445,8 @@ export default function DynamicFormatoPreviewDialog({
                 answers={localAnswers}
                 onAnswerChange={editMode ? handleAnswerChange : undefined}
                 readOnly={!editMode}
+                firmasMatricula={firmasMatricula ?? undefined}
+                respuestasPrevias={allRespuestas ?? undefined}
               />
             </div>
           </div>

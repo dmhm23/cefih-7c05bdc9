@@ -2,7 +2,7 @@ import React from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
-import type { FormatoFormacion, Bloque, AutoFieldKey } from "@/types/formatoFormacion";
+import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
@@ -354,6 +354,9 @@ interface DynamicFormatoDocumentProps {
   answers?: Record<string, unknown>;
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
+  firmasMatricula?: FirmaMatricula[];
+  respuestasPrevias?: FormatoRespuesta[];
+  camposAdicionalesNivel?: { key: string; label: string; value?: string }[];
 }
 
 export default function DynamicFormatoDocument({
@@ -367,10 +370,18 @@ export default function DynamicFormatoDocument({
   answers = {},
   onAnswerChange,
   readOnly = true,
+  firmasMatricula,
+  respuestasPrevias,
+  camposAdicionalesNivel,
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
-  const ctx: AutoFieldContext = { persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre };
+  const ctx: AutoFieldContext = {
+    persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre,
+    firmasMatricula,
+    respuestasPrevias,
+    camposAdicionalesNivel,
+  };
   const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
   return (

@@ -19,6 +19,7 @@ import { resolveNivelFormacionLabel } from '@/utils/resolveNivelLabel';
 import { fmtDateLocal } from '@/utils/dateUtils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import type { FormatoRespuesta, FirmaMatricula } from '@/types/formatoFormacion';
 
 export interface AutoFieldContext {
   persona: Persona | null;
@@ -27,6 +28,12 @@ export interface AutoFieldContext {
   entrenador: Personal | null;
   supervisor: Personal | null;
   nivelFormacionNombre?: string | null;
+  /** Respuestas de formatos previos para herencia de datos */
+  respuestasPrevias?: FormatoRespuesta[];
+  /** Campos adicionales del nivel de formación */
+  camposAdicionalesNivel?: { key: string; label: string; value?: string }[];
+  /** Firmas por matrícula (nueva tabla firmas_matricula) */
+  firmasMatricula?: FirmaMatricula[];
 }
 
 function lookup(value: string | undefined, options: readonly { value: string; label: string }[]): string | null {
@@ -42,6 +49,30 @@ function fmtDate(dateStr: string | undefined): string | null {
 
 export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext): string | null {
   const { persona, matricula, curso, entrenador, supervisor } = ctx;
+
+  // --- Dynamic: Formatos previos (key format: "formato_prev:{formatoId}:{fieldKey}") ---
+  if (key.startsWith('formato_prev:')) {
+    const parts = key.split(':');
+    if (parts.length >= 3 && ctx.respuestasPrevias) {
+      const [, formatoId, fieldKey] = parts;
+      const resp = ctx.respuestasPrevias.find(r => r.formatoId === formatoId);
+      if (resp?.answers) {
+        const val = (resp.answers as Record<string, unknown>)[fieldKey];
+        return val != null ? String(val) : null;
+      }
+    }
+    return null;
+  }
+
+  // --- Dynamic: Campos adicionales del nivel (key format: "nivel_campo:{key}") ---
+  if (key.startsWith('nivel_campo:')) {
+    const campoKey = key.replace('nivel_campo:', '');
+    if (ctx.camposAdicionalesNivel) {
+      const campo = ctx.camposAdicionalesNivel.find(c => c.key === campoKey);
+      return campo?.value ?? null;
+    }
+    return null;
+  }
 
   switch (key) {
     // --- Aprendiz ---
@@ -94,9 +125,7 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'centro_formacion_previo':
       return matricula?.centroFormacionPrevio ?? null;
     case 'empresa_nivel_formacion':
-      // Use dynamically resolved nivel name from context, fall back to resolveNivelLabel
       if (ctx.nivelFormacionNombre) return ctx.nivelFormacionNombre;
-      // Use nivelFormacionId as source of truth
       const nivelId = matricula?.nivelFormacionId || matricula?.empresaNivelFormacion;
       if (nivelId) {
         const resolved = resolveNivelFormacionLabel(nivelId);
@@ -106,15 +135,15 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
 
     // --- Curso ---
     case 'nombre_curso':
-      return curso?.nombre ?? null;
+      return curso?.nombre ?? (matricula?.cursoId ? 'Sin datos de curso' : null);
     case 'tipo_formacion_curso':
       return curso?.tipoFormacion ? (TIPO_FORMACION_LABELS[curso.tipoFormacion] ?? curso.tipoFormacion) : null;
     case 'numero_curso':
       return curso?.numeroCurso ?? null;
     case 'fecha_inicio_curso':
-      return fmtDate(curso?.fechaInicio);
+      return curso ? fmtDate(curso?.fechaInicio) : (matricula?.cursoId ? 'Sin datos aún' : null);
     case 'fecha_fin_curso':
-      return fmtDate(curso?.fechaFin);
+      return curso ? fmtDate(curso?.fechaFin) : (matricula?.cursoId ? 'Sin datos aún' : null);
     case 'duracion_dias_curso':
       return curso?.duracionDias != null ? String(curso.duracionDias) : null;
     case 'horas_totales_curso':
@@ -134,13 +163,22 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'fecha_diligenciamiento':
       return format(new Date(), 'd/MM/yyyy', { locale: es });
 
-    // --- Firmas (base64) ---
-    case 'aprendiz_firma':
+    // --- Firmas (prefer firmas_matricula, fallback to legacy) ---
+    case 'aprendiz_firma': {
+      const firmaMatr = ctx.firmasMatricula?.find(f => f.tipo === 'aprendiz');
+      if (firmaMatr) return firmaMatr.firmaBase64;
       return persona?.firma ?? null;
-    case 'entrenador_firma':
+    }
+    case 'entrenador_firma': {
+      const firmaMatr = ctx.firmasMatricula?.find(f => f.tipo === 'entrenador');
+      if (firmaMatr) return firmaMatr.firmaBase64;
       return entrenador?.firmaBase64 ?? null;
-    case 'supervisor_firma':
+    }
+    case 'supervisor_firma': {
+      const firmaMatr = ctx.firmasMatricula?.find(f => f.tipo === 'supervisor');
+      if (firmaMatr) return firmaMatr.firmaBase64;
       return supervisor?.firmaBase64 ?? null;
+    }
 
     default:
       return null;

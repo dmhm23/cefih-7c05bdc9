@@ -745,6 +745,63 @@ export type Database = {
           },
         ]
       }
+      firmas_matricula: {
+        Row: {
+          autoriza_reutilizacion: boolean
+          created_at: string
+          firma_base64: string
+          formato_origen_id: string | null
+          hash_integridad: string | null
+          id: string
+          ip: string | null
+          matricula_id: string
+          tipo: Database["public"]["Enums"]["tipo_firma_matricula"]
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          autoriza_reutilizacion?: boolean
+          created_at?: string
+          firma_base64: string
+          formato_origen_id?: string | null
+          hash_integridad?: string | null
+          id?: string
+          ip?: string | null
+          matricula_id: string
+          tipo: Database["public"]["Enums"]["tipo_firma_matricula"]
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          autoriza_reutilizacion?: boolean
+          created_at?: string
+          firma_base64?: string
+          formato_origen_id?: string | null
+          hash_integridad?: string | null
+          id?: string
+          ip?: string | null
+          matricula_id?: string
+          tipo?: Database["public"]["Enums"]["tipo_firma_matricula"]
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firmas_matricula_formato_origen_id_fkey"
+            columns: ["formato_origen_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "firmas_matricula_matricula_id_fkey"
+            columns: ["matricula_id"]
+            isOneToOne: false
+            referencedRelation: "matriculas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formato_respuestas: {
         Row: {
           answers: Json
@@ -753,7 +810,10 @@ export type Database = {
           estado: Database["public"]["Enums"]["estado_formato_respuesta"]
           formato_id: string
           id: string
+          intentos_evaluacion: Json
           matricula_id: string
+          reabierto_at: string | null
+          reabierto_por: string | null
           updated_at: string
         }
         Insert: {
@@ -763,7 +823,10 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
           formato_id: string
           id?: string
+          intentos_evaluacion?: Json
           matricula_id: string
+          reabierto_at?: string | null
+          reabierto_por?: string | null
           updated_at?: string
         }
         Update: {
@@ -773,7 +836,10 @@ export type Database = {
           estado?: Database["public"]["Enums"]["estado_formato_respuesta"]
           formato_id?: string
           id?: string
+          intentos_evaluacion?: Json
           matricula_id?: string
+          reabierto_at?: string | null
+          reabierto_por?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -803,11 +869,13 @@ export type Database = {
           created_at: string
           css_template: string | null
           deleted_at: string | null
+          dependencias: Json
           descripcion: string
           document_meta: Json | null
           encabezado_config: Json | null
           es_automatico: boolean
           estado: Database["public"]["Enums"]["estado_formato"]
+          eventos_disparadores: Json
           html_template: string | null
           id: string
           legacy_component_id: string | null
@@ -837,11 +905,13 @@ export type Database = {
           created_at?: string
           css_template?: string | null
           deleted_at?: string | null
+          dependencias?: Json
           descripcion?: string
           document_meta?: Json | null
           encabezado_config?: Json | null
           es_automatico?: boolean
           estado?: Database["public"]["Enums"]["estado_formato"]
+          eventos_disparadores?: Json
           html_template?: string | null
           id?: string
           legacy_component_id?: string | null
@@ -871,11 +941,13 @@ export type Database = {
           created_at?: string
           css_template?: string | null
           deleted_at?: string | null
+          dependencias?: Json
           descripcion?: string
           document_meta?: Json | null
           encabezado_config?: Json | null
           es_automatico?: boolean
           estado?: Database["public"]["Enums"]["estado_formato"]
+          eventos_disparadores?: Json
           html_template?: string | null
           id?: string
           legacy_component_id?: string | null
@@ -1876,11 +1948,13 @@ export type Database = {
           created_at: string
           css_template: string | null
           deleted_at: string | null
+          dependencias: Json
           descripcion: string
           document_meta: Json | null
           encabezado_config: Json | null
           es_automatico: boolean
           estado: Database["public"]["Enums"]["estado_formato"]
+          eventos_disparadores: Json
           html_template: string | null
           id: string
           legacy_component_id: string | null
@@ -1967,7 +2041,12 @@ export type Database = {
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
       estado_factura: "por_pagar" | "parcial" | "pagada"
       estado_formato: "borrador" | "activo" | "archivado"
-      estado_formato_respuesta: "pendiente" | "completado" | "firmado"
+      estado_formato_respuesta:
+        | "pendiente"
+        | "completado"
+        | "firmado"
+        | "bloqueado"
+        | "reabierto"
       estado_grupo_cartera:
         | "sin_facturar"
         | "facturado"
@@ -2093,6 +2172,7 @@ export type Database = {
         | "actividad_cartera"
         | "rol"
         | "rol_permiso"
+      tipo_firma_matricula: "aprendiz" | "entrenador" | "supervisor"
       tipo_formacion:
         | "formacion_inicial"
         | "reentrenamiento"
@@ -2256,7 +2336,13 @@ export const Constants = {
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
       estado_factura: ["por_pagar", "parcial", "pagada"],
       estado_formato: ["borrador", "activo", "archivado"],
-      estado_formato_respuesta: ["pendiente", "completado", "firmado"],
+      estado_formato_respuesta: [
+        "pendiente",
+        "completado",
+        "firmado",
+        "bloqueado",
+        "reabierto",
+      ],
       estado_grupo_cartera: [
         "sin_facturar",
         "facturado",
@@ -2393,6 +2479,7 @@ export const Constants = {
         "rol",
         "rol_permiso",
       ],
+      tipo_firma_matricula: ["aprendiz", "entrenador", "supervisor"],
       tipo_formacion: [
         "formacion_inicial",
         "reentrenamiento",

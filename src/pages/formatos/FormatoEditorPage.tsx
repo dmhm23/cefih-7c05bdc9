@@ -117,6 +117,8 @@ export default function FormatoEditorPage() {
           mostrarLogo: true, mostrarNombreCentro: true, mostrarCodigoDocumento: true,
           mostrarVersion: true, mostrarFecha: true, mostrarPaginacion: false, alineacion: 'centro',
         },
+        dependencias: existing.dependencias || [],
+        eventosDisparadores: existing.eventosDisparadores || [],
       };
       store.loadFromFormato(existing.bloques as EditorItem[], config, existing.nombre);
     }

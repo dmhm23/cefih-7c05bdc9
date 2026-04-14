@@ -5,7 +5,51 @@ import { crearDocumentosMatricula } from '@/services/documentoService';
 import { supabase } from '@/integrations/supabase/client';
 import { EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 
-// ... keep existing code
+export const useMatriculas = () => {
+  return useQuery({
+    queryKey: ['matriculas'],
+    queryFn: () => matriculaService.getAll(),
+  });
+};
+
+export const useMatricula = (id: string) => {
+  return useQuery({
+    queryKey: ['matricula', id],
+    queryFn: () => matriculaService.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const useMatriculasByPersona = (personaId: string) => {
+  return useQuery({
+    queryKey: ['matriculas', 'persona', personaId],
+    queryFn: () => matriculaService.getByPersonaId(personaId),
+    enabled: !!personaId,
+  });
+};
+
+export const useMatriculasByCurso = (cursoId: string) => {
+  return useQuery({
+    queryKey: ['matriculas', 'curso', cursoId],
+    queryFn: () => matriculaService.getByCursoId(cursoId),
+    enabled: !!cursoId,
+  });
+};
+
+export const useMatriculasByEstado = (estado: EstadoMatricula) => {
+  return useQuery({
+    queryKey: ['matriculas', 'estado', estado],
+    queryFn: () => matriculaService.getByEstado(estado),
+  });
+};
+
+export const useHistorialByPersona = (personaId: string) => {
+  return useQuery({
+    queryKey: ['matriculas', 'historial', personaId],
+    queryFn: () => matriculaService.getHistorialByPersona(personaId),
+    enabled: !!personaId,
+  });
+};
 
 export const useCreateMatricula = () => {
   const queryClient = useQueryClient();

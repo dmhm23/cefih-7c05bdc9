@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { nivelFormacionService } from '@/services/nivelFormacionService';
 import { NivelFormacionFormData } from '@/types/nivelFormacion';
+import { invalidateNivelesCache, preloadNiveles } from '@/utils/resolveNivelLabel';
 
 export const useNivelesFormacion = () => {
   return useQuery({
@@ -31,6 +32,8 @@ export const useCreateNivelFormacion = () => {
     mutationFn: (data: NivelFormacionFormData) => nivelFormacionService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['niveles-formacion'] });
+      invalidateNivelesCache();
+      preloadNiveles();
     },
   });
 };
@@ -43,6 +46,8 @@ export const useUpdateNivelFormacion = () => {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['niveles-formacion'] });
       queryClient.invalidateQueries({ queryKey: ['nivel-formacion', id] });
+      invalidateNivelesCache();
+      preloadNiveles();
     },
   });
 };

@@ -340,6 +340,14 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
         />
       );
 
+    case "signature_capture":
+      return (
+        <SignatureCaptureBlock
+          bloque={bloque as BloqueSignatureCapture}
+          rc={rc}
+        />
+      );
+
     default:
       return null;
   }

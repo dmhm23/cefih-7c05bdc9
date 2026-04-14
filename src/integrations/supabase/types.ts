@@ -874,6 +874,7 @@ export type Database = {
           document_meta: Json | null
           encabezado_config: Json | null
           es_automatico: boolean
+          es_origen_firma: boolean
           estado: Database["public"]["Enums"]["estado_formato"]
           eventos_disparadores: Json
           html_template: string | null
@@ -910,6 +911,7 @@ export type Database = {
           document_meta?: Json | null
           encabezado_config?: Json | null
           es_automatico?: boolean
+          es_origen_firma?: boolean
           estado?: Database["public"]["Enums"]["estado_formato"]
           eventos_disparadores?: Json
           html_template?: string | null
@@ -946,6 +948,7 @@ export type Database = {
           document_meta?: Json | null
           encabezado_config?: Json | null
           es_automatico?: boolean
+          es_origen_firma?: boolean
           estado?: Database["public"]["Enums"]["estado_formato"]
           eventos_disparadores?: Json
           html_template?: string | null
@@ -1953,6 +1956,7 @@ export type Database = {
           document_meta: Json | null
           encabezado_config: Json | null
           es_automatico: boolean
+          es_origen_firma: boolean
           estado: Database["public"]["Enums"]["estado_formato"]
           eventos_disparadores: Json
           html_template: string | null

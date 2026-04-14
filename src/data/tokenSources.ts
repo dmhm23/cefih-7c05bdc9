@@ -1,15 +1,10 @@
 import { AutoFieldKey } from '@/types/formatoFormacion';
 
 export interface TokenDefinition {
-  /** Token key in template notation, e.g. 'persona.nombreCompleto' */
   key: string;
-  /** Human-readable label */
   label: string;
-  /** Category for grouping */
   category: string;
-  /** Maps to AutoFieldKey in resolveAutoField */
   autoFieldKey: AutoFieldKey;
-  /** Optional description */
   description?: string;
 }
 
@@ -39,12 +34,22 @@ const TOKEN_CATALOG: TokenDefinition[] = [
   { key: 'empresa.cargo', label: 'Cargo', category: 'Empresa', autoFieldKey: 'empresa_cargo' },
   { key: 'empresa.nit', label: 'NIT empresa', category: 'Empresa', autoFieldKey: 'empresa_nit' },
   { key: 'empresa.representanteLegal', label: 'Representante legal', category: 'Empresa', autoFieldKey: 'empresa_representante_legal' },
-  { key: 'empresa.nivelFormacion', label: 'Nivel de formación empresa', category: 'Empresa', autoFieldKey: 'empresa_nivel_formacion' },
+  { key: 'empresa.nivelFormacion', label: 'Nivel de formación', category: 'Empresa', autoFieldKey: 'nivel_formacion' },
   { key: 'empresa.areaTrabajo', label: 'Área de trabajo', category: 'Empresa', autoFieldKey: 'area_trabajo' },
   { key: 'empresa.sectorEconomico', label: 'Sector económico', category: 'Empresa', autoFieldKey: 'sector_economico' },
   { key: 'empresa.tipoVinculacion', label: 'Responsable del pago', category: 'Empresa', autoFieldKey: 'tipo_vinculacion' },
   { key: 'empresa.eps', label: 'EPS', category: 'Empresa', autoFieldKey: 'eps_aprendiz' },
   { key: 'empresa.arl', label: 'ARL', category: 'Empresa', autoFieldKey: 'arl_aprendiz' },
+
+  // --- Salud ---
+  { key: 'salud.consentimiento', label: 'Consentimiento de salud', category: 'Salud', autoFieldKey: 'consentimiento_salud' },
+  { key: 'salud.restriccionMedica', label: 'Restricción médica', category: 'Salud', autoFieldKey: 'restriccion_medica' },
+  { key: 'salud.restriccionMedicaDetalle', label: 'Restricción médica (detalle)', category: 'Salud', autoFieldKey: 'restriccion_medica_detalle' },
+  { key: 'salud.alergias', label: 'Alergias', category: 'Salud', autoFieldKey: 'alergias' },
+  { key: 'salud.alergiasDetalle', label: 'Alergias (detalle)', category: 'Salud', autoFieldKey: 'alergias_detalle' },
+  { key: 'salud.consumoMedicamentos', label: 'Consumo de medicamentos', category: 'Salud', autoFieldKey: 'consumo_medicamentos' },
+  { key: 'salud.consumoMedicamentosDetalle', label: 'Consumo medicamentos (detalle)', category: 'Salud', autoFieldKey: 'consumo_medicamentos_detalle' },
+  { key: 'salud.embarazo', label: 'Embarazo', category: 'Salud', autoFieldKey: 'embarazo' },
 
   // --- Curso ---
   { key: 'curso.nombre', label: 'Nombre del curso', category: 'Curso', autoFieldKey: 'nombre_curso' },

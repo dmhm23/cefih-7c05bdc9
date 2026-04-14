@@ -23,10 +23,20 @@ export const AUTO_FIELD_CATALOG: AutoFieldOption[] = [
   { key: 'contacto_emergencia_nombre', label: 'Contacto emergencia (nombre)', category: 'Datos del Aprendiz', source: 'Persona' },
   { key: 'contacto_emergencia_telefono', label: 'Contacto emergencia (teléfono)', category: 'Datos del Aprendiz', source: 'Persona' },
 
+  // --- Datos de Salud (Matrícula) ---
+  { key: 'consentimiento_salud', label: 'Consentimiento de salud', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'restriccion_medica', label: 'Restricción médica (Sí/No)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'restriccion_medica_detalle', label: 'Restricción médica (detalle)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'alergias', label: 'Alergias (Sí/No)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'alergias_detalle', label: 'Alergias (detalle)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'consumo_medicamentos', label: 'Consumo de medicamentos (Sí/No)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'consumo_medicamentos_detalle', label: 'Consumo de medicamentos (detalle)', category: 'Datos de Salud', source: 'Matrícula' },
+  { key: 'embarazo', label: 'Embarazo (Sí/No)', category: 'Datos de Salud', source: 'Matrícula' },
+
   // --- Datos Laborales (Matrícula) ---
   { key: 'empresa_nombre', label: 'Nombre de la empresa', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'empresa_cargo', label: 'Cargo', category: 'Datos Laborales', source: 'Matrícula' },
-  { key: 'empresa_nivel_formacion', label: 'Nivel de formación empresa', category: 'Datos Laborales', source: 'Matrícula' },
+  { key: 'nivel_formacion', label: 'Nivel de formación', category: 'Datos Laborales', source: 'Matrícula', description: 'Resuelve el nombre del nivel desde nivel_formacion_id' },
   { key: 'empresa_nit', label: 'NIT empresa', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'empresa_representante_legal', label: 'Representante legal', category: 'Datos Laborales', source: 'Matrícula' },
   { key: 'area_trabajo', label: 'Área de trabajo', category: 'Datos Laborales', source: 'Matrícula' },

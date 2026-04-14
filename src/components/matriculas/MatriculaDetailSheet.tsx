@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -32,7 +32,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula } from "@/hooks/useMatriculas";
+import { sincronizarDocumentos } from "@/services/documentoService";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";

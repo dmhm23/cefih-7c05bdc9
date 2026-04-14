@@ -185,8 +185,9 @@ export default function FormatoEditorPage() {
       store.markClean();
       setSavedOnce(true);
       navigate('/gestion-formatos');
-    } catch {
-      toast({ title: 'Error al guardar', variant: 'destructive' });
+    } catch (err: any) {
+      const msg = err?.message || 'Error al guardar';
+      toast({ title: msg, variant: 'destructive' });
     }
   };
 

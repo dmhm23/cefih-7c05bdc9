@@ -256,6 +256,25 @@ export interface EncabezadoConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Dependencia entre formatos
+// ---------------------------------------------------------------------------
+
+export type TipoDependencia = 'activacion' | 'datos' | 'precondicion';
+export type CondicionDependencia = 'completado' | 'firmado' | 'aprobado';
+
+export interface FormatoDependencia {
+  formatoId: string;
+  tipo: TipoDependencia;
+  condicion: CondicionDependencia;
+}
+
+// ---------------------------------------------------------------------------
+// Eventos disparadores para formatos automáticos
+// ---------------------------------------------------------------------------
+
+export type EventoDisparador = 'asignacion_curso' | 'cierre_curso' | 'firma_completada';
+
+// ---------------------------------------------------------------------------
 // FormatoFormacion — entidad principal
 // ---------------------------------------------------------------------------
 
@@ -314,6 +333,12 @@ export interface FormatoFormacion {
     subsistema: string;
   };
 
+  // Dependencias entre formatos
+  dependencias: FormatoDependencia[];
+
+  // Eventos que disparan generación automática
+  eventosDisparadores: EventoDisparador[];
+
   // Legacy: si este formato tiene componente hardcodeado asociado
   legacyComponentId?: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats' | 'evaluacion_reentrenamiento';
 
@@ -352,7 +377,13 @@ export interface PlantillaBase {
 }
 
 // ---------------------------------------------------------------------------
-// FormatoRespuesta — respuestas por matrícula y formato (futuro)
+// Estado de formato-respuesta (extendido)
+// ---------------------------------------------------------------------------
+
+export type EstadoFormatoRespuesta = 'pendiente' | 'completado' | 'firmado' | 'bloqueado' | 'reabierto';
+
+// ---------------------------------------------------------------------------
+// FormatoRespuesta — respuestas por matrícula y formato
 // ---------------------------------------------------------------------------
 
 export interface FormatoRespuesta {
@@ -360,8 +391,31 @@ export interface FormatoRespuesta {
   matriculaId: string;
   formatoId: string;
   answers: Record<string, unknown>;  // key = bloqueId, value = respuesta
-  estado: 'pendiente' | 'completado' | 'firmado';
+  estado: EstadoFormatoRespuesta;
   completadoAt?: string;
+  reabiertoPor?: string;
+  reabiertoAt?: string;
+  intentosEvaluacion?: Record<string, unknown>[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Firma por matrícula
+// ---------------------------------------------------------------------------
+
+export type TipoFirmaMatricula = 'aprendiz' | 'entrenador' | 'supervisor';
+
+export interface FirmaMatricula {
+  id: string;
+  matriculaId: string;
+  tipo: TipoFirmaMatricula;
+  firmaBase64: string;
+  formatoOrigenId?: string;
+  ip?: string;
+  userAgent?: string;
+  hashIntegridad?: string;
+  autorizaReutilizacion: boolean;
   createdAt: string;
   updatedAt: string;
 }

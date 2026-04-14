@@ -120,15 +120,15 @@ export default function MatriculaDetallePage() {
   const [docsSynced, setDocsSynced] = useState(false);
   useEffect(() => {
     if (!matricula?.id || docsSynced) return;
-    // Use nivelFormacionId directly from the enrollment (source of truth)
-    const nivelId = matricula.nivelFormacionId;
+    // nivelFormacionId is the single source of truth
+    const nivelId = matricula.nivelFormacionId || matricula.empresaNivelFormacion || undefined;
     sincronizarDocumentos(matricula.id, nivelId)
       .then(({ huboCambios }) => {
         setDocsSynced(true);
         if (huboCambios) refetchMatricula();
       })
       .catch(() => setDocsSynced(true));
-  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, refetchMatricula]);
+  }, [matricula?.id, matricula?.nivelFormacionId, matricula?.empresaNivelFormacion, docsSynced, refetchMatricula]);
 
   const handleSyncCartera = async () => {
     if (!matricula || !id) return;
@@ -691,9 +691,12 @@ export default function MatriculaDetallePage() {
               />
               <EditableField
                 label="Nivel de Formación"
-                value={getValue("empresaNivelFormacion")}
-                displayValue={resolveNivelFormacionLabel(getValue("empresaNivelFormacion"))}
-                onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+                value={getValue("nivelFormacionId") || getValue("empresaNivelFormacion")}
+                displayValue={resolveNivelFormacionLabel(getValue("nivelFormacionId") || getValue("empresaNivelFormacion"))}
+                onChange={(v) => {
+                  handleFieldChange("nivelFormacionId", v);
+                  handleFieldChange("empresaNivelFormacion", v);
+                }}
                 type="select"
                 options={nivelesOptions}
               />

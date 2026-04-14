@@ -1931,6 +1931,7 @@ export type Database = {
           enviado_en: string
           estado: Database["public"]["Enums"]["estado_doc_portal"]
           firma_data: string
+          formato_id: string
           icono: string
           intentos: Json
           label: string

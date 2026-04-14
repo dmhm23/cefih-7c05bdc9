@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
@@ -10,6 +10,7 @@ import type { Personal } from "@/types/personal";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { parseLocalDate } from "@/utils/dateUtils";
+import { ChevronDown } from "lucide-react";
 import BloqueHealthConsentRenderer from "./bloques/BloqueHealthConsentRenderer";
 import BloqueDataAuthorizationRenderer from "./bloques/BloqueDataAuthorizationRenderer";
 import BloqueEvaluationQuizRenderer from "./bloques/BloqueEvaluationQuizRenderer";
@@ -85,7 +86,11 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
   const { ctx, answers, onChange, readOnly } = rc;
 
   switch (bloque.type) {
-    case "section_title":
+    case "section_title": {
+      const isCollapsible = ("props" in bloque && (bloque as any).props?.collapsible) || false;
+      if (isCollapsible) {
+        return <CollapsibleSection bloque={bloque} rc={rc} />;
+      }
       return (
         <div className="field-span" style={{ gridColumn: "span 2" }}>
           <div className="section-title flex items-center gap-2 border-b border-border pb-1 mt-5 mb-3">
@@ -95,6 +100,7 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
           </div>
         </div>
       );
+    }
 
     case "heading": {
       const level = ("props" in bloque && (bloque as any).props?.level) || 2;

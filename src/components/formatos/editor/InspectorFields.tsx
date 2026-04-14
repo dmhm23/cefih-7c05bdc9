@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
-import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
+import type { Bloque, TipoBloque, VisibilityRule } from '@/types/formatoFormacion';
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -65,8 +65,24 @@ export default function InspectorFields({ bloque, onChange }: InspectorFieldsPro
         </div>
       )}
 
+      {/* Editable toggle (for auto_field and pre-filled fields) */}
+      {bloque.type === 'auto_field' && (
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Editable por estudiante</Label>
+          <Switch
+            checked={(bloque as any).editable ?? false}
+            onCheckedChange={(v) => onChange({ editable: v } as any)}
+          />
+        </div>
+      )}
+
       {/* Type-specific */}
       <TypeSpecific bloque={bloque} onChange={onChange} />
+
+      {/* Visibility Rule — available for all field blocks */}
+      {!['divider', 'document_header'].includes(bloque.type) && (
+        <VisibilityRuleInspector bloque={bloque} onChange={onChange} />
+      )}
     </div>
   );
 }

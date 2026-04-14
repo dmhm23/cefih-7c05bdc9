@@ -116,7 +116,20 @@ export default function MatriculaDetallePage() {
       .then(({ data }) => setHasGrupoCartera(!!data));
   }, [matricula?.id]);
 
-  const handleSyncCartera = async () => {
+  // Sync document requirements: create missing docs for existing enrollments
+  const [docsSynced, setDocsSynced] = useState(false);
+  useEffect(() => {
+    if (!matricula?.id || docsSynced) return;
+    const nivelId = curso?.nivelFormacionId;
+    sincronizarDocumentos(matricula.id, nivelId)
+      .then(({ huboCambios }) => {
+        setDocsSynced(true);
+        if (huboCambios) refetchMatricula();
+      })
+      .catch(() => setDocsSynced(true));
+  }, [matricula?.id, curso?.nivelFormacionId, docsSynced, refetchMatricula]);
+
+
     if (!matricula || !id) return;
     setSyncingCartera(true);
     try {

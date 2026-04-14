@@ -70,6 +70,107 @@ function SignatureBox({ label, imageBase64, name }: { label: string; imageBase64
 }
 
 // ---------------------------------------------------------------------------
+// Signature capture block component
+// ---------------------------------------------------------------------------
+
+function SignatureCaptureBlock({ bloque, rc }: { bloque: BloqueSignatureCapture; rc: RenderContext }) {
+  const { ctx, answers, onChange, readOnly } = rc;
+  const mode: SignatureCaptureMode = bloque.props?.mode || 'capture';
+  const tipoFirmante = bloque.props?.tipoFirmante || 'aprendiz';
+  const formatoOrigenId = bloque.props?.formatoOrigenId;
+
+  // Try to resolve reusable signature
+  const firmas = ctx.firmasMatricula || [];
+  const eligible = firmas.filter(f => f.tipo === tipoFirmante && f.autorizaReutilizacion);
+  let reusable: FirmaMatricula | null = null;
+  if (formatoOrigenId) {
+    reusable = eligible.find(f => f.formatoOrigenId === formatoOrigenId) || null;
+  } else if (eligible.length > 0) {
+    reusable = eligible.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+  }
+
+  const existingCapture = answers[bloque.id] as string | undefined;
+
+  // Display-only mode
+  if (mode === 'display_only') {
+    const img = reusable?.firmaBase64 || existingCapture;
+    return (
+      <SignatureBox
+        label={bloque.label || `Firma ${tipoFirmante}`}
+        imageBase64={img || null}
+      />
+    );
+  }
+
+  // Reuse required but no signature
+  if (mode === 'reuse_required' && !reusable) {
+    return (
+      <div className="mt-4" style={{ gridColumn: "span 2" }}>
+        <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || `Firma ${tipoFirmante}`}</p>
+        <div className="border-2 border-dashed border-destructive/40 rounded h-24 flex items-center justify-center">
+          <p className="text-sm text-destructive italic">Firma requerida — complete primero el formato origen</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Reuse available
+  if ((mode === 'reuse_if_available' || mode === 'reuse_required') && reusable) {
+    return (
+      <SignatureBox
+        label={bloque.label || `Firma ${tipoFirmante} (reutilizada)`}
+        imageBase64={reusable.firmaBase64}
+      />
+    );
+  }
+
+  // Capture mode (or reuse_if_available without existing)
+  if (readOnly) {
+    return (
+      <SignatureBox
+        label={bloque.label || `Firma ${tipoFirmante}`}
+        imageBase64={existingCapture || null}
+      />
+    );
+  }
+
+  // Interactive capture canvas
+  return (
+    <div className="mt-4" style={{ gridColumn: "span 2" }}>
+      <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || `Firma ${tipoFirmante}`}</p>
+      {existingCapture ? (
+        <div className="space-y-2">
+          <div className="border rounded h-24 flex items-center justify-center bg-muted/10">
+            <img src={existingCapture} alt="Firma capturada" className="max-h-16 object-contain" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-green-600 font-medium">✓ Firma lista</span>
+            <button
+              type="button"
+              onClick={() => onChange?.(bloque.id, undefined)}
+              className="text-xs text-destructive underline"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="border-2 border-dashed border-primary/30 rounded p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-2">
+            La captura de firma se habilitará al enviar desde el portal
+          </p>
+          <p className="text-xs text-muted-foreground italic">
+            (Bloque signature_capture — modo: {mode})
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Block renderer
 // ---------------------------------------------------------------------------
 

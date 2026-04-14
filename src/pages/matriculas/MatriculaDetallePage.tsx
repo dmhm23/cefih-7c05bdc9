@@ -86,7 +86,7 @@ export default function MatriculaDetallePage() {
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
   const [isPersonaDirty, setIsPersonaDirty] = useState(false);
 
-  const { data: matricula, isLoading } = useMatricula(id || "");
+  const { data: matricula, isLoading, refetch: refetchMatricula } = useMatricula(id || "");
   const { data: persona } = usePersona(matricula?.personaId || "");
   const { data: curso } = useCurso(matricula?.cursoId || "");
   const { data: formatosDinamicos } = useFormatosMatricula(id);

@@ -32,45 +32,12 @@ export type TipoBloque =
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
  */
-export type AutoFieldKey =
-  | 'nombre_aprendiz'
-  | 'documento_aprendiz'
-  | 'tipo_documento_aprendiz'
-  | 'genero_aprendiz'
-  | 'fecha_nacimiento_aprendiz'
-  | 'pais_nacimiento_aprendiz'
-  | 'nivel_educativo_aprendiz'
-  | 'rh_aprendiz'
-  | 'telefono_aprendiz'
-  | 'email_aprendiz'
-  | 'contacto_emergencia_nombre'
-  | 'contacto_emergencia_telefono'
-  | 'empresa_nombre'
-  | 'empresa_cargo'
-  | 'empresa_nivel_formacion'
-  | 'empresa_nit'
-  | 'empresa_representante_legal'
-  | 'area_trabajo'
-  | 'sector_economico'
-  | 'tipo_vinculacion'
-  | 'eps_aprendiz'
-  | 'arl_aprendiz'
-  | 'nivel_previo'
-  | 'centro_formacion_previo'
-  | 'fecha_inicio_curso'
-  | 'fecha_fin_curso'
-  | 'nombre_curso'
-  | 'tipo_formacion_curso'
-  | 'numero_curso'
-  | 'duracion_dias_curso'
-  | 'horas_totales_curso'
-  | 'entrenador_nombre'
-  | 'supervisor_nombre'
-  | 'fecha_diligenciamiento'
-  | 'aprendiz_firma'
-  | 'entrenador_firma'
-  | 'supervisor_firma';
-
+/**
+ * Claves de auto_field: valores resueltos automáticamente desde el sistema.
+ * Se mantiene como string para permitir extensibilidad dinámica.
+ * Las claves conocidas se documentan en autoFieldCatalog.ts.
+ */
+export type AutoFieldKey = string;
 export interface BloqueBase {
   id: string;
   type: TipoBloque;

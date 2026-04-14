@@ -1,24 +1,69 @@
+# Plan: Corregir carga de requisitos documentales en matrículas
 
-# Plan: Refactorización para Autonomía Total en Gestión de Formatos
+## Diagnóstico
 
-## Estado: Fases 1, 2, 3 y 5 completadas ✅
+El problema es que **nunca se crean las filas de `documentos_matricula**` en la base de datos. La función `crearDocumentosMatricula` y `sincronizarDocumentos` existen en `src/services/documentoService.ts` pero **no se invocan desde ningún lugar**:
 
-### Fase 1 ✅ — Resolución dinámica de nivel de formación
-- `resolveAutoField.ts` ahora usa `resolveNivelFormacionLabel()` (cache dinámica desde DB) en vez del mapa legacy `NIVELES_FORMACION_EMPRESA`
-- Se agregó `nivelFormacionNombre` al `AutoFieldContext` para resolución directa
+1. **Al crear matrícula** (`MatriculaFormPage.tsx`): se llama `createMatricula.mutateAsync()` pero nunca se ejecuta `crearDocumentosMatricula()` después.
+2. **Al abrir detalle** (`MatriculaDetallePage.tsx`): no se llama `sincronizarDocumentos()` para verificar/crear documentos faltantes.
 
-### Fase 2 ✅ — Asistencia dinámica con fallback
-- El bloque `attendance_by_day` muestra mensaje claro cuando `duracionDias` es 0 o null
+Resultado: `matricula.documentos` siempre es `[]`, por lo que `DocumentosCarga` no renderiza ningún documento ni botón de carga.
 
-### Fase 3 ✅ — Portal: habilitación por UUID de nivel
-- Migración DB: nueva columna `niveles_habilitados UUID[]`, eliminada `habilitado_por_nivel` JSONB
-- `get_documentos_portal` ahora filtra por `nivel_formacion_id` del curso
-- Frontend actualizado: `DocumentoConfigDialog`, `DocumentosCatalogoTable`, `NivelesHabilitacionGrid`
+Para la matrícula actual (`6a65ed3a...`), además `curso_id` es `null`, lo que significa que no hay nivel de formación asociado — en ese caso el sistema debería al menos crear el requisito mínimo (Cédula) y un mensaje con buen UX y claro, como ej. asignar nivel de formación para carga de requisitos.
 
-### Fase 5 ✅ — Auto-vinculación Portal ↔ Formato
-- Al guardar un formato con `visible_en_portal_estudiante = true`, se crea/reactiva automáticamente en `portal_config_documentos`
-- Al desactivar, se marca `activo = false` (preserva historial)
+## Cambios propuestos
 
-### Fase 4 — Pendiente (proyecto separado)
-- Desacoplar bloques especiales (`health_consent`, `data_authorization`, `evaluation_quiz`, `satisfaction_survey`) del código hardcodeado
-- Convertirlos en composiciones de bloques primitivos editables desde el constructor
+### 1. Crear documentos al crear matrícula
+
+**Archivo**: `src/hooks/useMatriculas.ts` → `useCreateMatricula`
+
+En el `onSuccess` del mutation, llamar `crearDocumentosMatricula(matricula.id, nivelFormacionId)`. Alternativamente, encadenar la llamada dentro del `mutationFn` después de `matriculaService.create()`.
+
+```
+mutationFn: async (data) => {
+  const matricula = await matriculaService.create(data);
+  // Obtener nivel del curso si existe
+  let nivelId = undefined;
+  if (data.cursoId) {
+    const curso = await cursoService.getById(data.cursoId); // o query directa
+    nivelId = curso?.nivelFormacionId;
+  }
+  await crearDocumentosMatricula(matricula.id, nivelId);
+  return matricula;
+}
+```
+
+### 2. Sincronizar documentos al cargar detalle
+
+**Archivo**: `src/pages/matriculas/MatriculaDetallePage.tsx`
+
+Agregar un `useEffect` que al cargar la matrícula llame `sincronizarDocumentos()` si el curso tiene un nivel de formación. Esto cubre matrículas existentes que no tienen documentos creados y también detecta nuevos requisitos añadidos al nivel.
+
+```
+useEffect(() => {
+  if (matricula && curso?.nivelFormacionId) {
+    sincronizarDocumentos(matricula.id, curso.nivelFormacionId)
+      .then(({ huboCambios }) => {
+        if (huboCambios) refetchMatricula();
+      });
+  }
+}, [matricula?.id, curso?.nivelFormacionId]);
+```
+
+### 3. Fallback para matrículas sin curso
+
+Cuando `curso_id` es `null`, llamar `sincronizarDocumentos(matriculaId, undefined)` para que al menos se cree el requisito mínimo (Cédula) y mostrar un mensaje con buen UX y claro, como ej. asignar nivel de formación para carga de requisitos.
+
+## Archivos a modificar
+
+
+| Archivo                                         | Cambio                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `src/hooks/useMatriculas.ts`                    | Encadenar `crearDocumentosMatricula` en `useCreateMatricula` |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Agregar `useEffect` con `sincronizarDocumentos`              |
+
+
+## Impacto
+
+- **Ningún cambio** en `DocumentosCarga.tsx`, `driveService.ts`, `matriculaService.ts` ni storage — todo el pipeline de subida ya funciona correctamente.
+- Las matrículas existentes sin documentos se reparan automáticamente al abrir su detalle.

@@ -9,10 +9,11 @@ import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api
 /** Map a DB row (snake_case) to the frontend Matricula shape */
 function rowToMatricula(row: any): Matricula {
   const m = snakeToCamel<any>(row);
-  // Map firma_storage_path → firmaBase64 is not applicable; keep storage path
-  // documentos come from a separate query
   return {
     ...m,
+    // Unify: nivelFormacionId is the single source of truth;
+    // fall back to empresaNivelFormacion for legacy rows not yet backfilled
+    nivelFormacionId: m.nivelFormacionId || m.empresaNivelFormacion || undefined,
     firmaBase64: undefined, // firma lives in storage, not inline
     documentos: [], // populated separately
   } as Matricula;
@@ -30,9 +31,14 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   delete row.empresa_contacto_id; // not a DB column
 
   // Sanitize empty strings to null for UUID columns
-  const uuidFields = ['curso_id', 'empresa_id', 'persona_id'];
+  const uuidFields = ['curso_id', 'empresa_id', 'persona_id', 'nivel_formacion_id'];
   for (const f of uuidFields) {
     if (row[f] === '') row[f] = null;
+  }
+
+  // Keep empresa_nivel_formacion in sync with nivel_formacion_id for legacy compatibility
+  if (row.nivel_formacion_id) {
+    row.empresa_nivel_formacion = row.nivel_formacion_id;
   }
 
   // Strip undefined values

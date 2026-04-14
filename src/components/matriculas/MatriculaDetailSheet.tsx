@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -32,7 +32,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula } from "@/hooks/useMatriculas";
+import { sincronizarDocumentos } from "@/services/documentoService";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
@@ -109,12 +110,28 @@ export function MatriculaDetailSheet({
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
   const [dynamicFormato, setDynamicFormato] = useState<FormatoFormacion | null>(null);
 
+  // Fetch individual matricula to get documents
+  const { data: fullMatricula, refetch: refetchMatricula } = useMatricula(matricula?.id || "");
+
   const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
   const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
   const { data: formatosDinamicos } = useFormatosMatricula(matricula?.id);
   const { data: respuestas = [] } = useFormatoRespuestas(matricula?.id);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+
+  // Sync document requirements
+  const [docsSynced, setDocsSynced] = useState(false);
+  useEffect(() => {
+    if (!matricula?.id || docsSynced || !open) return;
+    const nivelId = matricula.nivelFormacionId;
+    sincronizarDocumentos(matricula.id, nivelId)
+      .then(({ huboCambios }) => {
+        setDocsSynced(true);
+        if (huboCambios) refetchMatricula();
+      })
+      .catch(() => setDocsSynced(true));
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, open, refetchMatricula]);
 
   useEffect(() => {
     setFormData({});
@@ -123,6 +140,7 @@ export function MatriculaDetailSheet({
     setIsPersonaDirty(false);
     setPreviewFormato(null);
     setDynamicFormato(null);
+    setDocsSynced(false);
   }, [matricula?.id]);
 
   useEffect(() => {
@@ -508,7 +526,7 @@ export function MatriculaDetailSheet({
         {/* Documentos */}
         <DetailSection title="Requisitos documentales">
           <DocumentosCarga
-            documentos={matricula.documentos}
+            documentos={fullMatricula?.documentos || matricula.documentos}
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
             onFechaChange={handleDocFechaChange}

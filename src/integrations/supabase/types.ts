@@ -1027,6 +1027,7 @@ export type Database = {
           firma_storage_path: string | null
           forma_pago: Database["public"]["Enums"]["metodo_pago"] | null
           id: string
+          nivel_formacion_id: string | null
           nivel_lectoescritura: boolean
           nivel_previo: Database["public"]["Enums"]["nivel_previo"] | null
           observaciones: string | null
@@ -1094,6 +1095,7 @@ export type Database = {
           firma_storage_path?: string | null
           forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
           id?: string
+          nivel_formacion_id?: string | null
           nivel_lectoescritura?: boolean
           nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
           observaciones?: string | null
@@ -1161,6 +1163,7 @@ export type Database = {
           firma_storage_path?: string | null
           forma_pago?: Database["public"]["Enums"]["metodo_pago"] | null
           id?: string
+          nivel_formacion_id?: string | null
           nivel_lectoescritura?: boolean
           nivel_previo?: Database["public"]["Enums"]["nivel_previo"] | null
           observaciones?: string | null
@@ -1190,6 +1193,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_nivel_formacion_id_fkey"
+            columns: ["nivel_formacion_id"]
+            isOneToOne: false
+            referencedRelation: "niveles_formacion"
             referencedColumns: ["id"]
           },
           {

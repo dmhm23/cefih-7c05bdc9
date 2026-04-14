@@ -215,7 +215,7 @@ export default function InfoAprendizDocument({ persona, matricula, curso, onAuto
           <FieldCell label="Nivel educativo" value={getLabel(persona?.nivelEducativo, NIVELES_EDUCATIVOS)} />
           <FieldCell label="Área de trabajo" value={getLabel(matricula.areaTrabajo, AREAS_TRABAJO)} />
           <FieldCell label="Cargo" value={matricula.empresaCargo} />
-          <FieldCell label="Nivel de formación" value={resolveNivelFormacionLabel(matricula.empresaNivelFormacion)} span />
+          <FieldCell label="Nivel de formación" value={resolveNivelFormacionLabel(matricula.nivelFormacionId)} span />
         </div>
       </div>
 

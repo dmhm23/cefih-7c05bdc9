@@ -76,8 +76,8 @@ export function AgregarEstudiantesModal({
     return matriculas.filter(
       (m) =>
         (!m.cursoId || m.cursoId === "") &&
-        m.empresaNivelFormacion &&
-        nivelesValidos.includes(m.empresaNivelFormacion)
+        m.nivelFormacionId &&
+        nivelesValidos.includes(m.nivelFormacionId)
     );
   }, [matriculas, nivelesValidos]);
 

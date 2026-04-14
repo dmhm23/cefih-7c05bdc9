@@ -691,9 +691,9 @@ export default function MatriculaDetallePage() {
               />
               <EditableField
                 label="Nivel de Formación"
-                value={getValue("empresaNivelFormacion")}
-                displayValue={resolveNivelFormacionLabel(getValue("empresaNivelFormacion"))}
-                onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
+                value={getValue("nivelFormacionId")}
+                displayValue={resolveNivelFormacionLabel(getValue("nivelFormacionId"))}
+                onChange={(v) => handleFieldChange("nivelFormacionId", v)}
                 type="select"
                 options={nivelesOptions}
               />

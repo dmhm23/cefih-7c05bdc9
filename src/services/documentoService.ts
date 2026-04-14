@@ -27,10 +27,14 @@ export async function getDocumentosRequeridos(
     cedula: 'Cédula de Ciudadanía',
     certificado_eps: 'Certificado EPS',
     certificado_arl: 'Certificado ARL',
+    arl: 'ARL',
     certificado_pension: 'Certificado Pensión',
     examen_medico: 'Examen Médico Ocupacional',
     certificado_alturas: 'Certificado de Alturas Previo',
     carta_autorizacion: 'Carta de Autorización',
+    planilla_seguridad_social: 'Planilla de Seguridad Social',
+    curso_previo: 'Certificado Curso Previo',
+    consolidado: 'Consolidado',
     otro: 'Otro documento',
   };
 

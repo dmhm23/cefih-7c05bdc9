@@ -169,6 +169,7 @@ export default function FormatoEditorPage() {
       bloques: items as Bloque[], // Store all items including row2
       dependencias: existing?.dependencias || [],
       eventosDisparadores: existing?.eventosDisparadores || [],
+      esOrigenFirma: existing?.esOrigenFirma ?? false,
       documentMeta: existing?.documentMeta,
     };
 

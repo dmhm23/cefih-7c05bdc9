@@ -43,6 +43,7 @@ const PALETTE: PaletteItem[] = [
   { type: 'signature_aprendiz', label: 'Firma aprendiz', icon: PenTool, category: 'special' },
   { type: 'signature_entrenador_auto', label: 'Firma entrenador', icon: PenTool, category: 'special' },
   { type: 'signature_supervisor_auto', label: 'Firma supervisor', icon: PenTool, category: 'special' },
+  { type: 'signature_capture', label: 'Captura firma', icon: PenTool, category: 'special' },
   { type: 'file', label: 'Archivo', icon: Paperclip, category: 'special' },
   { type: 'health_consent', label: 'Consentimiento salud', icon: Heart, category: 'special' },
   { type: 'data_authorization', label: 'Autorización datos', icon: ShieldCheck, category: 'special' },

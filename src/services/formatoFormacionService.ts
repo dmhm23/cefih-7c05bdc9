@@ -53,6 +53,7 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   if (data.plantillaBaseId !== undefined) row.plantilla_base_id = data.plantillaBaseId;
   if (data.dependencias !== undefined) row.dependencias = data.dependencias;
   if (data.eventosDisparadores !== undefined) row.eventos_disparadores = data.eventosDisparadores;
+  if (data.esOrigenFirma !== undefined) row.es_origen_firma = data.esOrigenFirma;
 
   return row;
 }

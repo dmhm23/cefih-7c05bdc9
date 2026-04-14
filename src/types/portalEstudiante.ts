@@ -9,6 +9,7 @@ export interface DocumentoPortalConfig {
   requiereFirma: boolean;
   dependeDe: DocumentoPortalKey[];
   orden: number;
+  formatoId?: string | null;
 }
 
 export interface DocumentoPortalEstado {

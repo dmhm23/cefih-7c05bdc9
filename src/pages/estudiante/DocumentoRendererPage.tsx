@@ -1,13 +1,13 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
-import { useDocumentosPortal } from '@/hooks/usePortalEstudiante';
-import { TipoDocPortal } from '@/types/portalEstudiante';
+import { useDocumentosPortal, useFormatoById, useFirmasMatricula, useInfoAprendizData } from '@/hooks/usePortalEstudiante';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Construction, BookOpen } from 'lucide-react';
+import { FileText, Construction, BookOpen, AlertTriangle } from 'lucide-react';
 import InfoAprendizPage from './InfoAprendizPage';
 import EvaluacionPage from './EvaluacionPage';
+import DynamicPortalRenderer from './DynamicPortalRenderer';
 
-/* ── Placeholder renderers for future types ── */
+/* ── Legacy placeholder renderers (kept temporarily as fallback) ── */
 function FormularioPlaceholder() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
@@ -26,8 +26,8 @@ function SoloLecturaPlaceholder() {
   );
 }
 
-/* ── Renderer registry ── */
-const RENDERERS: Record<TipoDocPortal, React.ComponentType> = {
+/* ── Legacy renderer registry (fallback only when formato_id is missing) ── */
+const LEGACY_RENDERERS: Record<string, React.ComponentType> = {
   firma_autorizacion: InfoAprendizPage,
   evaluacion: EvaluacionPage,
   formulario: FormularioPlaceholder,
@@ -64,6 +64,27 @@ export default function DocumentoRendererPage() {
     return <Navigate to="/estudiante/inicio" replace />;
   }
 
-  const Renderer = RENDERERS[docConfig.tipo];
+  // PRIORITY: If docConfig has a formato_id, use the dynamic renderer
+  if (docConfig.formatoId) {
+    return (
+      <DynamicPortalRenderer
+        formatoId={docConfig.formatoId}
+        documentoKey={documentoKey}
+        matriculaId={session.matriculaId}
+      />
+    );
+  }
+
+  // FALLBACK: Legacy renderer for documents without formato_id
+  const Renderer = LEGACY_RENDERERS[docConfig.tipo];
+  if (!Renderer) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive" />
+        <p className="text-sm text-destructive">Documento no configurado — falta formato vinculado</p>
+      </div>
+    );
+  }
+
   return <Renderer />;
 }

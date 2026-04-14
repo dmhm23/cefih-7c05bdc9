@@ -68,7 +68,14 @@ function SortableRow({
           <GripVertical className="h-4 w-4" />
         </button>
       </TableCell>
-      <TableCell className="font-medium">{doc.nombre}</TableCell>
+      <TableCell className="font-medium">
+        <div className="flex items-center gap-2">
+          {doc.nombre}
+          {!(doc as any).formatoId && (
+            <Badge variant="destructive" className="text-[10px]">Sin formato vinculado</Badge>
+          )}
+        </div>
+      </TableCell>
       <TableCell><Badge variant="outline">{TIPO_LABELS[doc.tipo] || doc.tipo}</Badge></TableCell>
       <TableCell className="text-center">{doc.requiereFirma ? 'Sí' : 'No'}</TableCell>
       <TableCell className="text-sm text-muted-foreground">{depNames || '—'}</TableCell>

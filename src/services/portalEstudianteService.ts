@@ -72,6 +72,7 @@ export const portalEstudianteService = {
       requiereFirma: row.tipo === 'firma_autorizacion',
       dependeDe: row.depende_de || [],
       orden: row.orden,
+      formatoId: row.formato_id || null,
     }));
 
     const estados: DocumentoPortalEstado[] = rows.map((row: any) => ({

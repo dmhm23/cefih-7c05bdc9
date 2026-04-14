@@ -124,14 +124,14 @@ export function MatriculaDetailSheet({
   const [docsSynced, setDocsSynced] = useState(false);
   useEffect(() => {
     if (!matricula?.id || docsSynced || !open) return;
-    const nivelId = matricula.nivelFormacionId || matricula.empresaNivelFormacion || undefined;
+    const nivelId = matricula.nivelFormacionId;
     sincronizarDocumentos(matricula.id, nivelId)
       .then(({ huboCambios }) => {
         setDocsSynced(true);
         if (huboCambios) refetchMatricula();
       })
       .catch(() => setDocsSynced(true));
-  }, [matricula?.id, matricula?.nivelFormacionId, matricula?.empresaNivelFormacion, docsSynced, open, refetchMatricula]);
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, open, refetchMatricula]);
 
   useEffect(() => {
     setFormData({});
@@ -263,8 +263,8 @@ export function MatriculaDetailSheet({
   const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "Sin curso asignado";
-  const nivelFormacionLabel = (matricula.nivelFormacionId || matricula.empresaNivelFormacion)
-    ? resolveNivelFormacionLabel(matricula.nivelFormacionId || matricula.empresaNivelFormacion || '') 
+  const nivelFormacionLabel = matricula.empresaNivelFormacion 
+    ? resolveNivelFormacionLabel(matricula.empresaNivelFormacion) 
     : undefined;
 
   const handleFullScreen = () => {
@@ -414,12 +414,9 @@ export function MatriculaDetailSheet({
             />
             <EditableField
               label="Nivel de Formación"
-              value={getValue("nivelFormacionId") || getValue("empresaNivelFormacion") || ""}
-              displayValue={(getValue("nivelFormacionId") || getValue("empresaNivelFormacion")) ? resolveNivelFormacionLabel((getValue("nivelFormacionId") || getValue("empresaNivelFormacion")) as string) : undefined}
-              onChange={(v) => {
-                handleFieldChange("nivelFormacionId", v);
-                handleFieldChange("empresaNivelFormacion", v);
-              }}
+              value={getValue("empresaNivelFormacion") || ""}
+              displayValue={getValue("empresaNivelFormacion") ? resolveNivelFormacionLabel(getValue("empresaNivelFormacion") as string) : undefined}
+              onChange={(v) => handleFieldChange("empresaNivelFormacion", v)}
               type="select"
               options={nivelesOptions}
               icon={GraduationCap}

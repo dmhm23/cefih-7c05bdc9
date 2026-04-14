@@ -110,12 +110,28 @@ export function MatriculaDetailSheet({
   const [previewFormato, setPreviewFormato] = useState<PreviewFormatoId>(null);
   const [dynamicFormato, setDynamicFormato] = useState<FormatoFormacion | null>(null);
 
+  // Fetch individual matricula to get documents
+  const { data: fullMatricula, refetch: refetchMatricula } = useMatricula(matricula?.id || "");
+
   const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
   const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
   const { data: formatosDinamicos } = useFormatosMatricula(matricula?.id);
   const { data: respuestas = [] } = useFormatoRespuestas(matricula?.id);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
+
+  // Sync document requirements
+  const [docsSynced, setDocsSynced] = useState(false);
+  useEffect(() => {
+    if (!matricula?.id || docsSynced || !open) return;
+    const nivelId = matricula.nivelFormacionId;
+    sincronizarDocumentos(matricula.id, nivelId)
+      .then(({ huboCambios }) => {
+        setDocsSynced(true);
+        if (huboCambios) refetchMatricula();
+      })
+      .catch(() => setDocsSynced(true));
+  }, [matricula?.id, matricula?.nivelFormacionId, docsSynced, open, refetchMatricula]);
 
   useEffect(() => {
     setFormData({});
@@ -124,6 +140,7 @@ export function MatriculaDetailSheet({
     setIsPersonaDirty(false);
     setPreviewFormato(null);
     setDynamicFormato(null);
+    setDocsSynced(false);
   }, [matricula?.id]);
 
   useEffect(() => {

@@ -7,10 +7,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus, X } from 'lucide-react';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
-import { CategoriaFormato, AsignacionScope, ModoDiligenciamiento } from '@/types/formatoFormacion';
+import { CategoriaFormato, AsignacionScope, ModoDiligenciamiento, TipoDependencia, CondicionDependencia, EventoDisparador } from '@/types/formatoFormacion';
 import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
+import { useFormatos } from '@/hooks/useFormatosFormacion';
 import { cn } from '@/lib/utils';
+import { useMemo, useState } from 'react';
 
 const CATEGORIA_OPTIONS: { value: CategoriaFormato; label: string }[] = [
   { value: 'formacion', label: 'Formación' },
@@ -26,6 +31,24 @@ const MODO_DILIGENCIAMIENTO_OPTIONS: { value: ModoDiligenciamiento; label: strin
   { value: 'automatico_sistema', label: 'Automático — Sistema', description: 'Se genera automáticamente según datos del curso (ej: asistencia por días)' },
 ];
 
+const TIPO_DEPENDENCIA_LABELS: Record<TipoDependencia, string> = {
+  activacion: 'Activación',
+  datos: 'Herencia de datos',
+  precondicion: 'Precondición',
+};
+
+const CONDICION_LABELS: Record<CondicionDependencia, string> = {
+  completado: 'Completado',
+  firmado: 'Firmado',
+  aprobado: 'Aprobado',
+};
+
+const EVENTO_LABELS: Record<EventoDisparador, string> = {
+  asignacion_curso: 'Asignación a curso',
+  cierre_curso: 'Cierre de curso',
+  firma_completada: 'Firma completada',
+};
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -34,6 +57,17 @@ interface Props {
 export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
   const { config, setConfig, items, updateBlock } = useFormatoEditorStore();
   const { data: niveles = [] } = useNivelesFormacion();
+  const { data: allFormatos = [] } = useFormatos();
+  const [addingDep, setAddingDep] = useState(false);
+  const [newDepFormatoId, setNewDepFormatoId] = useState('');
+  const [newDepTipo, setNewDepTipo] = useState<TipoDependencia>('precondicion');
+  const [newDepCondicion, setNewDepCondicion] = useState<CondicionDependencia>('completado');
+
+  // Exclude self from dependency options
+  const formatoOptions = useMemo(() =>
+    allFormatos.filter(f => f.id !== (window.location.pathname.split('/').pop() || '')),
+    [allFormatos]
+  );
 
   const toggleNivel = (id: string) => {
     setConfig({
@@ -41,6 +75,27 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
         ? config.nivelFormacionIds.filter((n) => n !== id)
         : [...config.nivelFormacionIds, id],
     });
+  };
+
+  const addDependencia = () => {
+    if (!newDepFormatoId) return;
+    const deps = [...config.dependencias, { formatoId: newDepFormatoId, tipo: newDepTipo, condicion: newDepCondicion }];
+    setConfig({ dependencias: deps });
+    setAddingDep(false);
+    setNewDepFormatoId('');
+  };
+
+  const removeDependencia = (index: number) => {
+    const deps = config.dependencias.filter((_, i) => i !== index);
+    setConfig({ dependencias: deps });
+  };
+
+  const toggleEvento = (evento: EventoDisparador) => {
+    const current = config.eventosDisparadores || [];
+    const updated = current.includes(evento)
+      ? current.filter(e => e !== evento)
+      : [...current, evento];
+    setConfig({ eventosDisparadores: updated });
   };
 
   return (
@@ -123,6 +178,77 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
 
             <Separator />
 
+            {/* Dependencias */}
+            <div className="space-y-3">
+              <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Dependencias entre Formatos</Label>
+              <p className="text-xs text-muted-foreground">
+                Define qué formatos deben estar completados, firmados o aprobados antes de que este se active.
+              </p>
+
+              {config.dependencias.length > 0 && (
+                <div className="space-y-2">
+                  {config.dependencias.map((dep, i) => {
+                    const fmt = allFormatos.find(f => f.id === dep.formatoId);
+                    return (
+                      <div key={i} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{fmt?.nombre || dep.formatoId}</p>
+                          <div className="flex gap-1 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] py-0">{TIPO_DEPENDENCIA_LABELS[dep.tipo]}</Badge>
+                            <Badge variant="secondary" className="text-[10px] py-0">{CONDICION_LABELS[dep.condicion]}</Badge>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removeDependencia(i)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {addingDep ? (
+                <div className="space-y-2 p-3 border rounded-md bg-muted/20">
+                  <Select value={newDepFormatoId} onValueChange={setNewDepFormatoId}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Seleccionar formato..." /></SelectTrigger>
+                    <SelectContent>
+                      {formatoOptions.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={newDepTipo} onValueChange={(v) => setNewDepTipo(v as TipoDependencia)}>
+                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="precondicion">Precondición</SelectItem>
+                        <SelectItem value="activacion">Activación</SelectItem>
+                        <SelectItem value="datos">Herencia de datos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={newDepCondicion} onValueChange={(v) => setNewDepCondicion(v as CondicionDependencia)}>
+                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completado">Completado</SelectItem>
+                        <SelectItem value="firmado">Firmado</SelectItem>
+                        <SelectItem value="aprobado">Aprobado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setAddingDep(false)}>Cancelar</Button>
+                    <Button size="sm" onClick={addDependencia} disabled={!newDepFormatoId}>Agregar</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setAddingDep(true)} className="w-full">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Agregar dependencia
+                </Button>
+              )}
+            </div>
+
+            <Separator />
+
             {/* Visibility & Filing */}
             <div className="space-y-4">
               <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Visibilidad y Diligenciamiento</Label>
@@ -180,6 +306,30 @@ export default function FormatoConfigSheet({ open, onOpenChange }: Props) {
             </div>
 
             <Separator />
+
+            {/* Eventos disparadores (para formatos automáticos) */}
+            {config.modoDiligenciamiento === 'automatico_sistema' && (
+              <>
+                <div className="space-y-3">
+                  <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">Eventos Disparadores</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona los eventos que generan automáticamente una instancia de este formato.
+                  </p>
+                  <div className="space-y-2">
+                    {(Object.keys(EVENTO_LABELS) as EventoDisparador[]).map(evento => (
+                      <div key={evento} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={(config.eventosDisparadores || []).includes(evento)}
+                          onCheckedChange={() => toggleEvento(evento)}
+                        />
+                        <Label className="text-sm">{EVENTO_LABELS[evento]}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Signatures */}
             <div className="space-y-3">

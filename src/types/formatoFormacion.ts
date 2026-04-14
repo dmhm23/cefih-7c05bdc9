@@ -32,45 +32,12 @@ export type TipoBloque =
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
  */
-export type AutoFieldKey =
-  | 'nombre_aprendiz'
-  | 'documento_aprendiz'
-  | 'tipo_documento_aprendiz'
-  | 'genero_aprendiz'
-  | 'fecha_nacimiento_aprendiz'
-  | 'pais_nacimiento_aprendiz'
-  | 'nivel_educativo_aprendiz'
-  | 'rh_aprendiz'
-  | 'telefono_aprendiz'
-  | 'email_aprendiz'
-  | 'contacto_emergencia_nombre'
-  | 'contacto_emergencia_telefono'
-  | 'empresa_nombre'
-  | 'empresa_cargo'
-  | 'empresa_nivel_formacion'
-  | 'empresa_nit'
-  | 'empresa_representante_legal'
-  | 'area_trabajo'
-  | 'sector_economico'
-  | 'tipo_vinculacion'
-  | 'eps_aprendiz'
-  | 'arl_aprendiz'
-  | 'nivel_previo'
-  | 'centro_formacion_previo'
-  | 'fecha_inicio_curso'
-  | 'fecha_fin_curso'
-  | 'nombre_curso'
-  | 'tipo_formacion_curso'
-  | 'numero_curso'
-  | 'duracion_dias_curso'
-  | 'horas_totales_curso'
-  | 'entrenador_nombre'
-  | 'supervisor_nombre'
-  | 'fecha_diligenciamiento'
-  | 'aprendiz_firma'
-  | 'entrenador_firma'
-  | 'supervisor_firma';
-
+/**
+ * Claves de auto_field: valores resueltos automáticamente desde el sistema.
+ * Se mantiene como string para permitir extensibilidad dinámica.
+ * Las claves conocidas se documentan en autoFieldCatalog.ts.
+ */
+export type AutoFieldKey = string;
 export interface BloqueBase {
   id: string;
   type: TipoBloque;
@@ -289,6 +256,25 @@ export interface EncabezadoConfig {
 }
 
 // ---------------------------------------------------------------------------
+// Dependencia entre formatos
+// ---------------------------------------------------------------------------
+
+export type TipoDependencia = 'activacion' | 'datos' | 'precondicion';
+export type CondicionDependencia = 'completado' | 'firmado' | 'aprobado';
+
+export interface FormatoDependencia {
+  formatoId: string;
+  tipo: TipoDependencia;
+  condicion: CondicionDependencia;
+}
+
+// ---------------------------------------------------------------------------
+// Eventos disparadores para formatos automáticos
+// ---------------------------------------------------------------------------
+
+export type EventoDisparador = 'asignacion_curso' | 'cierre_curso' | 'firma_completada';
+
+// ---------------------------------------------------------------------------
 // FormatoFormacion — entidad principal
 // ---------------------------------------------------------------------------
 
@@ -347,6 +333,12 @@ export interface FormatoFormacion {
     subsistema: string;
   };
 
+  // Dependencias entre formatos
+  dependencias: FormatoDependencia[];
+
+  // Eventos que disparan generación automática
+  eventosDisparadores: EventoDisparador[];
+
   // Legacy: si este formato tiene componente hardcodeado asociado
   legacyComponentId?: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats' | 'evaluacion_reentrenamiento';
 
@@ -385,7 +377,13 @@ export interface PlantillaBase {
 }
 
 // ---------------------------------------------------------------------------
-// FormatoRespuesta — respuestas por matrícula y formato (futuro)
+// Estado de formato-respuesta (extendido)
+// ---------------------------------------------------------------------------
+
+export type EstadoFormatoRespuesta = 'pendiente' | 'completado' | 'firmado' | 'bloqueado' | 'reabierto';
+
+// ---------------------------------------------------------------------------
+// FormatoRespuesta — respuestas por matrícula y formato
 // ---------------------------------------------------------------------------
 
 export interface FormatoRespuesta {
@@ -393,8 +391,31 @@ export interface FormatoRespuesta {
   matriculaId: string;
   formatoId: string;
   answers: Record<string, unknown>;  // key = bloqueId, value = respuesta
-  estado: 'pendiente' | 'completado' | 'firmado';
+  estado: EstadoFormatoRespuesta;
   completadoAt?: string;
+  reabiertoPor?: string;
+  reabiertoAt?: string;
+  intentosEvaluacion?: Record<string, unknown>[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Firma por matrícula
+// ---------------------------------------------------------------------------
+
+export type TipoFirmaMatricula = 'aprendiz' | 'entrenador' | 'supervisor';
+
+export interface FirmaMatricula {
+  id: string;
+  matriculaId: string;
+  tipo: TipoFirmaMatricula;
+  firmaBase64: string;
+  formatoOrigenId?: string;
+  ip?: string;
+  userAgent?: string;
+  hashIntegridad?: string;
+  autorizaReutilizacion: boolean;
   createdAt: string;
   updatedAt: string;
 }

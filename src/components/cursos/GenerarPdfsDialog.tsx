@@ -164,6 +164,8 @@ async function fetchFormatosForCurso(matriculaId: string): Promise<FormatoFormac
     htmlTemplate: row.html_template,
     cssTemplate: row.css_template,
     plantillaBaseId: row.plantilla_base_id,
+    dependencias: row.dependencias || [],
+    eventosDisparadores: row.eventos_disparadores || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

@@ -14,6 +14,8 @@ function rowToFormato(row: any): FormatoFormacion {
     nivelFormacionIds: f.nivelesAsignados || [],
     bloques: f.bloques || [],
     tokensUsados: f.tokensUsados || [],
+    dependencias: f.dependencias || [],
+    eventosDisparadores: f.eventosDisparadores || [],
   } as FormatoFormacion;
 }
 
@@ -49,6 +51,8 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   if (data.documentMeta !== undefined) row.document_meta = data.documentMeta;
   if (data.legacyComponentId !== undefined) row.legacy_component_id = data.legacyComponentId;
   if (data.plantillaBaseId !== undefined) row.plantilla_base_id = data.plantillaBaseId;
+  if (data.dependencias !== undefined) row.dependencias = data.dependencias;
+  if (data.eventosDisparadores !== undefined) row.eventos_disparadores = data.eventosDisparadores;
 
   return row;
 }
@@ -78,7 +82,13 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
         if (!existing.activo) {
           await supabase
             .from('portal_config_documentos')
-            .update({ activo: true, label: formato.nombre })
+            .update({ activo: true, label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
+            .eq('id', existing.id);
+        } else {
+          // Always sync niveles
+          await supabase
+            .from('portal_config_documentos')
+            .update({ label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
             .eq('id', existing.id);
         }
       } else {
@@ -100,7 +110,7 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
             descripcion: formato.descripcion || '',
             orden: nextOrden,
             formato_id: formato.id,
-            niveles_habilitados: [],
+            niveles_habilitados: formato.nivelFormacionIds || [],
             depende_de: [],
             activo: true,
             obligatorio: true,

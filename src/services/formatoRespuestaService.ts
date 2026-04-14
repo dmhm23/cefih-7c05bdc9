@@ -10,6 +10,9 @@ function rowToRespuesta(row: any): FormatoRespuesta {
     answers: row.answers || {},
     estado: row.estado,
     completadoAt: row.completado_at,
+    reabiertoPor: row.reabierto_por,
+    reabiertoAt: row.reabierto_at,
+    intentosEvaluacion: row.intentos_evaluacion || [],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -59,6 +62,22 @@ export const formatoRespuestaService = {
         },
         { onConflict: 'matricula_id,formato_id' }
       )
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToRespuesta(data);
+  },
+
+  reopen: async (respuestaId: string, userId: string): Promise<FormatoRespuesta> => {
+    const { data, error } = await supabase
+      .from('formato_respuestas')
+      .update({
+        estado: 'reabierto' as any,
+        reabierto_por: userId,
+        reabierto_at: new Date().toISOString(),
+      })
+      .eq('id', respuestaId)
       .select()
       .single();
 

@@ -117,6 +117,8 @@ export default function FormatoEditorPage() {
           mostrarLogo: true, mostrarNombreCentro: true, mostrarCodigoDocumento: true,
           mostrarVersion: true, mostrarFecha: true, mostrarPaginacion: false, alineacion: 'centro',
         },
+        dependencias: existing.dependencias || [],
+        eventosDisparadores: existing.eventosDisparadores || [],
       };
       store.loadFromFormato(existing.bloques as EditorItem[], config, existing.nombre);
     }
@@ -165,6 +167,8 @@ export default function FormatoEditorPage() {
       requiereFirmaEntrenador: config.requiereFirmaEntrenador,
       requiereFirmaSupervisor: config.requiereFirmaSupervisor,
       bloques: items as Bloque[], // Store all items including row2
+      dependencias: existing?.dependencias || [],
+      eventosDisparadores: existing?.eventosDisparadores || [],
       documentMeta: existing?.documentMeta,
     };
 

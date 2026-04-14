@@ -24,9 +24,8 @@ interface InspectorFieldsProps {
 
 const HIDE_REQUIRED: TipoBloque[] = [
   'section_title', 'heading', 'paragraph', 'divider',
-  'signature_aprendiz', 'signature_entrenador_auto', 'signature_supervisor_auto',
   'signature_capture',
-  'health_consent', 'data_authorization', 'evaluation_quiz', 'satisfaction_survey',
+  'health_consent', 'evaluation_quiz', 'satisfaction_survey',
   'attendance_by_day', 'document_header',
 ];
 
@@ -261,14 +260,7 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
         </div>
       );
 
-    case 'signature_aprendiz':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Reutiliza la firma capturada en Información del Aprendiz.</p>;
-
-    case 'signature_entrenador_auto':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (entrenador del curso).</p>;
-
-    case 'signature_supervisor_auto':
-      return <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Firma automática desde Gestión de Personal (supervisor del curso).</p>;
+    /* Legacy signature blocks removed — use signature_capture instead */
 
     case 'signature_capture':
       return (
@@ -317,8 +309,7 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'health_consent':
       return <HealthConsentInspector bloque={bloque} onChange={onChange} />;
 
-    case 'data_authorization':
-      return <DataAuthorizationInspector bloque={bloque} onChange={onChange} />;
+    /* data_authorization block removed — use paragraph + checkbox instead */
 
     case 'attendance_by_day':
       return <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;

@@ -28,11 +28,8 @@ export interface AutoFieldContext {
   entrenador: Personal | null;
   supervisor: Personal | null;
   nivelFormacionNombre?: string | null;
-  /** Respuestas de formatos previos para herencia de datos */
   respuestasPrevias?: FormatoRespuesta[];
-  /** Campos adicionales del nivel de formación */
   camposAdicionalesNivel?: { key: string; label: string; value?: string }[];
-  /** Firmas por matrícula (nueva tabla firmas_matricula) */
   firmasMatricula?: FirmaMatricula[];
 }
 
@@ -47,10 +44,15 @@ function fmtDate(dateStr: string | undefined): string | null {
   return result === "—" ? null : result;
 }
 
+function boolToSiNo(val: boolean | null | undefined): string | null {
+  if (val == null) return null;
+  return val ? 'Sí' : 'No';
+}
+
 export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext): string | null {
   const { persona, matricula, curso, entrenador, supervisor } = ctx;
 
-  // --- Dynamic: Formatos previos (key format: "formato_prev:{formatoId}:{fieldKey}") ---
+  // --- Dynamic: Formatos previos ---
   if (key.startsWith('formato_prev:')) {
     const parts = key.split(':');
     if (parts.length >= 3 && ctx.respuestasPrevias) {
@@ -64,7 +66,7 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     return null;
   }
 
-  // --- Dynamic: Campos adicionales del nivel (key format: "nivel_campo:{key}") ---
+  // --- Dynamic: Campos adicionales del nivel ---
   if (key.startsWith('nivel_campo:')) {
     const campoKey = key.replace('nivel_campo:', '');
     if (ctx.camposAdicionalesNivel) {
@@ -101,6 +103,24 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'contacto_emergencia_telefono':
       return persona?.contactoEmergencia?.telefono ?? null;
 
+    // --- Datos de Salud (Matrícula) ---
+    case 'consentimiento_salud':
+      return boolToSiNo(matricula?.consentimientoSalud);
+    case 'restriccion_medica':
+      return boolToSiNo(matricula?.restriccionMedica);
+    case 'restriccion_medica_detalle':
+      return matricula?.restriccionMedicaDetalle ?? null;
+    case 'alergias':
+      return boolToSiNo(matricula?.alergias);
+    case 'alergias_detalle':
+      return matricula?.alergiasDetalle ?? null;
+    case 'consumo_medicamentos':
+      return boolToSiNo(matricula?.consumoMedicamentos);
+    case 'consumo_medicamentos_detalle':
+      return matricula?.consumoMedicamentosDetalle ?? null;
+    case 'embarazo':
+      return boolToSiNo(matricula?.embarazo);
+
     // --- Datos laborales ---
     case 'empresa_nombre':
       return matricula?.empresaNombre ?? null;
@@ -124,7 +144,10 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
       return lookup(matricula?.nivelPrevio, NIVELES_PREVIOS);
     case 'centro_formacion_previo':
       return matricula?.centroFormacionPrevio ?? null;
-    case 'empresa_nivel_formacion':
+
+    // Nivel de formación (unified)
+    case 'nivel_formacion':
+    case 'empresa_nivel_formacion': {
       if (ctx.nivelFormacionNombre) return ctx.nivelFormacionNombre;
       const nivelId = matricula?.nivelFormacionId || matricula?.empresaNivelFormacion;
       if (nivelId) {
@@ -132,6 +155,7 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
         return resolved || nivelId;
       }
       return null;
+    }
 
     // --- Curso ---
     case 'nombre_curso':
@@ -163,7 +187,7 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     case 'fecha_diligenciamiento':
       return format(new Date(), 'd/MM/yyyy', { locale: es });
 
-    // --- Firmas (prefer firmas_matricula, fallback to legacy) ---
+    // --- Firmas ---
     case 'aprendiz_firma': {
       const firmaMatr = ctx.firmasMatricula?.find(f => f.tipo === 'aprendiz');
       if (firmaMatr) return firmaMatr.firmaBase64;

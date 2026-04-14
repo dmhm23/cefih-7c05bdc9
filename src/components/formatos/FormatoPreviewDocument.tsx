@@ -187,38 +187,22 @@ function renderBloque(bloque: Bloque): React.ReactNode {
       );
     }
 
-    case "signature_aprendiz":
+    case "signature_capture": {
+      const scProps = (bloque as any).props || {};
+      const mode = scProps.mode || 'capture';
+      const tipoFirmante = scProps.tipoFirmante || 'aprendiz';
+      const firmanteLabel = tipoFirmante === 'aprendiz' ? 'Aprendiz' : tipoFirmante === 'entrenador' ? 'Entrenador' : 'Supervisor';
+      const modeLabel = mode === 'capture' ? 'Captura nueva' : mode === 'reuse_if_available' ? 'Reutilizar si disponible' : mode === 'reuse_required' ? 'Solo reutilizar' : 'Solo mostrar';
       return (
         <div style={{ gridColumn: "span 2" }} className="mt-4">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Firma del Aprendiz"}</p>
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || `Firma — ${firmanteLabel}`}</p>
           <div className="border-2 border-dashed border-muted rounded h-24 flex flex-col items-center justify-center">
-            <p className="text-sm text-muted-foreground italic">Firma del Aprendiz</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">Juan Carlos Pérez Martínez</p>
+            <p className="text-sm text-muted-foreground italic">Firma del {firmanteLabel}</p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1">{modeLabel}</p>
           </div>
         </div>
       );
-
-    case "signature_entrenador_auto":
-      return (
-        <div className="mt-4">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Firma del Entrenador"}</p>
-          <div className="border-2 border-dashed border-muted rounded h-24 flex flex-col items-center justify-center">
-            <p className="text-sm font-medium">Carlos Rodríguez</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">Entrenador</p>
-          </div>
-        </div>
-      );
-
-    case "signature_supervisor_auto":
-      return (
-        <div className="mt-4">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Firma del Supervisor"}</p>
-          <div className="border-2 border-dashed border-muted rounded h-24 flex flex-col items-center justify-center">
-            <p className="text-sm font-medium">Ana Martínez</p>
-            <p className="text-[10px] text-muted-foreground/60 mt-1">Supervisor</p>
-          </div>
-        </div>
-      );
+    }
 
     case "attendance_by_day":
       return (
@@ -404,13 +388,15 @@ function renderBloque(bloque: Bloque): React.ReactNode {
         <div style={{ gridColumn: "span 2" }}>
           <DocumentHeader
             nombreDocumento={bloque.label || "Formato sin nombre"}
-            codigo={hp.mostrarCodigo ? "---" : ""}
-            version={hp.mostrarVersion ? "---" : ""}
+            codigo={hp.mostrarCodigo ? (hp.codigo || "---") : ""}
+            version={hp.mostrarVersion ? (hp.version || "---") : ""}
             fechaCreacion={hp.fechaCreacion || "01/01/2025"}
             fechaEdicion={hp.fechaEdicion || "01/01/2025"}
             empresaNombre={hp.empresaNombre}
             sistemaGestion={hp.sistemaGestion}
             subsistema={hp.subsistema || "FORMACIÓN"}
+            logoUrl={hp.logoUrl || undefined}
+            borderColor={hp.borderColor || undefined}
           />
         </div>
       );

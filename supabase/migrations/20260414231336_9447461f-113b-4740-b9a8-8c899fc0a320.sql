@@ -1,0 +1,1 @@
+ALTER TYPE public.scope_formato ADD VALUE IF NOT EXISTS 'todos';

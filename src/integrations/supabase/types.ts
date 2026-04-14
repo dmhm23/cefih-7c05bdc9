@@ -2088,7 +2088,7 @@ export type Database = {
         | "otro"
         | "analfabeta"
       nivel_previo: "trabajador_autorizado" | "avanzado"
-      scope_formato: "nivel_formacion" | "tipo_curso"
+      scope_formato: "nivel_formacion" | "tipo_curso" | "todos"
       seccion_comentario: "cartera" | "observaciones" | "curso_observaciones"
       sector_economico:
         | "construccion"
@@ -2388,7 +2388,7 @@ export const Constants = {
         "analfabeta",
       ],
       nivel_previo: ["trabajador_autorizado", "avanzado"],
-      scope_formato: ["nivel_formacion", "tipo_curso"],
+      scope_formato: ["nivel_formacion", "tipo_curso", "todos"],
       seccion_comentario: ["cartera", "observaciones", "curso_observaciones"],
       sector_economico: [
         "construccion",

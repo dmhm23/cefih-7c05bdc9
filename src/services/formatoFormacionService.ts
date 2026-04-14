@@ -82,7 +82,13 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
         if (!existing.activo) {
           await supabase
             .from('portal_config_documentos')
-            .update({ activo: true, label: formato.nombre })
+            .update({ activo: true, label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
+            .eq('id', existing.id);
+        } else {
+          // Always sync niveles
+          await supabase
+            .from('portal_config_documentos')
+            .update({ label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
             .eq('id', existing.id);
         }
       } else {
@@ -104,7 +110,7 @@ async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
             descripcion: formato.descripcion || '',
             orden: nextOrden,
             formato_id: formato.id,
-            niveles_habilitados: [],
+            niveles_habilitados: formato.nivelFormacionIds || [],
             depende_de: [],
             activo: true,
             obligatorio: true,

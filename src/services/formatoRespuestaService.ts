@@ -68,4 +68,20 @@ export const formatoRespuestaService = {
     if (error) handleSupabaseError(error);
     return rowToRespuesta(data);
   },
+
+  reopen: async (respuestaId: string, userId: string): Promise<FormatoRespuesta> => {
+    const { data, error } = await supabase
+      .from('formato_respuestas')
+      .update({
+        estado: 'reabierto' as any,
+        reabierto_por: userId,
+        reabierto_at: new Date().toISOString(),
+      })
+      .eq('id', respuestaId)
+      .select()
+      .single();
+
+    if (error) handleSupabaseError(error);
+    return rowToRespuesta(data);
+  },
 };

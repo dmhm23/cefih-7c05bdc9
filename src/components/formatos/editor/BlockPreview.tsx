@@ -14,7 +14,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
   const b = block as any;
   const req = b.required && <span className="text-destructive ml-0.5">*</span>;
   const L = () => (
-    <span className="block text-sm font-semibold text-muted-foreground mb-1">
+    <span className="block text-sm font-medium text-foreground mb-1">
       {b.label || 'Sin etiqueta'}{req}
     </span>
   );
@@ -58,11 +58,28 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       return (
         <>
           <L />
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {options.map((o: any, i: number) => (
-              <label key={i} className="flex items-center gap-1.5 text-sm">
-                <div className="h-4 w-4 rounded-full border border-muted-foreground/40" />
-                {o.label}
+              <label key={i} className="flex items-center gap-2 text-sm">
+                <div className={`h-4 w-4 rounded-full border ${o.default ? 'border-primary bg-primary/20' : 'border-muted-foreground/40'}`} />
+                <span className={o.default ? 'font-medium' : ''}>{o.label}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    case 'multi_choice': {
+      const options = b.props?.options || [];
+      return (
+        <>
+          <L />
+          <div className="space-y-1.5">
+            {options.map((o: any, i: number) => (
+              <label key={i} className="flex items-center gap-2 text-sm">
+                <div className={`h-4 w-4 border rounded ${o.default ? 'border-primary bg-primary/20' : 'border-muted-foreground/40'}`} />
+                <span className={o.default ? 'font-medium' : ''}>{o.label}</span>
               </label>
             ))}
           </div>

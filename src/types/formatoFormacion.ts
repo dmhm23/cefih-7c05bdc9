@@ -366,8 +366,8 @@ export interface FormatoFormacion {
   // Eventos que disparan generación automática
   eventosDisparadores: EventoDisparador[];
 
-  // Legacy: si este formato tiene componente hardcodeado asociado
-  legacyComponentId?: 'info_aprendiz' | 'registro_asistencia' | 'participacion_pta_ats' | 'evaluacion_reentrenamiento';
+  /** @deprecated Campo legacy, ya no se utiliza */
+  legacyComponentId?: string;
 
   // Marca si este formato actúa como origen de firma reutilizable
   esOrigenFirma: boolean;

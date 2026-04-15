@@ -160,7 +160,7 @@ async function fetchFormatosForCurso(matriculaId: string): Promise<FormatoFormac
     modoDiligenciamiento: row.modo_diligenciamiento,
     esAutomatico: row.es_automatico,
     documentMeta: row.document_meta,
-    legacyComponentId: row.legacy_component_id,
+    // legacyComponentId removed (legacy)
     htmlTemplate: row.html_template,
     cssTemplate: row.css_template,
     plantillaBaseId: row.plantilla_base_id,

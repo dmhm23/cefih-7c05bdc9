@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { BLOQUE_TYPE_LABELS } from "@/data/bloqueConstants";
 import type { FormatoFormacion, Bloque } from "@/types/formatoFormacion";
+import type { Row2Block } from "@/stores/useFormatoEditorStore";
 import DOMPurify from "dompurify";
 
 // ---------------------------------------------------------------------------
@@ -92,6 +93,17 @@ function FieldCell({ label, value, badge, span }: { label: string; value: string
 // ---------------------------------------------------------------------------
 
 function renderBloque(bloque: Bloque): React.ReactNode {
+  // Handle row2 before switch (type not in Bloque union)
+  if ((bloque as any).type === 'row2') {
+    const row = bloque as unknown as Row2Block;
+    return (
+      <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
+        <div>{row.cols[0] ? renderBloque(row.cols[0]) : null}</div>
+        <div>{row.cols[1] ? renderBloque(row.cols[1]) : null}</div>
+      </div>
+    );
+  }
+
   switch (bloque.type) {
     case "section_title":
       return (

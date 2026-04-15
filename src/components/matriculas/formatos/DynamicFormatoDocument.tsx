@@ -4,6 +4,7 @@ import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
 import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta, BloqueSignatureCapture, SignatureCaptureMode } from "@/types/formatoFormacion";
+import type { Row2Block } from "@/stores/useFormatoEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
@@ -187,6 +188,17 @@ interface RenderContext {
 
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
   const { ctx, answers, onChange, readOnly } = rc;
+
+  // Handle row2 before switch (type not in Bloque union)
+  if ((bloque as any).type === 'row2') {
+    const row = bloque as unknown as Row2Block;
+    return (
+      <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
+        <div>{row.cols[0] ? renderBloque(row.cols[0], rc) : null}</div>
+        <div>{row.cols[1] ? renderBloque(row.cols[1], rc) : null}</div>
+      </div>
+    );
+  }
 
   switch (bloque.type) {
     case "section_title": {

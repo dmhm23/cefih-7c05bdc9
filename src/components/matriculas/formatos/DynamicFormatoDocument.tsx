@@ -181,6 +181,7 @@ interface RenderContext {
   answers: Record<string, unknown>;
   onChange?: (key: string, value: unknown) => void;
   readOnly: boolean;
+  formatoRef?: { nombre: string; codigo: string; version: string; documentMeta?: any };
 }
 
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
@@ -449,6 +450,28 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
         />
       );
 
+    case "document_header": {
+      const hp = (bloque as any).props || {};
+      const fRef = rc.formatoRef;
+      const fMeta = fRef?.documentMeta;
+      return (
+        <div style={{ gridColumn: "span 2" }}>
+          <DocumentHeader
+            nombreDocumento={bloque.label || fRef?.nombre || ""}
+            codigo={hp.codigo || fRef?.codigo || ""}
+            version={hp.version || fRef?.version || ""}
+            fechaCreacion={hp.fechaCreacion || fMeta?.fechaCreacion || "—"}
+            fechaEdicion={hp.fechaEdicion || fMeta?.fechaEdicion || "—"}
+            empresaNombre={hp.empresaNombre}
+            sistemaGestion={hp.sistemaGestion}
+            subsistema={hp.subsistema || fMeta?.subsistema || "FORMACIÓN"}
+            logoUrl={hp.logoUrl || undefined}
+            borderColor={hp.borderColor || undefined}
+          />
+        </div>
+      );
+    }
+
     default:
       return null;
   }
@@ -555,18 +578,25 @@ export default function DynamicFormatoDocument({
     respuestasPrevias,
     camposAdicionalesNivel,
   };
-  const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
+  const rc: RenderContext = {
+    ctx, answers, onChange: onAnswerChange, readOnly,
+    formatoRef: { nombre: formato.nombre, codigo: formato.codigo, version: formato.version, documentMeta: meta },
+  };
+
+  const hasHeaderBlock = bloques.some((b: any) => b.type === 'document_header');
 
   return (
     <div className="bg-white p-6" style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px" }}>
-      <DocumentHeader
-        nombreDocumento={formato.nombre}
-        codigo={formato.codigo}
-        version={formato.version}
-        fechaCreacion={meta?.fechaCreacion || "—"}
-        fechaEdicion={meta?.fechaEdicion || "—"}
-        subsistema={meta?.subsistema || "FORMACIÓN"}
-      />
+      {!hasHeaderBlock && (
+        <DocumentHeader
+          nombreDocumento={formato.nombre}
+          codigo={formato.codigo}
+          version={formato.version}
+          fechaCreacion={meta?.fechaCreacion || "—"}
+          fechaEdicion={meta?.fechaEdicion || "—"}
+          subsistema={meta?.subsistema || "FORMACIÓN"}
+        />
+      )}
 
       {bloques.length > 0 ? (
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4" style={{ fontSize: "12px" }}>

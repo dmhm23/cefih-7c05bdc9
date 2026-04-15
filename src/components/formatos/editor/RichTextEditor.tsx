@@ -2,7 +2,8 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
-import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react';
+import Link from '@tiptap/extension-link';
+import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify, Link2, Unlink } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,14 @@ export default function RichTextEditor({ value, onChange, placeholder, className
       }),
       Underline,
       TextAlign.configure({ types: ['paragraph'] }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'text-primary underline',
+        },
+      }),
     ],
     content: value || '',
     onUpdate: ({ editor: e }) => {
@@ -44,6 +53,17 @@ export default function RichTextEditor({ value, onChange, placeholder, className
   }
 
   if (!editor) return null;
+
+  const handleLink = () => {
+    if (editor.isActive('link')) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+    const url = window.prompt('URL del enlace:');
+    if (url) {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+  };
 
   const ToolBtn = ({ active, onPress, children, title }: { active?: boolean; onPress: () => void; children: React.ReactNode; title: string }) => (
     <Toggle
@@ -78,6 +98,12 @@ export default function RichTextEditor({ value, onChange, placeholder, className
         </ToolBtn>
         <ToolBtn active={editor.isActive('orderedList')} onPress={() => editor.chain().focus().toggleOrderedList().run()} title="Lista numerada">
           <ListOrdered className="h-3.5 w-3.5" />
+        </ToolBtn>
+
+        <Separator orientation="vertical" className="h-5 mx-1" />
+
+        <ToolBtn active={editor.isActive('link')} onPress={handleLink} title={editor.isActive('link') ? 'Quitar enlace' : 'Insertar enlace'}>
+          {editor.isActive('link') ? <Unlink className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
         </ToolBtn>
 
         <Separator orientation="vertical" className="h-5 mx-1" />

@@ -15,7 +15,7 @@ import {
 import {
   Collapsible, CollapsibleTrigger, CollapsibleContent,
 } from '@/components/ui/collapsible';
-import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2 } from 'lucide-react';
+import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2, Upload, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface InspectorFieldsProps {
@@ -852,33 +852,34 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
             </Button>
           </div>
         ) : (
-          <label className={`flex items-center justify-center border-2 border-dashed rounded-md p-4 cursor-pointer hover:bg-muted/20 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {uploading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : (
-              <span className="text-xs text-muted-foreground">Subir logo…</span>
-            )}
-            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
-          </label>
-        )}
-
-        {/* Gallery of existing logos */}
-        {galleryLogos.length > 0 && (
-          <div className="space-y-1">
-            <button
-              type="button"
-              className="text-[10px] text-primary hover:underline"
-              onClick={() => setShowGallery(!showGallery)}
-            >
-              {showGallery ? 'Ocultar logos disponibles' : `Logos disponibles (${galleryLogos.length})`}
-            </button>
-            {showGallery && (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button
+                variant="outline" size="sm"
+                className="flex-1 text-xs"
+                onClick={() => setShowGallery(!showGallery)}
+                disabled={galleryLogos.length === 0}
+              >
+                <ImageIcon className="h-3 w-3 mr-1" />
+                Galería ({galleryLogos.length})
+              </Button>
+              <label className="flex-1">
+                <Button variant="outline" size="sm" className="w-full text-xs" asChild disabled={uploading}>
+                  <span>
+                    {uploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
+                    Subir nuevo
+                  </span>
+                </Button>
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
+              </label>
+            </div>
+            {showGallery && galleryLogos.length > 0 && (
               <div className="grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto border rounded-md p-1.5">
                 {galleryLogos.map((logo) => (
                   <button
                     key={logo.name}
                     type="button"
-                    className={`border rounded p-1 hover:ring-2 hover:ring-primary/50 transition-all ${props.logoUrl === logo.url ? 'ring-2 ring-primary' : ''}`}
+                    className="border rounded p-1 hover:ring-2 hover:ring-primary/50 transition-all"
                     onClick={() => updateProps({ logoUrl: logo.url })}
                   >
                     <img src={logo.url} alt={logo.name} className="h-8 w-full object-contain" />

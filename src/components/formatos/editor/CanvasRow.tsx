@@ -3,16 +3,18 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useFormatoEditorStore, type Row2Block } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/stores/useFormatoEditorStore';
 import BlockPreview from './BlockPreview';
 import { Badge } from '@/components/ui/badge';
 import type { TipoBloque } from '@/types/formatoFormacion';
 
 interface CanvasRowProps {
-  row: Row2Block;
+  row: Row2Block | Row1Block;
+  variant?: 'row1' | 'row2';
 }
 
-export default function CanvasRow({ row }: CanvasRowProps) {
+export default function CanvasRow({ row, variant }: CanvasRowProps) {
+  const isRow1 = variant === 'row1' || row.type === 'row1';
   const { selectedId, setSelected, removeBlock, removeFromCol, insertIntoCol } = useFormatoEditorStore();
 
   const {
@@ -29,7 +31,11 @@ export default function CanvasRow({ row }: CanvasRowProps) {
     transition,
   };
 
-  const anyColSelected = row.cols.some((c) => c?.id === selectedId);
+  const cols = isRow1
+    ? [(row as Row1Block).col]
+    : (row as Row2Block).cols;
+
+  const anyColSelected = cols.some((c) => c?.id === selectedId);
 
   return (
     <div
@@ -45,7 +51,7 @@ export default function CanvasRow({ row }: CanvasRowProps) {
       )}
     >
       <Badge className="absolute left-2 -top-2.5 bg-primary text-primary-foreground text-[9px] px-1.5 py-0.5">
-        2 col
+        {isRow1 ? '1 col' : '2 col'}
       </Badge>
 
       <span
@@ -68,18 +74,30 @@ export default function CanvasRow({ row }: CanvasRowProps) {
         </button>
       </div>
 
-      {[0, 1].map((ci) => (
+      {isRow1 ? (
         <ColDrop
-          key={ci}
-          col={row.cols[ci]}
+          col={(row as Row1Block).col}
           rowId={row.id}
-          colIndex={ci}
+          colIndex={0}
           selectedId={selectedId}
           onSelect={setSelected}
-          onRemove={() => removeFromCol(row.id, ci)}
-          onDrop={(type) => insertIntoCol(row.id, ci, type)}
+          onRemove={() => removeFromCol(row.id, 0)}
+          onDrop={(type) => insertIntoCol(row.id, 0, type)}
         />
-      ))}
+      ) : (
+        [0, 1].map((ci) => (
+          <ColDrop
+            key={ci}
+            col={(row as Row2Block).cols[ci]}
+            rowId={row.id}
+            colIndex={ci}
+            selectedId={selectedId}
+            onSelect={setSelected}
+            onRemove={() => removeFromCol(row.id, ci)}
+            onDrop={(type) => insertIntoCol(row.id, ci, type)}
+          />
+        ))
+      )}
     </div>
   );
 }

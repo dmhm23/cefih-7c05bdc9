@@ -16,7 +16,7 @@ import type {
   BloqueEvaluationQuiz,
   BloqueSatisfactionSurvey,
 } from "@/types/formatoFormacion";
-import type { Row2Block } from "@/stores/useFormatoEditorStore";
+import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
@@ -74,8 +74,8 @@ function classifyBlock(bloque: Bloque): SectionKind | "hidden" | "section_title"
   if (type === "satisfaction_survey") return "survey";
   if (type === "signature_capture" || type === "signature_aprendiz") return "signature";
   if (type === "attendance_by_day") return "attendance";
-  // row2 — classify by children
-  if (type === "row2") return "input";
+  // row1 / row2 — classify by children
+  if (type === "row1" || type === "row2") return "input";
   return "input";
 }
 
@@ -187,7 +187,7 @@ function getSectionStatus(
   section: SemanticSection,
   answers: Record<string, unknown>
 ): "complete" | "incomplete" | "info" {
-  if (section.kind === "info") return "info";
+  if (section.kind === "info") return "complete";
 
   const requiredIds = section.bloques
     .filter((b) => b.required !== false)
@@ -412,6 +412,16 @@ function renderPortalBlock(
   if (!evaluateVisibility(bloque, answers)) return null;
 
   const type = (bloque as any).type as string;
+
+  // Row1
+  if (type === "row1") {
+    const row = bloque as unknown as Row1Block;
+    return (
+      <div key={bloque.id}>
+        {row.col ? renderPortalBlock(row.col, ctx, answers, onChange, readOnly) : null}
+      </div>
+    );
+  }
 
   // Row2
   if (type === "row2") {

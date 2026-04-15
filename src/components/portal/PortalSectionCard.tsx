@@ -23,17 +23,17 @@ export default function PortalSectionCard({
 
   const statusIcon =
     status === "complete" ? (
-      <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+      <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))] shrink-0" />
     ) : status === "incomplete" ? (
-      <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+      <AlertCircle className="h-4 w-4 text-[hsl(var(--warning))] shrink-0" />
     ) : null;
 
   return (
     <div
       className={cn(
         "rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden",
-        status === "complete" && "border-green-200",
-        status === "incomplete" && "border-amber-200",
+        status === "complete" && "border-[hsl(var(--success)/0.3)]",
+        status === "incomplete" && "border-[hsl(var(--warning)/0.3)]",
         className
       )}
     >

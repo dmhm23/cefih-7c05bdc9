@@ -14,13 +14,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { useFormatoEditorStore, type Row2Block } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/stores/useFormatoEditorStore';
 import CanvasBlock from './CanvasBlock';
 import CanvasRow from './CanvasRow';
 import type { TipoBloque, Bloque } from '@/types/formatoFormacion';
 
 export default function EditorCanvas() {
-  const { items, docTitle, setDocTitle, setSelected, reorderBlock, addBlock, addRow2 } = useFormatoEditorStore();
+  const { items, docTitle, setDocTitle, setSelected, reorderBlock, addBlock, addRow2, addRow1 } = useFormatoEditorStore();
   const hojaDinamicaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,7 +51,9 @@ export default function EditorCanvas() {
     e.preventDefault();
     const type = e.dataTransfer.getData('block-type');
     if (!type) return;
-    if (type === 'row2') {
+    if (type === 'row1') {
+      addRow1();
+    } else if (type === 'row2') {
       addRow2();
     } else {
       addBlock(type as TipoBloque);
@@ -96,6 +98,9 @@ export default function EditorCanvas() {
               </div>
             ) : (
               items.map((item) => {
+                if (item.type === 'row1') {
+                  return <CanvasRow key={item.id} row={item as Row1Block} variant="row1" />;
+                }
                 if (item.type === 'row2') {
                   return <CanvasRow key={item.id} row={item as Row2Block} />;
                 }

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { BLOQUE_TYPE_LABELS } from "@/data/bloqueConstants";
 import type { FormatoFormacion, Bloque } from "@/types/formatoFormacion";
-import type { Row2Block } from "@/stores/useFormatoEditorStore";
+import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
 import DOMPurify from "dompurify";
 
 // ---------------------------------------------------------------------------
@@ -93,6 +93,16 @@ function FieldCell({ label, value, badge, span }: { label: string; value: string
 // ---------------------------------------------------------------------------
 
 function renderBloque(bloque: Bloque): React.ReactNode {
+  // Handle row1 before switch
+  if ((bloque as any).type === 'row1') {
+    const row = bloque as unknown as Row1Block;
+    return (
+      <div style={{ gridColumn: "span 2" }}>
+        {row.col ? renderBloque(row.col) : null}
+      </div>
+    );
+  }
+
   // Handle row2 before switch (type not in Bloque union)
   if ((bloque as any).type === 'row2') {
     const row = bloque as unknown as Row2Block;
@@ -264,8 +274,6 @@ function renderBloque(bloque: Bloque): React.ReactNode {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-1 px-2 font-semibold">Fecha</th>
-                <th className="text-left py-1 px-2 font-semibold">Hora entrada</th>
-                <th className="text-left py-1 px-2 font-semibold">Hora salida</th>
                 <th className="text-left py-1 px-2 font-semibold">Firma</th>
               </tr>
             </thead>
@@ -273,8 +281,6 @@ function renderBloque(bloque: Bloque): React.ReactNode {
               {ATTENDANCE_DAYS.map((day) => (
                 <tr key={day.fecha} className="border-b border-border/50">
                   <td className="py-1 px-2">{day.fecha}</td>
-                  <td className="py-1 px-2">{day.entrada}</td>
-                  <td className="py-1 px-2">{day.salida}</td>
                   <td className="py-1 px-2 text-muted-foreground italic">Firma</td>
                 </tr>
               ))}

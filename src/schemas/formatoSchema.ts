@@ -7,6 +7,12 @@ const bloqueBaseSchema = z.object({
   required: z.boolean().optional(),
 });
 
+const row1Schema = z.object({
+  id: z.string().min(1),
+  type: z.literal('row1'),
+  col: bloqueBaseSchema.nullable(),
+});
+
 const row2Schema = z.object({
   id: z.string().min(1),
   type: z.literal('row2'),
@@ -16,7 +22,7 @@ const row2Schema = z.object({
   ]),
 });
 
-const editorItemSchema = z.union([row2Schema, bloqueBaseSchema]);
+const editorItemSchema = z.union([row1Schema, row2Schema, bloqueBaseSchema]);
 
 export const formatoConfigSchema = z.object({
   nombre: z.string().min(1, 'El nombre es obligatorio'),

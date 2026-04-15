@@ -4,7 +4,7 @@ import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
 import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta, BloqueSignatureCapture, SignatureCaptureMode } from "@/types/formatoFormacion";
-import type { Row2Block } from "@/stores/useFormatoEditorStore";
+import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
@@ -188,6 +188,16 @@ interface RenderContext {
 
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
   const { ctx, answers, onChange, readOnly } = rc;
+
+  // Handle row1
+  if ((bloque as any).type === 'row1') {
+    const row = bloque as unknown as Row1Block;
+    return (
+      <div style={{ gridColumn: "span 2" }}>
+        {row.col ? renderBloque(row.col, rc) : null}
+      </div>
+    );
+  }
 
   // Handle row2 before switch (type not in Bloque union)
   if ((bloque as any).type === 'row2') {
@@ -440,8 +450,6 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-1 px-2 font-semibold">Fecha</th>
-                <th className="text-left py-1 px-2 font-semibold">Hora entrada</th>
-                <th className="text-left py-1 px-2 font-semibold">Hora salida</th>
                 <th className="text-left py-1 px-2 font-semibold">Firma</th>
               </tr>
             </thead>
@@ -449,8 +457,6 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
               {rows.map((fecha) => (
                 <tr key={fecha} className="border-b border-border/50">
                   <td className="py-1 px-2">{fecha}</td>
-                  <td className="py-1 px-2">—</td>
-                  <td className="py-1 px-2">—</td>
                   <td className="py-1 px-2 text-muted-foreground italic">—</td>
                 </tr>
               ))}

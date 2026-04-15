@@ -1,9 +1,7 @@
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/components/ui/button";
-import { PenTool, RotateCcw, Save, CheckCircle2, ImageIcon, RefreshCw } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileDropZone } from "@/components/shared/FileDropZone";
+import { PenTool, RotateCcw, Save, CheckCircle2, RefreshCw } from "lucide-react";
 import type { FirmaMatricula } from "@/types/formatoFormacion";
 
 interface PortalSignatureCaptureProps {
@@ -30,7 +28,6 @@ export default function PortalSignatureCapture({
 }: PortalSignatureCaptureProps) {
   const sigRef = useRef<SignatureCanvas>(null);
   const [isEmpty, setIsEmpty] = useState(true);
-  const [tab, setTab] = useState<string>("dibujar");
 
   // If there's a reusable signature and no value yet, auto-fill
   const displayValue = value || (reusableSignature?.firmaBase64 ?? null);
@@ -46,15 +43,6 @@ export default function PortalSignatureCapture({
       const base64 = sigRef.current.getCanvas().toDataURL("image/png");
       onChange(base64);
     }
-  };
-
-  const handleFileUpload = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      onChange(reader.result as string);
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleReset = () => {
@@ -111,52 +99,33 @@ export default function PortalSignatureCapture({
 
   return (
     <div className="space-y-3">
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-2 h-8">
-          <TabsTrigger value="dibujar" className="text-xs gap-1">
-            <PenTool className="h-3.5 w-3.5" />
-            Dibujar
-          </TabsTrigger>
-          <TabsTrigger value="cargar" className="text-xs gap-1">
-            <ImageIcon className="h-3.5 w-3.5" />
-            Cargar imagen
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+        <PenTool className="h-3.5 w-3.5" />
+        <span>Dibuja tu firma en el recuadro</span>
+      </div>
 
-        <TabsContent value="dibujar" className="space-y-2 mt-2">
-          <div className="border-2 border-dashed rounded-lg bg-background cursor-crosshair">
-            <SignatureCanvas
-              ref={sigRef}
-              canvasProps={{
-                className: "w-full",
-                style: { width: "100%", height: "140px" },
-              }}
-              penColor="black"
-              backgroundColor="white"
-              onBegin={() => setIsEmpty(false)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={isEmpty}>
-              <RotateCcw className="h-3.5 w-3.5 mr-1" />
-              Limpiar
-            </Button>
-            <Button type="button" size="sm" onClick={handleSaveDrawn} disabled={isEmpty}>
-              <Save className="h-3.5 w-3.5 mr-1" />
-              Guardar Firma
-            </Button>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="cargar" className="space-y-2 mt-2">
-          <FileDropZone
-            accept="image/png,image/jpeg,image/webp"
-            onFile={handleFileUpload}
-            label="Arrastra una imagen aquí o haz clic para seleccionar"
-            hint="PNG con fondo transparente para mejores resultados"
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="border-2 border-dashed rounded-lg bg-background cursor-crosshair">
+        <SignatureCanvas
+          ref={sigRef}
+          canvasProps={{
+            className: "w-full",
+            style: { width: "100%", height: "140px" },
+          }}
+          penColor="black"
+          backgroundColor="white"
+          onBegin={() => setIsEmpty(false)}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={handleClear} disabled={isEmpty}>
+          <RotateCcw className="h-3.5 w-3.5 mr-1" />
+          Limpiar
+        </Button>
+        <Button type="button" size="sm" onClick={handleSaveDrawn} disabled={isEmpty}>
+          <Save className="h-3.5 w-3.5 mr-1" />
+          Guardar Firma
+        </Button>
+      </div>
 
       {esOrigenFirma && (
         <label className="flex items-start gap-2 text-sm cursor-pointer">

@@ -13,7 +13,7 @@ import type { TipoBloque } from '@/types/formatoFormacion';
 import type { LucideIcon } from 'lucide-react';
 
 interface PaletteItem {
-  type: TipoBloque | 'row2';
+  type: TipoBloque | 'row2' | 'row1';
   label: string;
   icon: LucideIcon;
   category: 'layout' | 'fields' | 'special';
@@ -21,6 +21,7 @@ interface PaletteItem {
 
 const PALETTE: PaletteItem[] = [
   // Layout
+  { type: 'row1', label: '1 columna', icon: LayoutGrid, category: 'layout' },
   { type: 'row2', label: '2 columnas', icon: Columns2, category: 'layout' },
   { type: 'document_header', label: 'Encabezado', icon: LayoutGrid, category: 'layout' },
   // Fields
@@ -48,7 +49,7 @@ const PALETTE: PaletteItem[] = [
 ];
 
 export default function BlockCatalog() {
-  const { addBlock, addRow2, getSelectedBlock, updateBlock, selectedId } = useFormatoEditorStore();
+  const { addBlock, addRow2, addRow1, getSelectedBlock, updateBlock, selectedId } = useFormatoEditorStore();
   const [search, setSearch] = useState('');
   const [showTokens, setShowTokens] = useState(false);
 
@@ -61,7 +62,9 @@ export default function BlockCatalog() {
   const special = filtered.filter((p) => p.category === 'special');
 
   const handleClick = (item: PaletteItem) => {
-    if (item.type === 'row2') {
+    if (item.type === 'row1') {
+      addRow1();
+    } else if (item.type === 'row2') {
       addRow2();
     } else {
       addBlock(item.type as TipoBloque);

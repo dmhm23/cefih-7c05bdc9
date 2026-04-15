@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { Info, FileText, ClipboardCheck, ShieldCheck, Heart, PenTool, BarChart3, CalendarDays } from "lucide-react";
 import PortalSectionCard from "./PortalSectionCard";
+import PortalSignatureCapture from "./PortalSignatureCapture";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
 import type {
@@ -36,6 +37,11 @@ interface SemanticSection {
   bloques: Bloque[];
 }
 
+interface SignatureProps {
+  autorizaReutilizacion: boolean;
+  onAutorizaReutilizacionChange: (v: boolean) => void;
+}
+
 interface PortalFormatoRendererProps {
   formato: FormatoFormacion;
   persona: Persona | null;
@@ -45,6 +51,7 @@ interface PortalFormatoRendererProps {
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
   firmasMatricula?: FirmaMatricula[];
+  signatureProps?: SignatureProps;
 }
 
 // ---------------------------------------------------------------------------

@@ -106,21 +106,17 @@ export const portalDinamicoService = {
     // Filtrar en JS: formatos cuyo eventos_disparadores incluye "firma_completada"
     // y cuyo nivel coincide
     const targets = formatos.filter((f: any) => {
-      const eventos = f.eventos_disparadores as string[] | undefined;
-      if (!eventos || !Array.isArray(eventos)) {
-        // eventos_disparadores viene como jsonb, parsear si es string
-        const raw = (f as any).eventos_disparadores;
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (!Array.isArray(parsed) || !parsed.includes('firma_completada')) return false;
-      } else if (!eventos.includes('firma_completada')) {
-        return false;
-      }
+      // Check eventos_disparadores includes firma_completada
+      const raw = f.eventos_disparadores;
+      const eventos = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (!Array.isArray(eventos) || !eventos.includes('firma_completada')) return false;
+
+      // Check nivel match
+      const niveles = f.niveles_asignados as string[] | null;
+      if (niveles && niveles.length > 0 && nivelId && !niveles.includes(nivelId)) return false;
+
       return true;
     });
-
-    // Nota: el filtro por nivel se omite porque eventos_disparadores + es_automatico
-    // ya filtra los formatos relevantes. Si se necesitara:
-    // const niveles = f.niveles_asignados; (!niveles || niveles.length === 0 || niveles.includes(nivelId))
 
     for (const formato of targets) {
       const bloques = (typeof formato.bloques === 'string'

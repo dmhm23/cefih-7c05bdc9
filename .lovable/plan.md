@@ -1,73 +1,96 @@
 
 
-# Plan: Resolver la resolución de nombres de nivel en toda la plataforma
+# Plan: Corregir logo en encabezados de formatos y optimizar reutilización
 
 ## Causa raíz
 
-Hay **un solo problema** que se manifiesta en múltiples lugares: las funciones `resolveNivelCursoLabel()` y `resolveNivelFormacionLabel()` dependen de un **caché síncrono global** que puede no estar cargado al momento del render. Cuando el caché está vacío, reciben un UUID y lo devuelven tal cual, o reciben un slug legacy como `"trabajador_autorizado"` y lo mapean al label hardcoded (de ahí que todo diga "Trabajador Autorizado").
+Tres problemas interrelacionados:
 
-El fix aplicado a `CourseInfoCard` y `CursoDetailSheet` (usar niveles del hook local) fue correcto pero **no se propagó** a todos los puntos que usan estas funciones.
+1. **`DynamicFormatoDocument.tsx` ignora el bloque `document_header`**: Renderiza un `DocumentHeader` hardcoded (línea 562) sin pasar `logoUrl` ni `borderColor`. El `renderBloque` no tiene `case 'document_header'` — cae al `default: return null`. Resultado: el logo configurado en el editor nunca aparece en Matrículas ni Portal Estudiante.
 
-## Lugares afectados
+2. **Logos se almacenan como Base64 en JSON**: El inspector (`InspectorFields.tsx`, línea 794) convierte la imagen a `data:image/...;base64,...` y la guarda directamente en `props.logoUrl` del bloque. Esto infla el JSONB de `formatos_formacion.bloques` (un logo típico pesa 50-200KB en Base64). La memoria del proyecto ya indica que deben usarse URLs de Storage.
 
-| Archivo | Línea | Problema |
-|---|---|---|
-| `CourseHeader.tsx` | 27 | Usa `resolveNivelCursoLabel(curso.tipoFormacion)` — pasa slug legacy, no UUID |
-| `CursosListView.tsx` | 113, 305 | `getCursoLabel` y columna "Tipo Formación" usan cache síncrono |
-| `MatriculasPage.tsx` | 405 | Columna "Nivel Formación" usa `resolveNivelFormacionLabel` con cache |
-| `MatriculaDetailSheet.tsx` | 276, 427 | Título y campo usan cache síncrono |
-| `MatriculaDetallePage.tsx` | 701 | Campo nivel usa cache síncrono |
-| `PersonaDetailSheet.tsx` | 321 | Historial de matrículas usa cache |
-| `PersonaDetallePage.tsx` | 290 | Historial de matrículas usa cache |
-| `CursosCalendarioView.tsx` | (pendiente revisar) | Posiblemente afectado también |
+3. **No hay reutilización de logos**: Cada formato obliga al usuario a subir un archivo nuevo. No existe una galería de logos ya cargados.
 
-## Solución: helper local reutilizable
+## Puntos afectados
 
-En lugar de repetir el `useMemo` en cada componente, crear **un hook** que encapsule la resolución:
+| Componente | Problema |
+|---|---|
+| `DynamicFormatoDocument.tsx` (Matrículas) | No lee `document_header` block → sin logo personalizado |
+| `DynamicFormatoPreviewDialog.tsx` (Portal) | Usa `DynamicFormatoDocument` → mismo problema |
+| `InspectorFields.tsx` (Editor) | Guarda Base64 en JSON en vez de subir a Storage |
+| `EvaluacionReentrenamientoDocument.tsx` | Legacy: logo hardcoded, no afectado pero no reutiliza |
+
+## Solución
+
+### 1. Storage bucket para logos de formatos
+Crear un bucket `logos-formatos` (público) para almacenar los logos. Migración SQL.
+
+### 2. Subir logo a Storage desde el editor
+Modificar `DocumentHeaderInspector` en `InspectorFields.tsx`:
+- Al seleccionar un archivo, subirlo a `logos-formatos/{uuid}.{ext}` vía Supabase Storage
+- Guardar la URL pública en `props.logoUrl` (no Base64)
+- Mostrar galería de logos existentes consultando el bucket
+
+### 3. Galería de logos reutilizables
+Agregar en `DocumentHeaderInspector` una sección "Logos disponibles" que lista los archivos del bucket `logos-formatos`. El usuario puede:
+- Seleccionar uno existente (un clic)
+- O subir uno nuevo
+
+### 4. Renderizar `document_header` en `DynamicFormatoDocument.tsx`
+Cambiar la lógica del componente principal para que:
+- Detecte si existe un bloque `document_header` en los bloques (igual que hace `FormatoPreviewDocument.tsx` línea 430)
+- Si existe: renderizarlo con sus props (logo, empresa, etc.) — agregar `case 'document_header'` en `renderBloque`
+- Si no existe: mantener el `DocumentHeader` por defecto actual (fallback)
 
 ```typescript
-// src/hooks/useResolveNivel.ts
-export function useResolveNivel() {
-  const { data: niveles = [] } = useNivelesFormacion();
-  
-  const resolve = useCallback((id?: string, legacySlug?: string) => {
-    if (id) {
-      const found = niveles.find(n => n.id === id);
-      if (found) return found.nombreNivel;
-    }
-    if (legacySlug) {
-      const found = niveles.find(n => n.id === legacySlug);
-      if (found) return found.nombreNivel;
-    }
-    return LEGACY_LABELS[legacySlug || ''] || legacySlug || id || '';
-  }, [niveles]);
-  
-  return resolve;
+// En renderBloque, agregar:
+case "document_header": {
+  const hp = (bloque as any).props || {};
+  return (
+    <div style={{ gridColumn: "span 2" }}>
+      <DocumentHeader
+        nombreDocumento={bloque.label || formato.nombre}
+        codigo={hp.codigo || formato.codigo}
+        version={hp.version || formato.version}
+        fechaCreacion={hp.fechaCreacion || meta?.fechaCreacion || "—"}
+        fechaEdicion={hp.fechaEdicion || meta?.fechaEdicion || "—"}
+        empresaNombre={hp.empresaNombre}
+        sistemaGestion={hp.sistemaGestion}
+        subsistema={hp.subsistema || "FORMACIÓN"}
+        logoUrl={hp.logoUrl || undefined}
+        borderColor={hp.borderColor || undefined}
+      />
+    </div>
+  );
 }
 ```
 
-Luego reemplazar todas las llamadas a `resolveNivelCursoLabel` y `resolveNivelFormacionLabel` por este hook en los componentes que ya tienen acceso a React.
+Y en el componente principal:
+```typescript
+const hasHeaderBlock = bloques.some(b => b.type === 'document_header');
+
+// Solo renderizar el fallback si NO hay bloque document_header
+{!hasHeaderBlock && (
+  <DocumentHeader
+    nombreDocumento={formato.nombre}
+    codigo={formato.codigo}
+    ...
+  />
+)}
+```
 
 ## Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/hooks/useResolveNivel.ts` | **Nuevo** — hook que resuelve nivel usando datos del query |
-| `src/components/cursos/CourseHeader.tsx` | Usar hook, pasar `nivelFormacionId` en vez de `tipoFormacion` |
-| `src/components/cursos/CursosListView.tsx` | Usar hook para `getCursoLabel` y columna "Tipo Formación" |
-| `src/components/cursos/CursosCalendarioView.tsx` | Usar hook para labels en calendario |
-| `src/components/cursos/CourseInfoCard.tsx` | Simplificar: usar hook en vez de `useMemo` manual |
-| `src/components/cursos/CursoDetailSheet.tsx` | Simplificar: usar hook |
-| `src/pages/matriculas/MatriculasPage.tsx` | Columna "Nivel Formación": usar hook |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Título y campo: usar hook |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Campo nivel: usar hook |
-| `src/components/personas/PersonaDetailSheet.tsx` | Historial: usar hook |
-| `src/pages/personas/PersonaDetallePage.tsx` | Historial: usar hook |
+| Migración SQL | Crear bucket `logos-formatos` (público) con RLS |
+| `src/components/formatos/editor/InspectorFields.tsx` | Subir a Storage + galería de logos existentes |
+| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Agregar `case 'document_header'` y lógica condicional de fallback |
 
-## Lo que NO se toca
-
-- `resolveNivelLabel.ts` — se mantiene para contextos no-React (CSV export, etc.)
-- Base de datos — no requiere cambios
-- Servicios — no requiere cambios
-- El `useNivelesFormacion` subyacente comparte cache de React Query, así que no hay queries duplicadas
+## Archivos que NO se tocan
+- `DocumentHeader.tsx` — ya soporta `logoUrl`
+- `FormatoPreviewDocument.tsx` — ya maneja correctamente el bloque `document_header`
+- `BlockPreview.tsx` — ya renderiza la vista previa en el editor
+- Formatos legacy (Asistencia, PTA/ATS, Evaluación) — tienen encabezados hardcoded por diseño
 

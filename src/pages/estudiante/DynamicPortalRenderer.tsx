@@ -107,10 +107,7 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           onAnswerChange={handleAnswerChange}
           readOnly={false}
           firmasMatricula={firmas}
-          signatureProps={{
-            autorizaReutilizacion,
-            onAutorizaReutilizacionChange: setAutorizaReutilizacion,
-          }}
+        />
         />
 
         {/* Submit */}

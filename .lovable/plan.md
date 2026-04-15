@@ -1,96 +1,70 @@
 
 
-# Plan: Corregir logo en encabezados de formatos y optimizar reutilización
+# Plan: Mejorar UX de selección de logo en encabezado
 
-## Causa raíz
+## Estado actual
 
-Tres problemas interrelacionados:
+El código en `InspectorFields.tsx` (líneas 835-891) ya tiene:
+- Upload a Storage funcionando
+- Galería de logos existentes funcionando
 
-1. **`DynamicFormatoDocument.tsx` ignora el bloque `document_header`**: Renderiza un `DocumentHeader` hardcoded (línea 562) sin pasar `logoUrl` ni `borderColor`. El `renderBloque` no tiene `case 'document_header'` — cae al `default: return null`. Resultado: el logo configurado en el editor nunca aparece en Matrículas ni Portal Estudiante.
+Pero la UX actual muestra solo el botón "Subir logo…" y la galería como un link colapsable debajo. No es claro que hay dos opciones.
 
-2. **Logos se almacenan como Base64 en JSON**: El inspector (`InspectorFields.tsx`, línea 794) convierte la imagen a `data:image/...;base64,...` y la guarda directamente en `props.logoUrl` del bloque. Esto infla el JSONB de `formatos_formacion.bloques` (un logo típico pesa 50-200KB en Base64). La memoria del proyecto ya indica que deben usarse URLs de Storage.
+## Cambio propuesto
 
-3. **No hay reutilización de logos**: Cada formato obliga al usuario a subir un archivo nuevo. No existe una galería de logos ya cargados.
+Cuando no hay logo seleccionado, mostrar **dos botones claros** en lugar del área de carga:
+1. **"Galería"** — abre la grilla de logos existentes inline
+2. **"Subir nuevo"** — abre el file input (flujo actual)
 
-## Puntos afectados
+Cuando ya hay un logo seleccionado, se mantiene la vista actual (preview + botón X para quitar).
 
-| Componente | Problema |
-|---|---|
-| `DynamicFormatoDocument.tsx` (Matrículas) | No lee `document_header` block → sin logo personalizado |
-| `DynamicFormatoPreviewDialog.tsx` (Portal) | Usa `DynamicFormatoDocument` → mismo problema |
-| `InspectorFields.tsx` (Editor) | Guarda Base64 en JSON en vez de subir a Storage |
-| `EvaluacionReentrenamientoDocument.tsx` | Legacy: logo hardcoded, no afectado pero no reutiliza |
+### Cambio en `InspectorFields.tsx` (líneas 854-890)
 
-## Solución
+Reemplazar el bloque sin-logo y la galería colapsable por:
 
-### 1. Storage bucket para logos de formatos
-Crear un bucket `logos-formatos` (público) para almacenar los logos. Migración SQL.
-
-### 2. Subir logo a Storage desde el editor
-Modificar `DocumentHeaderInspector` en `InspectorFields.tsx`:
-- Al seleccionar un archivo, subirlo a `logos-formatos/{uuid}.{ext}` vía Supabase Storage
-- Guardar la URL pública en `props.logoUrl` (no Base64)
-- Mostrar galería de logos existentes consultando el bucket
-
-### 3. Galería de logos reutilizables
-Agregar en `DocumentHeaderInspector` una sección "Logos disponibles" que lista los archivos del bucket `logos-formatos`. El usuario puede:
-- Seleccionar uno existente (un clic)
-- O subir uno nuevo
-
-### 4. Renderizar `document_header` en `DynamicFormatoDocument.tsx`
-Cambiar la lógica del componente principal para que:
-- Detecte si existe un bloque `document_header` en los bloques (igual que hace `FormatoPreviewDocument.tsx` línea 430)
-- Si existe: renderizarlo con sus props (logo, empresa, etc.) — agregar `case 'document_header'` en `renderBloque`
-- Si no existe: mantener el `DocumentHeader` por defecto actual (fallback)
-
-```typescript
-// En renderBloque, agregar:
-case "document_header": {
-  const hp = (bloque as any).props || {};
-  return (
-    <div style={{ gridColumn: "span 2" }}>
-      <DocumentHeader
-        nombreDocumento={bloque.label || formato.nombre}
-        codigo={hp.codigo || formato.codigo}
-        version={hp.version || formato.version}
-        fechaCreacion={hp.fechaCreacion || meta?.fechaCreacion || "—"}
-        fechaEdicion={hp.fechaEdicion || meta?.fechaEdicion || "—"}
-        empresaNombre={hp.empresaNombre}
-        sistemaGestion={hp.sistemaGestion}
-        subsistema={hp.subsistema || "FORMACIÓN"}
-        logoUrl={hp.logoUrl || undefined}
-        borderColor={hp.borderColor || undefined}
-      />
+```tsx
+{/* Sin logo: mostrar dos opciones */}
+{!props.logoUrl && (
+  <div className="space-y-2">
+    <div className="flex gap-2">
+      <Button
+        variant="outline" size="sm"
+        className="flex-1 text-xs"
+        onClick={() => setShowGallery(!showGallery)}
+        disabled={galleryLogos.length === 0}
+      >
+        <ImageIcon className="h-3 w-3 mr-1" />
+        Galería ({galleryLogos.length})
+      </Button>
+      <label className="flex-1">
+        <Button variant="outline" size="sm" className="w-full text-xs" asChild disabled={uploading}>
+          <span>
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Upload className="h-3 w-3 mr-1" />}
+            Subir nuevo
+          </span>
+        </Button>
+        <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+      </label>
     </div>
-  );
-}
-```
-
-Y en el componente principal:
-```typescript
-const hasHeaderBlock = bloques.some(b => b.type === 'document_header');
-
-// Solo renderizar el fallback si NO hay bloque document_header
-{!hasHeaderBlock && (
-  <DocumentHeader
-    nombreDocumento={formato.nombre}
-    codigo={formato.codigo}
-    ...
-  />
+    {showGallery && galleryLogos.length > 0 && (
+      <div className="grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto border rounded-md p-1.5">
+        {galleryLogos.map(...)} {/* mismo código actual */}
+      </div>
+    )}
+  </div>
 )}
 ```
 
-## Archivos a modificar
+Mover la galería para que solo aparezca dentro de este bloque (no debajo del preview cuando ya hay logo).
+
+## Archivo a modificar
 
 | Archivo | Cambio |
 |---|---|
-| Migración SQL | Crear bucket `logos-formatos` (público) con RLS |
-| `src/components/formatos/editor/InspectorFields.tsx` | Subir a Storage + galería de logos existentes |
-| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Agregar `case 'document_header'` y lógica condicional de fallback |
+| `src/components/formatos/editor/InspectorFields.tsx` | Reemplazar zona de carga (líneas 854-890) con dos botones + galería inline |
 
-## Archivos que NO se tocan
-- `DocumentHeader.tsx` — ya soporta `logoUrl`
-- `FormatoPreviewDocument.tsx` — ya maneja correctamente el bloque `document_header`
-- `BlockPreview.tsx` — ya renderiza la vista previa en el editor
-- Formatos legacy (Asistencia, PTA/ATS, Evaluación) — tienen encabezados hardcoded por diseño
+## Lo que NO se toca
+- Lógica de upload a Storage — se mantiene igual
+- Lógica de galería (listado del bucket) — se mantiene igual
+- `DynamicFormatoDocument.tsx` — ya corregido en el commit anterior
 

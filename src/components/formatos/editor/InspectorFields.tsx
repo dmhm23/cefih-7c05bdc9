@@ -377,7 +377,7 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     /* data_authorization block removed — use paragraph + checkbox instead */
 
     case 'attendance_by_day':
-      return <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">Genera automáticamente la tabla de asistencia según los días del curso.</p>;
+      return <AttendanceByDayInspector bloque={bloque} onChange={onChange} />;
 
     case 'document_header':
       return <DocumentHeaderInspector bloque={bloque} onChange={onChange} />;

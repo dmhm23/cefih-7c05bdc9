@@ -122,8 +122,15 @@ export interface BloqueAutoField extends BloqueBase {
   props: { key: AutoFieldKey; span?: boolean };
 }
 
+export type AttendanceFirmaMode = 'none' | 'reuse_if_available' | 'reuse_required';
+
 export interface BloqueAttendanceByDay extends BloqueBase {
   type: 'attendance_by_day';
+  props?: {
+    firmaMode?: AttendanceFirmaMode;
+    tipoFirmante?: 'aprendiz' | 'entrenador' | 'supervisor';
+    formatoOrigenId?: string;
+  };
 }
 
 export interface BloqueSignatureAprendiz extends BloqueBase {

@@ -121,13 +121,22 @@ export const portalDinamicoService = {
     for (const formato of targets) {
       const bloques = (typeof formato.bloques === 'string'
         ? JSON.parse(formato.bloques)
-        : formato.bloques) as Array<{ id: string; type: string }>;
+        : formato.bloques) as Array<{ id: string; type: string; props?: any }>;
 
-      // Construir answers con la firma en el bloque signature_capture si existe
+      // Construir answers con la firma en bloques signature_capture y attendance_by_day
       const answers: Record<string, unknown> = {};
       const sigBlock = bloques.find(b => b.type === 'signature_capture');
       if (sigBlock) {
         answers[sigBlock.id] = firmaBase64;
+      }
+
+      // Inyectar firma en bloques attendance_by_day configurados para herencia
+      const attendanceBlocks = bloques.filter(b => b.type === 'attendance_by_day');
+      for (const attBlock of attendanceBlocks) {
+        const firmaMode = attBlock.props?.firmaMode;
+        if (firmaMode === 'reuse_if_available' || firmaMode === 'reuse_required') {
+          answers[attBlock.id] = { firmaHeredada: firmaBase64 };
+        }
       }
 
       // Upsert formato_respuestas — idempotente

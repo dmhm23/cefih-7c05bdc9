@@ -450,10 +450,37 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
         );
       }
       const startDate = ctx.curso?.fechaInicio ? (parseLocalDate(ctx.curso.fechaInicio) ?? new Date(ctx.curso.fechaInicio)) : new Date();
-      const rows = Array.from({ length: days }, (_, i) => {
+      const attendanceRows = Array.from({ length: days }, (_, i) => {
         const d = addDays(startDate, i);
         return format(d, "dd/MM/yyyy", { locale: es });
       });
+
+      // Resolve inherited signature for attendance block
+      const attProps = (bloque as any).props || {};
+      const firmaMode = attProps.firmaMode || 'none';
+      let attendanceFirmaBase64: string | null = null;
+
+      // 1. Check answers snapshot (injected by procesarEventoFirmaCompletada)
+      const answerData = answers[bloque.id] as { firmaHeredada?: string } | undefined;
+      if (answerData?.firmaHeredada) {
+        attendanceFirmaBase64 = answerData.firmaHeredada;
+      }
+
+      // 2. Fallback: resolve from firmasMatricula
+      if (!attendanceFirmaBase64 && firmaMode !== 'none') {
+        const tipoFirmante = attProps.tipoFirmante || 'aprendiz';
+        const firmas = ctx.firmasMatricula || [];
+        const eligible = firmas.filter(f => f.tipo === tipoFirmante && f.autorizaReutilizacion);
+        if (attProps.formatoOrigenId) {
+          const exact = eligible.find(f => f.formatoOrigenId === attProps.formatoOrigenId);
+          if (exact) attendanceFirmaBase64 = exact.firmaBase64;
+        }
+        if (!attendanceFirmaBase64 && eligible.length > 0) {
+          const sorted = eligible.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          attendanceFirmaBase64 = sorted[0].firmaBase64;
+        }
+      }
+
       return (
         <div style={{ gridColumn: "span 2" }} className="mt-3">
           <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Registro de Asistencia por Día"}</p>
@@ -465,10 +492,16 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
               </tr>
             </thead>
             <tbody>
-              {rows.map((fecha) => (
+              {attendanceRows.map((fecha) => (
                 <tr key={fecha} className="border-b border-border/50">
                   <td className="py-1 px-2">{fecha}</td>
-                  <td className="py-1 px-2 text-muted-foreground italic">—</td>
+                  <td className="py-1 px-2">
+                    {attendanceFirmaBase64 ? (
+                      <img src={attendanceFirmaBase64} alt="Firma" className="h-6 object-contain" />
+                    ) : (
+                      <span className="text-muted-foreground italic">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

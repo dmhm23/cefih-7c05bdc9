@@ -7,8 +7,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, GraduationCap } from 'lucide-react';
 import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
-import { portalEstudianteService } from '@/services/portalEstudianteService';
+import { portalEstudianteService, LoginResultado } from '@/services/portalEstudianteService';
 import logoEmpresa from '@/assets/logo-empresa.png';
+
+const ERROR_MESSAGES: Record<LoginResultado, string> = {
+  ok: '',
+  persona_no_encontrada: 'No se encontró una persona registrada con este número de documento.',
+  sin_curso: 'Tienes una matrícula registrada, pero aún no has sido asignado a un curso. Contacta a tu centro de formación.',
+  curso_cerrado: 'Tu curso ha finalizado. Si necesitas acceder a tus documentos, contacta a tu centro de formación.',
+  portal_deshabilitado: 'El acceso al portal ha sido deshabilitado para tu matrícula. Contacta a tu centro de formación.',
+};
 
 export default function AccesoEstudiantePage() {
   const navigate = useNavigate();
@@ -27,21 +35,23 @@ export default function AccesoEstudiantePage() {
     setLoading(true);
 
     try {
-      const result = await portalEstudianteService.buscarMatriculaVigente(cedula);
+      const response = await portalEstudianteService.buscarMatriculaVigente(cedula);
 
-      if (!result) {
-        setError('No se encontró una matrícula vigente asociada a este número de documento.');
+      if (response.resultado !== 'ok' || !response.data) {
+        setError(ERROR_MESSAGES[response.resultado] || 'No se encontró una matrícula vigente.');
         return;
       }
 
+      const { matricula, persona, curso } = response.data;
+
       setSession({
-        matriculaId: result.matricula.id,
-        personaId: result.persona.id,
-        cedula: result.persona.numeroDocumento,
-        nombreEstudiante: `${result.persona.nombres} ${result.persona.apellidos}`,
-        cursoNombre: result.curso.nombre,
-        cursoFechaInicio: result.curso.fechaInicio,
-        cursoFechaFin: result.curso.fechaFin,
+        matriculaId: matricula.id,
+        personaId: persona.id,
+        cedula: persona.numeroDocumento,
+        nombreEstudiante: `${persona.nombres} ${persona.apellidos}`,
+        cursoNombre: curso.nombre,
+        cursoFechaInicio: curso.fechaInicio,
+        cursoFechaFin: curso.fechaFin,
       });
 
       navigate('/estudiante/inicio');

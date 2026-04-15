@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { portalEstudianteService, MatriculaVigenteResult } from '@/services/portalEstudianteService';
+import { portalEstudianteService, MatriculaVigenteResult, LoginResultado } from '@/services/portalEstudianteService';
 import { portalDinamicoService, EnviarFormatoDinamicoParams } from '@/services/portalDinamicoService';
 import { DocumentoPortalEstado } from '@/types/portalEstudiante';
 import { snakeToCamel } from '@/services/api';
 import type { FormatoFormacion, FirmaMatricula } from '@/types/formatoFormacion';
 
 export function useBuscarMatriculaVigente(cedula: string | null) {
-  return useQuery<MatriculaVigenteResult | null>({
+  return useQuery<{ resultado: LoginResultado; data?: MatriculaVigenteResult }>({
     queryKey: ['portal-estudiante', 'matricula-vigente', cedula],
     queryFn: () => portalEstudianteService.buscarMatriculaVigente(cedula!),
     enabled: !!cedula && cedula.length >= 6,

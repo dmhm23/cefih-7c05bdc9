@@ -452,17 +452,19 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
 
     case "document_header": {
       const hp = (bloque as any).props || {};
+      const fRef = rc.formatoRef;
+      const fMeta = fRef?.documentMeta;
       return (
         <div style={{ gridColumn: "span 2" }}>
           <DocumentHeader
-            nombreDocumento={bloque.label || formato.nombre}
-            codigo={hp.codigo || formato.codigo}
-            version={hp.version || formato.version}
-            fechaCreacion={hp.fechaCreacion || meta?.fechaCreacion || "—"}
-            fechaEdicion={hp.fechaEdicion || meta?.fechaEdicion || "—"}
+            nombreDocumento={bloque.label || fRef?.nombre || ""}
+            codigo={hp.codigo || fRef?.codigo || ""}
+            version={hp.version || fRef?.version || ""}
+            fechaCreacion={hp.fechaCreacion || fMeta?.fechaCreacion || "—"}
+            fechaEdicion={hp.fechaEdicion || fMeta?.fechaEdicion || "—"}
             empresaNombre={hp.empresaNombre}
             sistemaGestion={hp.sistemaGestion}
-            subsistema={hp.subsistema || meta?.subsistema || "FORMACIÓN"}
+            subsistema={hp.subsistema || fMeta?.subsistema || "FORMACIÓN"}
             logoUrl={hp.logoUrl || undefined}
             borderColor={hp.borderColor || undefined}
           />
@@ -576,7 +578,10 @@ export default function DynamicFormatoDocument({
     respuestasPrevias,
     camposAdicionalesNivel,
   };
-  const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
+  const rc: RenderContext = {
+    ctx, answers, onChange: onAnswerChange, readOnly,
+    formatoRef: { nombre: formato.nombre, codigo: formato.codigo, version: formato.version, documentMeta: meta },
+  };
 
   const hasHeaderBlock = bloques.some((b: any) => b.type === 'document_header');
 

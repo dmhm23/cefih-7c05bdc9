@@ -189,6 +189,17 @@ interface RenderContext {
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
   const { ctx, answers, onChange, readOnly } = rc;
 
+  // Handle row2 before switch (type not in Bloque union)
+  if ((bloque as any).type === 'row2') {
+    const row = bloque as unknown as Row2Block;
+    return (
+      <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
+        <div>{row.cols[0] ? renderBloque(row.cols[0], rc) : null}</div>
+        <div>{row.cols[1] ? renderBloque(row.cols[1], rc) : null}</div>
+      </div>
+    );
+  }
+
   switch (bloque.type) {
     case "section_title": {
       const isCollapsible = ("props" in bloque && (bloque as any).props?.collapsible) || false;
@@ -515,16 +526,6 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
             logoUrl={hp.logoUrl || undefined}
             borderColor={hp.borderColor || undefined}
           />
-        </div>
-      );
-    }
-
-    case "row2": {
-      const row = bloque as unknown as Row2Block;
-      return (
-        <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
-          <div>{row.cols[0] ? renderBloque(row.cols[0], rc) : null}</div>
-          <div>{row.cols[1] ? renderBloque(row.cols[1], rc) : null}</div>
         </div>
       );
     }

@@ -418,7 +418,9 @@ function renderPortalBlock(
     const row = bloque as unknown as Row1Block;
     return (
       <div key={bloque.id}>
-        {row.col ? renderPortalBlock(row.col, ctx, answers, onChange, readOnly) : null}
+        {row.col.map((child) => (
+          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>
+        ))}
       </div>
     );
   }
@@ -428,8 +430,8 @@ function renderPortalBlock(
     const row = bloque as unknown as Row2Block;
     return (
       <div className="grid grid-cols-2 gap-3" key={bloque.id}>
-        <div>{row.cols[0] ? renderPortalBlock(row.cols[0], ctx, answers, onChange, readOnly) : null}</div>
-        <div>{row.cols[1] ? renderPortalBlock(row.cols[1], ctx, answers, onChange, readOnly) : null}</div>
+        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>)}</div>
+        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>)}</div>
       </div>
     );
   }

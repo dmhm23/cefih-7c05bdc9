@@ -98,7 +98,9 @@ function renderBloque(bloque: Bloque): React.ReactNode {
     const row = bloque as unknown as Row1Block;
     return (
       <div style={{ gridColumn: "span 2" }}>
-        {row.col ? renderBloque(row.col) : null}
+        {row.col.map((child) => (
+          <React.Fragment key={child.id}>{renderBloque(child)}</React.Fragment>
+        ))}
       </div>
     );
   }
@@ -108,8 +110,8 @@ function renderBloque(bloque: Bloque): React.ReactNode {
     const row = bloque as unknown as Row2Block;
     return (
       <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
-        <div>{row.cols[0] ? renderBloque(row.cols[0]) : null}</div>
-        <div>{row.cols[1] ? renderBloque(row.cols[1]) : null}</div>
+        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderBloque(child)}</React.Fragment>)}</div>
+        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderBloque(child)}</React.Fragment>)}</div>
       </div>
     );
   }

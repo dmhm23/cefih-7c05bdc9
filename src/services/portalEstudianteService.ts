@@ -5,10 +5,13 @@ import { Persona } from '@/types/persona';
 import { Curso } from '@/types/curso';
 import { FormatoFormacion } from '@/types/formatoFormacion';
 
+export type LoginResultado = 'ok' | 'persona_no_encontrada' | 'sin_curso' | 'curso_cerrado' | 'portal_deshabilitado';
+
 export interface MatriculaVigenteResult {
   matricula: Matricula;
   persona: Persona;
   curso: Curso;
+  resultado: LoginResultado;
 }
 
 // Helper to map DB row to frontend Matricula (minimal fields needed for portal)

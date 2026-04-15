@@ -11,7 +11,6 @@ export interface EnviarFormatoDinamicoParams {
     firmaBase64: string;
     tipoFirmante: 'aprendiz' | 'entrenador' | 'supervisor';
     esOrigenFirma: boolean;
-    autorizaReutilizacion: boolean;
   };
 }
 
@@ -52,7 +51,7 @@ export const portalDinamicoService = {
     if (dpError) throw dpError;
 
     // 3. Persist firma if this format is a signature origin with explicit authorization
-    if (firmaPayload && firmaPayload.esOrigenFirma && firmaPayload.autorizaReutilizacion) {
+    if (firmaPayload && firmaPayload.esOrigenFirma) {
       await firmaMatriculaService.upsert({
         matriculaId,
         tipo: firmaPayload.tipoFirmante,

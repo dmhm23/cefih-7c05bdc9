@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
 import type { Bloque, TipoBloque, VisibilityRule } from '@/types/formatoFormacion';
 import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
@@ -15,7 +15,8 @@ import {
 import {
   Collapsible, CollapsibleTrigger, CollapsibleContent,
 } from '@/components/ui/collapsible';
-import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2 } from 'lucide-react';
+import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface InspectorFieldsProps {
   bloque: Bloque;
@@ -787,19 +788,58 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
 
   const updateProps = (upd: any) => onChange({ props: { ...props, ...upd } } as any);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [uploading, setUploading] = useState(false);
+  const [galleryLogos, setGalleryLogos] = useState<{ name: string; url: string }[]>([]);
+  const [showGallery, setShowGallery] = useState(false);
+
+  // Load existing logos from storage bucket
+  useEffect(() => {
+    const loadLogos = async () => {
+      const { data } = await supabase.storage.from('logos-formatos').list('', { limit: 50 });
+      if (data) {
+        const items = data
+          .filter((f) => f.name && !f.name.startsWith('.'))
+          .map((f) => {
+            const { data: urlData } = supabase.storage.from('logos-formatos').getPublicUrl(f.name);
+            return { name: f.name, url: urlData.publicUrl };
+          });
+        setGalleryLogos(items);
+      }
+    };
+    loadLogos();
+  }, []);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => updateProps({ logoUrl: reader.result as string });
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const fileName = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('logos-formatos').upload(fileName, file, { upsert: false });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('logos-formatos').getPublicUrl(fileName);
+      updateProps({ logoUrl: urlData.publicUrl });
+      // Add to gallery
+      setGalleryLogos((prev) => [...prev, { name: fileName, url: urlData.publicUrl }]);
+    } catch (err: any) {
+      console.error('Error uploading logo:', err);
+    } finally {
+      setUploading(false);
+    }
   };
+
+  // Check if current logo is a base64 and needs migration
+  const isBase64 = props.logoUrl?.startsWith('data:');
 
   return (
     <div className="space-y-4">
       {/* Logo */}
       <div className="space-y-1.5">
         <Label className="text-xs">Logo</Label>
+        {isBase64 && (
+          <p className="text-[10px] text-amber-600">⚠ Logo almacenado como Base64. Suba uno nuevo para optimizar.</p>
+        )}
         {props.logoUrl ? (
           <div className="relative border rounded-md p-2 flex items-center justify-center bg-muted/20">
             <img src={props.logoUrl} alt="Logo" className="max-h-16 object-contain" />
@@ -812,10 +852,41 @@ function DocumentHeaderInspector({ bloque, onChange }: InspectorFieldsProps) {
             </Button>
           </div>
         ) : (
-          <label className="flex items-center justify-center border-2 border-dashed rounded-md p-4 cursor-pointer hover:bg-muted/20 transition-colors">
-            <span className="text-xs text-muted-foreground">Subir logo…</span>
-            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+          <label className={`flex items-center justify-center border-2 border-dashed rounded-md p-4 cursor-pointer hover:bg-muted/20 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <span className="text-xs text-muted-foreground">Subir logo…</span>
+            )}
+            <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
           </label>
+        )}
+
+        {/* Gallery of existing logos */}
+        {galleryLogos.length > 0 && (
+          <div className="space-y-1">
+            <button
+              type="button"
+              className="text-[10px] text-primary hover:underline"
+              onClick={() => setShowGallery(!showGallery)}
+            >
+              {showGallery ? 'Ocultar logos disponibles' : `Logos disponibles (${galleryLogos.length})`}
+            </button>
+            {showGallery && (
+              <div className="grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto border rounded-md p-1.5">
+                {galleryLogos.map((logo) => (
+                  <button
+                    key={logo.name}
+                    type="button"
+                    className={`border rounded p-1 hover:ring-2 hover:ring-primary/50 transition-all ${props.logoUrl === logo.url ? 'ring-2 ring-primary' : ''}`}
+                    onClick={() => updateProps({ logoUrl: logo.url })}
+                  >
+                    <img src={logo.url} alt={logo.name} className="h-8 w-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

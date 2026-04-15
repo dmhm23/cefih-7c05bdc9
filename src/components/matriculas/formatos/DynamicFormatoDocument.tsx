@@ -557,16 +557,20 @@ export default function DynamicFormatoDocument({
   };
   const rc: RenderContext = { ctx, answers, onChange: onAnswerChange, readOnly };
 
+  const hasHeaderBlock = bloques.some((b: any) => b.type === 'document_header');
+
   return (
     <div className="bg-white p-6" style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px" }}>
-      <DocumentHeader
-        nombreDocumento={formato.nombre}
-        codigo={formato.codigo}
-        version={formato.version}
-        fechaCreacion={meta?.fechaCreacion || "—"}
-        fechaEdicion={meta?.fechaEdicion || "—"}
-        subsistema={meta?.subsistema || "FORMACIÓN"}
-      />
+      {!hasHeaderBlock && (
+        <DocumentHeader
+          nombreDocumento={formato.nombre}
+          codigo={formato.codigo}
+          version={formato.version}
+          fechaCreacion={meta?.fechaCreacion || "—"}
+          fechaEdicion={meta?.fechaEdicion || "—"}
+          subsistema={meta?.subsistema || "FORMACIÓN"}
+        />
+      )}
 
       {bloques.length > 0 ? (
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-4" style={{ fontSize: "12px" }}>

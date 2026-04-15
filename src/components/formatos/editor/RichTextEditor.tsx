@@ -40,7 +40,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
 
   // Sync external value changes
   if (editor && value !== editor.getHTML() && !editor.isFocused) {
-    editor.commands.setContent(value || '', false);
+    editor.commands.setContent(value || '', { emitUpdate: false });
   }
 
   if (!editor) return null;

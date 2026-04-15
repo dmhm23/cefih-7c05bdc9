@@ -2011,6 +2011,7 @@ export type Database = {
           persona_nombres: string
           persona_numero_documento: string
           portal_habilitado: boolean
+          resultado: string
         }[]
       }
       recalcular_grupo_cartera: {

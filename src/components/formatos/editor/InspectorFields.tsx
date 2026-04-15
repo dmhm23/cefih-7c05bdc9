@@ -15,7 +15,7 @@ import {
 import {
   Collapsible, CollapsibleTrigger, CollapsibleContent,
 } from '@/components/ui/collapsible';
-import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2 } from 'lucide-react';
+import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2, Upload, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface InspectorFieldsProps {

@@ -110,7 +110,7 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
       if (isHtml) {
         return (
           <div
-            className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none"
+            className="text-sm text-foreground leading-relaxed prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
           />
         );

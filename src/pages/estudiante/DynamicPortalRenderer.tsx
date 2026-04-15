@@ -22,7 +22,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
   const enviarMutation = useEnviarFormatoDinamico();
 
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [autorizaReutilizacion, setAutorizaReutilizacion] = useState(false);
 
   const handleAnswerChange = useCallback((key: string, value: unknown) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
@@ -72,7 +71,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           firmaBase64,
           tipoFirmante: signatureBlock.props?.tipoFirmante || 'aprendiz',
           esOrigenFirma: formato.esOrigenFirma,
-          autorizaReutilizacion,
         } : undefined,
       });
 
@@ -109,10 +107,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           onAnswerChange={handleAnswerChange}
           readOnly={false}
           firmasMatricula={firmas}
-          signatureProps={{
-            autorizaReutilizacion,
-            onAutorizaReutilizacionChange: setAutorizaReutilizacion,
-          }}
         />
 
         {/* Submit */}

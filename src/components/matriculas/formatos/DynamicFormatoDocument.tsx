@@ -181,6 +181,7 @@ interface RenderContext {
   answers: Record<string, unknown>;
   onChange?: (key: string, value: unknown) => void;
   readOnly: boolean;
+  formatoRef?: { nombre: string; codigo: string; version: string; documentMeta?: any };
 }
 
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {

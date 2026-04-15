@@ -10,15 +10,15 @@ const bloqueBaseSchema = z.object({
 const row1Schema = z.object({
   id: z.string().min(1),
   type: z.literal('row1'),
-  col: bloqueBaseSchema.nullable(),
+  col: z.array(bloqueBaseSchema),
 });
 
 const row2Schema = z.object({
   id: z.string().min(1),
   type: z.literal('row2'),
   cols: z.tuple([
-    bloqueBaseSchema.nullable(),
-    bloqueBaseSchema.nullable(),
+    z.array(bloqueBaseSchema),
+    z.array(bloqueBaseSchema),
   ]),
 });
 

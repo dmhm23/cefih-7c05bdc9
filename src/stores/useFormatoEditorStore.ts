@@ -18,16 +18,36 @@ import type {
 export interface Row1Block {
   id: string;
   type: 'row1';
-  col: Bloque | null;
+  col: Bloque[];
 }
 
 export interface Row2Block {
   id: string;
   type: 'row2';
-  cols: [(Bloque | null), (Bloque | null)];
+  cols: [Bloque[], Bloque[]];
 }
 
 export type EditorItem = Bloque | Row1Block | Row2Block;
+
+/** Normalize legacy single-block col format to array format */
+function normalizeRowItem(item: any): EditorItem {
+  if (item.type === 'row1') {
+    const col = item.col;
+    if (col === null || col === undefined) return { ...item, col: [] };
+    if (Array.isArray(col)) return item;
+    return { ...item, col: [col] };
+  }
+  if (item.type === 'row2') {
+    const cols = item.cols || [null, null];
+    const norm = cols.map((c: any) => {
+      if (c === null || c === undefined) return [];
+      if (Array.isArray(c)) return c;
+      return [c];
+    });
+    return { ...item, cols: [norm[0], norm[1]] };
+  }
+  return item;
+}
 
 // ---------------------------------------------------------------------------
 // Format config (non-block metadata)
@@ -130,11 +150,11 @@ export function createDefaultBlock(type: TipoBloque): Bloque {
 }
 
 export function createRow1(): Row1Block {
-  return { id: uuidv4(), type: 'row1', col: null };
+  return { id: uuidv4(), type: 'row1', col: [] };
 }
 
 export function createRow2(): Row2Block {
-  return { id: uuidv4(), type: 'row2', cols: [null, null] };
+  return { id: uuidv4(), type: 'row2', cols: [[], []] };
 }
 
 // ---------------------------------------------------------------------------
@@ -169,7 +189,7 @@ interface FormatoEditorState {
   updateBlock: (id: string, updates: Partial<Bloque>) => void;
   reorderBlock: (fromIndex: number, toIndex: number) => void;
   insertIntoCol: (rowId: string, colIndex: number, type: TipoBloque) => void;
-  removeFromCol: (rowId: string, colIndex: number) => void;
+  removeFromCol: (rowId: string, colIndex: number, blockId: string) => void;
   duplicateBlock: (id: string) => void;
   setSelected: (id: string | null) => void;
   setDocTitle: (title: string) => void;
@@ -247,14 +267,17 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => {
         if (it.id === id && it.type !== 'row2' && it.type !== 'row1') return { ...it, ...updates } as Bloque;
         if (it.type === 'row1') {
           const row = it as Row1Block;
-          if (row.col && row.col.id === id) return { ...row, col: { ...row.col, ...updates } as Bloque };
+          const updatedCol = row.col.map((c) => (c.id === id ? { ...c, ...updates } as Bloque : c));
+          if (updatedCol !== row.col) return { ...row, col: updatedCol };
           return it;
         }
         if (it.type === 'row2') {
           const row = it as Row2Block;
           return {
             ...row,
-            cols: row.cols.map((c) => (c && c.id === id ? { ...c, ...updates } as Bloque : c)) as Row2Block['cols'],
+            cols: row.cols.map((colArr) =>
+              colArr.map((c) => (c.id === id ? { ...c, ...updates } as Bloque : c))
+            ) as Row2Block['cols'],
           };
         }
         return it;
@@ -275,12 +298,13 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => {
       set((s) => ({
         items: s.items.map((it) => {
           if (it.id === rowId && it.type === 'row1') {
-            return { ...it, col: block } as Row1Block;
+            const row = it as Row1Block;
+            return { ...row, col: [...row.col, block] };
           }
           if (it.id === rowId && it.type === 'row2') {
             const row = it as Row2Block;
-            const cols = [...row.cols] as Row2Block['cols'];
-            cols[colIndex] = block;
+            const cols = [...row.cols] as [Bloque[], Bloque[]];
+            cols[colIndex] = [...cols[colIndex], block];
             return { ...row, cols };
           }
           return it;
@@ -290,19 +314,18 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => {
       }));
     },
 
-    removeFromCol: (rowId, colIndex) => { pushHistory(); set((s) => {
+    removeFromCol: (rowId, colIndex, blockId) => { pushHistory(); set((s) => {
       let newSelectedId = s.selectedId;
+      if (blockId === s.selectedId) newSelectedId = null;
       const items = s.items.map((it) => {
         if (it.id === rowId && it.type === 'row1') {
           const row = it as Row1Block;
-          if (row.col?.id === s.selectedId) newSelectedId = null;
-          return { ...row, col: null } as Row1Block;
+          return { ...row, col: row.col.filter((c) => c.id !== blockId) };
         }
         if (it.id === rowId && it.type === 'row2') {
           const row = it as Row2Block;
-          if (row.cols[colIndex]?.id === s.selectedId) newSelectedId = null;
-          const cols = [...row.cols] as Row2Block['cols'];
-          cols[colIndex] = null;
+          const cols = [...row.cols] as [Bloque[], Bloque[]];
+          cols[colIndex] = cols[colIndex].filter((c) => c.id !== blockId);
           return { ...row, cols };
         }
         return it;
@@ -329,7 +352,7 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => {
     reset: () => set({ items: [], selectedId: null, docTitle: 'Formato sin título', config: { ...DEFAULT_CONFIG }, isDirty: false, history: [], future: [] }),
 
     loadFromFormato: (items, config, docTitle) => set({
-      items,
+      items: items.map(normalizeRowItem),
       config,
       docTitle,
       selectedId: null,
@@ -371,12 +394,16 @@ export const useFormatoEditorStore = create<FormatoEditorState>((set, get) => {
         if (it.id === selectedId && it.type !== 'row2' && it.type !== 'row1') return it as Bloque;
         if (it.type === 'row1') {
           const row = it as Row1Block;
-          if (row.col && row.col.id === selectedId) return row.col;
+          for (const c of row.col) {
+            if (c.id === selectedId) return c;
+          }
         }
         if (it.type === 'row2') {
           const row = it as Row2Block;
-          for (const col of row.cols) {
-            if (col && col.id === selectedId) return col;
+          for (const colArr of row.cols) {
+            for (const c of colArr) {
+              if (c.id === selectedId) return c;
+            }
           }
         }
       }

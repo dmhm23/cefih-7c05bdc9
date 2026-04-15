@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/stores/useFormatoEditorStore';
 import BlockPreview from './BlockPreview';
 import { Badge } from '@/components/ui/badge';
-import type { TipoBloque } from '@/types/formatoFormacion';
+import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
 
 interface CanvasRowProps {
   row: Row2Block | Row1Block;
@@ -31,11 +31,11 @@ export default function CanvasRow({ row, variant }: CanvasRowProps) {
     transition,
   };
 
-  const cols = isRow1
+  const cols: Bloque[][] = isRow1
     ? [(row as Row1Block).col]
     : (row as Row2Block).cols;
 
-  const anyColSelected = cols.some((c) => c?.id === selectedId);
+  const anyColSelected = cols.some((colArr) => colArr.some((c) => c.id === selectedId));
 
   return (
     <div
@@ -76,24 +76,24 @@ export default function CanvasRow({ row, variant }: CanvasRowProps) {
 
       {isRow1 ? (
         <ColDrop
-          col={(row as Row1Block).col}
+          blocks={(row as Row1Block).col}
           rowId={row.id}
           colIndex={0}
           selectedId={selectedId}
           onSelect={setSelected}
-          onRemove={() => removeFromCol(row.id, 0)}
+          onRemoveBlock={(blockId) => removeFromCol(row.id, 0, blockId)}
           onDrop={(type) => insertIntoCol(row.id, 0, type)}
         />
       ) : (
         [0, 1].map((ci) => (
           <ColDrop
             key={ci}
-            col={(row as Row2Block).cols[ci]}
+            blocks={(row as Row2Block).cols[ci]}
             rowId={row.id}
             colIndex={ci}
             selectedId={selectedId}
             onSelect={setSelected}
-            onRemove={() => removeFromCol(row.id, ci)}
+            onRemoveBlock={(blockId) => removeFromCol(row.id, ci, blockId)}
             onDrop={(type) => insertIntoCol(row.id, ci, type)}
           />
         ))
@@ -103,29 +103,28 @@ export default function CanvasRow({ row, variant }: CanvasRowProps) {
 }
 
 function ColDrop({
-  col,
+  blocks,
   rowId,
   colIndex,
   selectedId,
   onSelect,
-  onRemove,
+  onRemoveBlock,
   onDrop,
 }: {
-  col: Row2Block['cols'][0];
+  blocks: Bloque[];
   rowId: string;
   colIndex: number;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  onRemove: () => void;
+  onRemoveBlock: (blockId: string) => void;
   onDrop: (type: TipoBloque) => void;
 }) {
   const [over, setOver] = useState(false);
-  const isSelected = col?.id === selectedId;
 
   return (
     <div
       className={cn(
-        'flex-1 min-h-14 border-2 border-dashed rounded relative transition-all duration-150',
+        'flex-1 min-h-14 border-2 border-dashed rounded relative transition-all duration-150 flex flex-col',
         over ? 'bg-primary/5 border-primary/40' : 'border-muted'
       )}
       onDragOver={(e) => {
@@ -141,34 +140,37 @@ function ColDrop({
         if (type) onDrop(type);
       }}
     >
-      {col ? (
-        <div
-          className={cn(
-            'relative rounded px-2 py-2 pr-8 cursor-pointer border transition-colors min-w-0 overflow-visible',
-            isSelected
-              ? 'border-primary/60 bg-primary/5'
-              : 'border-transparent hover:border-border hover:bg-muted/50'
-          )}
-          onClick={(e) => { e.stopPropagation(); onSelect(col.id); }}
-        >
-          <BlockPreview block={col} />
-          <div className={cn(
-            'absolute right-1 top-1 z-10',
-            isSelected ? 'block' : 'hidden group-hover:block'
-          )}>
-            <button
-              className="p-1 rounded bg-background border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
-              onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            >
-              <X size={11} />
-            </button>
+      {blocks.map((block) => {
+        const isSelected = block.id === selectedId;
+        return (
+          <div
+            key={block.id}
+            className={cn(
+              'relative rounded px-2 py-2 pr-8 cursor-pointer border transition-colors min-w-0 overflow-visible',
+              isSelected
+                ? 'border-primary/60 bg-primary/5'
+                : 'border-transparent hover:border-border hover:bg-muted/50'
+            )}
+            onClick={(e) => { e.stopPropagation(); onSelect(block.id); }}
+          >
+            <BlockPreview block={block} />
+            <div className={cn(
+              'absolute right-1 top-1 z-10',
+              isSelected ? 'block' : 'hidden group-hover:block'
+            )}>
+              <button
+                className="p-1 rounded bg-background border border-border text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
+                onClick={(e) => { e.stopPropagation(); onRemoveBlock(block.id); }}
+              >
+                <X size={11} />
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40 text-xs pointer-events-none">
-          Arrastra aquí
-        </div>
-      )}
+        );
+      })}
+      <div className="flex-1 min-h-6 flex items-center justify-center text-muted-foreground/40 text-xs pointer-events-none">
+        {blocks.length === 0 ? 'Arrastra aquí' : '+'}
+      </div>
     </div>
   );
 }

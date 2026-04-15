@@ -93,9 +93,12 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <EditableField
             label="Tipo de Formación"
-            value={getValue("tipoFormacion")}
+            value={formData.nivelFormacionId ?? curso.nivelFormacionId ?? ""}
             displayValue={nivelLabel}
-            onChange={(v) => onFieldChange("tipoFormacion", v)}
+            onChange={(v) => {
+              onFieldChange("nivelFormacionId", v);
+              onFieldChange("tipoFormacion", v);
+            }}
             type="select"
             options={tipoFormacionOptions}
             editable={!readOnly}

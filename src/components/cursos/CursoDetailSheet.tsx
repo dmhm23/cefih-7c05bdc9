@@ -156,9 +156,12 @@ export function CursoDetailSheet({
           <div className="space-y-4">
             <EditableField
               label="Tipo de Formación"
-              value={getValue("tipoFormacion")}
+              value={formData.nivelFormacionId ?? curso?.nivelFormacionId ?? ""}
               displayValue={nivelLabel}
-              onChange={(v) => handleFieldChange("tipoFormacion", v)}
+              onChange={(v) => {
+                handleFieldChange("nivelFormacionId", v);
+                handleFieldChange("tipoFormacion", v);
+              }}
               type="select"
               options={tipoFormacionOptions}
             />

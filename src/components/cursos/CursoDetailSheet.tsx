@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -66,6 +66,16 @@ export function CursoDetailSheet({
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
 
+  const nivelLabel = useMemo(() => {
+    if (!curso) return "";
+    const id = curso.nivelFormacionId;
+    if (id) {
+      const found = niveles.find(n => n.id === id);
+      if (found) return found.nombreNivel;
+    }
+    return resolveNivelCursoLabel(curso.tipoFormacion);
+  }, [curso?.nivelFormacionId, curso?.tipoFormacion, niveles]);
+
   useEffect(() => {
     setFormData({});
     setIsDirty(false);
@@ -73,7 +83,7 @@ export function CursoDetailSheet({
 
   if (!curso) return null;
 
-  const title = `${curso.numeroCurso}—${resolveNivelCursoLabel(curso.nivelFormacionId || curso.tipoFormacion)}`;
+  const title = `${curso.numeroCurso}—${nivelLabel}`;
   const subtitle = `Entrenador: ${curso.entrenadorNombre}`;
 
   const handleFieldChange = (field: keyof CursoFormData, value: string | number) => {
@@ -147,7 +157,7 @@ export function CursoDetailSheet({
             <EditableField
               label="Tipo de Formación"
               value={getValue("tipoFormacion")}
-              displayValue={resolveNivelCursoLabel(getValue("tipoFormacion"))}
+              displayValue={nivelLabel}
               onChange={(v) => handleFieldChange("tipoFormacion", v)}
               type="select"
               options={tipoFormacionOptions}

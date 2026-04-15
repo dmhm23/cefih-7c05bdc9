@@ -1,50 +1,47 @@
 
 
-# Plan: Corregir error de guardado de formatos
+# Plan: Corregir nombre del nivel de formación en vistas de curso
 
-## Causa raíz confirmada
+## Causa raíz
 
-El error proviene de un **desajuste entre el frontend y la base de datos** en el campo `asignacion_scope`:
+Hay dos problemas distintos:
 
-- **Frontend** define `AsignacionScope = 'todos' | 'nivel_formacion'` y el store tiene como valor por defecto `'todos'`
-- **Base de datos** el enum `scope_formato` solo acepta `'nivel_formacion'` y `'tipo_curso'`
+1. **Panel deslizable (`CursoDetailSheet.tsx`, línea 150)**: Pasa `getValue("tipoFormacion")` a `resolveNivelCursoLabel()`. El campo `tipoFormacion` contiene un key legacy como `"trabajador_autorizado"`, no el UUID del nivel. Debería usar `curso.nivelFormacionId` (el UUID) para resolver el nombre correcto, igual que hace `CourseInfoCard`.
 
-Cuando se intenta insertar un formato nuevo, Postgres rechaza el valor `'todos'` con un error de violación de enum. El `catch` genérico en `FormatoEditorPage.tsx` (línea 188) descarta el mensaje real y muestra solo "Error al guardar".
+2. **Vista completa (`CourseInfoCard.tsx`, línea 88)**: Usa correctamente `curso.nivelFormacionId || getValue("tipoFormacion")`, pero `resolveNivelCursoLabel()` depende de un **caché síncrono** que puede no estar cargado cuando el componente renderiza. Cuando el caché está vacío, la función recibe un UUID y no lo encuentra, así que lo devuelve crudo (el UUID como texto).
 
-## Segundo problema: error opaco
-
-El `catch` no captura ni muestra el mensaje del error de Supabase, por lo que es imposible diagnosticar desde la UI.
+   Ambos componentes ya tienen `useNivelesFormacion()` cargado con los datos de niveles. La solución correcta es **usar los niveles del hook directamente** para resolver el nombre, en lugar de depender de la función de caché global.
 
 ## Solución
 
-### 1. Alinear el enum de BD con el frontend
+### `CursoDetailSheet.tsx`
+- Línea 150: Cambiar `resolveNivelCursoLabel(getValue("tipoFormacion"))` por una resolución local usando el array `niveles` que ya tiene cargado el componente.
+- Línea 76 (título): Ya usa `curso.nivelFormacionId || curso.tipoFormacion` — verificar que también se resuelva con datos locales.
 
-Agregar el valor `'todos'` al enum `scope_formato` en la base de datos. Esto es correcto semánticamente: un formato con scope `'todos'` aplica sin restricción de nivel ni tipo.
+### `CourseInfoCard.tsx`
+- Línea 88: Reemplazar `resolveNivelCursoLabel(...)` por una resolución local: buscar el nivel en el array `niveles` por UUID y mostrar `nombreNivel`.
 
-```sql
-ALTER TYPE public.scope_formato ADD VALUE IF NOT EXISTS 'todos';
-```
-
-### 2. Mejorar la observabilidad del error de guardado
-
-En `FormatoEditorPage.tsx`, capturar el mensaje real del error y mostrarlo en el toast:
-
+### Lógica de resolución local (ambos archivos)
 ```typescript
-} catch (err: any) {
-  const msg = err?.message || 'Error al guardar';
-  toast({ title: msg, variant: 'destructive' });
-}
+const nivelLabel = useMemo(() => {
+  const id = curso.nivelFormacionId;
+  if (id) {
+    const found = niveles.find(n => n.id === id);
+    if (found) return found.nombreNivel;
+  }
+  // Fallback legacy
+  return resolveNivelCursoLabel(curso.tipoFormacion);
+}, [curso.nivelFormacionId, curso.tipoFormacion, niveles]);
 ```
 
-## Archivos que se modifican
+## Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| Migración SQL | `ALTER TYPE scope_formato ADD VALUE 'todos'` |
-| `src/pages/formatos/FormatoEditorPage.tsx` | Capturar y mostrar el mensaje real del error |
-| `src/types/formatoFormacion.ts` | Agregar `'tipo_curso'` a `AsignacionScope` para paridad completa con BD |
+| `src/components/cursos/CursoDetailSheet.tsx` | Usar `niveles` del hook para resolver el displayValue del campo "Tipo de Formación" y el título |
+| `src/components/cursos/CourseInfoCard.tsx` | Usar `niveles` del hook para resolver el displayValue en lugar de `resolveNivelCursoLabel` |
 
 ## Archivos que NO se tocan
-
-Todo lo demás permanece igual. No se requieren cambios en el store, el servicio ni los componentes del editor.
+- `resolveNivelLabel.ts` — se mantiene para otros contextos donde no hay hook disponible.
+- No se modifica ningún servicio ni base de datos.
 

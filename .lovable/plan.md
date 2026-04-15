@@ -1,29 +1,48 @@
-# Fix: Bloques de párrafo en 2 columnas no se renderizan en vista previa ni PDF
 
-## Problema
 
-El tipo `row2` (bloque de 2 columnas) no tiene caso en la función `renderBloque()` de `FormatoPreviewDocument.tsx`. Cuando el array de bloques incluye un item con `type: 'row2'`, el `switch` no lo reconoce y no renderiza nada — ni el contenedor de 2 columnas ni los bloques hijos (párrafos u otros) dentro de cada columna.
+# Fix: Firma digital en portal — UX y posición
 
-## Cambio
+## Problemas identificados
 
-### Archivo: `src/components/formatos/FormatoPreviewDocument.tsx`
+1. **Auto-cierre inmediato**: `DynamicPortalRenderer` usa `onEnd` del canvas para guardar la firma en `answers` automáticamente. Al hacerlo, la condición `!answers[signatureBlock.id]` se vuelve `false` y el canvas desaparece, reemplazado por "Firma capturada". Un roce accidental cierra la interacción.
 
-1. **Importar el tipo `Row2Block**` desde el store.
-2. **Agregar caso `row2` en `renderBloque()**`: Detectar cuando `bloque.type === 'row2'`, hacer cast a `Row2Block`, y renderizar un grid de 2 columnas con `gridColumn: span 2` (para ocupar todo el ancho). Cada columna renderiza recursivamente su bloque hijo con `renderBloque()`, o muestra un espacio vacío si la columna está vacía.
+2. **Firma siempre al final**: La firma se renderiza hardcodeada al final de `DynamicPortalRenderer`, fuera de `PortalFormatoRenderer`. El renderer semántico clasifica correctamente `signature_capture` como sección independiente pero no tiene un caso en `renderPortalBlock` para renderizarla — devuelve `null`.
 
-```text
-┌─────────────────────────────────┐
-│  row2  (span 2, grid 2-cols)    │
-│  ┌─────────┐  ┌─────────┐       │
-│  │ col[0]  │  │ col[1]  │       │
-│  │ párrafo │  │ bloque ó│       │ 
-│  │         │  │ parrafo │       │ 
-│  └─────────┘  └─────────┘       │
-└─────────────────────────────────┘
-```
+3. **UX pobre vs referencia**: El componente `FirmaPersonal` (gestión de personal) tiene tabs (Dibujar/Cargar PNG), botón explícito "Guardar Firma", y botón "Limpiar" claro. El portal no tiene nada de esto.
 
-### Archivo: `src/components/matriculas/formatos/DynamicFormatoDocument.tsx`
+## Cambios
 
-Aplicar el mismo tratamiento para que el portal del estudiante también renderice correctamente bloques dentro de `row2`.
+### 1. `PortalFormatoRenderer.tsx` — Renderizar firma inline
 
-No se requieren cambios en `PRINT_STYLES` ya que las reglas de grid de 2 columnas y `span 2` ya existen.
+Agregar caso `signature_capture` en `renderPortalBlock` que renderice un componente `PortalSignatureCapture` con la misma UX de `FirmaPersonal`:
+- Tabs: Dibujar / Cargar PNG
+- Botón explícito "Guardar Firma" (no auto-save on stroke)
+- Botón "Limpiar" visible
+- Si ya hay firma guardada: mostrar preview + botón "Cambiar firma"
+- Si hay firma reutilizable desde `firmasMatricula`: mostrar preview con badge "Firma reutilizada"
+
+Esto hace que la firma aparezca en la posición exacta donde el bloque fue ubicado en el formato.
+
+### 2. `DynamicPortalRenderer.tsx` — Eliminar firma hardcodeada
+
+- Eliminar toda la sección de firma manual (SignatureCanvas, handleClearSignature, handleEndStroke, firmaBase64 state, sigCanvasRef, isEmptyRef)
+- Eliminar la sección de "Firma capturada" y el checkbox de autorización de reutilización
+- La firma ahora se lee desde `answers[signatureBlockId]` que el renderer semántico ya gestiona
+- Adaptar `handleSubmit` para extraer `firmaBase64` desde `answers` en lugar del state local
+
+### 3. Nuevo componente `PortalSignatureCapture.tsx`
+
+Componente reutilizable inspirado en `FirmaPersonal`:
+- Props: `blockId`, `label`, `value` (base64 o null), `onChange`, `readOnly`, `reusableSignature?` (FirmaMatricula)
+- Estado interno: canvas ref, isEmpty, tab activo
+- No auto-guarda al terminar trazo — requiere clic en "Guardar Firma"
+- Muestra firma existente con opción de cambiar/limpiar
+
+### Archivos afectados
+
+| Archivo | Cambio |
+|---|---|
+| `src/components/portal/PortalSignatureCapture.tsx` | Nuevo componente |
+| `src/components/portal/PortalFormatoRenderer.tsx` | Agregar caso signature_capture + pasar firmasMatricula al renderer |
+| `src/pages/estudiante/DynamicPortalRenderer.tsx` | Eliminar firma hardcodeada, simplificar submit |
+

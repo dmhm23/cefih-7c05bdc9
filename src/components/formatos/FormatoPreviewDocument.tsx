@@ -163,7 +163,7 @@ function renderBloque(bloque: Bloque): React.ReactNode {
       const firstLabel = options[0]?.label || "Opción";
       return (
         <div className="field-cell">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{bloque.label || "Selección"}</p>
+          <p className="text-sm font-medium text-foreground leading-tight mb-1">{bloque.label || "Selección"}</p>
           <div className="flex gap-3 mt-1">
             {options.map((opt: any, i: number) => (
               <div key={opt.value} className="flex items-center gap-1">
@@ -197,7 +197,7 @@ function renderBloque(bloque: Bloque): React.ReactNode {
       const mcOptions = ("props" in bloque && (bloque as any).props?.options) || [];
       return (
         <div className="field-cell">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{bloque.label || "Selección múltiple"}</p>
+          <p className="text-sm font-medium text-foreground leading-tight mb-1">{bloque.label || "Selección múltiple"}</p>
           <div className="flex flex-wrap gap-3 mt-1">
             {mcOptions.map((opt: any, i: number) => (
               <div key={opt.value} className="flex items-center gap-1">

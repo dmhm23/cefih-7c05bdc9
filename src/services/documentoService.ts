@@ -68,7 +68,7 @@ export async function crearDocumentosMatricula(
 
   const { data, error } = await supabase
     .from('documentos_matricula')
-    .insert(rows)
+    .upsert(rows, { onConflict: 'matricula_id,tipo', ignoreDuplicates: true })
     .select();
 
   if (error) handleSupabaseError(error);
@@ -110,7 +110,7 @@ export async function sincronizarDocumentos(
 
     await supabase
       .from('documentos_matricula')
-      .insert(rows)
+      .upsert(rows, { onConflict: 'matricula_id,tipo', ignoreDuplicates: true })
       .select();
 
     huboCambios = true;

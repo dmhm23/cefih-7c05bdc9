@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
 import { CertificacionSection } from "@/components/matriculas/CertificacionSection";

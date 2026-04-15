@@ -168,7 +168,7 @@ function renderBloque(bloque: Bloque): React.ReactNode {
             {options.map((opt: any, i: number) => (
               <div key={opt.value} className="flex items-center gap-1">
                 <div className={`h-3.5 w-3.5 rounded-full border ${i === 0 ? "bg-foreground border-foreground" : "border-muted-foreground/40"}`} />
-                <span className="text-xs">{opt.label}</span>
+                <span className="text-sm font-medium text-foreground">{opt.label}</span>
               </div>
             ))}
           </div>
@@ -206,7 +206,7 @@ function renderBloque(bloque: Bloque): React.ReactNode {
                     <svg className="h-3.5 w-3.5 text-background" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
                   )}
                 </div>
-                <span className="text-xs">{opt.label}</span>
+                <span className="text-sm font-medium text-foreground">{opt.label}</span>
               </div>
             ))}
           </div>

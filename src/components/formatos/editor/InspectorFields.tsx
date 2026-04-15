@@ -5,6 +5,7 @@ import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatal
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from './RichTextEditor';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -113,11 +114,10 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
       return (
         <div className="space-y-1.5">
           <Label className="text-xs">Texto del párrafo</Label>
-          <Textarea
+          <RichTextEditor
             value={b.props?.text ?? ''}
-            onChange={(e) => onChange({ props: { text: e.target.value } } as any)}
+            onChange={(html) => onChange({ props: { text: html } } as any)}
             placeholder="Contenido del párrafo..."
-            className="min-h-[120px] text-sm"
           />
         </div>
       );

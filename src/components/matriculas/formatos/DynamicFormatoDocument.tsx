@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
+import DOMPurify from "dompurify";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
@@ -214,14 +215,22 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
       );
     }
 
-    case "paragraph":
+    case "paragraph": {
+      const rawHtml = ("props" in bloque && (bloque as any).props?.text) || "";
+      const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
       return (
         <div style={{ gridColumn: "span 2" }}>
-          <p className="text-sm leading-relaxed text-justify">
-            {("props" in bloque && (bloque as any).props?.text) || ""}
-          </p>
+          {isHtml ? (
+            <div
+              className="text-sm leading-relaxed text-justify prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
+            />
+          ) : (
+            <p className="text-sm leading-relaxed text-justify">{rawHtml}</p>
+          )}
         </div>
       );
+    }
 
     case "text":
       return (

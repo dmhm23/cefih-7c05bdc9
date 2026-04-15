@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization, BloqueDocumentHeader } from '@/types/formatoFormacion';
 import { BLOQUE_TYPE_LABELS } from '@/data/bloqueConstants';
 import { Badge } from '@/components/ui/badge';
@@ -103,12 +104,23 @@ export default function BlockPreview({ block }: BlockPreviewProps) {
         </div>
       );
 
-    case 'paragraph':
+    case 'paragraph': {
+      const rawHtml = b.props?.text || '';
+      const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
+      if (isHtml) {
+        return (
+          <div
+            className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
+          />
+        );
+      }
       return (
         <p className="text-sm text-muted-foreground leading-relaxed">
-          {b.props?.text || 'Texto del párrafo...'}
+          {rawHtml || 'Texto del párrafo...'}
         </p>
       );
+    }
 
     case 'divider':
       return <hr className="border-t-2 border-muted my-1" />;

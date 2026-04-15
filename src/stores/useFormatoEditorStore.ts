@@ -93,8 +93,9 @@ const BLOCK_DEFAULTS: Partial<Record<TipoBloque, Record<string, unknown>>> = {
   number: { placeholder: '0' },
   email: { placeholder: 'correo@ejemplo.com' },
   paragraph: { text: '' },
-  radio: { options: [{ value: 'opcion_1', label: 'Opción 1' }, { value: 'opcion_2', label: 'Opción 2' }] },
-  select: { options: [{ value: 'opcion_1', label: 'Opción 1' }, { value: 'opcion_2', label: 'Opción 2' }] },
+  radio: { options: [{ value: 'opcion_1', label: 'Opción 1', default: false }, { value: 'opcion_2', label: 'Opción 2', default: false }] },
+  select: { options: [{ value: 'opcion_1', label: 'Opción 1', default: false }, { value: 'opcion_2', label: 'Opción 2', default: false }] },
+  multi_choice: { options: [{ value: 'opcion_1', label: 'Opción 1', default: false }, { value: 'opcion_2', label: 'Opción 2', default: false }] },
   auto_field: { key: 'nombre_aprendiz' },
   heading: { level: 2 },
   document_header: {

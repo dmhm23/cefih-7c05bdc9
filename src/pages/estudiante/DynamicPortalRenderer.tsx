@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormatoById, useFirmasMatricula, useEnviarFormatoDinamico, useInfoAprendizData } from '@/hooks/usePortalEstudiante';
-import DynamicFormatoDocument from '@/components/matriculas/formatos/DynamicFormatoDocument';
+import PortalFormatoRenderer from '@/components/portal/PortalFormatoRenderer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
@@ -107,7 +107,7 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="w-full max-w-lg mx-auto px-4 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/estudiante/inicio')}>
@@ -121,23 +121,19 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           </div>
         </div>
 
-        {/* Dynamic format document */}
-        <div className="border rounded-lg overflow-hidden">
-          <DynamicFormatoDocument
-            formato={formato}
-            persona={contextData?.persona ?? null}
-            matricula={contextData?.matricula ?? { id: matriculaId } as any}
-            curso={contextData?.curso ?? null}
-            entrenador={null}
-            supervisor={null}
-            answers={answers}
-            onAnswerChange={handleAnswerChange}
-            readOnly={false}
-            firmasMatricula={firmas}
-          />
-        </div>
+        {/* Semantic portal renderer */}
+        <PortalFormatoRenderer
+          formato={formato}
+          persona={contextData?.persona ?? null}
+          matricula={contextData?.matricula ?? { id: matriculaId } as any}
+          curso={contextData?.curso ?? null}
+          answers={answers}
+          onAnswerChange={handleAnswerChange}
+          readOnly={false}
+          firmasMatricula={firmas}
+        />
 
-        {/* Signature capture section (if format needs it and block is in capture mode) */}
+        {/* Signature capture section */}
         {signatureBlock && !answers[signatureBlock.id] && (
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-foreground">

@@ -284,9 +284,6 @@ function renderBloque(bloque: Bloque): React.ReactNode {
                 <th className="text-left py-1 px-2 font-semibold">Fecha</th>
                 <th className="text-left py-1 px-2 font-semibold">
                   Firma
-                  {firmaMode !== 'none' && (
-                    <span className="ml-1 text-[9px] font-normal text-blue-600">(hereda {firmanteLabel})</span>
-                  )}
                 </th>
               </tr>
             </thead>
@@ -295,7 +292,7 @@ function renderBloque(bloque: Bloque): React.ReactNode {
                 <tr key={day.fecha} className="border-b border-border/50">
                   <td className="py-1 px-2">{day.fecha}</td>
                   <td className="py-1 px-2 text-muted-foreground italic">
-                    {firmaMode !== 'none' ? '(firma heredada)' : 'Firma'}
+                    Firma
                   </td>
                 </tr>
               ))}

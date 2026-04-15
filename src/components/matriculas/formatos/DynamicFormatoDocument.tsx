@@ -122,7 +122,7 @@ function SignatureCaptureBlock({ bloque, rc }: { bloque: BloqueSignatureCapture;
   if ((mode === 'reuse_if_available' || mode === 'reuse_required') && reusable) {
     return (
       <SignatureBox
-        label={bloque.label || `Firma ${tipoFirmante} (reutilizada)`}
+        label={bloque.label || `Firma ${tipoFirmante}`}
         imageBase64={reusable.firmaBase64}
       />
     );

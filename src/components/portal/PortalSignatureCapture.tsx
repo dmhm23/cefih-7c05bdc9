@@ -52,7 +52,7 @@ export default function PortalSignatureCapture({
           <div className="flex items-center gap-2 text-sm text-primary">
             <CheckCircle2 className="h-4 w-4" />
             <span className="font-medium">
-              {isReused ? "Firma reutilizada" : "Firma capturada"}
+              Firma registrada
             </span>
           </div>
           {!readOnly && (

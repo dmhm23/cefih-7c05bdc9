@@ -10,6 +10,7 @@ interface FormatoItem {
   codigo?: string;
   estado: string;
   estadoRespuesta?: EstadoFormatoRespuesta;
+  esAutomatico?: boolean;
 }
 
 interface Props {
@@ -59,7 +60,7 @@ export default function FormatosList({ formatos, onPreview, onDownload, onReopen
                 </Badge>
               </div>
               <div className="flex gap-1 shrink-0">
-                {onReopen && (estadoKey === 'completado' || estadoKey === 'firmado') && (
+                {onReopen && !fmt.esAutomatico && (estadoKey === 'completado' || estadoKey === 'firmado') && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button

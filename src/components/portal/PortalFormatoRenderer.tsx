@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, useMemo } from "react";
 import DOMPurify from "dompurify";
 import { Info, FileText, ClipboardCheck, ShieldCheck, Heart, PenTool, BarChart3, CalendarDays } from "lucide-react";
 import PortalSectionCard from "./PortalSectionCard";
+import PortalSignatureCapture from "./PortalSignatureCapture";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
 import type {
@@ -36,6 +37,11 @@ interface SemanticSection {
   bloques: Bloque[];
 }
 
+interface SignatureProps {
+  autorizaReutilizacion: boolean;
+  onAutorizaReutilizacionChange: (v: boolean) => void;
+}
+
 interface PortalFormatoRendererProps {
   formato: FormatoFormacion;
   persona: Persona | null;
@@ -45,6 +51,7 @@ interface PortalFormatoRendererProps {
   onAnswerChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
   firmasMatricula?: FirmaMatricula[];
+  signatureProps?: SignatureProps;
 }
 
 // ---------------------------------------------------------------------------
@@ -606,6 +613,11 @@ function renderPortalBlock(
         />
       );
 
+    // signature_capture is rendered by the section renderer, not here
+    case "signature_capture":
+    case "signature_aprendiz":
+      return null;
+
     default:
       return null;
   }
@@ -624,6 +636,7 @@ export default function PortalFormatoRenderer({
   onAnswerChange,
   readOnly = false,
   firmasMatricula,
+  signatureProps,
 }: PortalFormatoRendererProps) {
   const bloques = formato.bloques || [];
 
@@ -656,6 +669,51 @@ export default function PortalFormatoRenderer({
 
   const sections = useMemo(() => groupBlocksIntoSections(bloques), [bloques]);
 
+  const renderSectionContent = (section: SemanticSection) => {
+    // Signature sections get the dedicated capture component
+    if (section.kind === "signature") {
+      const sigBloque = section.bloques[0] as BloqueSignatureCapture;
+      const tipoFirmante = sigBloque.props?.tipoFirmante || "aprendiz";
+      const reusable = firmasMatricula?.find(f => f.tipo === tipoFirmante) || null;
+
+      return (
+        <PortalSignatureCapture
+          blockId={sigBloque.id}
+          label={sigBloque.label}
+          value={(answers[sigBloque.id] as string) || null}
+          onChange={(v) => onAnswerChange?.(sigBloque.id, v)}
+          readOnly={readOnly}
+          reusableSignature={reusable}
+          esOrigenFirma={formato.esOrigenFirma}
+          autorizaReutilizacion={signatureProps?.autorizaReutilizacion}
+          onAutorizaReutilizacionChange={signatureProps?.onAutorizaReutilizacionChange}
+        />
+      );
+    }
+
+    if (section.kind === "info") {
+      return (
+        <div className="divide-y divide-border/50">
+          {section.bloques.map((bloque) => (
+            <React.Fragment key={bloque.id}>
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true)}
+            </React.Fragment>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {section.bloques.map((bloque) => (
+          <React.Fragment key={bloque.id}>
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly)}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3">
       {sections.map((section, idx) => {
@@ -670,23 +728,7 @@ export default function PortalFormatoRenderer({
             status={status}
             defaultOpen={!isInfoSection}
           >
-            {isInfoSection ? (
-              <div className="divide-y divide-border/50">
-                {section.bloques.map((bloque) => (
-                  <React.Fragment key={bloque.id}>
-                    {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true)}
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {section.bloques.map((bloque) => (
-                  <React.Fragment key={bloque.id}>
-                    {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly)}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
+            {renderSectionContent(section)}
           </PortalSectionCard>
         );
       })}

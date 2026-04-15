@@ -7,8 +7,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, GraduationCap } from 'lucide-react';
 import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
-import { portalEstudianteService } from '@/services/portalEstudianteService';
+import { portalEstudianteService, LoginResultado } from '@/services/portalEstudianteService';
 import logoEmpresa from '@/assets/logo-empresa.png';
+
+const ERROR_MESSAGES: Record<LoginResultado, string> = {
+  ok: '',
+  persona_no_encontrada: 'No se encontró una persona registrada con este número de documento.',
+  sin_curso: 'Tienes una matrícula registrada, pero aún no has sido asignado a un curso. Contacta a tu centro de formación.',
+  curso_cerrado: 'Tu curso ha finalizado. Si necesitas acceder a tus documentos, contacta a tu centro de formación.',
+  portal_deshabilitado: 'El acceso al portal ha sido deshabilitado para tu matrícula. Contacta a tu centro de formación.',
+};
 
 export default function AccesoEstudiantePage() {
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
@@ -609,6 +609,25 @@ export default function DynamicFormatoDocument({
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
+
+  // Seed default values from option blocks on first render
+  useEffect(() => {
+    if (readOnly || !onAnswerChange) return;
+    bloques.forEach((b: any) => {
+      if (answers[b.id] !== undefined) return;
+      const options = b.props?.options as { value: string; default?: boolean }[] | undefined;
+      if (!options) return;
+      if (b.type === 'radio' || b.type === 'select') {
+        const def = options.find((o) => o.default);
+        if (def) onAnswerChange(b.id, def.value);
+      } else if (b.type === 'multi_choice') {
+        const defs = options.filter((o) => o.default).map((o) => o.value);
+        if (defs.length > 0) onAnswerChange(b.id, defs);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formato.id]);
+
   const ctx: AutoFieldContext = {
     persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre,
     firmasMatricula,

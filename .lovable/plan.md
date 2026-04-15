@@ -1,66 +1,43 @@
 
 
-# 5 ajustes al editor de formatos y portal del estudiante
+# Fix: Duración de curso inclusiva + editable + asistencia completa
 
-## 1. Bloque de 1 columna en el editor (`/gestion-formatos/nuevo`)
+## Problema identificado
 
-Actualmente solo existe `row2` (2 columnas). Se agregará un bloque `row1` que funciona como contenedor de una sola columna con borde visual, útil para agrupar un bloque en un recuadro diferenciado.
+El bloque de asistencia en `DynamicFormatoDocument.tsx` usa `ctx.curso?.duracionDias` para generar las filas. Si el valor almacenado en la base de datos es incorrecto (calculado sin el +1 inclusivo), la tabla muestra menos días de los esperados.
 
-**Archivos:**
-- `src/stores/useFormatoEditorStore.ts` — Nuevo tipo `Row1Block` (`{ id, type: 'row1', col: Bloque | null }`), función `createRow1()`, acción `addRow1()`.
-- `src/components/formatos/editor/BlockCatalog.tsx` — Agregar entrada `{ type: 'row1', label: '1 columna', icon: Square, category: 'layout' }` en la paleta.
-- `src/components/formatos/editor/CanvasRow.tsx` — Agregar caso para renderizar `row1` (una sola celda drop).
-- `src/components/formatos/editor/EditorCanvas.tsx` — Manejar `row1` al hacer drop y al renderizar items.
-- `src/components/formatos/FormatoPreviewDocument.tsx` — Caso `row1` en `renderBloque`.
-- `src/components/portal/PortalFormatoRenderer.tsx` — Caso `row1` en `renderPortalBlock` y `classifyBlock`.
-- `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` — Caso `row1`.
+**Causa raíz**: `CourseInfoCard` calcula `duracionDiasCalculada` con la fórmula inclusiva correcta (+1), pero **nunca la persiste** en `formData` vía `onFieldChange("duracionDias", ...)`. Cuando se guardan cambios de fechas, el campo `duracionDias` no se incluye en el payload — el valor viejo del DB se mantiene.
 
-## 2. Firma sin carga de imagen en el portal
+Adicionalmente, la asistencia debería calcular las filas directamente desde las fechas del curso en vez de depender solo de `duracionDias`, para mayor robustez.
 
-Eliminar las pestañas (Tabs) y la opción "Cargar imagen" del componente `PortalSignatureCapture.tsx`. Solo queda el canvas de dibujo con botones "Limpiar" y "Guardar Firma".
+## Cambios
 
-**Archivo:** `src/components/portal/PortalSignatureCapture.tsx` — Eliminar imports de `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `FileDropZone`, `ImageIcon`. Renderizar directamente el canvas sin tabs.
+### 1. `CourseInfoCard.tsx` — Sincronizar duración al cambiar fechas + campo editable
 
-## 3. Íconos de secciones colapsables → check verde para datos prellenados
+- Cuando cambien `fechaInicio` o `fechaFin`, llamar `onFieldChange("duracionDias", diasCalculados)` automáticamente para que la duración entre en el payload de guardado.
+- Reemplazar el `<div>` estático de duración por un `EditableField` que permita override manual.
+- Mostrar hint "(auto)" cuando coincide con el cálculo, y "(manual)" cuando el usuario lo sobreescribió.
 
-Reemplazar el ícono informativo (ℹ️) de las secciones `info` por un check verde (`CheckCircle2 text-green-600`), transmitiendo progreso cuando los datos ya están prellenados. Secciones de tipo `info` pasan de `status="info"` a `status="complete"` ya que siempre tienen datos resueltos.
+### 2. `CursoFormPage.tsx` — Habilitar edición manual del campo
 
-**Archivos:**
-- `src/components/portal/PortalFormatoRenderer.tsx` — En `getSectionStatus`, cambiar: si `kind === "info"` retornar `"complete"` en vez de `"info"`.
-- `src/components/portal/PortalSectionCard.tsx` — Actualmente `status === "info"` no muestra ícono. No se necesita cambio aquí porque ahora será `"complete"` y ya muestra el check verde.
+- Quitar `disabled` del input de duración.
+- Mantener auto-cálculo al cambiar fechas, pero permitir que el usuario escriba un valor diferente.
 
-## 4. Colores del design system en el portal
+### 3. `DynamicFormatoDocument.tsx` — Calcular filas de asistencia desde fechas
 
-Las secciones colapsables usan colores hardcodeados (`border-green-200`, `border-amber-200`, `text-green-600`, `text-amber-500`). Se migrarán a los tokens CSS del design system:
-- Verde → `hsl(var(--success))` / `border-success/30`
-- Ámbar → `hsl(var(--warning))` / `border-warning/30`
+- Cambiar la lógica del bloque `attendance_by_day`: en vez de usar solo `days = ctx.curso?.duracionDias`, recalcular inclusivamente desde `fechaInicio` y `fechaFin` cuando ambas existan.
+- Fallback a `duracionDias` solo si no hay fechas disponibles.
 
-**Archivo:** `src/components/portal/PortalSectionCard.tsx` — Reemplazar:
-- `border-green-200` → `border-[hsl(var(--success)/0.3)]`
-- `border-amber-200` → `border-[hsl(var(--warning)/0.3)]`
-- `text-green-600` en `CheckCircle2` → `text-[hsl(var(--success))]`
-- `text-amber-500` en `AlertCircle` → `text-[hsl(var(--warning))]`
+### 4. `PortalFormatoRenderer.tsx` — Mismo fix para asistencia en portal
 
-## 5. Bloque asistencia sin columnas de hora
+- Aplicar la misma lógica de cálculo inclusivo de fechas para generar las filas de asistencia en el portal del estudiante.
 
-El bloque `attendance_by_day` actualmente muestra 4 columnas: Fecha, Hora entrada, Hora salida, Firma. Se eliminarán las columnas de hora, dejando solo Fecha y Firma.
+## Archivos afectados
 
-**Archivos:**
-- `src/components/formatos/FormatoPreviewDocument.tsx` — Eliminar `<th>` y `<td>` de "Hora entrada" y "Hora salida" en el caso `attendance_by_day`.
-- `src/components/formatos/editor/BlockPreview.tsx` — Si hay preview de la tabla, actualizar igualmente (actualmente solo muestra un badge, no requiere cambio).
-- Datos mock `ATTENDANCE_DAYS` — Verificar si `entrada`/`salida` se usan en otro lugar; si no, se pueden dejar pero ignorarlos en la UI.
-
-## Resumen de archivos afectados
-
-| Archivo | Cambios |
+| Archivo | Cambio |
 |---|---|
-| `useFormatoEditorStore.ts` | `Row1Block`, `addRow1` |
-| `BlockCatalog.tsx` | Entrada row1 en paleta |
-| `CanvasRow.tsx` | Render row1 |
-| `EditorCanvas.tsx` | Drop y render row1 |
-| `FormatoPreviewDocument.tsx` | row1 + asistencia sin horas |
-| `DynamicFormatoDocument.tsx` | row1 |
-| `PortalFormatoRenderer.tsx` | row1 + info→complete |
-| `PortalSignatureCapture.tsx` | Eliminar tabs/carga imagen |
-| `PortalSectionCard.tsx` | Tokens design system |
+| `src/components/cursos/CourseInfoCard.tsx` | Auto-sync duracionDias + EditableField editable |
+| `src/pages/cursos/CursoFormPage.tsx` | Quitar `disabled` del campo duración |
+| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` | Calcular filas asistencia desde fechas inclusivas |
+| `src/components/portal/PortalFormatoRenderer.tsx` | Mismo fix para asistencia en portal |
 

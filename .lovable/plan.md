@@ -1,68 +1,123 @@
+## Diagnóstico validado
 
+Revisé el flujo y el problema está dividido en dos partes:
 
-# Fix: Evento `firma_completada` sin implementar — formatos automáticos no se generan ni autocompletan firma
+1. **La firma fuente sí existe y sí quedó guardada**
+  - Thomas Doe (`1110123123`) ya tiene una firma persistida en `firmas_matricula`.
+  - El formato **Información del Aprendiz** sí está funcionando como origen de firma.
+2. **El evento automático sí está corriendo, pero solo cubre un tipo de bloque**
+  - El formato **Participación en el diligenciamiento del PTA - ATS** ya tiene un `formato_respuestas` generado y su bloque `signature_capture` ya recibió firma.
+  - El formato **Registro de asistencia...** también fue generado, pero quedó con `answers` vacíos.
+3. **La causa real del faltante en asistencia es de motor, no de tu configuración**
+  - Ese formato de asistencia **solo tiene** un bloque `attendance_by_day`.
+  - Hoy el código de `procesarEventoFirmaCompletada` **solo inyecta firma en bloques `signature_capture**`.
+  - Además, el renderer de `attendance_by_day` **nunca lee ni `firmas_matricula` ni `answers**`; la columna “Firma” está hardcodeada con placeholder.
+4. **Hay además una confusión de UX en Gestión de Formatos**
+  - El preview del editor (`FormatoPreviewDocument`) muestra `signature_capture` y `attendance_by_day` como maquetas estáticas.
+  - Ahí **no se resuelven firmas reales por matrícula**, así que puede parecer que “no heredó”, aunque en runtime sí exista la firma para formatos compatibles.
 
-## Diagnóstico
+## Conclusión
 
-Hay **tres problemas encadenados**:
+Tu configuración actual **sí es suficiente para un formato destino que tenga `signature_capture**`.
 
-### 1. `firmas_matricula` está vacía
-La firma de Thomas Doe se capturó antes de que el fix anterior (eliminar `autorizaReutilizacion`) estuviera activo en el navegador. La firma quedó en `documentos_portal.firma_data` pero nunca se persistió en `firmas_matricula`.
+Pero **no existe hoy una configuración útil para que `attendance_by_day` herede firma**, porque ese bloque no fue implementado con esa capacidad.  
+O sea: para asistencia, **te falta código**, no te falta marcar otra casilla.
 
-### 2. No existe handler para el evento `firma_completada`
-Los formatos "PTA" y "Registro de Asistencia" tienen `eventos_disparadores: ["firma_completada"]`, pero **no existe ningún trigger ni código** que procese este evento. Los triggers existentes solo manejan `asignacion_curso` y `cierre_curso`.
+## Plan de ajuste
 
-Cuando el estudiante firma y envía "Información del Aprendiz", debería ocurrir:
-1. La firma se guarda en `firmas_matricula` ✓ (ya corregido)
-2. Se crean `formato_respuestas` para los formatos disparados por `firma_completada` ✗ (no implementado)
-3. Esos `formato_respuestas` se auto-completan con la firma reutilizada ✗ (no implementado)
+### 1. Hacer explícito que el bloque de asistencia también puede heredar firma
 
-### 3. Los formatos tienen `es_automatico = false`
-Incluso si existiera el trigger, el trigger `autogenerar_formato_respuestas` filtra por `es_automatico = TRUE`.
+Extender `attendance_by_day` para que tenga propiedades similares a `signature_capture`, por ejemplo:
 
-## Plan de corrección
+- `mode`: `none | reuse_if_available | reuse_required`
+- `tipoFirmante`: `aprendiz | entrenador | supervisor`
+- `formatoOrigenId` opcional
 
-### Paso 1: Backfill — Persistir firma existente en `firmas_matricula`
-Usar la herramienta de inserción de datos para mover la firma de Thomas Doe desde `documentos_portal` a `firmas_matricula`.
+Así el usuario podrá configurar la herencia desde el propio bloque de asistencia, sin depender de adivinanzas.
 
-### Paso 2: Corregir `es_automatico` en los formatos afectados
-Actualizar los dos formatos ("PTA" y "Registro de Asistencia") para que tengan `es_automatico = true`, ya que su `modo_diligenciamiento` es `automatico_sistema`.
+### 2. Actualizar el editor para que esa configuración exista y sea clara
 
-### Paso 3: Implementar handler `firma_completada` en `portalDinamicoService.ts`
-Después de persistir la firma en `firmas_matricula` (paso 3 actual del servicio), agregar lógica que:
+Modificar el inspector del bloque `attendance_by_day` para permitir:
 
-1. Consulte `formatos_formacion` que tengan `eventos_disparadores @> '["firma_completada"]'` y coincidan con el nivel de la matrícula
-2. Para cada formato encontrado, cree un `formato_respuestas` con estado `completado` y answers que incluyan la firma en el blockId correspondiente al bloque `signature_capture` del formato destino
-3. Use `ON CONFLICT DO NOTHING` para idempotencia
+- activar firma heredada,
+- elegir tipo de firmante,
+- opcionalmente fijar el formato origen.
 
-```typescript
-// Después de persistir firma en firmas_matricula:
-if (firmaPayload && firmaPayload.esOrigenFirma) {
-  // ... upsert firma existente ...
-  
-  // Disparar evento firma_completada
-  await this.procesarEventoFirmaCompletada(
-    matriculaId, formatoId, firmaPayload.firmaBase64, firmaPayload.tipoFirmante
-  );
-}
-```
+También ajustar el preview del editor para mostrar texto más claro para el inspector:
 
-### Paso 4: Nueva función `procesarEventoFirmaCompletada`
-En `portalDinamicoService.ts`:
+- “La firma heredada se resuelve en instancias reales del formato, no en esta maqueta”.
 
-1. Consultar formatos con `eventos_disparadores @> '["firma_completada"]'`, activos, no eliminados
-2. Para cada formato, buscar el bloque `signature_capture` en sus `bloques`
-3. Crear/actualizar `formato_respuestas` con `estado: 'completado'` y `answers: { [signatureBlockId]: firmaBase64 }`
+### 3. Enseñar al motor automático a poblar también bloques de asistencia
 
-### Paso 5: Backfill de formato_respuestas para Thomas Doe
-Insertar las entradas `formato_respuestas` faltantes para los dos formatos automáticos, con la firma incluida en answers.
+En `portalDinamicoService.procesarEventoFirmaCompletada`:
 
-## Archivos afectados
+- mantener la lógica actual para `signature_capture`,
+- agregar soporte para `attendance_by_day`,
+- si el formato destino tiene ese bloque configurado para herencia, guardar en `formato_respuestas.answers` una snapshot de la firma reutilizada para ese bloque.
 
-| Recurso | Cambio |
-|---|---|
-| `src/services/portalDinamicoService.ts` | Agregar `procesarEventoFirmaCompletada` y llamarlo tras persistir firma |
-| Data insert | Backfill `firmas_matricula` desde `documentos_portal` para casos existentes |
-| Data update | Corregir `es_automatico = true` en los dos formatos |
-| Data insert | Backfill `formato_respuestas` para Thomas Doe con firma en answers |
+Esto evita que asistencia quede “completado” pero sin evidencia visual.
 
+### 4. Renderizar la firma heredada dentro de la tabla de asistencia
+
+En `DynamicFormatoDocument`:
+
+- hacer que `attendance_by_day` lea primero la firma snapshot guardada en `answers[blockId]`,
+- y como fallback pueda resolverla desde `firmas_matricula`,
+- renderizar esa firma en la columna “Firma” de cada fila del registro.
+
+Con esto el documento final sí mostrará la firma en asistencia.
+
+### 5. Alinear también el preview documental
+
+Actualizar `FormatoPreviewDocument` / preview de formatos para no inducir a error:
+
+- mostrar que el bloque de asistencia admite firma heredada,
+- diferenciar entre “preview de diseño” y “instancia real por matrícula”.
+
+### 6. Backfill para no dejar casos ya creados rotos
+
+Aplicar una corrección sobre respuestas ya generadas:
+
+- Thomas Doe
+- y cualquier otro formato automático ya creado por `firma_completada`
+
+Objetivo del backfill:
+
+- completar la data faltante en formatos con `attendance_by_day` configurados para reutilización.
+
+## Configuración final que deberías usar
+
+### Formato origen
+
+- `esOrigenFirma = true`
+
+### Formato destino con bloque `signature_capture`
+
+- `mode = reuse_required` o `reuse_if_available`
+- `tipoFirmante = aprendiz`
+- `formatoOrigenId` opcional si quieres amarrarlo a un origen específico
+
+### Formato destino con bloque `attendance_by_day`
+
+Después del ajuste:
+
+- activar firma heredada en el mismo bloque
+- `tipoFirmante = aprendiz`
+- `formatoOrigenId` opcional
+
+## Archivos a tocar
+
+- `src/types/formatoFormacion.ts`
+- `src/components/formatos/editor/InspectorFields.tsx`
+- `src/components/formatos/FormatoPreviewDocument.tsx`
+- `src/components/matriculas/formatos/DynamicFormatoDocument.tsx`
+- `src/services/portalDinamicoService.ts`
+
+## Resultado esperado
+
+Después del ajuste:
+
+- **PTA** seguirá heredando la firma con `signature_capture`
+- **Asistencia** heredará y mostrará la firma desde su propio bloque `attendance_by_day`
+- el editor dejará claro qué se ve en preview y qué solo aparece en instancias reales
+- no tendrás que poner esos formatos en el portal del estudiante

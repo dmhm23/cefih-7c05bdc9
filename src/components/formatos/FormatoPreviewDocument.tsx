@@ -96,9 +96,11 @@ function renderBloque(bloque: Bloque): React.ReactNode {
   // Handle row1 before switch
   if ((bloque as any).type === 'row1') {
     const row = bloque as unknown as Row1Block;
+    const children = Array.isArray(row.col) ? row.col : [];
+    if (children.length === 0) return null;
     return (
-      <div style={{ gridColumn: "span 2" }}>
-        {row.col.map((child) => (
+      <div style={{ gridColumn: "span 2" }} className="grid grid-cols-2 gap-x-6 gap-y-2">
+        {children.map((child) => (
           <React.Fragment key={child.id}>{renderBloque(child)}</React.Fragment>
         ))}
       </div>

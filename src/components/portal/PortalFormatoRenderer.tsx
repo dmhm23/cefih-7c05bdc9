@@ -416,9 +416,11 @@ function renderPortalBlock(
   // Row1
   if (type === "row1") {
     const row = bloque as unknown as Row1Block;
+    const children = Array.isArray(row.col) ? row.col : [];
+    if (children.length === 0) return null;
     return (
-      <div key={bloque.id}>
-        {row.col.map((child) => (
+      <div key={bloque.id} className="space-y-3">
+        {children.map((child) => (
           <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>
         ))}
       </div>

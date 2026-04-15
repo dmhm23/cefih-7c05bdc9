@@ -270,7 +270,11 @@ function renderBloque(bloque: Bloque): React.ReactNode {
       );
     }
 
-    case "attendance_by_day":
+    case "attendance_by_day": {
+      const attProps = (bloque as any).props || {};
+      const firmaMode = attProps.firmaMode || 'none';
+      const tipoFirmante = attProps.tipoFirmante || 'aprendiz';
+      const firmanteLabel = tipoFirmante === 'aprendiz' ? 'Aprendiz' : tipoFirmante === 'entrenador' ? 'Entrenador' : 'Supervisor';
       return (
         <div style={{ gridColumn: "span 2" }} className="mt-3">
           <p className="text-[9px] uppercase tracking-wide text-muted-foreground mb-2">{bloque.label || "Registro de Asistencia por Día"}</p>
@@ -278,20 +282,33 @@ function renderBloque(bloque: Bloque): React.ReactNode {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-1 px-2 font-semibold">Fecha</th>
-                <th className="text-left py-1 px-2 font-semibold">Firma</th>
+                <th className="text-left py-1 px-2 font-semibold">
+                  Firma
+                  {firmaMode !== 'none' && (
+                    <span className="ml-1 text-[9px] font-normal text-blue-600">(hereda {firmanteLabel})</span>
+                  )}
+                </th>
               </tr>
             </thead>
             <tbody>
               {ATTENDANCE_DAYS.map((day) => (
                 <tr key={day.fecha} className="border-b border-border/50">
                   <td className="py-1 px-2">{day.fecha}</td>
-                  <td className="py-1 px-2 text-muted-foreground italic">Firma</td>
+                  <td className="py-1 px-2 text-muted-foreground italic">
+                    {firmaMode !== 'none' ? '(firma heredada)' : 'Firma'}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {firmaMode !== 'none' && (
+            <p className="text-[10px] text-muted-foreground/60 mt-1 italic">
+              La firma se resuelve en instancias reales por matrícula
+            </p>
+          )}
         </div>
       );
+    }
 
     case "evaluation_quiz": {
       const quizProps = (bloque as any).props || {};

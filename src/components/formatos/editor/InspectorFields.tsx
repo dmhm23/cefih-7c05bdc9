@@ -1111,3 +1111,59 @@ function VisibilityRuleInspector({ bloque, onChange }: InspectorFieldsProps) {
     </Collapsible>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Attendance By Day Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function AttendanceByDayInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || {};
+  const firmaMode = props.firmaMode || 'none';
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
+        Genera automáticamente la tabla de asistencia según los días del curso.
+      </p>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Firma heredada</Label>
+        <Select
+          value={firmaMode}
+          onValueChange={(v) => onChange({ props: { ...props, firmaMode: v } } as any)}
+        >
+          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Sin firma</SelectItem>
+            <SelectItem value="reuse_if_available">Reutilizar si disponible</SelectItem>
+            <SelectItem value="reuse_required">Solo reutilizar (obligatoria)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {firmaMode !== 'none' && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo de firmante</Label>
+            <Select
+              value={props.tipoFirmante || 'aprendiz'}
+              onValueChange={(v) => onChange({ props: { ...props, tipoFirmante: v } } as any)}
+            >
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aprendiz">Aprendiz</SelectItem>
+                <SelectItem value="entrenador">Entrenador</SelectItem>
+                <SelectItem value="supervisor">Supervisor</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <p className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2">
+            La firma heredada se resuelve en instancias reales del formato (por matrícula), no en esta maqueta de diseño.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}

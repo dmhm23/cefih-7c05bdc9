@@ -95,7 +95,7 @@ export const portalDinamicoService = {
     // Buscar formatos automáticos disparados por firma_completada
     const { data: formatos, error } = await supabase
       .from('formatos_formacion')
-      .select('id, bloques')
+      .select('id, bloques, eventos_disparadores, niveles_asignados')
       .eq('activo', true)
       .eq('es_automatico', true)
       .is('deleted_at', null)

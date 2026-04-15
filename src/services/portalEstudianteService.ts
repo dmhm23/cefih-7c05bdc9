@@ -45,18 +45,30 @@ function mapMinimalCurso(row: any): Curso {
 }
 
 export const portalEstudianteService = {
-  async buscarMatriculaVigente(cedula: string): Promise<MatriculaVigenteResult | null> {
+  async buscarMatriculaVigente(cedula: string): Promise<{ resultado: LoginResultado; data?: MatriculaVigenteResult }> {
     const { data, error } = await supabase.rpc('login_portal_estudiante', { p_cedula: cedula });
     if (error) throw error;
-    if (!data || data.length === 0) return null;
+    if (!data || data.length === 0) return { resultado: 'persona_no_encontrada' };
 
     const row = data[0];
-    if (!row.portal_habilitado) return null;
+    const resultado = (row.resultado || 'persona_no_encontrada') as LoginResultado;
+
+    if (resultado !== 'ok') {
+      return { resultado };
+    }
+
+    if (!row.portal_habilitado) {
+      return { resultado: 'portal_deshabilitado' };
+    }
 
     return {
-      matricula: mapMinimalMatricula(row),
-      persona: mapMinimalPersona(row),
-      curso: mapMinimalCurso(row),
+      resultado: 'ok',
+      data: {
+        matricula: mapMinimalMatricula(row),
+        persona: mapMinimalPersona(row),
+        curso: mapMinimalCurso(row),
+        resultado: 'ok',
+      },
     };
   },
 

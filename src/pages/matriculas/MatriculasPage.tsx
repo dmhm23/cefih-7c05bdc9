@@ -90,6 +90,7 @@ export default function MatriculasPage() {
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
   const { data: niveles = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
   const deleteMatricula = useDeleteMatricula();
 
   // Load cartera status from DB

@@ -120,6 +120,7 @@ export function MatriculaDetailSheet({
   const { data: formatosDinamicos } = useFormatosMatricula(matricula?.id);
   const { data: respuestas = [] } = useFormatoRespuestas(matricula?.id);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
 
   // Sync document requirements

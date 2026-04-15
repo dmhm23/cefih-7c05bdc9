@@ -52,6 +52,7 @@ export function PersonaDetailSheet({
   const { toast } = useToast();
   const updatePersona = useUpdatePersona();
   const { data: matriculas = [] } = useMatriculasByPersona(persona?.id || "");
+  const resolveNivel = useResolveNivel();
   const [formData, setFormData] = useState<Partial<PersonaFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 

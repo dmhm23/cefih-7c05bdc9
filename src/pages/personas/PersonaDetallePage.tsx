@@ -41,6 +41,7 @@ export default function PersonaDetallePage() {
 
   const { data: persona, isLoading } = usePersona(id || "");
   const { data: matriculas = [] } = useMatriculasByPersona(id || "");
+  const resolveNivel = useResolveNivel();
   const updatePersona = useUpdatePersona();
 
   const [formData, setFormData] = useState<Partial<PersonaFormData>>({});

@@ -98,6 +98,7 @@ export default function MatriculaDetallePage() {
   const uploadDocumento = useUploadDocumento();
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
   const { data: empresasList = [] } = useEmpresas();
   const empresasOptions = empresasList.map((e) => ({ value: e.id, label: e.nombreEmpresa }));

@@ -449,6 +449,26 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
         />
       );
 
+    case "document_header": {
+      const hp = (bloque as any).props || {};
+      return (
+        <div style={{ gridColumn: "span 2" }}>
+          <DocumentHeader
+            nombreDocumento={bloque.label || formato.nombre}
+            codigo={hp.codigo || formato.codigo}
+            version={hp.version || formato.version}
+            fechaCreacion={hp.fechaCreacion || meta?.fechaCreacion || "—"}
+            fechaEdicion={hp.fechaEdicion || meta?.fechaEdicion || "—"}
+            empresaNombre={hp.empresaNombre}
+            sistemaGestion={hp.sistemaGestion}
+            subsistema={hp.subsistema || meta?.subsistema || "FORMACIÓN"}
+            logoUrl={hp.logoUrl || undefined}
+            borderColor={hp.borderColor || undefined}
+          />
+        </div>
+      );
+    }
+
     default:
       return null;
   }

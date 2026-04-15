@@ -50,7 +50,7 @@ export const portalDinamicoService = {
 
     if (dpError) throw dpError;
 
-    // 3. Persist firma if this format is a signature origin with explicit authorization
+    // 3. Persist firma if this format is a signature origin
     if (firmaPayload && firmaPayload.esOrigenFirma) {
       await firmaMatriculaService.upsert({
         matriculaId,
@@ -61,6 +61,85 @@ export const portalDinamicoService = {
         ip: null,
         userAgent: navigator.userAgent || null,
       });
+
+      // 4. Disparar evento firma_completada: generar formato_respuestas automáticos
+      await this.procesarEventoFirmaCompletada(
+        matriculaId,
+        formatoId,
+        firmaPayload.firmaBase64,
+      );
+    }
+  },
+
+  /**
+   * Procesa el evento `firma_completada`:
+   * Busca formatos automáticos disparados por este evento y crea formato_respuestas
+   * con la firma inyectada en el bloque signature_capture correspondiente.
+   */
+  async procesarEventoFirmaCompletada(
+    matriculaId: string,
+    sourceFormatoId: string,
+    firmaBase64: string,
+  ): Promise<void> {
+    // Obtener nivel_formacion_id de la matrícula
+    const { data: matricula } = await supabase
+      .from('matriculas')
+      .select('nivel_formacion_id')
+      .eq('id', matriculaId)
+      .single();
+
+    if (!matricula) return;
+
+    const nivelId = matricula.nivel_formacion_id;
+
+    // Buscar formatos automáticos disparados por firma_completada
+    const { data: formatos, error } = await supabase
+      .from('formatos_formacion')
+      .select('id, bloques, eventos_disparadores, niveles_asignados')
+      .eq('activo', true)
+      .eq('es_automatico', true)
+      .is('deleted_at', null)
+      .neq('id', sourceFormatoId);
+
+    if (error || !formatos) return;
+
+    // Filtrar en JS: formatos cuyo eventos_disparadores incluye "firma_completada"
+    // y cuyo nivel coincide
+    const targets = formatos.filter((f: any) => {
+      // Check eventos_disparadores includes firma_completada
+      const raw = f.eventos_disparadores;
+      const eventos = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (!Array.isArray(eventos) || !eventos.includes('firma_completada')) return false;
+
+      // Check nivel match
+      const niveles = f.niveles_asignados as string[] | null;
+      if (niveles && niveles.length > 0 && nivelId && !niveles.includes(nivelId)) return false;
+
+      return true;
+    });
+
+    for (const formato of targets) {
+      const bloques = (typeof formato.bloques === 'string'
+        ? JSON.parse(formato.bloques)
+        : formato.bloques) as Array<{ id: string; type: string }>;
+
+      // Construir answers con la firma en el bloque signature_capture si existe
+      const answers: Record<string, unknown> = {};
+      const sigBlock = bloques.find(b => b.type === 'signature_capture');
+      if (sigBlock) {
+        answers[sigBlock.id] = firmaBase64;
+      }
+
+      // Upsert formato_respuestas — idempotente
+      await supabase
+        .from('formato_respuestas')
+        .upsert({
+          matricula_id: matriculaId,
+          formato_id: formato.id,
+          estado: 'completado',
+          answers: answers as any,
+          completado_at: new Date().toISOString(),
+        } as any, { onConflict: 'matricula_id,formato_id' });
     }
   },
 

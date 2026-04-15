@@ -35,21 +35,23 @@ export default function AccesoEstudiantePage() {
     setLoading(true);
 
     try {
-      const result = await portalEstudianteService.buscarMatriculaVigente(cedula);
+      const response = await portalEstudianteService.buscarMatriculaVigente(cedula);
 
-      if (!result) {
-        setError('No se encontró una matrícula vigente asociada a este número de documento.');
+      if (response.resultado !== 'ok' || !response.data) {
+        setError(ERROR_MESSAGES[response.resultado] || 'No se encontró una matrícula vigente.');
         return;
       }
 
+      const { matricula, persona, curso } = response.data;
+
       setSession({
-        matriculaId: result.matricula.id,
-        personaId: result.persona.id,
-        cedula: result.persona.numeroDocumento,
-        nombreEstudiante: `${result.persona.nombres} ${result.persona.apellidos}`,
-        cursoNombre: result.curso.nombre,
-        cursoFechaInicio: result.curso.fechaInicio,
-        cursoFechaFin: result.curso.fechaFin,
+        matriculaId: matricula.id,
+        personaId: persona.id,
+        cedula: persona.numeroDocumento,
+        nombreEstudiante: `${persona.nombres} ${persona.apellidos}`,
+        cursoNombre: curso.nombre,
+        cursoFechaInicio: curso.fechaInicio,
+        cursoFechaFin: curso.fechaFin,
       });
 
       navigate('/estudiante/inicio');

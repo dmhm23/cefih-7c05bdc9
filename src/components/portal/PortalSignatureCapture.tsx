@@ -11,9 +11,6 @@ interface PortalSignatureCaptureProps {
   onChange: (base64: string | null) => void;
   readOnly?: boolean;
   reusableSignature?: FirmaMatricula | null;
-  esOrigenFirma?: boolean;
-  autorizaReutilizacion?: boolean;
-  onAutorizaReutilizacionChange?: (v: boolean) => void;
 }
 
 export default function PortalSignatureCapture({
@@ -22,9 +19,6 @@ export default function PortalSignatureCapture({
   onChange,
   readOnly,
   reusableSignature,
-  esOrigenFirma,
-  autorizaReutilizacion,
-  onAutorizaReutilizacionChange,
 }: PortalSignatureCaptureProps) {
   const sigRef = useRef<SignatureCanvas>(null);
   const [isEmpty, setIsEmpty] = useState(true);
@@ -71,20 +65,6 @@ export default function PortalSignatureCapture({
         <div className="border rounded-lg p-3 bg-background">
           <img src={displayValue} alt="Firma" className="max-h-24 mx-auto" />
         </div>
-
-        {esOrigenFirma && !readOnly && (
-          <label className="flex items-start gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={autorizaReutilizacion ?? false}
-              onChange={(e) => onAutorizaReutilizacionChange?.(e.target.checked)}
-              className="mt-0.5"
-            />
-            <span className="text-muted-foreground">
-              Guardar mi firma para uso en documentos futuros
-            </span>
-          </label>
-        )}
       </div>
     );
   }
@@ -126,20 +106,6 @@ export default function PortalSignatureCapture({
           Guardar Firma
         </Button>
       </div>
-
-      {esOrigenFirma && (
-        <label className="flex items-start gap-2 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            checked={autorizaReutilizacion ?? false}
-            onChange={(e) => onAutorizaReutilizacionChange?.(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span className="text-muted-foreground">
-            Guardar mi firma para uso en documentos futuros
-          </span>
-        </label>
-      )}
     </div>
   );
 }

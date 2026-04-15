@@ -1,11 +1,30 @@
 
-## Ajuste tipográfico: Radio y Multi-choice
 
-**Problema:** Los bloques `radio` (selección única) y `multi_choice` (selección múltiple) en `FormatoPreviewDocument.tsx` usan `text-xs` para las etiquetas de opciones, resultando en texto pequeño y poco legible comparado con las preguntas del bloque de evaluación.
+# Agregar opción de enlace al editor de párrafo
 
-**Cambio:** Archivo `src/components/formatos/FormatoPreviewDocument.tsx`
+## Cambio
 
-- **Línea 171** (radio): Cambiar `<span className="text-xs">` → `<span className="text-sm font-medium text-foreground">`
-- **Línea 209** (multi_choice): Cambiar `<span className="text-xs">` → `<span className="text-sm font-medium text-foreground">`
+### 1. Instalar extensión — `package.json`
+```
+npm install @tiptap/extension-link
+```
 
-Esto alinea la tipografía con el estándar de legibilidad del bloque de evaluación: tamaño `text-sm`, peso `font-medium`, y color `text-foreground` para máxima legibilidad.
+### 2. Actualizar `RichTextEditor.tsx`
+- Importar `Link` de `@tiptap/extension-link` y el ícono `Link2` / `Unlink` de `lucide-react`.
+- Registrar la extensión `Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } })` en el array de extensiones.
+- Agregar un botón de enlace en la toolbar (después de las listas, antes de alineación) que:
+  - Si hay texto seleccionado sin enlace → abre un `window.prompt` pidiendo la URL y aplica `setLink({ href })`.
+  - Si el cursor está sobre un enlace existente → lo remueve con `unsetLink()`.
+- El botón muestra estado activo cuando el cursor está sobre un enlace.
+
+### 3. Estilo del enlace en el editor
+Los enlaces dentro del área `prose` se estilizan automáticamente por `@tailwindcss/typography` (azul, subrayado). No se necesitan estilos adicionales.
+
+### Archivos afectados
+| Archivo | Cambio |
+|---|---|
+| `package.json` | Agregar `@tiptap/extension-link` |
+| `RichTextEditor.tsx` | Import + extensión + botón toolbar |
+
+No se modifican otros componentes. Los enlaces generados son HTML estándar `<a>` que ya se renderizan correctamente en `BlockPreview`, `FormatoPreviewDocument` y el PDF gracias a `dangerouslySetInnerHTML` + `prose`.
+

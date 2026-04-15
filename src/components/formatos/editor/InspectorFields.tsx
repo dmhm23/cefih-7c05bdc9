@@ -162,57 +162,87 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
       );
 
     case 'radio':
-    case 'select': {
-      const options: { value: string; label: string }[] = b.props?.options ?? [];
+    case 'select':
+    case 'multi_choice': {
+      const options: { value: string; label: string; default?: boolean }[] = b.props?.options ?? [];
+      const isRadio = bloque.type === 'radio';
+      const isMulti = bloque.type === 'multi_choice';
       return (
-        <div className="space-y-1.5">
-          <Label className="text-xs">Opciones</Label>
-          <div className="space-y-2">
-            {options.map((opt, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <div className="flex-1 space-y-1">
-                  <Input
-                    value={opt.label}
-                    onChange={(e) => {
-                      const updated = options.map((o, i) => i === idx ? { ...o, label: e.target.value } : o);
-                      onChange({ props: { ...b.props, options: updated } } as any);
-                    }}
-                    placeholder="Etiqueta"
-                    className="h-8 text-sm"
-                  />
-                  <Input
-                    value={opt.value}
-                    onChange={(e) => {
-                      const updated = options.map((o, i) => i === idx ? { ...o, value: e.target.value } : o);
-                      onChange({ props: { ...b.props, options: updated } } as any);
-                    }}
-                    placeholder="Valor"
-                    className="h-8 text-sm font-mono text-muted-foreground"
-                  />
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Opciones</Label>
+            <div className="space-y-2">
+              {options.map((opt, idx) => (
+                <div key={idx} className="space-y-1 border rounded-md p-2 bg-muted/20">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 space-y-1">
+                      <Input
+                        value={opt.label}
+                        onChange={(e) => {
+                          const updated = options.map((o, i) => i === idx ? { ...o, label: e.target.value } : o);
+                          onChange({ props: { ...b.props, options: updated } } as any);
+                        }}
+                        placeholder="Etiqueta"
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        value={opt.value}
+                        onChange={(e) => {
+                          const updated = options.map((o, i) => i === idx ? { ...o, value: e.target.value } : o);
+                          onChange({ props: { ...b.props, options: updated } } as any);
+                        }}
+                        placeholder="Valor"
+                        className="h-8 text-sm font-mono text-muted-foreground"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        if (options.length <= 1) return;
+                        onChange({ props: { ...b.props, options: options.filter((_, i) => i !== idx) } } as any);
+                      }}
+                      disabled={options.length <= 1}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                  {/* Default toggle per option */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <Switch
+                      checked={opt.default ?? false}
+                      onCheckedChange={(v) => {
+                        let updated;
+                        if (isRadio || bloque.type === 'select') {
+                          // Single default: uncheck all others
+                          updated = options.map((o, i) => ({ ...o, default: i === idx ? v : false }));
+                        } else {
+                          // Multi default
+                          updated = options.map((o, i) => i === idx ? { ...o, default: v } : o);
+                        }
+                        onChange({ props: { ...b.props, options: updated } } as any);
+                      }}
+                    />
+                    <Label className="text-xs text-muted-foreground">Seleccionado por defecto</Label>
+                  </div>
                 </div>
-                <Button
-                  variant="ghost" size="icon"
-                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={() => {
-                    if (options.length <= 1) return;
-                    onChange({ props: { ...b.props, options: options.filter((_, i) => i !== idx) } } as any);
-                  }}
-                  disabled={options.length <= 1}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
+            <Button
+              variant="outline" size="sm" className="w-full"
+              onClick={() => {
+                const n = options.length + 1;
+                onChange({ props: { ...b.props, options: [...options, { value: `opcion_${n}`, label: `Opción ${n}`, default: false }] } } as any);
+              }}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Agregar opción
+            </Button>
           </div>
-          <Button
-            variant="outline" size="sm" className="w-full"
-            onClick={() => {
-              const n = options.length + 1;
-              onChange({ props: { ...b.props, options: [...options, { value: `opcion_${n}`, label: `Opción ${n}` }] } } as any);
-            }}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" /> Agregar opción
-          </Button>
+          {isMulti && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
+              <p className="text-xs text-blue-700">Permite seleccionar varias opciones simultáneamente</p>
+            </div>
+          )}
         </div>
       );
     }

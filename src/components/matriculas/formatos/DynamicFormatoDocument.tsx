@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
@@ -258,22 +258,59 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
       const selected = answers[bloque.id] as string | undefined;
       return (
         <div className="field-cell">
-          <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{bloque.label || "Selección"}</p>
-          <div className="flex gap-3 mt-1">
+          <p className="text-sm font-medium text-foreground leading-tight mb-1">{bloque.label || "Selección"}</p>
+          <div className="flex flex-wrap gap-3 mt-1">
             {options.map((opt: any) => (
               <button
                 key={opt.value}
                 type="button"
                 disabled={readOnly}
                 onClick={() => !readOnly && onChange?.(bloque.id, opt.value)}
-                className={`flex items-center gap-1 ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+                className={`flex items-center gap-1.5 ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
               >
-                <div className={`h-3.5 w-3.5 rounded-full border ${
+                <div className={`h-4 w-4 rounded-full border-2 ${
                   selected === opt.value ? 'border-primary bg-primary' : 'border-muted-foreground/40'
                 }`} />
-                <span className="text-xs">{opt.label}</span>
+                <span className="text-sm">{opt.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+      );
+    }
+
+    case "multi_choice": {
+      const options = ("props" in bloque && (bloque as any).props?.options) || [];
+      const selected = (answers[bloque.id] as string[]) || [];
+      return (
+        <div className="field-cell">
+          <p className="text-sm font-medium text-foreground leading-tight mb-1">{bloque.label || "Selección múltiple"}</p>
+          <div className="flex flex-wrap gap-3 mt-1">
+            {options.map((opt: any) => {
+              const isChecked = selected.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  disabled={readOnly}
+                  onClick={() => {
+                    if (readOnly || !onChange) return;
+                    const next = isChecked
+                      ? selected.filter((v: string) => v !== opt.value)
+                      : [...selected, opt.value];
+                    onChange(bloque.id, next);
+                  }}
+                  className={`flex items-center gap-1.5 ${!readOnly ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <div className={`h-4 w-4 border-2 rounded flex items-center justify-center ${
+                    isChecked ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'
+                  }`}>
+                    {isChecked && <span className="text-[10px]">✓</span>}
+                  </div>
+                  <span className="text-sm">{opt.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       );
@@ -572,6 +609,25 @@ export default function DynamicFormatoDocument({
 }: DynamicFormatoDocumentProps) {
   const meta = formato.documentMeta;
   const bloques = formato.bloques || [];
+
+  // Seed default values from option blocks on first render
+  useEffect(() => {
+    if (readOnly || !onAnswerChange) return;
+    bloques.forEach((b: any) => {
+      if (answers[b.id] !== undefined) return;
+      const options = b.props?.options as { value: string; default?: boolean }[] | undefined;
+      if (!options) return;
+      if (b.type === 'radio' || b.type === 'select') {
+        const def = options.find((o) => o.default);
+        if (def) onAnswerChange(b.id, def.value);
+      } else if (b.type === 'multi_choice') {
+        const defs = options.filter((o) => o.default).map((o) => o.value);
+        if (defs.length > 0) onAnswerChange(b.id, defs);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formato.id]);
+
   const ctx: AutoFieldContext = {
     persona, matricula, curso, entrenador, supervisor, nivelFormacionNombre,
     firmasMatricula,

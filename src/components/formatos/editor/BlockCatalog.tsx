@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Columns2, Type, AlignLeft, Hash, Mail, Calendar, ChevronDown,
-  CheckSquare, CircleDot, Heading, Minus, PenTool, Paperclip,
+  CheckSquare, CircleDot, ListChecks, Heading, Minus, PenTool, Paperclip,
   Zap, Heart, ClipboardCheck, SmilePlus, CalendarCheck,
   Bookmark, Search, LayoutGrid,
 } from 'lucide-react';
@@ -34,7 +34,8 @@ const PALETTE: PaletteItem[] = [
   { type: 'date', label: 'Fecha', icon: Calendar, category: 'fields' },
   { type: 'select', label: 'Desplegable', icon: ChevronDown, category: 'fields' },
   { type: 'checkbox', label: 'Checkbox', icon: CheckSquare, category: 'fields' },
-  { type: 'radio', label: 'Opciones', icon: CircleDot, category: 'fields' },
+  { type: 'radio', label: 'Selección única', icon: CircleDot, category: 'fields' },
+  { type: 'multi_choice', label: 'Selección múltiple', icon: ListChecks, category: 'fields' },
   { type: 'divider', label: 'Divisor', icon: Minus, category: 'fields' },
   { type: 'auto_field', label: 'Automático', icon: Zap, category: 'fields' },
   // Special

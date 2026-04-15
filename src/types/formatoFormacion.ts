@@ -15,6 +15,7 @@ export type TipoBloque =
   | 'radio'
   | 'select'
   | 'checkbox'
+  | 'multi_choice'
   | 'auto_field'
   | 'attendance_by_day'
   | 'signature_aprendiz'
@@ -29,6 +30,15 @@ export type TipoBloque =
   | 'file'
   | 'document_header'
   | 'signature_capture';
+
+/**
+ * Opción para bloques de selección (radio, select, multi_choice).
+ */
+export interface SelectionOption {
+  label: string;
+  value: string;
+  default?: boolean;
+}
 
 /**
  * Claves de auto_field: valores resueltos automáticamente desde el sistema.
@@ -85,12 +95,17 @@ export interface BloqueNumber extends BloqueBase {
 
 export interface BloqueRadio extends BloqueBase {
   type: 'radio';
-  props: { options: { value: string; label: string }[] };
+  props: { options: SelectionOption[] };
 }
 
 export interface BloqueSelect extends BloqueBase {
   type: 'select';
-  props: { options: { value: string; label: string }[] };
+  props: { options: SelectionOption[] };
+}
+
+export interface BloqueMultiChoice extends BloqueBase {
+  type: 'multi_choice';
+  props: { options: SelectionOption[] };
 }
 
 export interface BloqueCheckbox extends BloqueBase {
@@ -224,6 +239,7 @@ export type Bloque =
   | BloqueRadio
   | BloqueSelect
   | BloqueCheckbox
+  | BloqueMultiChoice
   | BloqueAutoField
   | BloqueAttendanceByDay
   | BloqueSignatureAprendiz

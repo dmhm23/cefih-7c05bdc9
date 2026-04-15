@@ -108,7 +108,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           readOnly={false}
           firmasMatricula={firmas}
         />
-        />
 
         {/* Submit */}
         <Button

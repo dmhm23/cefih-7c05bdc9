@@ -1,30 +1,29 @@
+# Fix: Bloques de párrafo en 2 columnas no se renderizan en vista previa ni PDF
 
+## Problema
 
-# Agregar opción de enlace al editor de párrafo
+El tipo `row2` (bloque de 2 columnas) no tiene caso en la función `renderBloque()` de `FormatoPreviewDocument.tsx`. Cuando el array de bloques incluye un item con `type: 'row2'`, el `switch` no lo reconoce y no renderiza nada — ni el contenedor de 2 columnas ni los bloques hijos (párrafos u otros) dentro de cada columna.
 
 ## Cambio
 
-### 1. Instalar extensión — `package.json`
+### Archivo: `src/components/formatos/FormatoPreviewDocument.tsx`
+
+1. **Importar el tipo `Row2Block**` desde el store.
+2. **Agregar caso `row2` en `renderBloque()**`: Detectar cuando `bloque.type === 'row2'`, hacer cast a `Row2Block`, y renderizar un grid de 2 columnas con `gridColumn: span 2` (para ocupar todo el ancho). Cada columna renderiza recursivamente su bloque hijo con `renderBloque()`, o muestra un espacio vacío si la columna está vacía.
+
+```text
+┌─────────────────────────────────┐
+│  row2  (span 2, grid 2-cols)    │
+│  ┌─────────┐  ┌─────────┐       │
+│  │ col[0]  │  │ col[1]  │       │
+│  │ párrafo │  │ bloque ó│       │ 
+│  │         │  │ parrafo │       │ 
+│  └─────────┘  └─────────┘       │
+└─────────────────────────────────┘
 ```
-npm install @tiptap/extension-link
-```
 
-### 2. Actualizar `RichTextEditor.tsx`
-- Importar `Link` de `@tiptap/extension-link` y el ícono `Link2` / `Unlink` de `lucide-react`.
-- Registrar la extensión `Link.configure({ openOnClick: false, HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' } })` en el array de extensiones.
-- Agregar un botón de enlace en la toolbar (después de las listas, antes de alineación) que:
-  - Si hay texto seleccionado sin enlace → abre un `window.prompt` pidiendo la URL y aplica `setLink({ href })`.
-  - Si el cursor está sobre un enlace existente → lo remueve con `unsetLink()`.
-- El botón muestra estado activo cuando el cursor está sobre un enlace.
+### Archivo: `src/components/matriculas/formatos/DynamicFormatoDocument.tsx`
 
-### 3. Estilo del enlace en el editor
-Los enlaces dentro del área `prose` se estilizan automáticamente por `@tailwindcss/typography` (azul, subrayado). No se necesitan estilos adicionales.
+Aplicar el mismo tratamiento para que el portal del estudiante también renderice correctamente bloques dentro de `row2`.
 
-### Archivos afectados
-| Archivo | Cambio |
-|---|---|
-| `package.json` | Agregar `@tiptap/extension-link` |
-| `RichTextEditor.tsx` | Import + extensión + botón toolbar |
-
-No se modifican otros componentes. Los enlaces generados son HTML estándar `<a>` que ya se renderizan correctamente en `BlockPreview`, `FormatoPreviewDocument` y el PDF gracias a `dangerouslySetInnerHTML` + `prose`.
-
+No se requieren cambios en `PRINT_STYLES` ya que las reglas de grid de 2 columnas y `span 2` ya existen.

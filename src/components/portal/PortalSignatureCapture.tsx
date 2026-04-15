@@ -81,7 +81,7 @@ export default function PortalSignatureCapture({
               className="mt-0.5"
             />
             <span className="text-muted-foreground">
-              Autorizo la reutilización de mi firma en los demás documentos de esta matrícula
+              Guardar mi firma para uso en documentos futuros
             </span>
           </label>
         )}
@@ -136,7 +136,7 @@ export default function PortalSignatureCapture({
             className="mt-0.5"
           />
           <span className="text-muted-foreground">
-            Autorizo la reutilización de mi firma en los demás documentos de esta matrícula
+            Guardar mi firma para uso en documentos futuros
           </span>
         </label>
       )}

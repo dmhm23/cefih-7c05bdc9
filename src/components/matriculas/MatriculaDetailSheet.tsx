@@ -68,7 +68,7 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
 type PreviewFormatoId = string | null;
@@ -120,6 +120,7 @@ export function MatriculaDetailSheet({
   const { data: formatosDinamicos } = useFormatosMatricula(matricula?.id);
   const { data: respuestas = [] } = useFormatoRespuestas(matricula?.id);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
 
   // Sync document requirements
@@ -273,7 +274,7 @@ export function MatriculaDetailSheet({
   const personaDoc = persona?.numeroDocumento || "";
   const cursoName = curso?.nombre || "Sin curso asignado";
   const nivelFormacionLabel = matricula.nivelFormacionId 
-    ? resolveNivelFormacionLabel(matricula.nivelFormacionId) 
+    ? resolveNivel(matricula.nivelFormacionId) 
     : undefined;
 
   const handleFullScreen = () => {
@@ -424,7 +425,7 @@ export function MatriculaDetailSheet({
             <EditableField
               label="Nivel de Formación"
               value={getValue("nivelFormacionId") || ""}
-              displayValue={getValue("nivelFormacionId") ? resolveNivelFormacionLabel(getValue("nivelFormacionId") as string) : undefined}
+              displayValue={getValue("nivelFormacionId") ? resolveNivel(getValue("nivelFormacionId") as string) : undefined}
               onChange={(v) => handleFieldChange("nivelFormacionId", v)}
               type="select"
               options={nivelesOptions}

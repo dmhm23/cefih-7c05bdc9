@@ -53,7 +53,7 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { asignarMatriculaACartera } from "@/services/carteraService";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,6 +98,7 @@ export default function MatriculaDetallePage() {
   const uploadDocumento = useUploadDocumento();
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
   const nivelesOptions = nivelesFormacion.map((n) => ({ value: n.id, label: n.nombreNivel }));
   const { data: empresasList = [] } = useEmpresas();
   const empresasOptions = empresasList.map((e) => ({ value: e.id, label: e.nombreEmpresa }));
@@ -698,7 +699,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Nivel de Formación"
                 value={getValue("nivelFormacionId")}
-                displayValue={resolveNivelFormacionLabel(getValue("nivelFormacionId"))}
+                displayValue={resolveNivel(getValue("nivelFormacionId"))}
                 onChange={(v) => handleFieldChange("nivelFormacionId", v)}
                 type="select"
                 options={nivelesOptions}

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { useMatriculasByPersona } from "@/hooks/useMatriculas";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { EditableField } from "@/components/shared/EditableField";
 import { useToast } from "@/hooks/use-toast";
 import { Persona, PersonaFormData } from "@/types/persona";
@@ -41,6 +41,7 @@ export default function PersonaDetallePage() {
 
   const { data: persona, isLoading } = usePersona(id || "");
   const { data: matriculas = [] } = useMatriculasByPersona(id || "");
+  const resolveNivel = useResolveNivel();
   const updatePersona = useUpdatePersona();
 
   const [formData, setFormData] = useState<Partial<PersonaFormData>>({});
@@ -287,7 +288,7 @@ export default function PersonaDetallePage() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium capitalize">
-                      {m.nivelFormacionId ? resolveNivelFormacionLabel(m.nivelFormacionId) : 'Sin nivel'}
+                      {m.nivelFormacionId ? resolveNivel(m.nivelFormacionId) : 'Sin nivel'}
                     </span>
                     <StatusBadge status={m.estado} />
                   </div>

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditableField } from "@/components/shared/EditableField";
 import { Curso, CursoFormData } from "@/types/curso";
-import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import { parseLocalDate } from "@/utils/dateUtils";
@@ -20,20 +20,14 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
   const { data: niveles = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
 
   const tipoFormacionOptions = useMemo(
     () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
     [niveles]
   );
 
-  const nivelLabel = useMemo(() => {
-    const id = curso.nivelFormacionId;
-    if (id) {
-      const found = niveles.find(n => n.id === id);
-      if (found) return found.nombreNivel;
-    }
-    return resolveNivelCursoLabel(curso.tipoFormacion);
-  }, [curso.nivelFormacionId, curso.tipoFormacion, niveles]);
+  const nivelLabel = resolveNivel(curso.nivelFormacionId || curso.tipoFormacion);
 
   const entrenadorOptions = useMemo(() =>
     entrenadores.map((e) => ({ value: e.id, label: `${e.nombres} ${e.apellidos}` })),

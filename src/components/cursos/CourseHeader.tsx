@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Curso } from "@/types/curso";
-import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useToast } from "@/hooks/use-toast";
 
 interface CourseHeaderProps {
@@ -23,8 +23,9 @@ interface CourseHeaderProps {
 
 export function CourseHeader({ curso, onBack, onCloseCourse, onDownloadCsvMinTrabajo, onExportarListado, onGenerarPdfs }: CourseHeaderProps) {
   const { toast } = useToast();
+  const resolveNivel = useResolveNivel();
 
-  const title = `${resolveNivelCursoLabel(curso.tipoFormacion)} — #${curso.numeroCurso}`;
+  const title = `${resolveNivel(curso.nivelFormacionId || curso.tipoFormacion)} — #${curso.numeroCurso}`;
   const meta = `${curso.fechaInicio} → ${curso.fechaFin} | ${curso.duracionDias}d | ${curso.horasTotales}h`;
 
   return (

@@ -17,7 +17,7 @@ import { usePersonas } from "@/hooks/usePersonas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso, CursoFormData } from "@/types/curso";
-import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -49,6 +49,8 @@ export function CursoDetailSheet({
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
 
+  const resolveNivel = useResolveNivel();
+
   const tipoFormacionOptions = useMemo(
     () => niveles.map((n) => ({ value: n.id, label: n.nombreNivel })),
     [niveles]
@@ -66,15 +68,7 @@ export function CursoDetailSheet({
 
   const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
 
-  const nivelLabel = useMemo(() => {
-    if (!curso) return "";
-    const id = curso.nivelFormacionId;
-    if (id) {
-      const found = niveles.find(n => n.id === id);
-      if (found) return found.nombreNivel;
-    }
-    return resolveNivelCursoLabel(curso.tipoFormacion);
-  }, [curso?.nivelFormacionId, curso?.tipoFormacion, niveles]);
+  const nivelLabel = resolveNivel(curso?.nivelFormacionId || curso?.tipoFormacion);
 
   useEffect(() => {
     setFormData({});

@@ -559,6 +559,7 @@ export function MatriculaDetailSheet({
               codigo: f.codigo,
               estado: resolveFormatoEstado(f, respuestas),
               estadoRespuesta: resolveFormatoEstado(f, respuestas),
+              esAutomatico: f.esAutomatico,
             }))}
             onPreview={(id) => {
               const fmt = formatosDinamicos?.find((f) => f.id === id);

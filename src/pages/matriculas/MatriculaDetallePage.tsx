@@ -1024,6 +1024,7 @@ export default function MatriculaDetallePage() {
                 nombre: f.nombre,
                 codigo: f.codigo,
                 estado: resolveFormatoEstado(f, respuestas),
+                esAutomatico: f.esAutomatico,
               }))}
               onPreview={(id) => {
                 const fmt = formatosDinamicos?.find((f) => f.id === id);

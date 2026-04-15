@@ -696,9 +696,6 @@ export default function PortalFormatoRenderer({
           onChange={(v) => onAnswerChange?.(sigBloque.id, v)}
           readOnly={readOnly}
           reusableSignature={reusable}
-          esOrigenFirma={formato.esOrigenFirma}
-          autorizaReutilizacion={signatureProps?.autorizaReutilizacion}
-          onAutorizaReutilizacionChange={signatureProps?.onAutorizaReutilizacionChange}
         />
       );
     }

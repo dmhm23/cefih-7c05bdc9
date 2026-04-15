@@ -57,6 +57,15 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
 
   const handleFechaChange = (campo: "fechaInicio" | "fechaFin", nuevoValor: string) => {
     onFieldChange(campo, nuevoValor);
+    // Auto-sync duracionDias when dates change
+    const inicio = campo === "fechaInicio" ? nuevoValor : (formData.fechaInicio ?? curso.fechaInicio);
+    const fin = campo === "fechaFin" ? nuevoValor : (formData.fechaFin ?? curso.fechaFin);
+    if (inicio && fin) {
+      const dInicio = parseLocalDate(inicio) ?? new Date(inicio);
+      const dFin = parseLocalDate(fin) ?? new Date(fin);
+      const dias = differenceInCalendarDays(dFin, dInicio);
+      if (dias >= 0) onFieldChange("duracionDias", dias + 1);
+    }
   };
 
   const duracionDiasCalculada = useMemo(() => {
@@ -70,6 +79,9 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
     }
     return curso.duracionDias ?? 0;
   }, [formData.fechaInicio, formData.fechaFin, curso.fechaInicio, curso.fechaFin, curso.duracionDias]);
+
+  const duracionActual = (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? duracionDiasCalculada;
+  const esManual = duracionActual !== duracionDiasCalculada;
 
   const getValue = (field: keyof Curso): string => {
     const val = (formData[field as keyof CursoFormData] ?? curso[field]) as string | number | undefined;
@@ -117,11 +129,14 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             type="date"
             editable={!readOnly}
           />
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Duración (días)</p>
-            <p className="text-sm">{duracionDiasCalculada} día{duracionDiasCalculada !== 1 ? 's' : ''}</p>
-            <p className="text-[10px] text-muted-foreground">Calculado desde fechas</p>
-          </div>
+          <EditableField
+            label="Duración (días)"
+            value={String(duracionActual)}
+            displayValue={`${duracionActual} día${duracionActual !== 1 ? 's' : ''}`}
+            onChange={(v) => onFieldChange("duracionDias", Number(v) || 0)}
+            editable={!readOnly}
+            placeholder="0"
+          />
           <EditableField
             label="Horas Totales"
             value={getValue("horasTotales")}

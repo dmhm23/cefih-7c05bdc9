@@ -9,7 +9,7 @@ import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
 import type { Personal } from "@/types/personal";
-import { format, addDays } from "date-fns";
+import { format, addDays, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { parseLocalDate } from "@/utils/dateUtils";
 import { ChevronDown } from "lucide-react";
@@ -429,7 +429,14 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
       );
 
     case "attendance_by_day": {
-      const days = ctx.curso?.duracionDias || 0;
+      // Calculate days inclusively from dates, fallback to stored duracionDias
+      let days = ctx.curso?.duracionDias || 0;
+      if (ctx.curso?.fechaInicio && ctx.curso?.fechaFin) {
+        const dInicio = parseLocalDate(ctx.curso.fechaInicio) ?? new Date(ctx.curso.fechaInicio);
+        const dFin = parseLocalDate(ctx.curso.fechaFin) ?? new Date(ctx.curso.fechaFin);
+        const calc = differenceInCalendarDays(dFin, dInicio);
+        if (calc >= 0) days = calc + 1;
+      }
       if (days <= 0) {
         return (
           <div style={{ gridColumn: "span 2" }} className="mt-3">

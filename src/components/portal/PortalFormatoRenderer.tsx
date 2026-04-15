@@ -636,6 +636,7 @@ export default function PortalFormatoRenderer({
   onAnswerChange,
   readOnly = false,
   firmasMatricula,
+  signatureProps,
 }: PortalFormatoRendererProps) {
   const bloques = formato.bloques || [];
 
@@ -668,6 +669,51 @@ export default function PortalFormatoRenderer({
 
   const sections = useMemo(() => groupBlocksIntoSections(bloques), [bloques]);
 
+  const renderSectionContent = (section: SemanticSection) => {
+    // Signature sections get the dedicated capture component
+    if (section.kind === "signature") {
+      const sigBloque = section.bloques[0] as BloqueSignatureCapture;
+      const tipoFirmante = sigBloque.props?.tipoFirmante || "aprendiz";
+      const reusable = firmasMatricula?.find(f => f.tipo === tipoFirmante) || null;
+
+      return (
+        <PortalSignatureCapture
+          blockId={sigBloque.id}
+          label={sigBloque.label}
+          value={(answers[sigBloque.id] as string) || null}
+          onChange={(v) => onAnswerChange?.(sigBloque.id, v)}
+          readOnly={readOnly}
+          reusableSignature={reusable}
+          esOrigenFirma={formato.esOrigenFirma}
+          autorizaReutilizacion={signatureProps?.autorizaReutilizacion}
+          onAutorizaReutilizacionChange={signatureProps?.onAutorizaReutilizacionChange}
+        />
+      );
+    }
+
+    if (section.kind === "info") {
+      return (
+        <div className="divide-y divide-border/50">
+          {section.bloques.map((bloque) => (
+            <React.Fragment key={bloque.id}>
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true)}
+            </React.Fragment>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {section.bloques.map((bloque) => (
+          <React.Fragment key={bloque.id}>
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly)}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3">
       {sections.map((section, idx) => {
@@ -682,23 +728,7 @@ export default function PortalFormatoRenderer({
             status={status}
             defaultOpen={!isInfoSection}
           >
-            {isInfoSection ? (
-              <div className="divide-y divide-border/50">
-                {section.bloques.map((bloque) => (
-                  <React.Fragment key={bloque.id}>
-                    {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true)}
-                  </React.Fragment>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {section.bloques.map((bloque) => (
-                  <React.Fragment key={bloque.id}>
-                    {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly)}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
+            {renderSectionContent(section)}
           </PortalSectionCard>
         );
       })}

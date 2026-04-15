@@ -426,26 +426,20 @@ export default function CursoFormPage() {
                   )}
                 />
 
-                <div className="space-y-2">
-                  <FormLabel>Duración (días)</FormLabel>
-                  <Input
-                    type="number"
-                    value={(() => {
-                      const inicio = form.watch("fechaInicio");
-                      const fin = form.watch("fechaFin");
-                      if (inicio && fin) {
-                        const dI = parseLocalDate(inicio) ?? new Date(inicio);
-                        const dF = parseLocalDate(fin) ?? new Date(fin);
-                        const dias = differenceInCalendarDays(dF, dI);
-                        return dias >= 0 ? dias + 1 : 0;
-                      }
-                      return form.watch("duracionDias") || 0;
-                    })()}
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">Calculado automáticamente desde las fechas</p>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="duracionDias"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duración (días)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} min={1} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">Auto-calculado desde fechas, editable manualmente</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </CardContent>
           </Card>

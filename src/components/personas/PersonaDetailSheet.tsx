@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdatePersona } from "@/hooks/usePersonas";
 import { useMatriculasByPersona } from "@/hooks/useMatriculas";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { Persona, PersonaFormData } from "@/types/persona";
 import {
   TIPOS_DOCUMENTO,
@@ -318,7 +318,7 @@ export function PersonaDetailSheet({
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium capitalize">
-                      {m.nivelFormacionId ? resolveNivelFormacionLabel(m.nivelFormacionId) : 'Sin nivel'}
+                      {m.nivelFormacionId ? resolveNivel(m.nivelFormacionId) : 'Sin nivel'}
                     </span>
                     <StatusBadge status={m.estado} />
                   </div>

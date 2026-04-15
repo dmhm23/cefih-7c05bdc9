@@ -15,7 +15,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useCursos, useDeleteCurso } from "@/hooks/useCursos";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso } from "@/types";
-import { resolveNivelCursoLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useToast } from "@/hooks/use-toast";
 import { fmtDateLocal } from "@/utils/dateUtils";
@@ -73,6 +73,7 @@ export default function CursosListView() {
   const { mutateAsync: deleteCurso } = useDeleteCurso();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: niveles = [] } = useNivelesFormacion();
+  const resolveNivel = useResolveNivel();
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(columnConfig));
@@ -110,7 +111,7 @@ export default function CursosListView() {
   }).length;
 
   const getCursoLabel = (c: Curso) =>
-    `${c.numeroCurso}—${resolveNivelCursoLabel(c.nivelFormacionId || c.tipoFormacion)}`;
+    `${c.numeroCurso}—${resolveNivel(c.nivelFormacionId || c.tipoFormacion)}`;
 
   const filteredCursos = cursos.filter((c) => {
     const label = getCursoLabel(c).toLowerCase();
@@ -302,7 +303,7 @@ export default function CursosListView() {
     {
       key: "tipoFormacion",
       header: "Tipo Formación",
-      render: (c: Curso) => resolveNivelCursoLabel(c.nivelFormacionId || c.tipoFormacion),
+      render: (c: Curso) => resolveNivel(c.nivelFormacionId || c.tipoFormacion),
     },
     {
       key: "minTrabajoRegistro",

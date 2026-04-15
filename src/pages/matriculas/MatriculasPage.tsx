@@ -19,7 +19,7 @@ import { useCursos } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { Matricula } from "@/types";
 import { TipoDocumento, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS, FORMA_PAGO_LABELS } from "@/types/matricula";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useToast } from "@/hooks/use-toast";
 import { fmtDateLocal } from "@/utils/dateUtils";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
@@ -402,7 +402,7 @@ export default function MatriculasPage() {
       header: "Nivel Formación",
       render: (m: Matricula) =>
         m.nivelFormacionId
-          ? resolveNivelFormacionLabel(m.nivelFormacionId)
+          ? resolveNivel(m.nivelFormacionId)
           : "-",
     },
     {

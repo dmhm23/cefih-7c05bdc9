@@ -53,7 +53,7 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
-import { resolveNivelFormacionLabel } from "@/utils/resolveNivelLabel";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { asignarMatriculaACartera } from "@/services/carteraService";
 import { supabase } from "@/integrations/supabase/client";
@@ -698,7 +698,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Nivel de Formación"
                 value={getValue("nivelFormacionId")}
-                displayValue={resolveNivelFormacionLabel(getValue("nivelFormacionId"))}
+                displayValue={resolveNivel(getValue("nivelFormacionId"))}
                 onChange={(v) => handleFieldChange("nivelFormacionId", v)}
                 type="select"
                 options={nivelesOptions}

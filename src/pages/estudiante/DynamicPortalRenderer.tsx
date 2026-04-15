@@ -1,12 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormatoById, useFirmasMatricula, useEnviarFormatoDinamico, useInfoAprendizData } from '@/hooks/usePortalEstudiante';
 import PortalFormatoRenderer from '@/components/portal/PortalFormatoRenderer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import SignatureCanvas from 'react-signature-canvas';
 import type { BloqueSignatureCapture } from '@/types/formatoFormacion';
 
 interface Props {
@@ -23,16 +22,21 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
   const enviarMutation = useEnviarFormatoDinamico();
 
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [firmaBase64, setFirmaBase64] = useState<string | null>(null);
   const [autorizaReutilizacion, setAutorizaReutilizacion] = useState(false);
-  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const isEmptyRef = useRef(true);
 
   const handleAnswerChange = useCallback((key: string, value: unknown) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
   }, []);
 
   const isLoading = loadingFormato || loadingContext || loadingFirmas;
+
+  // Find signature block to extract firma from answers on submit
+  const signatureBlock = useMemo(() => {
+    if (!formato) return undefined;
+    return formato.bloques.find(
+      b => b.type === 'signature_capture' && ((b as BloqueSignatureCapture).props?.mode === 'capture' || !(b as BloqueSignatureCapture).props?.mode)
+    ) as BloqueSignatureCapture | undefined;
+  }, [formato]);
 
   if (isLoading) {
     return (
@@ -54,34 +58,8 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     );
   }
 
-  // Check if this format has a signature_capture block in capture mode
-  const signatureBlock = formato.bloques.find(
-    b => b.type === 'signature_capture' && ((b as BloqueSignatureCapture).props?.mode === 'capture' || !(b as BloqueSignatureCapture).props?.mode)
-  ) as BloqueSignatureCapture | undefined;
-
-  const needsSignatureCapture = !!signatureBlock && !answers[signatureBlock.id];
-
-  const handleClearSignature = () => {
-    sigCanvasRef.current?.clear();
-    isEmptyRef.current = true;
-    setFirmaBase64(null);
-    if (signatureBlock) {
-      setAnswers(prev => {
-        const next = { ...prev };
-        delete next[signatureBlock.id];
-        return next;
-      });
-    }
-  };
-
-  const handleEndStroke = () => {
-    if (!sigCanvasRef.current || isEmptyRef.current) return;
-    const data = sigCanvasRef.current.getCanvas().toDataURL('image/png');
-    setFirmaBase64(data);
-    if (signatureBlock) {
-      setAnswers(prev => ({ ...prev, [signatureBlock.id]: data }));
-    }
-  };
+  const firmaBase64 = signatureBlock ? (answers[signatureBlock.id] as string | undefined) || null : null;
+  const needsSignature = !!signatureBlock && !firmaBase64;
 
   const handleSubmit = async () => {
     try {
@@ -131,65 +109,17 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           onAnswerChange={handleAnswerChange}
           readOnly={false}
           firmasMatricula={firmas}
+          signatureProps={{
+            autorizaReutilizacion,
+            onAutorizaReutilizacionChange: setAutorizaReutilizacion,
+          }}
         />
-
-        {/* Signature capture section */}
-        {signatureBlock && !answers[signatureBlock.id] && (
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-foreground">
-              {signatureBlock.label || 'Firma del estudiante'}
-            </h3>
-            <div className="border-2 border-dashed border-primary/30 rounded-lg bg-background">
-              <SignatureCanvas
-                ref={sigCanvasRef}
-                canvasProps={{
-                  className: 'w-full h-40',
-                  style: { width: '100%', height: '160px' },
-                }}
-                onBegin={() => { isEmptyRef.current = false; }}
-                onEnd={handleEndStroke}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handleClearSignature}>
-                Limpiar
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {signatureBlock && answers[signatureBlock.id] && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <span className="text-sm text-green-600 font-medium">Firma capturada</span>
-              <Button variant="ghost" size="sm" onClick={handleClearSignature}>
-                Limpiar
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Authorization checkbox for signature reuse */}
-        {signatureBlock && formato.esOrigenFirma && (
-          <label className="flex items-start gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={autorizaReutilizacion}
-              onChange={(e) => setAutorizaReutilizacion(e.target.checked)}
-              className="mt-0.5"
-            />
-            <span className="text-muted-foreground">
-              Autorizo la reutilización de mi firma en los demás documentos de esta matrícula
-            </span>
-          </label>
-        )}
 
         {/* Submit */}
         <Button
           className="w-full"
           onClick={handleSubmit}
-          disabled={enviarMutation.isPending || (needsSignatureCapture && !firmaBase64)}
+          disabled={enviarMutation.isPending || needsSignature}
         >
           {enviarMutation.isPending ? (
             'Enviando...'

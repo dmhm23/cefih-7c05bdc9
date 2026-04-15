@@ -606,6 +606,11 @@ function renderPortalBlock(
         />
       );
 
+    // signature_capture is rendered by the section renderer, not here
+    case "signature_capture":
+    case "signature_aprendiz":
+      return null;
+
     default:
       return null;
   }

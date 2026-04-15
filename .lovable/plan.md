@@ -1,48 +1,66 @@
 
 
-# Fix: Firma digital en portal — UX y posición
+# 5 ajustes al editor de formatos y portal del estudiante
 
-## Problemas identificados
+## 1. Bloque de 1 columna en el editor (`/gestion-formatos/nuevo`)
 
-1. **Auto-cierre inmediato**: `DynamicPortalRenderer` usa `onEnd` del canvas para guardar la firma en `answers` automáticamente. Al hacerlo, la condición `!answers[signatureBlock.id]` se vuelve `false` y el canvas desaparece, reemplazado por "Firma capturada". Un roce accidental cierra la interacción.
+Actualmente solo existe `row2` (2 columnas). Se agregará un bloque `row1` que funciona como contenedor de una sola columna con borde visual, útil para agrupar un bloque en un recuadro diferenciado.
 
-2. **Firma siempre al final**: La firma se renderiza hardcodeada al final de `DynamicPortalRenderer`, fuera de `PortalFormatoRenderer`. El renderer semántico clasifica correctamente `signature_capture` como sección independiente pero no tiene un caso en `renderPortalBlock` para renderizarla — devuelve `null`.
+**Archivos:**
+- `src/stores/useFormatoEditorStore.ts` — Nuevo tipo `Row1Block` (`{ id, type: 'row1', col: Bloque | null }`), función `createRow1()`, acción `addRow1()`.
+- `src/components/formatos/editor/BlockCatalog.tsx` — Agregar entrada `{ type: 'row1', label: '1 columna', icon: Square, category: 'layout' }` en la paleta.
+- `src/components/formatos/editor/CanvasRow.tsx` — Agregar caso para renderizar `row1` (una sola celda drop).
+- `src/components/formatos/editor/EditorCanvas.tsx` — Manejar `row1` al hacer drop y al renderizar items.
+- `src/components/formatos/FormatoPreviewDocument.tsx` — Caso `row1` en `renderBloque`.
+- `src/components/portal/PortalFormatoRenderer.tsx` — Caso `row1` en `renderPortalBlock` y `classifyBlock`.
+- `src/components/matriculas/formatos/DynamicFormatoDocument.tsx` — Caso `row1`.
 
-3. **UX pobre vs referencia**: El componente `FirmaPersonal` (gestión de personal) tiene tabs (Dibujar/Cargar PNG), botón explícito "Guardar Firma", y botón "Limpiar" claro. El portal no tiene nada de esto.
+## 2. Firma sin carga de imagen en el portal
 
-## Cambios
+Eliminar las pestañas (Tabs) y la opción "Cargar imagen" del componente `PortalSignatureCapture.tsx`. Solo queda el canvas de dibujo con botones "Limpiar" y "Guardar Firma".
 
-### 1. `PortalFormatoRenderer.tsx` — Renderizar firma inline
+**Archivo:** `src/components/portal/PortalSignatureCapture.tsx` — Eliminar imports de `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`, `FileDropZone`, `ImageIcon`. Renderizar directamente el canvas sin tabs.
 
-Agregar caso `signature_capture` en `renderPortalBlock` que renderice un componente `PortalSignatureCapture` con la misma UX de `FirmaPersonal`:
-- Tabs: Dibujar / Cargar PNG
-- Botón explícito "Guardar Firma" (no auto-save on stroke)
-- Botón "Limpiar" visible
-- Si ya hay firma guardada: mostrar preview + botón "Cambiar firma"
-- Si hay firma reutilizable desde `firmasMatricula`: mostrar preview con badge "Firma reutilizada"
+## 3. Íconos de secciones colapsables → check verde para datos prellenados
 
-Esto hace que la firma aparezca en la posición exacta donde el bloque fue ubicado en el formato.
+Reemplazar el ícono informativo (ℹ️) de las secciones `info` por un check verde (`CheckCircle2 text-green-600`), transmitiendo progreso cuando los datos ya están prellenados. Secciones de tipo `info` pasan de `status="info"` a `status="complete"` ya que siempre tienen datos resueltos.
 
-### 2. `DynamicPortalRenderer.tsx` — Eliminar firma hardcodeada
+**Archivos:**
+- `src/components/portal/PortalFormatoRenderer.tsx` — En `getSectionStatus`, cambiar: si `kind === "info"` retornar `"complete"` en vez de `"info"`.
+- `src/components/portal/PortalSectionCard.tsx` — Actualmente `status === "info"` no muestra ícono. No se necesita cambio aquí porque ahora será `"complete"` y ya muestra el check verde.
 
-- Eliminar toda la sección de firma manual (SignatureCanvas, handleClearSignature, handleEndStroke, firmaBase64 state, sigCanvasRef, isEmptyRef)
-- Eliminar la sección de "Firma capturada" y el checkbox de autorización de reutilización
-- La firma ahora se lee desde `answers[signatureBlockId]` que el renderer semántico ya gestiona
-- Adaptar `handleSubmit` para extraer `firmaBase64` desde `answers` en lugar del state local
+## 4. Colores del design system en el portal
 
-### 3. Nuevo componente `PortalSignatureCapture.tsx`
+Las secciones colapsables usan colores hardcodeados (`border-green-200`, `border-amber-200`, `text-green-600`, `text-amber-500`). Se migrarán a los tokens CSS del design system:
+- Verde → `hsl(var(--success))` / `border-success/30`
+- Ámbar → `hsl(var(--warning))` / `border-warning/30`
 
-Componente reutilizable inspirado en `FirmaPersonal`:
-- Props: `blockId`, `label`, `value` (base64 o null), `onChange`, `readOnly`, `reusableSignature?` (FirmaMatricula)
-- Estado interno: canvas ref, isEmpty, tab activo
-- No auto-guarda al terminar trazo — requiere clic en "Guardar Firma"
-- Muestra firma existente con opción de cambiar/limpiar
+**Archivo:** `src/components/portal/PortalSectionCard.tsx` — Reemplazar:
+- `border-green-200` → `border-[hsl(var(--success)/0.3)]`
+- `border-amber-200` → `border-[hsl(var(--warning)/0.3)]`
+- `text-green-600` en `CheckCircle2` → `text-[hsl(var(--success))]`
+- `text-amber-500` en `AlertCircle` → `text-[hsl(var(--warning))]`
 
-### Archivos afectados
+## 5. Bloque asistencia sin columnas de hora
 
-| Archivo | Cambio |
+El bloque `attendance_by_day` actualmente muestra 4 columnas: Fecha, Hora entrada, Hora salida, Firma. Se eliminarán las columnas de hora, dejando solo Fecha y Firma.
+
+**Archivos:**
+- `src/components/formatos/FormatoPreviewDocument.tsx` — Eliminar `<th>` y `<td>` de "Hora entrada" y "Hora salida" en el caso `attendance_by_day`.
+- `src/components/formatos/editor/BlockPreview.tsx` — Si hay preview de la tabla, actualizar igualmente (actualmente solo muestra un badge, no requiere cambio).
+- Datos mock `ATTENDANCE_DAYS` — Verificar si `entrada`/`salida` se usan en otro lugar; si no, se pueden dejar pero ignorarlos en la UI.
+
+## Resumen de archivos afectados
+
+| Archivo | Cambios |
 |---|---|
-| `src/components/portal/PortalSignatureCapture.tsx` | Nuevo componente |
-| `src/components/portal/PortalFormatoRenderer.tsx` | Agregar caso signature_capture + pasar firmasMatricula al renderer |
-| `src/pages/estudiante/DynamicPortalRenderer.tsx` | Eliminar firma hardcodeada, simplificar submit |
+| `useFormatoEditorStore.ts` | `Row1Block`, `addRow1` |
+| `BlockCatalog.tsx` | Entrada row1 en paleta |
+| `CanvasRow.tsx` | Render row1 |
+| `EditorCanvas.tsx` | Drop y render row1 |
+| `FormatoPreviewDocument.tsx` | row1 + asistencia sin horas |
+| `DynamicFormatoDocument.tsx` | row1 |
+| `PortalFormatoRenderer.tsx` | row1 + info→complete |
+| `PortalSignatureCapture.tsx` | Eliminar tabs/carga imagen |
+| `PortalSectionCard.tsx` | Tokens design system |
 

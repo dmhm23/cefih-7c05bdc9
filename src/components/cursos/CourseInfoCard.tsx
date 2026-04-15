@@ -80,7 +80,7 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
     return curso.duracionDias ?? 0;
   }, [formData.fechaInicio, formData.fechaFin, curso.fechaInicio, curso.fechaFin, curso.duracionDias]);
 
-  const duracionActual = (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? duracionDiasCalculada;
+  const duracionActual = duracionDiasCalculada || (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? 0;
   const esManual = duracionActual !== duracionDiasCalculada;
 
   const getValue = (field: keyof Curso): string => {

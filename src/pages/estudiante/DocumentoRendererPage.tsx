@@ -1,38 +1,9 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { usePortalEstudianteSession } from '@/contexts/PortalEstudianteContext';
-import { useDocumentosPortal, useFormatoById, useFirmasMatricula, useInfoAprendizData } from '@/hooks/usePortalEstudiante';
+import { useDocumentosPortal } from '@/hooks/usePortalEstudiante';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Construction, BookOpen, AlertTriangle } from 'lucide-react';
-import InfoAprendizPage from './InfoAprendizPage';
-import EvaluacionPage from './EvaluacionPage';
+import { FileText, AlertTriangle } from 'lucide-react';
 import DynamicPortalRenderer from './DynamicPortalRenderer';
-
-/* ── Legacy placeholder renderers (kept temporarily as fallback) ── */
-function FormularioPlaceholder() {
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
-      <Construction className="h-12 w-12 text-muted-foreground" />
-      <p className="text-muted-foreground text-sm">Formulario en construcción</p>
-    </div>
-  );
-}
-
-function SoloLecturaPlaceholder() {
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
-      <BookOpen className="h-12 w-12 text-muted-foreground" />
-      <p className="text-muted-foreground text-sm">Documento de solo lectura</p>
-    </div>
-  );
-}
-
-/* ── Legacy renderer registry (fallback only when formato_id is missing) ── */
-const LEGACY_RENDERERS: Record<string, React.ComponentType> = {
-  firma_autorizacion: InfoAprendizPage,
-  evaluacion: EvaluacionPage,
-  formulario: FormularioPlaceholder,
-  solo_lectura: SoloLecturaPlaceholder,
-};
 
 export default function DocumentoRendererPage() {
   const { documentoKey } = useParams<{ documentoKey: string }>();
@@ -64,20 +35,7 @@ export default function DocumentoRendererPage() {
     return <Navigate to="/estudiante/inicio" replace />;
   }
 
-  // PRIORITY: If docConfig has a formato_id, use the dynamic renderer
-  if (docConfig.formatoId) {
-    return (
-      <DynamicPortalRenderer
-        formatoId={docConfig.formatoId}
-        documentoKey={documentoKey}
-        matriculaId={session.matriculaId}
-      />
-    );
-  }
-
-  // FALLBACK: Legacy renderer for documents without formato_id
-  const Renderer = LEGACY_RENDERERS[docConfig.tipo];
-  if (!Renderer) {
+  if (!docConfig.formatoId) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-6 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive" />
@@ -86,5 +44,11 @@ export default function DocumentoRendererPage() {
     );
   }
 
-  return <Renderer />;
+  return (
+    <DynamicPortalRenderer
+      formatoId={docConfig.formatoId}
+      documentoKey={documentoKey}
+      matriculaId={session.matriculaId}
+    />
+  );
 }

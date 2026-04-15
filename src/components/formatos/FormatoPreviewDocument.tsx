@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
 import { BLOQUE_TYPE_LABELS } from "@/data/bloqueConstants";
 import type { FormatoFormacion, Bloque } from "@/types/formatoFormacion";
+import DOMPurify from "dompurify";
 
 // ---------------------------------------------------------------------------
 // Dummy data for preview
@@ -113,14 +114,24 @@ function renderBloque(bloque: Bloque): React.ReactNode {
       );
     }
 
-    case "paragraph":
+    case "paragraph": {
+      const rawHtml = ("props" in bloque && (bloque as any).props?.text) || "";
+      const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
       return (
         <div style={{ gridColumn: "span 2" }}>
-          <p className="text-sm leading-relaxed text-justify">
-            {("props" in bloque && (bloque as any).props?.text) || "Texto del párrafo..."}
-          </p>
+          {isHtml ? (
+            <div
+              className="prose prose-sm max-w-none text-foreground"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rawHtml) }}
+            />
+          ) : (
+            <p className="text-sm leading-relaxed text-justify">
+              {rawHtml || "Texto del párrafo..."}
+            </p>
+          )}
         </div>
       );
+    }
 
     case "text":
       return <FieldCell label={bloque.label || "Campo de texto"} value="Dato de ejemplo" />;
@@ -182,6 +193,27 @@ function renderBloque(bloque: Bloque): React.ReactNode {
         </div>
       );
 
+    case "multi_choice": {
+      const mcOptions = ("props" in bloque && (bloque as any).props?.options) || [];
+      return (
+        <div className="field-cell">
+          <p className="text-[9px] uppercase tracking-wide text-muted-foreground leading-tight">{bloque.label || "Selección múltiple"}</p>
+          <div className="flex flex-wrap gap-3 mt-1">
+            {mcOptions.map((opt: any, i: number) => (
+              <div key={opt.value} className="flex items-center gap-1">
+                <div className={`h-3.5 w-3.5 border rounded-sm ${i === 0 ? "bg-foreground border-foreground" : "border-muted-foreground/40"}`}>
+                  {i === 0 && (
+                    <svg className="h-3.5 w-3.5 text-background" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}><path d="M5 13l4 4L19 7" /></svg>
+                  )}
+                </div>
+                <span className="text-xs">{opt.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     case "auto_field": {
       const key = ("props" in bloque && (bloque as any).props?.key) || "";
       const span = ("props" in bloque && (bloque as any).props?.span) || false;
@@ -190,7 +222,6 @@ function renderBloque(bloque: Bloque): React.ReactNode {
         <FieldCell
           label={bloque.label || getAutoFieldLabel(key)}
           value={resolvedValue}
-          badge="Auto"
           span={span}
         />
       );

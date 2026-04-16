@@ -77,6 +77,7 @@ function FirmaIcons({ formato }: { formato: FormatoFormacion }) {
 export default function FormatosPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [toggleId, setToggleId] = useState<string | null>(null);
   const [toggleActivo, setToggleActivo] = useState(false);
@@ -115,6 +116,7 @@ export default function FormatosPage() {
     try {
       await toggleActMutation.mutateAsync(toggleId);
       toast({ title: toggleActivo ? "Formato desactivado" : "Formato activado" });
+      logActivity({ action: "editar", module: "formatos", description: `${toggleActivo ? "Desactivó" : "Activó"} formato`, entityType: "formato", entityId: toggleId });
     } catch { toast({ title: "Error al cambiar estado", variant: "destructive" }); }
     setToggleId(null);
   };
@@ -123,6 +125,7 @@ export default function FormatosPage() {
     try {
       const nuevo = await duplicateMutation.mutateAsync(id);
       toast({ title: "Formato duplicado", description: nuevo.nombre });
+      logActivity({ action: "crear", module: "formatos", description: `Duplicó formato como ${nuevo.nombre}`, entityType: "formato", entityId: nuevo.id });
     } catch { toast({ title: "Error al duplicar", variant: "destructive" }); }
   };
 
@@ -130,6 +133,7 @@ export default function FormatosPage() {
     try {
       await archiveMutation.mutateAsync(id);
       toast({ title: "Formato archivado" });
+      logActivity({ action: "eliminar", module: "formatos", description: `Archivó formato`, entityType: "formato", entityId: id });
     } catch { toast({ title: "Error al archivar", variant: "destructive" }); }
   };
 
@@ -139,6 +143,7 @@ export default function FormatosPage() {
         await deleteMutation.mutateAsync(id);
       }
       toast({ title: `${selectedIds.length} formato(s) eliminado(s)` });
+      logActivity({ action: "eliminar", module: "formatos", description: `Eliminó ${selectedIds.length} formato(s)`, entityType: "formato" });
       setSelectedIds([]);
     } catch {
       toast({ title: "Error al eliminar formatos", variant: "destructive" });

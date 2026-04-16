@@ -12,14 +12,14 @@ import {
 /**
  * Convert to Title Case preserving tildes, ñ and special characters.
  */
-function capitalize(value: string): string {
+export function capitalize(value: string): string {
   if (!value) return "";
   return value
     .toLowerCase()
     .replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 
-function findLabel(
+export function findLabel(
   options: ReadonlyArray<{ value: string; label: string }>,
   value: string | undefined
 ): string {
@@ -27,7 +27,7 @@ function findLabel(
   const found = options.find((o) => o.value === value);
   return found ? capitalize(found.label) : capitalize(value);
 }
-function formatDate(dateStr: string | undefined): string {
+export function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return "";
   try {
     const d = new Date(dateStr);
@@ -46,7 +46,7 @@ function splitName(fullName: string, index: number): string {
   return capitalize(parts[index] ?? "");
 }
 
-function cleanDocumento(doc: string): string {
+export function cleanDocumento(doc: string): string {
   return doc.replace(/[\.\s]/g, "");
 }
 

@@ -281,6 +281,7 @@ export default function MatriculaFormPage() {
         });
         toast({ title: "Matrícula creada correctamente" });
         logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
+        if (path === '__back__') window.history.back();
         else navigate(path || '/matriculas');
       } catch (error: any) {
         toast({ title: "Error", description: error.message || "No se pudo crear la matrícula", variant: "destructive" });

@@ -52,6 +52,8 @@ interface PortalFormatoRendererProps {
   readOnly?: boolean;
   firmasMatricula?: FirmaMatricula[];
   signatureProps?: SignatureProps;
+  submitted?: boolean;
+  onQuizRetry?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +76,6 @@ function classifyBlock(bloque: Bloque): SectionKind | "hidden" | "section_title"
   if (type === "satisfaction_survey") return "survey";
   if (type === "signature_capture" || type === "signature_aprendiz") return "signature";
   if (type === "attendance_by_day") return "attendance";
-  // row1 / row2 — classify by children
   if (type === "row1" || type === "row2") return "input";
   return "input";
 }
@@ -110,7 +111,6 @@ function groupBlocksIntoSections(bloques: Bloque[]): SemanticSection[] {
 
     const kind = classification as SectionKind;
 
-    // Specialized blocks always get their own section
     if (["health", "authorization", "evaluation", "survey", "signature", "attendance"].includes(kind)) {
       flush();
       sections.push({
@@ -122,7 +122,6 @@ function groupBlocksIntoSections(bloques: Bloque[]): SemanticSection[] {
       continue;
     }
 
-    // Group consecutive info or input blocks
     if (currentKind && currentKind !== kind) {
       flush();
     }
@@ -194,7 +193,6 @@ function getSectionStatus(
     .map((b) => b.id);
 
   if (requiredIds.length === 0) {
-    // Check if any answer exists for any block in section
     const hasAny = section.bloques.some((b) => {
       const v = answers[b.id];
       return v != null && v !== "" && v !== false;
@@ -407,7 +405,9 @@ function renderPortalBlock(
   ctx: AutoFieldContext,
   answers: Record<string, unknown>,
   onChange?: (key: string, value: unknown) => void,
-  readOnly?: boolean
+  readOnly?: boolean,
+  submitted?: boolean,
+  onQuizRetry?: () => void
 ): React.ReactNode {
   if (!evaluateVisibility(bloque, answers)) return null;
 
@@ -421,7 +421,7 @@ function renderPortalBlock(
     return (
       <div key={bloque.id} className="space-y-3">
         {children.map((child) => (
-          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>
+          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>
         ))}
       </div>
     );
@@ -432,8 +432,8 @@ function renderPortalBlock(
     const row = bloque as unknown as Row2Block;
     return (
       <div className="grid grid-cols-2 gap-3" key={bloque.id}>
-        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>)}</div>
-        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly)}</React.Fragment>)}</div>
+        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
+        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
       </div>
     );
   }
@@ -613,6 +613,8 @@ function renderPortalBlock(
           answers={answers}
           onChange={onChange}
           readOnly={readOnly}
+          submitted={submitted}
+          onRetry={onQuizRetry}
         />
       );
 
@@ -627,7 +629,6 @@ function renderPortalBlock(
         />
       );
 
-    // signature_capture is rendered by the section renderer, not here
     case "signature_capture":
     case "signature_aprendiz":
       return null;
@@ -651,6 +652,8 @@ export default function PortalFormatoRenderer({
   readOnly = false,
   firmasMatricula,
   signatureProps,
+  submitted,
+  onQuizRetry,
 }: PortalFormatoRendererProps) {
   const bloques = formato.bloques || [];
 
@@ -684,7 +687,6 @@ export default function PortalFormatoRenderer({
   const sections = useMemo(() => groupBlocksIntoSections(bloques), [bloques]);
 
   const renderSectionContent = (section: SemanticSection) => {
-    // Signature sections get the dedicated capture component
     if (section.kind === "signature") {
       const sigBloque = section.bloques[0] as BloqueSignatureCapture;
       const tipoFirmante = sigBloque.props?.tipoFirmante || "aprendiz";
@@ -707,7 +709,7 @@ export default function PortalFormatoRenderer({
         <div className="divide-y divide-border/50">
           {section.bloques.map((bloque) => (
             <React.Fragment key={bloque.id}>
-              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true)}
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry)}
             </React.Fragment>
           ))}
         </div>
@@ -718,7 +720,7 @@ export default function PortalFormatoRenderer({
       <div className="space-y-4">
         {section.bloques.map((bloque) => (
           <React.Fragment key={bloque.id}>
-            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly)}
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry)}
           </React.Fragment>
         ))}
       </div>

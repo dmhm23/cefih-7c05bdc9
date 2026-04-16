@@ -82,11 +82,13 @@ export function AdjuntosMinTrabajoSection({ cursoId, fechaId = null, title, read
   const isFull = adjuntos.length >= MAX_FILES;
 
   return (
-    <div className="space-y-3">
-      {title && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">{title}</p>
-          <span className="text-xs text-muted-foreground">{adjuntos.length} / {MAX_FILES} archivos</span>
+    <div className="space-y-2">
+      {(title || !readOnly) && (
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          {title && <p className="text-xs font-medium text-muted-foreground">{title}</p>}
+          <span className="text-xs text-muted-foreground ml-auto">
+            {adjuntos.length} / {MAX_FILES} · PDF, JPG, PNG · Máx. 5 MB
+          </span>
         </div>
       )}
 
@@ -95,27 +97,23 @@ export function AdjuntosMinTrabajoSection({ cursoId, fechaId = null, title, read
           accept=".pdf,.jpg,.jpeg,.png"
           onFiles={handleFiles}
           multiple
+          compact
           disabled={addMutation.isPending}
-          label={addMutation.isPending ? "Subiendo..." : "Arrastra archivos aquí o haz clic para seleccionar"}
-          hint="PDF, JPG, PNG · Máx. 5 MB · Hasta 10 archivos"
+          label={addMutation.isPending ? "Subiendo..." : "Subir archivos (PDF/JPG/PNG)"}
         />
       )}
 
       {addMutation.isPending && (
-        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-          <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
-          <div className="flex-1 space-y-1.5">
-            <p className="text-sm font-medium text-muted-foreground">Cargando archivos...</p>
-            <Progress value={undefined} className="h-1.5" />
-          </div>
+        <div className="flex items-center gap-2 px-2 py-1.5 border rounded-md bg-muted/30">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+          <span className="text-xs text-muted-foreground flex-1">Cargando archivos...</span>
+          <Progress value={undefined} className="h-1 w-20" />
         </div>
       )}
 
       {isLoading ? (
-        <p className="text-xs text-muted-foreground text-center py-2">Cargando adjuntos...</p>
-      ) : adjuntos.length === 0 ? (
-        !readOnly && <p className="text-xs text-muted-foreground text-center py-1">Aún no hay archivos adjuntos</p>
-      ) : (
+        <p className="text-xs text-muted-foreground py-1">Cargando adjuntos...</p>
+      ) : adjuntos.length === 0 ? null : (
         <div className="space-y-1.5">
           {adjuntos.map((adj) => {
             const isImage = adj.tipoMime.startsWith("image/");

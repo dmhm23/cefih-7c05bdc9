@@ -104,6 +104,7 @@ type MatriculaFormData = z.infer<typeof matriculaSchema>;
 export default function MatriculaFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
@@ -279,7 +280,7 @@ export default function MatriculaFormPage() {
           pagado: false,
         });
         toast({ title: "Matrícula creada correctamente" });
-        if (path === '__back__') window.history.back();
+        logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
         else navigate(path || '/matriculas');
       } catch (error: any) {
         toast({ title: "Error", description: error.message || "No se pudo crear la matrícula", variant: "destructive" });

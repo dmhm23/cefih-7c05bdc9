@@ -46,6 +46,7 @@ export default function PersonasPage() {
   const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -281,10 +282,20 @@ export default function PersonasPage() {
           <h1 className="text-2xl font-semibold">Personas</h1>
           <p className="text-sm text-muted-foreground">Gestión de identidad - Hoja de Vida Digital</p>
         </div>
-        <Button onClick={() => navigate("/personas/nuevo")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Persona
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => descargarPlantillaPersonas()}>
+            <FileDown className="h-4 w-4 mr-2" />
+            Plantilla
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+          <Button onClick={() => navigate("/personas/nuevo")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Persona
+          </Button>
+        </div>
       </div>
 
 

@@ -103,7 +103,9 @@ const App = () => (
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLoginPage />} />
-            <Route path="/admin/dashboard" element={<AdminGuard><MainLayout><AdminDashboardPage /></MainLayout></AdminGuard>} />
+            <Route path="/admin/dashboard" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminDashboardPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/logs" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminLogsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/logs/:userId" element={<AdminGuard><ActivityLoggerProvider><MainLayout><UserActivityLogPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
 
             {/* Protected routes with layout */}
             <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />

@@ -27,6 +27,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 export default function NivelesPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [columnConfig, setColumnConfig] = useState<ColumnConfig[]>(() => {
@@ -54,9 +55,11 @@ export default function NivelesPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const nivel = niveles.find(n => n.id === deleteId);
     try {
       await deleteNivel.mutateAsync(deleteId);
       toast({ title: "Nivel eliminado correctamente" });
+      logActivity({ action: "eliminar", module: "niveles", description: `Eliminó nivel de formación "${nivel?.nombreNivel || ""}"`, entityType: "nivel_formacion", entityId: deleteId, metadata: { nombre: nivel?.nombreNivel } });
     } catch (err: any) {
       toast({ title: err?.message || "Error al eliminar el nivel", variant: "destructive" });
     }

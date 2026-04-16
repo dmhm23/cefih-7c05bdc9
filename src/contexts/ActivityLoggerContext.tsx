@@ -33,15 +33,21 @@ export function ActivityLoggerProvider({ children }: { children: ReactNode }) {
   const logActivity = useCallback(
     (params: LogActivityParams) => {
       if (!user) return;
-      const row = {
-        user_id: user.id,
-        user_email: user.email ?? "",
-        user_name: perfil?.nombres ?? null,
-        action: params.action,
-        module: params.module ?? null,
-        description: params.description,
-        metadata: (params.metadata ?? {}) as Json,
-      supabase.from("user_activity_logs").insert([row]).then(() => {});
+      supabase
+        .from("user_activity_logs")
+        .insert([{
+          user_id: user.id,
+          user_email: user.email ?? "",
+          user_name: perfil?.nombres ?? null,
+          action: params.action,
+          module: params.module ?? null,
+          description: params.description,
+          entity_type: params.entityType ?? null,
+          entity_id: params.entityId ?? null,
+          metadata: (params.metadata ?? {}) as Json,
+          route: location.pathname,
+        }])
+        .then(() => {});
     },
     [user, perfil, location.pathname],
   );
@@ -71,19 +77,21 @@ export function ActivityLoggerProvider({ children }: { children: ReactNode }) {
     const segment = path.split("/").filter(Boolean)[0] ?? "dashboard";
     const mod = moduleMap[segment] ?? segment;
 
-    const row = {
-      user_id: user.id,
-      user_email: user.email ?? "",
-      user_name: perfil?.nombres ?? null,
-      action: "navegar",
-      module: mod,
-      description: `Navegó a ${path}`,
-      entity_type: null,
-      entity_id: null,
-      metadata: {},
-      route: path,
-    };
-    supabase.from("user_activity_logs").insert([row]).then(() => {});
+    supabase
+      .from("user_activity_logs")
+      .insert([{
+        user_id: user.id,
+        user_email: user.email ?? "",
+        user_name: perfil?.nombres ?? null,
+        action: "navegar",
+        module: mod,
+        description: `Navegó a ${path}`,
+        entity_type: null as string | null,
+        entity_id: null as string | null,
+        metadata: {} as Json,
+        route: path,
+      }])
+      .then(() => {});
   }, [location.pathname, user, perfil]);
 
   return (

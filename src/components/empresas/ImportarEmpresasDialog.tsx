@@ -24,6 +24,22 @@ function hasFieldError(errors: string[], fieldName: string): boolean {
   return errors.some(e => e.toLowerCase().includes(lower));
 }
 
+function CopyErrorsButton({ rowIndex, errors }: { rowIndex: number; errors: string[] }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `Fila ${rowIndex}: ${errors.join('; ')}`;
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <button onClick={handleCopy} className="shrink-0 p-1 rounded hover:bg-destructive/10 transition-colors" title="Copiar errores">
+      {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5 text-destructive" />}
+    </button>
+  );
+}
+
 export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();

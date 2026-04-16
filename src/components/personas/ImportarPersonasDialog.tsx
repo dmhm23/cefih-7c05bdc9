@@ -440,9 +440,14 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
-        {importing && (
+        {(importing || logger.logs.length > 0) && (
           <div className="-mx-6">
-            <ImportProgress current={progress.current} total={progress.total} label="Importando personas" />
+            <ImportProgress
+              current={progress.current}
+              total={progress.total}
+              label="Importando personas"
+              logs={logger.logs}
+            />
           </div>
         )}
 

@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { empresaService } from '@/services/empresaService';
 import { EmpresaImportRow, parsearArchivoEmpresas } from '@/utils/empresaPlantilla';
 import { useQueryClient } from '@tanstack/react-query';
+import { useImportLogger } from '@/hooks/useImportLogger';
 
 interface Props {
   open: boolean;
@@ -70,6 +71,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const [result, setResult] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
   const [filter, setFilter] = useState<FilterTab>('todas');
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const logger = useImportLogger();
 
   const validRows = rows.filter(r => r.errors.length === 0);
   const errorRows = rows.filter(r => r.errors.length > 0);
@@ -111,6 +113,11 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
     if (validRows.length === 0) return;
     setImporting(true);
     setProgress({ current: 0, total: validRows.length });
+    logger.start();
+    logger.info(`Iniciando importación desde "${fileName}"`);
+    logger.debug(`Filas leídas: ${rows.length} | válidas: ${validRows.length} | con errores: ${errorRows.length}`);
+    logger.info(`Total a procesar: ${validRows.length}`);
+    const tStart = performance.now();
     try {
       const empresas = validRows.map(r => ({
         nombreEmpresa: r.nombreEmpresa,
@@ -131,12 +138,19 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
       const res = await empresaService.createBulk(
         empresas as any,
         (current, total) => setProgress({ current, total }),
+        logger.log,
       );
+      const totalSec = ((performance.now() - tStart) / 1000).toFixed(1);
+      const avg = validRows.length > 0 ? Math.round((performance.now() - tStart) / validRows.length) : 0;
+      logger.info('═══ Resumen ═══');
+      logger.success(`✓ ${res.created} creadas | ${res.errors.length} errores`);
+      logger.info(`Tiempo total: ${totalSec}s — promedio ${avg}ms/registro`);
       setResult(res);
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       toast({ title: `${res.created} empresas importadas correctamente` });
       logActivity({ action: "importar", module: "empresas", description: `Importó ${res.created} empresa(s) desde archivo "${fileName}"`, entityType: "empresa", metadata: { archivo: fileName, total_filas: rows.length, importadas: res.created, errores: res.errors.length } });
-    } catch {
+    } catch (err: any) {
+      logger.error(`Error fatal: ${err?.message || 'desconocido'}`);
       toast({ title: 'Error al importar', variant: 'destructive' });
     } finally {
       setImporting(false);
@@ -321,9 +335,14 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
-        {importing && (
+        {(importing || logger.logs.length > 0) && (
           <div className="-mx-6">
-            <ImportProgress current={progress.current} total={progress.total} label="Importando empresas" />
+            <ImportProgress
+              current={progress.current}
+              total={progress.total}
+              label="Importando empresas"
+              logs={logger.logs}
+            />
           </div>
         )}
 

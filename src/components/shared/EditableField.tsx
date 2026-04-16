@@ -148,10 +148,17 @@ export function EditableField({
     }
 
     if (type === "select") {
-      if (options.length >= 4) {
+      // Si el valor almacenado no coincide con ninguna opción del catálogo,
+      // lo agregamos como opción adicional para que se muestre (datos legacy).
+      const hasMatch = !value || options.some(o => o.value === value);
+      const effectiveOptions = hasMatch
+        ? options
+        : [...options, { value, label: displayValue || value }];
+
+      if (effectiveOptions.length >= 4) {
         return (
           <Combobox
-            options={[...options]}
+            options={[...effectiveOptions]}
             value={value}
             onValueChange={(val) => handleSelectChange(val)}
             placeholder={effectivePlaceholder}
@@ -165,15 +172,15 @@ export function EditableField({
             <SelectValue placeholder={effectivePlaceholder}>
               {badge && value ? (
                 <Badge variant={badgeVariant} className="font-normal">
-                  {displayValue || options.find(o => o.value === value)?.label || value}
+                  {displayValue || effectiveOptions.find(o => o.value === value)?.label || value}
                 </Badge>
               ) : (
-                displayValue || options.find(o => o.value === value)?.label || value || effectivePlaceholder
+                displayValue || effectiveOptions.find(o => o.value === value)?.label || value || effectivePlaceholder
               )}
             </SelectValue>
           </SelectTrigger>
           <SelectContent side="bottom">
-            {options.map((option) => (
+            {effectiveOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

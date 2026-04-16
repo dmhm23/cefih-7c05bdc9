@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, GRUPOS_SANGUINEOS } from '@/data/formOptions';
+import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, GRUPOS_SANGUINEOS, PAISES } from '@/data/formOptions';
 
 const HEADERS = [
   'Tipo Documento',
@@ -39,6 +39,7 @@ const tipoDocLabels = TIPOS_DOCUMENTO.map(t => t.value);
 const generoLabels = GENEROS.map(g => g.label);
 const rhLabels = GRUPOS_SANGUINEOS.map(r => r.value);
 const nivelLabels = NIVELES_EDUCATIVOS.map(n => n.label);
+const paisLabels = PAISES.map(p => p.label);
 
 export function descargarPlantillaPersonas() {
   const wb = XLSX.utils.book_new();
@@ -50,6 +51,7 @@ export function descargarPlantillaPersonas() {
   ws['!dataValidation'] = [
     { sqref: 'A2:A9999', type: 'list', formula1: `"${tipoDocLabels.join(',')}"`, showDropDown: true },
     { sqref: 'E2:E9999', type: 'list', formula1: `"${generoLabels.join(',')}"`, showDropDown: true },
+    { sqref: 'G2:G9999', type: 'list', formula1: `"${paisLabels.join(',')}"`, showDropDown: true },
     { sqref: 'H2:H9999', type: 'list', formula1: `"${rhLabels.join(',')}"`, showDropDown: true },
     { sqref: 'I2:I9999', type: 'list', formula1: `"${nivelLabels.join(',')}"`, showDropDown: true },
   ];
@@ -136,7 +138,7 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
           const apellidos = String(row[3] || '').trim();
           const generoRaw = String(row[4] || '').trim();
           const fechaRaw = row[5];
-          const paisNacimiento = String(row[6] || '').trim();
+          const paisRaw = String(row[6] || '').trim();
           const rhRaw = String(row[7] || '').trim();
           const nivelRaw = String(row[8] || '').trim();
           const email = String(row[9] || '').trim();
@@ -197,6 +199,18 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
           if (nivelRaw) {
             nivelEducativo = findEnumValue(nivelRaw, NIVELES_EDUCATIVOS) || '';
             if (!nivelEducativo) errors.push(`Nivel Educativo "${nivelRaw}" no reconocido`);
+          }
+
+          // País de nacimiento — normalizar a código ISO. Si no se reconoce, conservar texto pero advertir.
+          let paisNacimiento = '';
+          if (paisRaw) {
+            const isoCode = findEnumValue(paisRaw, PAISES as any);
+            if (isoCode) {
+              paisNacimiento = isoCode;
+            } else {
+              paisNacimiento = paisRaw;
+              warnings.push(`País "${paisRaw}" no está en el catálogo, se guardará tal cual`);
+            }
           }
 
           return {

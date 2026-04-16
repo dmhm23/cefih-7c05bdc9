@@ -474,6 +474,7 @@ export default function MatriculaFormPage() {
       }
 
       toast({ title: "Matrícula creada correctamente" });
+      logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
       skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {

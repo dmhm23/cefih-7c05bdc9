@@ -177,17 +177,42 @@ export const empresaService = {
   async createBulk(
     empresas: EmpresaFormData[],
     onProgress?: (current: number, total: number) => void,
+    onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
-    for (let i = 0; i < empresas.length; i++) {
+    const total = empresas.length;
+    const startTs = performance.now();
+    onLog?.('info', `Procesando ${total} empresa(s)`);
+
+    for (let i = 0; i < total; i++) {
+      const e = empresas[i];
+      const label = e.nombreEmpresa || '(sin nombre)';
+      const idx = `[${i + 1}/${total}]`;
+      const t0 = performance.now();
+      onLog?.('debug', `${idx} Insertando "${label}" (NIT ${e.nit})`);
       try {
-        await this.create(empresas[i]);
+        await this.create(e);
+        const dt = Math.round(performance.now() - t0);
+        onLog?.('success', `${idx} Creada en ${dt}ms`);
         created++;
       } catch (err: any) {
-        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+        const dt = Math.round(performance.now() - t0);
+        const msg = err?.message || 'Error desconocido';
+        onLog?.('error', `${idx} Falló "${label}" en ${dt}ms — ${msg}`);
+        errors.push({ row: i + 2, error: msg });
       }
-      onProgress?.(i + 1, empresas.length);
+      onProgress?.(i + 1, total);
+
+      if ((i + 1) % 10 === 0 && i + 1 < total) {
+        const elapsedSec = (performance.now() - startTs) / 1000;
+        const rps = (i + 1) / elapsedSec;
+        const remaining = Math.round((total - (i + 1)) / rps);
+        onLog?.(
+          'info',
+          `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${i + 1}/${total})`,
+        );
+      }
     }
     return { created, errors };
   },

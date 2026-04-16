@@ -161,15 +161,25 @@ export const personaService = {
   async createBulk(
     personas: PersonaFormData[],
     onProgress?: (current: number, total: number) => void,
+    onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
     for (let i = 0; i < personas.length; i++) {
+      const p = personas[i];
+      const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
+      const t0 = performance.now();
+      onLog?.('debug', `[${i + 1}/${personas.length}] Insertando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
       try {
-        await this.create(personas[i]);
+        await this.create(p);
+        const dt = Math.round(performance.now() - t0);
+        onLog?.('success', `[${i + 1}/${personas.length}] OK en ${dt}ms`);
         created++;
       } catch (err: any) {
-        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+        const dt = Math.round(performance.now() - t0);
+        const msg = err?.message || 'Error desconocido';
+        onLog?.('error', `[${i + 1}/${personas.length}] Falló "${label}" en ${dt}ms — ${msg}`);
+        errors.push({ row: i + 2, error: msg });
       }
       onProgress?.(i + 1, personas.length);
     }
@@ -209,35 +219,65 @@ export const personaService = {
     existingDocs: Set<string>,
     updateExisting: boolean,
     onProgress?: (current: number, total: number) => void,
+    onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; updated: number; skipped: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
     let updated = 0;
     let skipped = 0;
+    const total = personas.length;
+    const startTs = performance.now();
 
-    for (let i = 0; i < personas.length; i++) {
+    onLog?.('info', `Procesando ${total} registro(s) — modo: ${updateExisting ? 'actualizar existentes' : 'omitir existentes'}`);
+
+    for (let i = 0; i < total; i++) {
       const p = personas[i];
+      const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
+      const idx = `[${i + 1}/${total}]`;
+      const t0 = performance.now();
       try {
         if (existingDocs.has(p.numeroDocumento)) {
           if (updateExisting) {
+            onLog?.('debug', `${idx} Actualizando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
             const id = await this.getIdByDocumento(p.numeroDocumento);
             if (id) {
               await this.update(id, p);
+              const dt = Math.round(performance.now() - t0);
+              onLog?.('success', `${idx} Actualizado en ${dt}ms`);
               updated++;
             } else {
+              onLog?.('warn', `${idx} No se encontró ID para "${label}", omitido`);
               skipped++;
             }
           } else {
+            onLog?.('debug', `${idx} Omitido "${label}" (ya existe)`);
             skipped++;
           }
         } else {
+          onLog?.('debug', `${idx} Insertando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
           await this.create(p);
+          const dt = Math.round(performance.now() - t0);
+          onLog?.('success', `${idx} Creado en ${dt}ms`);
           created++;
         }
       } catch (err: any) {
-        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+        const dt = Math.round(performance.now() - t0);
+        const msg = err?.message || 'Error desconocido';
+        onLog?.('error', `${idx} Falló "${label}" en ${dt}ms — ${msg}`);
+        errors.push({ row: i + 2, error: msg });
       }
-      onProgress?.(i + 1, personas.length);
+      onProgress?.(i + 1, total);
+
+      // Throughput cada 10 registros
+      if ((i + 1) % 10 === 0 && i + 1 < total) {
+        const elapsedSec = (performance.now() - startTs) / 1000;
+        const rps = (i + 1) / elapsedSec;
+        const remaining = Math.round((total - (i + 1)) / rps);
+        onLog?.(
+          'info',
+          `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${i + 1}/${total})`,
+        );
+      }
     }
     return { created, updated, skipped, errors };
   },

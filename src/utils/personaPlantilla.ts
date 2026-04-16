@@ -39,6 +39,7 @@ const tipoDocLabels = TIPOS_DOCUMENTO.map(t => t.value);
 const generoLabels = GENEROS.map(g => g.label);
 const rhLabels = GRUPOS_SANGUINEOS.map(r => r.value);
 const nivelLabels = NIVELES_EDUCATIVOS.map(n => n.label);
+const paisLabels = PAISES.map(p => p.label);
 
 export function descargarPlantillaPersonas() {
   const wb = XLSX.utils.book_new();
@@ -50,6 +51,7 @@ export function descargarPlantillaPersonas() {
   ws['!dataValidation'] = [
     { sqref: 'A2:A9999', type: 'list', formula1: `"${tipoDocLabels.join(',')}"`, showDropDown: true },
     { sqref: 'E2:E9999', type: 'list', formula1: `"${generoLabels.join(',')}"`, showDropDown: true },
+    { sqref: 'G2:G9999', type: 'list', formula1: `"${paisLabels.join(',')}"`, showDropDown: true },
     { sqref: 'H2:H9999', type: 'list', formula1: `"${rhLabels.join(',')}"`, showDropDown: true },
     { sqref: 'I2:I9999', type: 'list', formula1: `"${nivelLabels.join(',')}"`, showDropDown: true },
   ];

@@ -51,6 +51,7 @@ export function PersonaDetailSheet({
 }: PersonaDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updatePersona = useUpdatePersona();
   const { data: matriculas = [] } = useMatriculasByPersona(persona?.id || "");
   const resolveNivel = useResolveNivel();

@@ -378,6 +378,8 @@ export default function PersonasPage() {
         variant="destructive"
         onConfirm={handleBulkDelete}
       />
+
+      <ImportarPersonasDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

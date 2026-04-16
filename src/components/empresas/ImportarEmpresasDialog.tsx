@@ -163,6 +163,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
     setResult(null);
     setFilter('todas');
     setExpandedRows(new Set());
+    logger.clear();
     onOpenChange(false);
   };
 

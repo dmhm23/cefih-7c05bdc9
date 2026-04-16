@@ -217,6 +217,7 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
     setExpandedRows(new Set());
     setExistingDocs(new Set());
     setUpdateExisting(false);
+    logger.clear();
     onOpenChange(false);
   };
 

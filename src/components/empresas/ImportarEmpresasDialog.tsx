@@ -40,6 +40,24 @@ function CopyErrorsButton({ rowIndex, errors }: { rowIndex: number; errors: stri
   );
 }
 
+function CopyAllErrorsButton({ errorRows }: { errorRows: EmpresaImportRow[] }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    const text = errorRows
+      .map(r => `${r.nombreEmpresa || '—'}, ${r.nit || '—'}, ${r.errors.join('; ')}`)
+      .join('\n');
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <Button variant="ghost" size="sm" className="h-6 px-2 gap-1 text-xs text-destructive hover:text-destructive" onClick={handleCopy}>
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? 'Copiado' : 'Copiar todos'}
+    </Button>
+  );
+}
+
 export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();

@@ -1,129 +1,73 @@
 
-
 ## Análisis
 
-**Estado actual:**
-- `MinTrabajoCard` permite registrar un número de registro y fechas adicionales, pero **no soporta adjuntos** de ningún tipo.
-- `cursos_fechas_mintrabajo` no tiene columnas para archivos.
-- Patrón ya existente: `personal_adjuntos` + bucket `adjuntos-personal` (storage privado, signed URLs, sanitización de nombre, mime + tamaño en BD). Lo replicamos.
+Reviso la captura y el código:
 
-**Decisiones clave:**
-- Crear bucket privado `adjuntos-mintrabajo` (signed URLs 1h, igual que `adjuntos-personal`).
-- Crear tabla `cursos_mintrabajo_adjuntos` que sirve para **dos contextos** mediante `fecha_id` nullable:
-  - `fecha_id IS NULL` → adjuntos del **registro principal** del curso (vinculados a `curso_id`).
-  - `fecha_id NOT NULL` → adjuntos de una **fecha adicional** específica.
-- Límite **10 archivos por contexto** (registro principal y por cada fecha adicional).
-- Tipos: PDF, JPG, PNG. Tamaño máx **5 MB** por archivo (bajo peso, según solicitud).
+1. **Tamaño del adjunto**: El `FileDropZone` actual ocupa ~150px de alto con padding generoso (`p-6` o similar) e ícono grande. Se ve desproporcionado para este contexto donde solo se suben capturas pequeñas.
+
+2. **Orden actual** en `CursoDetallePage`: necesito confirmar dónde está hoy `MinTrabajoCard` vs `EnrollmentsTable` para reordenar.
+<lov-tool-use id="toolu_vrtx_01CJNoQzkh3cDgPCn3fLq2uc" name="code--search_files" integration-id="code" data="{\"query\": \"MinTrabajoCard|EnrollmentsTable\", \"include_patterns\": \"src/pages/cursos/CursoDetallePage.tsx\"}">
+</lov-tool-use>
+
+<lov-tool-use id="toolu_vrtx_01Hgy9JvFFNuub3nuDzi7oYe" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/shared/FileDropZone.tsx\"}">
+</lov-tool-use>
+
+<lov-tool-use id="toolu_vrtx_01XbhKhkkFQMxnvfBUG6VbT3" name="code--search_files" integration-id="code" data="{\"query\": \"MinTrabajoCard|EnrollmentsTable\", \"include_patterns\": \"src/pages/cursos/CursoDetallePage.tsx\"}">
+</lov-tool-use>
+
+<lov-tool-use id="toolu_vrtx_01EHBbrxXfcY7psxj7CHwaRz" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/shared/FileDropZone.tsx\"}">
+</lov-tool-use>
+
+<lov-tool-use id="toolu_vrtx_016NUfqZFJoWFMx2iDKRobSS" name="code--view" integration-id="code" data="{\"file_path\": \"src/pages/cursos/CursoDetallePage.tsx\", \"lines\": \"140-200\"}">
+</lov-tool-use>
+<lov-plan>
 
 ## Cambios
 
-### 1. Backend (migración SQL)
+### 1. Mover sección "Registro MinTrabajo" debajo de "Estudiantes Inscritos"
 
-**Bucket** (privado):
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('adjuntos-mintrabajo', 'adjuntos-mintrabajo', false);
+En `src/pages/cursos/CursoDetallePage.tsx`, reordenar los componentes:
+
+```
+1. CourseInfoCard
+2. EnrollmentsTable        ← antes era MinTrabajo
+3. MinTrabajoCard          ← ahora va aquí (mantiene el ref para scroll)
+4. CourseStatsChips
+5. CourseObservations
 ```
 
-**Tabla:**
-```sql
-CREATE TABLE public.cursos_mintrabajo_adjuntos (
-  id uuid PK default gen_random_uuid(),
-  curso_id uuid NOT NULL,
-  fecha_id uuid NULL REFERENCES cursos_fechas_mintrabajo(id) ON DELETE CASCADE,
-  nombre text NOT NULL,
-  tipo_mime text,
-  tamano bigint,
-  storage_path text NOT NULL,
-  created_by uuid,
-  created_at timestamptz default now()
-);
-CREATE INDEX ON public.cursos_mintrabajo_adjuntos (curso_id);
-CREATE INDEX ON public.cursos_mintrabajo_adjuntos (fecha_id);
-```
+El `ref={minTrabajoRef}` se mantiene para que el botón "Ir a MinTrabajo" del diálogo de cierre siga funcionando.
 
-**RLS**: SELECT autenticados; ALL para `superadministrador`/`administrador` (mismo patrón que `cursos_fechas_mintrabajo`).
+### 2. Hacer el componente de adjuntos más sutil
 
-**Storage policies** sobre `storage.objects` para bucket `adjuntos-mintrabajo`: SELECT/INSERT/UPDATE/DELETE para autenticados (igual que `adjuntos-personal`).
+En `src/components/cursos/AdjuntosMinTrabajoSection.tsx`, reducir el tamaño visual de la zona de carga:
 
-### 2. Service (`src/services/cursoService.ts`)
+- Usar `FileDropZone` en modo **`compact`** (botón outline pequeño en vez de drop zone grande de 6 niveles de padding).
+- Etiqueta breve: *"Subir archivos (PDF/JPG/PNG)"*.
+- Mover el hint *"Máx. 5 MB · Hasta 10 archivos"* a una línea pequeña al lado del contador `X / 10 archivos`, no debajo.
+- Quitar el mensaje *"Aún no hay archivos adjuntos"* (innecesario cuando ya hay un botón compacto).
+- Reducir padding del contenedor (de `space-y-3` a `space-y-2`).
 
-Agregar métodos:
-- `listAdjuntosMinTrabajo(cursoId, fechaId?: string | null)` → devuelve adjuntos del contexto solicitado (con signed URL).
-- `addAdjuntoMinTrabajo(cursoId, file, fechaId?: string | null)` → valida límite de 10, sube a storage en path `mintrabajo/{cursoId}/{fechaId|principal}/{ts}_{nombre}`, inserta fila.
-- `deleteAdjuntoMinTrabajo(adjuntoId)` → borra de storage + fila.
+**Antes (visible en screenshot):** zona de drop de ~150px de alto con icono de upload grande, label, hint y borde punteado.
 
-Path sanitization igual que `personalService.addAdjunto`.
+**Después:** una sola fila con el botón compacto + contador a la derecha + lista de archivos debajo si los hay.
 
-### 3. Tipos (`src/types/curso.ts`)
+### 3. Sin cambios en lógica
 
-```ts
-export interface AdjuntoMinTrabajo {
-  id: string;
-  cursoId: string;
-  fechaId: string | null;
-  nombre: string;
-  tipoMime: string;
-  tamano: number;
-  url?: string;       // signed URL
-  createdAt: string;
-}
-```
+- Límite de 10 archivos, 5 MB, validación, signed URLs, vista previa inline, eliminación: todo se conserva.
+- En `AddFechaMinTrabajoDialog.tsx` ya usaba `FileDropZone` directamente — no se toca para mantener visibilidad clara durante la creación de fecha (donde sí tiene sentido el drop zone grande porque es un dialog dedicado).
 
-### 4. Hooks (`src/hooks/useCursos.ts`)
+## Archivos a modificar
 
-- `useAdjuntosMinTrabajo(cursoId, fechaId?)` → query.
-- `useAddAdjuntoMinTrabajo()` / `useDeleteAdjuntoMinTrabajo()` → mutations que invalidan la query del contexto correspondiente.
-
-### 5. Componente compartido (`src/components/cursos/AdjuntosMinTrabajoSection.tsx`) — nuevo
-
-Reutiliza el patrón visual de `AdjuntosPersonal`:
-- `FileDropZone` con `accept=".pdf,.jpg,.jpeg,.png"`, `multiple`, hint: *"PDF, JPG, PNG · Máx. 5 MB · Hasta 10 archivos"*.
-- Bloquea upload si ya hay 10 (toast informativo).
-- Lista compacta con icono, nombre, tamaño, fecha, botones **Vista previa / Descargar / Eliminar**.
-- Vista previa inline (PDF en `<object>`, imagen en `<img>`), igual que `AdjuntosPersonal`.
-
-Props: `cursoId`, `fechaId?: string | null`, `readOnly?`, `title?`.
-
-### 6. Integración UI
-
-**`MinTrabajoCard.tsx`:**
-- Debajo de los 3 inputs y antes de "Fechas Adicionales" agregar:
-  ```
-  <AdjuntosMinTrabajoSection cursoId={curso.id} fechaId={null} title="Adjuntos del registro principal" readOnly={readOnly} />
-  ```
-- En cada item de `minTrabajoFechasAdicionales`, agregar al expandir/colapsar (acordeón sencillo con chevron) la sección:
-  ```
-  <AdjuntosMinTrabajoSection cursoId={curso.id} fechaId={f.id} title="Adjuntos de esta fecha" readOnly={readOnly} />
-  ```
-
-**`AddFechaMinTrabajoDialog.tsx`:**
-- Agregar zona de carga **opcional** debajo del campo motivo, dentro del mismo diálogo.
-- En modo creación: archivos quedan en estado local; tras crear la fecha (ya devuelve el curso con la nueva fecha), tomar el ID de la fecha recién creada y subir cada archivo con `addAdjuntoMinTrabajo`.
-- En modo edición: usar el componente `AdjuntosMinTrabajoSection` directamente con `fechaId`.
-
-### 7. Limpieza al borrar
-
-- `ON DELETE CASCADE` en `fecha_id` ya borra filas de adjuntos cuando se elimina una fecha adicional, pero **no** borra los archivos del bucket. En `cursoService.eliminarFechaAdicional`, **antes** de borrar la fecha, listar adjuntos asociados y removerlos de storage.
-- Similar en `cursoService.delete`: borrar archivos del bucket bajo `mintrabajo/{cursoId}/`.
-
-## Archivos a crear/modificar
-
-| Archivo | Tipo |
+| Archivo | Cambio |
 |---|---|
-| Migración SQL | Crear |
-| `src/types/curso.ts` | Modificar (añadir `AdjuntoMinTrabajo`) |
-| `src/services/cursoService.ts` | Añadir 3 métodos + cleanup en delete/eliminarFecha |
-| `src/hooks/useCursos.ts` | Añadir 3 hooks |
-| `src/components/cursos/AdjuntosMinTrabajoSection.tsx` | Crear |
-| `src/components/cursos/MinTrabajoCard.tsx` | Integrar sección principal + sección por fecha |
-| `src/components/cursos/AddFechaMinTrabajoDialog.tsx` | FileDropZone opcional + upload tras crear |
+| `src/pages/cursos/CursoDetallePage.tsx` | Reordenar: EnrollmentsTable antes de MinTrabajoCard |
+| `src/components/cursos/AdjuntosMinTrabajoSection.tsx` | `FileDropZone` en modo `compact`, layout más sutil |
 
 ## Resultado esperado
 
-- Registro principal MinTrabajo: zona de carga visible con hasta 10 archivos (PDF/imagen).
-- Cada fecha adicional: sus propios adjuntos (independientes), opcionales.
-- Al crear una fecha desde el diálogo, opcionalmente se pueden adjuntar archivos en el mismo paso.
-- Vista previa inline + descarga + eliminación.
-- Contadores: "X / 10 archivos".
-- Sin regresiones en el flujo actual de MinTrabajo.
+- "Registro MinTrabajo" aparece debajo de "Estudiantes Inscritos".
+- La sección de adjuntos ocupa ~40px en lugar de ~180px cuando está vacía.
+- Al subir archivos, la lista compacta sigue mostrándose igual (ya era pequeña).
+- Toda la funcionalidad existente intacta (drag & drop disponible vía dialog de fecha adicional).
 

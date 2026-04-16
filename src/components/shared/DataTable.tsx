@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Eye, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { BulkActionsBar, BulkAction } from "./BulkActionsBar";
 import { ColumnConfig } from "./ColumnSelector";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export const DATATABLE_PAGE_SIZE = 100;
 
 export interface Column<T> {
   key: string;

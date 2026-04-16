@@ -24,6 +24,7 @@ export default function CursoDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const { data: curso, isLoading } = useCurso(id || "");
   const { data: estadisticas } = useCursoEstadisticas(id || "");
@@ -79,6 +80,7 @@ export default function CursoDetallePage() {
     try {
       await updateCurso.mutateAsync({ id: curso.id, data: formData, justificacion });
       toast({ title: "Cambios guardados correctamente" });
+      logActivity({ action: "editar", module: "cursos", description: `Editó el curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
       setFormData({});
       setIsDirty(false);
     } catch {
@@ -112,10 +114,9 @@ export default function CursoDetallePage() {
     downloadCsv(content, filename);
     toast({
       title: isDummy ? "CSV de prueba generado" : "CSV MinTrabajo descargado",
-      description: isDummy
-        ? "Se generó un archivo con datos de ejemplo (3 filas dummy)."
-        : `${matriculas.length} registro(s) exportados.`,
+      description: isDummy ? "Se generó un archivo con datos de ejemplo (3 filas dummy)." : `${matriculas.length} registro(s) exportados.`,
     });
+    logActivity({ action: "exportar", module: "cursos", description: `Exportó CSV MinTrabajo del curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
   };
 
   const handleExportarListado = () => setExportarListadoOpen(true);
@@ -124,6 +125,7 @@ export default function CursoDetallePage() {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });
       toast({ title: `Estado cambiado a ${ESTADO_CURSO_LABELS[nuevoEstado]}` });
+      logActivity({ action: "editar", module: "cursos", description: `Cambió estado del curso ${curso.nombre} a ${nuevoEstado}`, entityType: "curso", entityId: curso.id });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }

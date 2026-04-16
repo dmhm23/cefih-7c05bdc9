@@ -356,21 +356,6 @@ export const personaService = {
     onLog?.('info', `Inserción completada: ${created} OK, ${errors.length} error(es) en ${totalSec}s`);
     return { created, errors };
   },
-      onProgress?.(i + 1, total);
-
-      // Throughput cada 10 registros
-      if ((i + 1) % 10 === 0 && i + 1 < total) {
-        const elapsedSec = (performance.now() - startTs) / 1000;
-        const rps = (i + 1) / elapsedSec;
-        const remaining = Math.round((total - (i + 1)) / rps);
-        onLog?.(
-          'info',
-          `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${i + 1}/${total})`,
-        );
-      }
-    }
-    return { created, updated, skipped, errors };
-  },
 
   async delete(id: string): Promise<void> {
     // Verificar si tiene matrículas asociadas

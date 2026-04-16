@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

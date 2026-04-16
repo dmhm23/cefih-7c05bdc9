@@ -1,20 +1,25 @@
 
 
-# Plan: Celdas copiables en importación de empresas
+# Plan: Botón "Copiar todos los errores" en importación
 
 ## Cambio
 
-Hacer que las celdas de **Nombre**, **NIT** y los **errores expandidos** sean copiables con un clic, reutilizando el componente `CopyableCell` que ya existe en el proyecto.
+Agregar un botón junto al badge "X con errores" que copie al portapapeles TODAS las filas con error en formato texto plano, una por línea:
+
+```
+Empresa ABC, 900123456, NIT duplicado; ARL no reconocida
+Empresa XYZ, , Nombre vacío; Sector inválido
+```
 
 ## Archivo a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/empresas/ImportarEmpresasDialog.tsx` | Reemplazar texto plano de Nombre y NIT por `CopyableCell`. Agregar botón de copiar en la zona expandida de errores que copie todos los errores de esa fila como texto. |
+| `src/components/empresas/ImportarEmpresasDialog.tsx` | Agregar botón "Copiar todos los errores" que genera texto plano con `nombre, nit, errores` por línea y lo copia al portapapeles |
 
 ## Detalle
 
-1. **Nombre y NIT**: Envolver el valor con `<CopyableCell value={...} />` para que al hover aparezca el ícono de copiar (mismo patrón usado en otras tablas del sistema).
-
-2. **Errores expandidos**: Agregar un botón pequeño "Copiar errores" en la fila expandida que copie al portapapeles el texto formateado: `Fila X: Error 1; Error 2`.
+- Junto al badge destructive de errores, agregar un botón con ícono `Copy`/`Check`
+- Al hacer clic, genera una cadena iterando `errorRows` con formato: `${r.nombreEmpresa || '—'}, ${r.nit || '—'}, ${r.errors.join('; ')}\n`
+- Clipboard API + feedback visual (ícono cambia a Check por 1.5s)
 

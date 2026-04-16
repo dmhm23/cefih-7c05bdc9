@@ -1,4 +1,5 @@
 import { ChevronDown, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -20,6 +21,7 @@ const ESTADO_BADGE: Record<EstadoExcepcion, { label: string; className: string; 
 
 export function ExcepcionesPanel({ matriculaId, onExcepcionAprobada }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [open, setOpen] = useState(false);
   const { data: excepciones = [] } = useExcepcionesByMatricula(matriculaId);
   const aprobar = useAprobarExcepcion();
@@ -33,6 +35,7 @@ export function ExcepcionesPanel({ matriculaId, onExcepcionAprobada }: Props) {
     try {
       await aprobar.mutateAsync({ id: exc.id, resueltoPor: "admin" });
       toast({ title: "Excepción aprobada", description: "Se ha autorizado la generación excepcional del certificado." });
+      logActivity({ action: "aprobar", module: "certificacion", description: `Aprobó excepción de certificación (motivo: ${exc.motivo})`, entityType: "excepcion_certificado", entityId: exc.id, metadata: { motivo: exc.motivo } });
       onExcepcionAprobada?.();
     } catch {
       toast({ title: "Error al aprobar excepción", variant: "destructive" });
@@ -43,6 +46,7 @@ export function ExcepcionesPanel({ matriculaId, onExcepcionAprobada }: Props) {
     try {
       await rechazar.mutateAsync({ id: exc.id, resueltoPor: "admin" });
       toast({ title: "Excepción rechazada" });
+      logActivity({ action: "rechazar", module: "certificacion", description: `Rechazó excepción de certificación (motivo: ${exc.motivo})`, entityType: "excepcion_certificado", entityId: exc.id, metadata: { motivo: exc.motivo } });
     } catch {
       toast({ title: "Error al rechazar excepción", variant: "destructive" });
     }

@@ -30,6 +30,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { useCreatePersona } from "@/hooks/usePersonas";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import {
   TIPOS_DOCUMENTO,
   GENEROS,
@@ -65,6 +66,7 @@ interface CrearPersonaModalProps {
 
 export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: CrearPersonaModalProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const createPersona = useCreatePersona();
 
   const form = useForm<FormData>({
@@ -108,6 +110,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
         },
       });
       toast({ title: "Persona creada correctamente" });
+      logActivity({ action: "crear", module: "personas", description: `Creó persona ${data.nombres} ${data.apellidos} (Doc: ${data.numeroDocumento}) desde matrícula`, entityType: "persona", entityId: result.id, metadata: { nombre: `${data.nombres} ${data.apellidos}`, documento: data.numeroDocumento } });
       form.reset();
       onPersonaCreated(result.id);
       onOpenChange(false);

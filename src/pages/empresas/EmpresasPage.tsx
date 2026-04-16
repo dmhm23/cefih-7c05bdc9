@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, MoreVertical, FileDown, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 export default function EmpresasPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -124,9 +126,11 @@ export default function EmpresasPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const emp = empresas.find(e => e.id === deleteId);
     try {
       await deleteEmpresa.mutateAsync(deleteId);
       toast({ title: "Empresa eliminada correctamente" });
+      logActivity({ action: "eliminar", module: "empresas", description: `Eliminó empresa ${emp?.nombreEmpresa || ""} (NIT: ${emp?.nit || ""})`, entityType: "empresa", entityId: deleteId, metadata: { nombre: emp?.nombreEmpresa, nit: emp?.nit } });
     } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });
     }
@@ -135,10 +139,12 @@ export default function EmpresasPage() {
 
   const handleBulkDelete = async () => {
     try {
+      const nombres = selectedIds.map(id => empresas.find(e => e.id === id)?.nombreEmpresa).filter(Boolean);
       for (const id of selectedIds) {
         await deleteEmpresa.mutateAsync(id);
       }
       toast({ title: `${selectedIds.length} empresas eliminadas` });
+      logActivity({ action: "eliminar", module: "empresas", description: `Eliminó ${selectedIds.length} empresas en lote`, metadata: { cantidad: selectedIds.length, nombres } });
       setSelectedIds([]);
     } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });

@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useUpdateNivelFormacion } from "@/hooks/useNivelesFormacion";
 import {
   ConfiguracionCodigoEstudiante,
@@ -21,6 +22,7 @@ interface Props {
 
 export function CodigoEstudianteCard({ nivelId, config }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updateNivel = useUpdateNivelFormacion();
 
   const initial = config ?? DEFAULT_CONFIG_CODIGO;
@@ -54,6 +56,7 @@ export function CodigoEstudianteCard({ nivelId, config }: Props) {
         data: { configuracionCodigoEstudiante: draft },
       });
       toast({ title: "Configuración de código guardada" });
+      logActivity({ action: "editar", module: "niveles", description: `Actualizó configuración de código de estudiante`, entityType: "nivel_formacion", entityId: nivelId, metadata: { prefijo: draft.prefijoCodigo, tipo_formacion: draft.codigoTipoFormacion } });
       setIsDirty(false);
     } catch {
       toast({ title: "Error al guardar", variant: "destructive" });

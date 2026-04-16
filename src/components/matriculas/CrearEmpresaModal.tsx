@@ -23,6 +23,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { Empresa, ContactoEmpresa } from "@/types/empresa";
 import { useState } from "react";
@@ -48,6 +49,7 @@ interface CrearEmpresaModalProps {
 
 export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: CrearEmpresaModalProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const createEmpresa = useCreateEmpresa();
 
   const [contactos, setContactos] = useState<ContactoEmpresa[]>([
@@ -107,6 +109,7 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
         
       });
       toast({ title: "Empresa creada correctamente" });
+      logActivity({ action: "crear", module: "empresas", description: `Creó empresa "${data.nombreEmpresa}" (NIT: ${data.nit}) desde matrícula`, entityType: "empresa", entityId: result.id, metadata: { nombre: data.nombreEmpresa, nit: data.nit } });
       form.reset();
       setContactos([{ id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true }]);
       onEmpresaCreated(result);

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Award, Download, ShieldAlert, ShieldCheck, FileWarning, Loader2, RefreshCw } from "lucide-react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditableField } from "@/components/shared/EditableField";
@@ -49,6 +50,7 @@ const ESTADO_CONFIG: Record<EstadoCertificado, { label: string; icon: React.Elem
 
 export function CertificacionSection({ matricula, persona, curso, formatosDinamicos, onFieldChange, getValue }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [excepcionOpen, setExcepcionOpen] = useState(false);
   const [excepcionMotivo, setExcepcionMotivo] = useState("");
   const [revocacionOpen, setRevocacionOpen] = useState(false);
@@ -171,6 +173,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
 
       onFieldChange("fechaGeneracionCertificado", new Date().toISOString().split('T')[0]);
       toast({ title: "Certificado generado", description: `Código: ${codigo}` });
+      logActivity({ action: "generar_masivo", module: "certificacion", description: `Generó certificado ${codigo} para matrícula`, entityType: "certificado", entityId: matricula.id, metadata: { codigo, autorizadoExcepcional, plantilla_id: plantillaActiva.id } });
     } catch {
       toast({ title: "Error al generar certificado", variant: "destructive" });
     } finally {
@@ -192,6 +195,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         motivo,
       });
       toast({ title: "Certificado revocado", description: `El certificado ${certificadoExistente.codigo} ha sido revocado.` });
+      logActivity({ action: "revocar", module: "certificacion", description: `Revocó certificado ${certificadoExistente.codigo}: ${motivo}`, entityType: "certificado", entityId: certificadoExistente.id, metadata: { codigo: certificadoExistente.codigo, motivo } });
       setRevocacionOpen(false);
     } catch {
       toast({ title: "Error al revocar certificado", variant: "destructive" });
@@ -229,6 +233,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
 
       onFieldChange("fechaGeneracionCertificado", new Date().toISOString().split('T')[0]);
       toast({ title: "Certificado reemitido", description: `Nueva versión: ${codigo}` });
+      logActivity({ action: "reemitir", module: "certificacion", description: `Reemitió certificado como ${codigo}`, entityType: "certificado", entityId: matricula.id, metadata: { codigo, version: newVersion } });
     } catch {
       toast({ title: "Error al reemitir certificado", variant: "destructive" });
     } finally {
@@ -248,6 +253,7 @@ export function CertificacionSection({ matricula, persona, curso, formatosDinami
         motivo: excepcionMotivo,
       });
       toast({ title: "Solicitud de excepción enviada" });
+      logActivity({ action: "crear", module: "certificacion", description: `Solicitó excepción de certificación: ${excepcionMotivo}`, entityType: "excepcion_certificado", entityId: matricula.id, metadata: { motivo: excepcionMotivo } });
       setExcepcionOpen(false);
       setExcepcionMotivo("");
     } catch {

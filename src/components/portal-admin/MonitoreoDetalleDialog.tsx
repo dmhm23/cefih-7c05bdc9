@@ -18,6 +18,7 @@ import { es } from 'date-fns/locale';
 import { fmtDateLocal } from '@/utils/dateUtils';
 import { CheckCircle2, Clock, Lock, FileText, Award, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 
 interface MonitoreoDetalleDialogProps {
   row: MonitoreoRow | null;
@@ -34,6 +35,7 @@ const estadoConfig = {
 
 export function MonitoreoDetalleDialog({ row, open, onOpenChange, onDataChange }: MonitoreoDetalleDialogProps) {
   const [confirmReset, setConfirmReset] = useState<string | null>(null);
+  const { logActivity } = useActivityLogger();
 
   const toggleMutation = useTogglePortalMatricula();
   const resetMutation = useResetDocumentoMatricula();
@@ -46,6 +48,7 @@ export function MonitoreoDetalleDialog({ row, open, onOpenChange, onDataChange }
       {
         onSuccess: () => {
           toast.success(checked ? 'Portal habilitado' : 'Portal deshabilitado');
+          logActivity({ action: "editar", module: "portal_estudiante", description: `${checked ? "Habilitó" : "Deshabilitó"} portal para ${row.personaNombre}`, entityType: "matricula", entityId: row.matriculaId, metadata: { habilitado: checked, persona: row.personaNombre } });
           onDataChange?.();
         },
         onError: () => toast.error('Error al cambiar estado del portal'),
@@ -60,6 +63,7 @@ export function MonitoreoDetalleDialog({ row, open, onOpenChange, onDataChange }
       {
         onSuccess: () => {
           toast.success('Documento reabierto exitosamente');
+          logActivity({ action: "reabrir", module: "portal_estudiante", description: `Reabrió documento "${confirmReset}" para ${row.personaNombre}`, entityType: "matricula", entityId: row.matriculaId, metadata: { documento_key: confirmReset, persona: row.personaNombre } });
           setConfirmReset(null);
           onDataChange?.();
         },

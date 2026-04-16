@@ -19,6 +19,7 @@ import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNive
 import type { ReglaTipoCertificado } from "@/types/certificado";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 
 const DEFAULT_REGLAS: ReglaTipoCertificado = {
   requierePago: true,
@@ -39,6 +40,7 @@ const REGLA_LABELS: { key: keyof ReglaTipoCertificado; label: string }[] = [
 export default function PlantillasPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const { data: plantillas, isLoading } = usePlantillas();
   const { data: niveles = [] } = useNivelesFormacion();
   const createPlantillaMutation = useCreatePlantilla();
@@ -83,6 +85,7 @@ export default function PlantillasPage() {
         nivelesAsignados,
       });
       toast({ title: 'Plantilla creada', description: `"${result.nombre}" lista para mapear etiquetas.` });
+      logActivity({ action: "crear", module: "certificacion", description: `Creó plantilla de certificado "${result.nombre}"`, entityType: "plantilla_certificado", entityId: result.id, metadata: { nombre: result.nombre, tipo_formacion: tipoFormacion } });
       setDialogOpen(false);
       resetDialog();
       navigate(`/certificacion/plantillas/${result.id}/editar`);

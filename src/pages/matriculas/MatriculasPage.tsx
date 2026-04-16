@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 export default function MatriculasPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -272,6 +274,7 @@ export default function MatriculasPage() {
         await deleteMatricula.mutateAsync(id);
       }
       toast({ title: `${idsToDelete.length} matrícula(s) eliminada(s)` });
+      logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó ${idsToDelete.length} matrícula(s)`, metadata: { cantidad: idsToDelete.length, ids: idsToDelete } });
       setSelectedIds([]);
       setSelectedIndex(null);
     } catch {

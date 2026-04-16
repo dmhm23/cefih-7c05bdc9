@@ -22,6 +22,7 @@ import { useCargos, useCreateCargo, useUpdateCargo, useDeleteCargo } from "@/hoo
 import { usePersonalList } from "@/hooks/usePersonal";
 import { TIPOS_CARGO, TipoCargo, Cargo } from "@/types/personal";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 
 interface GestionCargosModalProps {
   open: boolean;
@@ -39,6 +40,7 @@ const TIPO_BADGE_VARIANT: Record<TipoCargo, "default" | "secondary" | "outline" 
 
 export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: GestionCargosModalProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const { data: cargos = [] } = useCargos();
   const { data: personal = [] } = usePersonalList();
   const createCargo = useCreateCargo();
@@ -71,9 +73,11 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
       if (editingId) {
         await updateCargo.mutateAsync({ id: editingId, data: { nombre, tipo } });
         toast({ title: "Rol actualizado" });
+        logActivity({ action: "editar", module: "personal", description: `Editó cargo "${nombre}" (${tipo})`, entityType: "cargo", entityId: editingId, metadata: { nombre, tipo } });
       } else {
         const newCargo = await createCargo.mutateAsync({ nombre, tipo });
         toast({ title: "Rol creado" });
+        logActivity({ action: "crear", module: "personal", description: `Creó cargo "${nombre}" (${tipo})`, entityType: "cargo", entityId: newCargo.id, metadata: { nombre, tipo } });
         onCargoCreated?.(newCargo.id);
       }
       resetForm();
@@ -84,8 +88,10 @@ export function GestionCargosModal({ open, onOpenChange, onCargoCreated }: Gesti
 
   const handleDelete = async (id: string) => {
     try {
+      const cargo = cargos.find(c => c.id === id);
       await deleteCargo.mutateAsync(id);
       toast({ title: "Rol eliminado" });
+      logActivity({ action: "eliminar", module: "personal", description: `Eliminó cargo "${cargo?.nombre || ""}"`, entityType: "cargo", entityId: id });
       if (editingId === id) resetForm();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });

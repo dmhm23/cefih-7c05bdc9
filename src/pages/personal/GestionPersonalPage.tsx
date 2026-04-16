@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 export default function GestionPersonalPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -83,9 +85,11 @@ export default function GestionPersonalPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const p = personal.find(x => x.id === deleteId);
     try {
       await deletePersonal.mutateAsync(deleteId);
       toast({ title: "Perfil eliminado correctamente" });
+      logActivity({ action: "eliminar", module: "personal", description: `Eliminó perfil de ${p?.nombres || ""} ${p?.apellidos || ""}`, entityType: "personal", entityId: deleteId, metadata: { nombre: `${p?.nombres} ${p?.apellidos}` } });
     } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });
     }
@@ -94,10 +98,12 @@ export default function GestionPersonalPage() {
 
   const handleBulkDelete = async () => {
     try {
+      const nombres = selectedIds.map(id => { const p = personal.find(x => x.id === id); return p ? `${p.nombres} ${p.apellidos}` : null; }).filter(Boolean);
       for (const id of selectedIds) {
         await deletePersonal.mutateAsync(id);
       }
       toast({ title: `${selectedIds.length} perfiles eliminados` });
+      logActivity({ action: "eliminar", module: "personal", description: `Eliminó ${selectedIds.length} perfiles en lote`, metadata: { cantidad: selectedIds.length, nombres } });
       setSelectedIds([]);
     } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });

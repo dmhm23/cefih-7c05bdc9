@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-
 import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,7 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 export default function PersonasPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -108,9 +109,11 @@ export default function PersonasPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    const p = personas.find(x => x.id === deleteId);
     try {
       await deletePersona.mutateAsync(deleteId);
       toast({ title: "Persona eliminada correctamente" });
+      logActivity({ action: "eliminar", module: "personas", description: `Eliminó persona ${p?.nombres || ""} ${p?.apellidos || ""} (Doc: ${p?.numeroDocumento || ""})`, entityType: "persona", entityId: deleteId, metadata: { nombre: `${p?.nombres} ${p?.apellidos}`, documento: p?.numeroDocumento } });
     } catch (err: any) {
       toast({ title: err?.message || "Error al eliminar", variant: "destructive" });
     }
@@ -119,10 +122,12 @@ export default function PersonasPage() {
 
   const handleBulkDelete = async () => {
     try {
+      const nombres = selectedIds.map(id => { const p = personas.find(x => x.id === id); return p ? `${p.nombres} ${p.apellidos}` : null; }).filter(Boolean);
       for (const id of selectedIds) {
         await deletePersona.mutateAsync(id);
       }
       toast({ title: `${selectedIds.length} personas eliminadas` });
+      logActivity({ action: "eliminar", module: "personas", description: `Eliminó ${selectedIds.length} personas en lote`, metadata: { cantidad: selectedIds.length, nombres } });
       setSelectedIds([]);
     } catch (err: any) {
       toast({ title: err?.message || "Error al eliminar", variant: "destructive" });

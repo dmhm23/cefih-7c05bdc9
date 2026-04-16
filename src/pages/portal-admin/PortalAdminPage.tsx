@@ -60,7 +60,7 @@ export default function PortalAdminPage() {
               if (!checked) {
                 setConfirmDesactivar(true);
               } else {
-                toggleGlobal.mutate(true);
+                toggleGlobal.mutate(true, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: "Activó portal estudiante por defecto" }) });
               }
             }}
           />
@@ -75,7 +75,7 @@ export default function PortalAdminPage() {
         confirmText="Desactivar"
         variant="destructive"
         onConfirm={() => {
-          toggleGlobal.mutate(false);
+          toggleGlobal.mutate(false, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: "Desactivó portal estudiante por defecto" }) });
           setConfirmDesactivar(false);
         }}
       />
@@ -99,9 +99,9 @@ export default function PortalAdminPage() {
             </p>
             <DocumentosCatalogoTable
               documentos={config?.documentos || []}
-              onSave={(doc) => saveDoc.mutate(doc)}
-              onDelete={(key) => deleteDoc.mutate(key)}
-              onReorder={(keys) => updateOrden.mutate(keys)}
+              onSave={(doc) => saveDoc.mutate(doc, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Guardó configuración de documento "${doc.key}"`, metadata: { key: doc.key } }) })}
+              onDelete={(key) => deleteDoc.mutate(key, { onSuccess: () => logActivity({ action: "eliminar", module: "portal_estudiante", description: `Eliminó documento del catálogo (${key})`, metadata: { key } }) })}
+              onReorder={(keys) => updateOrden.mutate(keys, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Reordenó documentos del catálogo` }) })}
             />
           </section>
 
@@ -112,7 +112,7 @@ export default function PortalAdminPage() {
             </p>
             <NivelesHabilitacionGrid
               documentos={config?.documentos || []}
-              onToggle={(key, nivel, activo) => updateNivel.mutate({ key, nivel, activo })}
+              onToggle={(key, nivel, activo) => updateNivel.mutate({ key, nivel, activo }, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `${activo ? "Habilitó" : "Deshabilitó"} documento "${key}" para nivel`, metadata: { key, nivel, activo } }) })}
             />
           </section>
         </TabsContent>

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { useFormatoVersiones, useRestoreVersion } from '@/hooks/useFormatosFormacion';
 import { useToast } from '@/hooks/use-toast';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { RotateCcw, Clock } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function VersionHistoryDialog({ open, onOpenChange, formatoId }: 
   const { data: versiones = [], isLoading } = useFormatoVersiones(open ? formatoId : undefined);
   const restoreMutation = useRestoreVersion();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [restoreId, setRestoreId] = useState<string | null>(null);
 
   const handleRestore = async () => {
@@ -31,6 +33,7 @@ export default function VersionHistoryDialog({ open, onOpenChange, formatoId }: 
     try {
       await restoreMutation.mutateAsync({ formatoId, versionId: restoreId });
       toast({ title: 'Versión restaurada correctamente' });
+      logActivity({ action: "restaurar", module: "formatos", description: `Restauró versión anterior de formato`, entityType: "formato_formacion", entityId: formatoId, metadata: { version_restaurada: restoreId } });
       onOpenChange(false);
     } catch {
       toast({ title: 'Error al restaurar versión', variant: 'destructive' });

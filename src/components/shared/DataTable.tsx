@@ -53,6 +53,9 @@ interface DataTableProps<T> {
   defaultSortDirection?: SortDirection;
   // Layout
   containerClassName?: string;
+  // Lazy load
+  pageSize?: number;
+  itemLabel?: string;
 }
 
 function getSortValue<T>(item: T, column: Column<T> | undefined, sortKey: string): string | number {

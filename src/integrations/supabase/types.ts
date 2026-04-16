@@ -2090,7 +2090,7 @@ export type Database = {
       estado_doc_portal: "bloqueado" | "pendiente" | "completado"
       estado_documento_matricula: "pendiente" | "cargado"
       estado_excepcion_certificado: "pendiente" | "aprobada" | "rechazada"
-      estado_factura: "por_pagar" | "parcial" | "pagada"
+      estado_factura: "por_pagar" | "parcial" | "pagada" | "anulada"
       estado_formato: "borrador" | "activo" | "archivado"
       estado_formato_respuesta:
         | "pendiente"
@@ -2385,7 +2385,7 @@ export const Constants = {
       estado_doc_portal: ["bloqueado", "pendiente", "completado"],
       estado_documento_matricula: ["pendiente", "cargado"],
       estado_excepcion_certificado: ["pendiente", "aprobada", "rechazada"],
-      estado_factura: ["por_pagar", "parcial", "pagada"],
+      estado_factura: ["por_pagar", "parcial", "pagada", "anulada"],
       estado_formato: ["borrador", "activo", "archivado"],
       estado_formato_respuesta: [
         "pendiente",

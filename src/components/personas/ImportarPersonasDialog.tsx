@@ -157,6 +157,13 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
     if (importableRows.length === 0) return;
     setImporting(true);
     setProgress({ current: 0, total: importableRows.length });
+    logger.start();
+    logger.info(`Iniciando importación desde "${fileName}"`);
+    logger.debug(`Filas leídas: ${rows.length} | válidas: ${validRows.length} | con errores: ${errorRows.length}`);
+    if (duplicadosArchivo.length > 0) logger.warn(`${duplicadosArchivo.length} duplicado(s) en archivo descartados`);
+    if (existentesEnBD.length > 0) logger.info(`${existentesEnBD.length} ya existen en BD — ${updateExisting ? 'serán actualizados' : 'serán omitidos'}`);
+    logger.info(`Total a procesar: ${importableRows.length}`);
+    const tStart = performance.now();
     try {
       const personas = importableRows.map(r => ({
         tipoDocumento: r.tipoDocumento,
@@ -179,7 +186,13 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
         existingDocs,
         updateExisting,
         (current, total) => setProgress({ current, total }),
+        logger.log,
       );
+      const totalSec = ((performance.now() - tStart) / 1000).toFixed(1);
+      const avg = importableRows.length > 0 ? Math.round((performance.now() - tStart) / importableRows.length) : 0;
+      logger.info('═══ Resumen ═══');
+      logger.success(`✓ ${res.created} creadas | ${res.updated} actualizadas | ${res.skipped} omitidas | ${res.errors.length} errores`);
+      logger.info(`Tiempo total: ${totalSec}s — promedio ${avg}ms/registro`);
       setResult(res);
       queryClient.invalidateQueries({ queryKey: ['personas'] });
       const parts = [];
@@ -188,7 +201,8 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
       if (res.skipped > 0) parts.push(`${res.skipped} omitidas`);
       toast({ title: `Importación completada: ${parts.join(', ')}` });
       logActivity({ action: "importar", module: "personas", description: `Importó ${res.created} persona(s) desde archivo "${fileName}"`, entityType: "persona", metadata: { archivo: fileName, total_filas: rows.length, importadas: res.created, actualizadas: res.updated, omitidas: res.skipped, errores: res.errors.length } });
-    } catch {
+    } catch (err: any) {
+      logger.error(`Error fatal: ${err?.message || 'desconocido'}`);
       toast({ title: 'Error al importar', variant: 'destructive' });
     } finally {
       setImporting(false);

@@ -152,6 +152,20 @@ export const personaService = {
     return mapPersonaRow(row);
   },
 
+  async createBulk(personas: PersonaFormData[]): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+    const errors: { row: number; error: string }[] = [];
+    let created = 0;
+    for (let i = 0; i < personas.length; i++) {
+      try {
+        await this.create(personas[i]);
+        created++;
+      } catch (err: any) {
+        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+      }
+    }
+    return { created, errors };
+  },
+
   async delete(id: string): Promise<void> {
     // Verificar si tiene matrículas asociadas
     const { count, error: countError } = await supabase

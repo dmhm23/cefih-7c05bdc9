@@ -118,6 +118,7 @@ function getDefaults(campos: CampoAdicional[]): Record<string, any> {
 export default function CursoFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const createCurso = useCreateCurso();
   const { data: niveles = [] } = useNivelesFormacion();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
@@ -282,6 +283,7 @@ export default function CursoFormPage() {
           ? camposAdicionalesValores : undefined,
       });
       toast({ title: "Curso creado correctamente" });
+      logActivity({ action: "crear", module: "cursos", description: `Creó un nuevo curso de tipo ${data.tipoFormacion}`, entityType: "curso" });
       navigate("/cursos");
     } catch (error: any) {
       toast({

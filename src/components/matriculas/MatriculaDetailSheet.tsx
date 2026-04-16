@@ -40,6 +40,7 @@ import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { useFormatoRespuestas, useReopenFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { PersonaFormData } from "@/types/persona";
 import {
   Matricula,
@@ -96,6 +97,7 @@ export function MatriculaDetailSheet({
 }: MatriculaDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const { user } = useAuth();
   const updateMatricula = useUpdateMatricula();
   const reopenMutation = useReopenFormatoRespuesta();
@@ -195,6 +197,7 @@ export function MatriculaDetailSheet({
         await updateMatricula.mutateAsync({ id: matricula.id, data: otherChanges });
       }
       toast({ title: "Cambios guardados correctamente" });
+      logActivity({ action: "editar", module: "matriculas", description: `Guardó cambios en matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { campos_matricula: Object.keys(otherChanges), campos_persona: isPersonaDirty ? Object.keys(personaFormData) : [] } });
       setFormData({});
       setPersonaFormData({});
       setIsDirty(false);
@@ -210,6 +213,7 @@ export function MatriculaDetailSheet({
     try {
       await registrarPago.mutateAsync({ id: matricula.id, datosPago: { ctaFactNumero: `FAC-${Date.now()}` } });
       toast({ title: "Pago registrado correctamente" });
+      logActivity({ action: "crear", module: "matriculas", description: `Registró pago en matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id });
     } catch (error) {
       toast({ title: "Error al registrar pago", variant: "destructive" });
     }
@@ -228,6 +232,7 @@ export function MatriculaDetailSheet({
         },
       });
       toast({ title: "Documento cargado correctamente" });
+      logActivity({ action: "subir", module: "matriculas", description: `Subió documento "${file.name}" a matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, documento_id: documentoId } });
     } catch (error) {
       toast({ title: "Error al cargar documento", variant: "destructive" });
     }
@@ -241,6 +246,7 @@ export function MatriculaDetailSheet({
         data: { estado: 'pendiente', fechaCarga: undefined, urlDrive: undefined, archivoNombre: undefined, archivoTamano: undefined } as any,
       });
       toast({ title: "Documento eliminado" });
+      logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó documento de matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { documento_id: documentoId } });
     } catch {
       toast({ title: "Error al eliminar documento", variant: "destructive" });
     }

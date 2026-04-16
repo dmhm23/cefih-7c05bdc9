@@ -284,18 +284,27 @@ export default function PersonasPage() {
           <p className="text-sm text-muted-foreground">Gestión de identidad - Hoja de Vida Digital</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => descargarPlantillaPersonas()}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Plantilla
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
           <Button onClick={() => navigate("/personas/nuevo")}>
             <Plus className="h-4 w-4 mr-2" />
             Nueva Persona
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => descargarPlantillaPersonas()}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Descargar plantilla
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <FileUp className="h-4 w-4 mr-2" />
+                Importar personas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

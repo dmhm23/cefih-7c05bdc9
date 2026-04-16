@@ -47,6 +47,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const { signOut, perfil, permisos } = useAuth();
+  const { logActivity } = useActivityLogger();
   const isCollapsed = state === "collapsed";
 
   const canView = useMemo(() => {
@@ -65,6 +66,7 @@ export function AppSidebar() {
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
   const handleLogout = async () => {
+    logActivity({ action: "logout", module: "auth", description: "Cerró sesión" });
     await signOut();
     navigate("/");
   };

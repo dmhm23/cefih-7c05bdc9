@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { personaService } from '@/services/personaService';
 import { PersonaImportRow, parsearArchivoPersonas } from '@/utils/personaPlantilla';
 import { useQueryClient } from '@tanstack/react-query';
+import { useImportLogger } from '@/hooks/useImportLogger';
 
 interface Props {
   open: boolean;

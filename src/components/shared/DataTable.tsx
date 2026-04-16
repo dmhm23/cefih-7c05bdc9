@@ -230,7 +230,7 @@ export function DataTable<T extends { id: string }>({
   return (
     <div className={cn("flex flex-col min-h-0 w-full", containerClassName)} data-table-container>
       <div className="flex-1 min-h-0 rounded-lg border overflow-hidden">
-        <div className="overflow-auto h-full">
+        <div className="overflow-auto h-full" ref={scrollContainerRef}>
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/80">

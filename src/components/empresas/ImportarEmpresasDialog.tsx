@@ -241,7 +241,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
             </Tabs>
 
             {/* Table */}
-            <ScrollArea className="max-h-[45vh] border rounded-md">
+            <ScrollArea className={`${importing ? 'max-h-[30vh]' : 'max-h-[45vh]'} border rounded-md transition-all`}>
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
@@ -322,7 +322,9 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
         )}
 
         {importing && (
-          <ImportProgress current={progress.current} total={progress.total} label="Importando empresas" />
+          <div className="-mx-6">
+            <ImportProgress current={progress.current} total={progress.total} label="Importando empresas" />
+          </div>
         )}
 
         <DialogFooter>

@@ -75,6 +75,10 @@ export interface PersonaImportRow {
   contactoEmergenciaTelefono: string;
   contactoEmergenciaParentesco: string;
   errors: string[];
+  warnings: string[];
+  duplicadoEnArchivo?: boolean;
+  duplicadoFilaOriginal?: number;
+  existeEnBD?: boolean;
 }
 
 const TIPO_DOC_MAP: Record<string, string> = {
@@ -150,10 +154,15 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
           if (!nombres) errors.push('Nombres es obligatorio');
           if (!apellidos) errors.push('Apellidos es obligatorio');
 
-          // Duplicate check
+          // Duplicate check — moved to warnings
+          const warnings: string[] = [];
+          let duplicadoEnArchivo = false;
+          let duplicadoFilaOriginal: number | undefined;
           if (numeroDocumento) {
             if (docsInFile.has(numeroDocumento)) {
-              errors.push(`Documento duplicado en fila ${docsInFile.get(numeroDocumento)! + 2}`);
+              duplicadoEnArchivo = true;
+              duplicadoFilaOriginal = docsInFile.get(numeroDocumento)! + 2;
+              warnings.push(`Documento duplicado en archivo (fila ${duplicadoFilaOriginal})`);
             } else {
               docsInFile.set(numeroDocumento, idx);
             }
@@ -203,6 +212,9 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
             contactoEmergenciaTelefono: ceTelefono,
             contactoEmergenciaParentesco: ceParentesco,
             errors,
+            warnings,
+            duplicadoEnArchivo,
+            duplicadoFilaOriginal,
           };
         });
         resolve(result);

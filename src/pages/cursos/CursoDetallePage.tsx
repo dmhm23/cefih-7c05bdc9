@@ -152,18 +152,18 @@ export default function CursoDetallePage() {
         readOnly={isReadOnly}
       />
 
-      {/* Card 2 — MinTrabajo */}
-      <div ref={minTrabajoRef}>
-        <MinTrabajoCard curso={curso} readOnly={isReadOnly} />
-      </div>
-
-      {/* Card 3 — Enrollments Table */}
+      {/* Card 2 — Enrollments Table */}
       <EnrollmentsTable
         curso={curso}
         matriculas={matriculas}
         personas={personas}
         readOnly={isReadOnly}
       />
+
+      {/* Card 3 — MinTrabajo */}
+      <div ref={minTrabajoRef}>
+        <MinTrabajoCard curso={curso} readOnly={isReadOnly} />
+      </div>
 
       {/* Card 4 — Stats */}
       {estadisticas && (

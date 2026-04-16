@@ -96,6 +96,7 @@ export default function UsuariosTab() {
   const handleChangeRole = async (userId: string, newRolId: string) => {
     await assignRole.mutateAsync({ userId, rolId: newRolId });
     logActivity({ action: "editar", module: "admin", description: `Cambió rol de usuario`, entityType: "usuario", entityId: userId });
+  };
 
   const handleEditSave = async () => {
     if (!editUser) return;

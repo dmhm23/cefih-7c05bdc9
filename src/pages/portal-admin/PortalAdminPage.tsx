@@ -20,6 +20,7 @@ import {
 
 export default function PortalAdminPage() {
   const [confirmDesactivar, setConfirmDesactivar] = useState(false);
+  const { logActivity } = useActivityLogger();
   const { data: config, isLoading } = usePortalAdminConfig();
   const saveDoc = useSaveDocumentoConfig();
   const deleteDoc = useDeleteDocumentoConfig();

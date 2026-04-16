@@ -30,6 +30,7 @@ const formatCurrency = (v: number) =>
 
 export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas, personas, cursos }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const createFactura = useCreateFactura();
 
   const [numeroFactura, setNumeroFactura] = useState("");
@@ -82,6 +83,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
     });
 
     toast({ title: "Factura registrada exitosamente" });
+    logActivity({ action: "crear", module: "cartera", description: `Creó factura ${numeroFactura}`, entityType: "factura" });
     onOpenChange(false);
     // Reset
     setSelectedIds([]);

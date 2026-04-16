@@ -25,6 +25,7 @@ const formatCurrency = (v: number) =>
 
 export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const registrarPago = useRegistrarPagoCartera();
   const { data: pagosExistentes = [] } = usePagosByFactura(factura.id);
 
@@ -71,6 +72,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
     });
 
     toast({ title: "Pago registrado exitosamente" });
+    logActivity({ action: "crear", module: "cartera", description: `Registró pago en factura ${factura.numeroFactura}`, entityType: "pago" });
     onOpenChange(false);
     setValorPagoNum(undefined);
     setMetodoOtro("");

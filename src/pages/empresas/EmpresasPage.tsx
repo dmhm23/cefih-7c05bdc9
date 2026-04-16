@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Download, Filter } from "lucide-react";
+import { Plus, Trash2, Download, Filter, MoreVertical, FileDown, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -12,7 +18,9 @@ import { RowActions, createViewAction, createEditAction, createDeleteAction } fr
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { EmpresaDetailSheet } from "@/components/empresas/EmpresaDetailSheet";
+import { ImportarEmpresasDialog } from "@/components/empresas/ImportarEmpresasDialog";
 import { useEmpresas, useDeleteEmpresa } from "@/hooks/useEmpresas";
+import { descargarPlantillaEmpresas } from "@/utils/empresaPlantilla";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +50,7 @@ export default function EmpresasPage() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -275,10 +284,29 @@ export default function EmpresasPage() {
           <h1 className="text-2xl font-semibold">Empresas</h1>
           <p className="text-sm text-muted-foreground">Directorio de empresas vinculadas</p>
         </div>
-        <Button onClick={() => navigate("/empresas/nueva")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Empresa
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => navigate("/empresas/nueva")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Empresa
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => descargarPlantillaEmpresas()}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Descargar plantilla
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <FileUp className="h-4 w-4 mr-2" />
+                Importar empresas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-4 shrink-0 mt-4">
@@ -358,6 +386,8 @@ export default function EmpresasPage() {
         variant="destructive"
         onConfirm={handleBulkDelete}
       />
+
+      <ImportarEmpresasDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

@@ -46,6 +46,17 @@ export type CursoFormData = Omit<Curso, 'id' | 'createdAt' | 'updatedAt' | 'matr
   camposAdicionalesValores?: Record<string, any>;
 };
 
+export interface AdjuntoMinTrabajo {
+  id: string;
+  cursoId: string;
+  fechaId: string | null;
+  nombre: string;
+  tipoMime: string;
+  tamano: number;
+  url?: string;
+  createdAt: string;
+}
+
 export const ESTADO_CURSO_LABELS: Record<EstadoCurso, string> = {
   abierto: 'Abierto',
   en_progreso: 'En Progreso',

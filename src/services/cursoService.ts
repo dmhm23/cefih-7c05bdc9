@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Curso, CursoFormData, EstadoCurso, FechaAdicionalMinTrabajo } from '@/types/curso';
+import { Curso, CursoFormData, EstadoCurso, FechaAdicionalMinTrabajo, AdjuntoMinTrabajo } from '@/types/curso';
 import { ApiError, handleSupabaseError } from './api';
 import { fetchAllPaginated } from './_paginated';
 
@@ -297,6 +297,16 @@ export const cursoService = {
   },
 
   async eliminarFechaAdicional(id: string, fechaId: string): Promise<Curso> {
+    // Limpiar adjuntos del storage antes del cascade DELETE
+    const { data: adjuntos } = await supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .select('storage_path')
+      .eq('fecha_id', fechaId);
+    const paths = (adjuntos || []).map(a => a.storage_path).filter(Boolean);
+    if (paths.length > 0) {
+      await supabase.storage.from('adjuntos-mintrabajo').remove(paths);
+    }
+
     const { error } = await supabase
       .from('cursos_fechas_mintrabajo')
       .delete()
@@ -380,5 +390,134 @@ export const cursoService = {
     const curso = await cursoService.getById(cursoId);
     if (!curso) throw new ApiError('Curso no encontrado', 404);
     return curso;
+  },
+
+  // ============ ADJUNTOS MINTRABAJO ============
+  async listAdjuntosMinTrabajo(cursoId: string, fechaId?: string | null): Promise<AdjuntoMinTrabajo[]> {
+    let query = supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .select('*')
+      .eq('curso_id', cursoId)
+      .order('created_at', { ascending: false });
+
+    if (fechaId === null || fechaId === undefined) {
+      query = query.is('fecha_id', null);
+    } else {
+      query = query.eq('fecha_id', fechaId);
+    }
+
+    const { data, error } = await query;
+    if (error) handleSupabaseError(error);
+
+    const rows = data || [];
+    // Generate signed URLs in parallel (1h)
+    const signed = await Promise.all(
+      rows.map(async (r) => {
+        const { data: sig } = await supabase.storage
+          .from('adjuntos-mintrabajo')
+          .createSignedUrl(r.storage_path, 3600);
+        return {
+          id: r.id,
+          cursoId: r.curso_id,
+          fechaId: r.fecha_id,
+          nombre: r.nombre,
+          tipoMime: r.tipo_mime || '',
+          tamano: r.tamano || 0,
+          url: sig?.signedUrl,
+          createdAt: r.created_at,
+        } as AdjuntoMinTrabajo;
+      })
+    );
+    return signed;
+  },
+
+  async addAdjuntoMinTrabajo(cursoId: string, file: File, fechaId?: string | null): Promise<AdjuntoMinTrabajo> {
+    // Validar límite de 10
+    let countQuery = supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .select('id', { count: 'exact', head: true })
+      .eq('curso_id', cursoId);
+    if (fechaId === null || fechaId === undefined) {
+      countQuery = countQuery.is('fecha_id', null);
+    } else {
+      countQuery = countQuery.eq('fecha_id', fechaId);
+    }
+    const { count } = await countQuery;
+    if ((count ?? 0) >= 10) {
+      throw new ApiError('Se alcanzó el límite de 10 archivos para este registro', 400);
+    }
+
+    // Validar tamaño 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      throw new ApiError('El archivo supera el tamaño máximo de 5 MB', 400);
+    }
+
+    const sanitizedName = file.name
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    const folder = fechaId ? `fecha_${fechaId}` : 'principal';
+    const path = `mintrabajo/${cursoId}/${folder}/${Date.now()}_${sanitizedName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('adjuntos-mintrabajo')
+      .upload(path, file);
+
+    if (uploadError) throw new ApiError('Error al subir el archivo', 500);
+
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: row, error } = await supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .insert({
+        curso_id: cursoId,
+        fecha_id: fechaId || null,
+        nombre: file.name,
+        tipo_mime: file.type,
+        tamano: file.size,
+        storage_path: path,
+        created_by: userData?.user?.id || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // Rollback storage
+      await supabase.storage.from('adjuntos-mintrabajo').remove([path]);
+      handleSupabaseError(error);
+    }
+
+    const { data: sig } = await supabase.storage
+      .from('adjuntos-mintrabajo')
+      .createSignedUrl(row.storage_path, 3600);
+
+    return {
+      id: row.id,
+      cursoId: row.curso_id,
+      fechaId: row.fecha_id,
+      nombre: row.nombre,
+      tipoMime: row.tipo_mime || '',
+      tamano: row.tamano || 0,
+      url: sig?.signedUrl,
+      createdAt: row.created_at,
+    };
+  },
+
+  async deleteAdjuntoMinTrabajo(adjuntoId: string): Promise<void> {
+    const { data: adjunto } = await supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .select('storage_path')
+      .eq('id', adjuntoId)
+      .single();
+
+    if (adjunto?.storage_path) {
+      await supabase.storage.from('adjuntos-mintrabajo').remove([adjunto.storage_path]);
+    }
+
+    const { error } = await supabase
+      .from('cursos_mintrabajo_adjuntos')
+      .delete()
+      .eq('id', adjuntoId);
+
+    if (error) handleSupabaseError(error);
   },
 };

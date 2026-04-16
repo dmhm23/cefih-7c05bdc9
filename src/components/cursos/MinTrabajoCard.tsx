@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, CalendarDays, Pencil } from "lucide-react";
+import { Plus, Trash2, CalendarDays, Pencil, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateField } from "@/components/shared/DateField";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AddFechaMinTrabajoDialog } from "@/components/cursos/AddFechaMinTrabajoDialog";
+import { AdjuntosMinTrabajoSection } from "@/components/cursos/AdjuntosMinTrabajoSection";
 import { Curso, FechaAdicionalMinTrabajo } from "@/types/curso";
 import { useActualizarMinTrabajo, useEliminarFechaAdicional } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
   const [fechaToEdit, setFechaToEdit] = useState<FechaAdicionalMinTrabajo | null>(null);
   const [fechaToDelete, setFechaToDelete] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [expandedFechaId, setExpandedFechaId] = useState<string | null>(null);
 
   const handleSaveMinTrabajo = async () => {
     try {
@@ -114,40 +116,72 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
             </div>
           )}
 
+          {/* Adjuntos del registro principal */}
+          <div className="pt-3 border-t">
+            <AdjuntosMinTrabajoSection
+              cursoId={curso.id}
+              fechaId={null}
+              title="Adjuntos del registro principal"
+              readOnly={readOnly}
+            />
+          </div>
+
           {/* Fechas adicionales */}
           {curso.minTrabajoFechasAdicionales.length > 0 && (
             <div className="space-y-2 pt-2 border-t">
               <p className="text-xs font-medium text-muted-foreground">Fechas Adicionales de Cierre</p>
               {curso.minTrabajoFechasAdicionales.map((f) => {
                 const localDate = parseLocalDate(f.fecha);
+                const isExpanded = expandedFechaId === f.id;
                 return (
-                  <div key={f.id} className="flex items-start justify-between p-2 bg-muted/30 rounded text-sm gap-2">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-medium">{localDate ? format(localDate, "d MMM yyyy", { locale: es }) : f.fecha}</p>
-                        <p className="text-xs text-muted-foreground">{f.motivo}</p>
-                        {f.createdBy && <p className="text-xs text-muted-foreground">Agregada por: {f.createdBy}</p>}
-                      </div>
+                  <div key={f.id} className="bg-muted/30 rounded">
+                    <div className="flex items-start justify-between p-2 text-sm gap-2">
+                      <button
+                        type="button"
+                        className="flex items-start gap-2 min-w-0 flex-1 text-left hover:opacity-80"
+                        onClick={() => setExpandedFechaId(isExpanded ? null : f.id)}
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        )}
+                        <CalendarDays className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium">{localDate ? format(localDate, "d MMM yyyy", { locale: es }) : f.fecha}</p>
+                          <p className="text-xs text-muted-foreground">{f.motivo}</p>
+                          {f.createdBy && <p className="text-xs text-muted-foreground">Agregada por: {f.createdBy}</p>}
+                        </div>
+                      </button>
+                      {!readOnly && (
+                        <div className="flex gap-0.5 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            onClick={() => { setFechaToEdit(f); setAddDialogOpen(true); }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => setFechaToDelete(f.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {!readOnly && (
-                      <div className="flex gap-0.5 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          onClick={() => { setFechaToEdit(f); setAddDialogOpen(true); }}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => setFechaToDelete(f.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                    {isExpanded && (
+                      <div className="px-3 pb-3 pt-1 border-t border-border/40">
+                        <AdjuntosMinTrabajoSection
+                          cursoId={curso.id}
+                          fechaId={f.id}
+                          title="Adjuntos de esta fecha"
+                          readOnly={readOnly}
+                        />
                       </div>
                     )}
                   </div>

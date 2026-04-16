@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -133,6 +134,7 @@ const GROUPS = ["Persona", "Matrícula", "Curso"];
 
 export function ExportarListadoDialog({ open, onOpenChange, curso, matriculas, personas }: ExportarListadoDialogProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const resolveNivel = useResolveNivel();
 
   const [selected, setSelected] = useState<Set<string>>(
@@ -177,6 +179,7 @@ export function ExportarListadoDialog({ open, onOpenChange, curso, matriculas, p
     const filename = `Curso_${curso.numeroCurso}_Listado.csv`;
     downloadCsv(content, filename);
     toast({ title: "Listado exportado", description: `${matriculas.length} registro(s) con ${cols.length} columnas.` });
+    logActivity({ action: "exportar", module: "cursos", description: `Exportó listado del curso ${curso.numeroCurso || curso.nombre} (${matriculas.length} registros, ${cols.length} columnas)`, entityType: "curso", entityId: curso.id, metadata: { registros: matriculas.length, columnas: cols.map(c => c.key) } });
     onOpenChange(false);
   };
 

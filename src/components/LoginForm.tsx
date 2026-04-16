@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -30,6 +31,23 @@ const LoginForm = () => {
           variant: "destructive",
         });
       } else {
+        // Fire-and-forget login log (user just authenticated, context not yet available)
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.user) {
+          const u = session.session.user;
+          supabase.from("user_activity_logs").insert([{
+            user_id: u.id,
+            user_email: u.email ?? "",
+            user_name: null as string | null,
+            action: "login",
+            module: "auth",
+            description: "Inició sesión",
+            entity_type: null as string | null,
+            entity_id: null as string | null,
+            metadata: {} as Json,
+            route: "/",
+          }]).then(() => {});
+        }
         toast({
           title: "¡Bienvenido!",
           description: "Has iniciado sesión correctamente",

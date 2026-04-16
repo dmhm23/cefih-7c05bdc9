@@ -342,7 +342,6 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
               current={progress.current}
               total={progress.total}
               label="Importando empresas"
-              logs={logger.logs}
             />
           </div>
         )}

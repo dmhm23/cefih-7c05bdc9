@@ -447,7 +447,6 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
               current={progress.current}
               total={progress.total}
               label="Importando personas"
-              logs={logger.logs}
             />
           </div>
         )}

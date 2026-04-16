@@ -174,7 +174,10 @@ export const empresaService = {
     return empresa;
   },
 
-  async createBulk(empresas: EmpresaFormData[]): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+  async createBulk(
+    empresas: EmpresaFormData[],
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
     for (let i = 0; i < empresas.length; i++) {
@@ -184,6 +187,7 @@ export const empresaService = {
       } catch (err: any) {
         errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
       }
+      onProgress?.(i + 1, empresas.length);
     }
     return { created, errors };
   },

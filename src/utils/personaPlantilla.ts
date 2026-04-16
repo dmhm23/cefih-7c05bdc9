@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, GRUPOS_SANGUINEOS } from '@/data/formOptions';
+import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, GRUPOS_SANGUINEOS, PAISES } from '@/data/formOptions';
 
 const HEADERS = [
   'Tipo Documento',

@@ -1,27 +1,74 @@
 
 
-# Fix: Permitir eliminación de cursos según permisos del rol
+# Plan: Importación masiva de empresas desde CSV/Excel
 
-## Problema
-La tabla `cursos` tiene la política `"Admin gestiona cursos"` hardcodeada a solo `superadministrador` y `administrador`. El rol Auxiliar con permiso `cursos:eliminar` no puede hacer soft-delete.
+## Resumen
 
-## Solución
-Reemplazar la política RLS por una basada en `has_permission()`, igual que se hizo para `personas`, `empresas`, `matriculas` y `documentos_matricula`.
+Dos fases: (1) Generar y descargar una plantilla Excel con las columnas exactas del sistema, y (2) implementar la funcionalidad de importación que parsea el archivo y crea las empresas en lote. Se agrega un menú de "más opciones" (tres puntos) junto al botón "Nueva Empresa".
 
-### Migración SQL
+## Plantilla de columnas
 
-```sql
-DROP POLICY "Admin gestiona cursos" ON public.cursos;
+La plantilla tendrá estas columnas, mapeadas directamente a los campos de la tabla `empresas`:
 
-CREATE POLICY "Usuarios con permiso gestionan cursos"
-  ON public.cursos FOR ALL TO authenticated
-  USING (public.has_permission(auth.uid(), 'cursos', 'editar'))
-  WITH CHECK (public.has_permission(auth.uid(), 'cursos', 'editar'));
+| Columna en plantilla | Campo DB | Obligatorio | Notas |
+|---|---|---|---|
+| Nombre Empresa | `nombre_empresa` | Sí | Texto libre |
+| NIT | `nit` | Sí | Debe ser único |
+| Representante Legal | `representante_legal` | No | |
+| Sector Económico | `sector_economico` | No | Debe coincidir con enum (ej: "Construcción") |
+| ARL | `arl` | No | Debe coincidir con enum (ej: "ARL Sura") |
+| Dirección | `direccion` | No | |
+| Teléfono Empresa | `telefono_contacto` | No | |
+| Persona Contacto | `persona_contacto` | No | Se guardará como contacto principal |
+| Teléfono Contacto | `telefono_contacto` (contacto) | No | |
+| Email Contacto | `email_contacto` | No | |
+
+La plantilla incluirá una fila de ejemplo y validaciones de datos (dropdown) para Sector Económico y ARL.
+
+## Cambios
+
+### 1. UI — Menú de más opciones en `EmpresasPage.tsx`
+
+Agregar un `DropdownMenu` con ícono `MoreVertical` al lado del botón "Nueva Empresa" con dos opciones:
+- **Descargar plantilla**: genera y descarga un `.xlsx` con las columnas y dropdowns de validación
+- **Importar empresas**: abre un diálogo de importación
+
+### 2. Componente `ImportarEmpresasDialog.tsx`
+
+- Diálogo modal con `FileDropZone` para arrastrar CSV/Excel
+- Parseo con la librería `xlsx` (SheetJS) ya disponible o instalable
+- Vista previa de las filas detectadas con validación inline (NIT duplicado, campos obligatorios faltantes, sector/ARL no reconocido)
+- Resumen: X válidas, Y con errores
+- Botón "Importar" que ejecuta inserciones en lote vía `empresaService`
+- Manejo de errores por fila (NIT duplicado en BD)
+
+### 3. Utilidad de descarga de plantilla
+
+Función que genera el archivo Excel con:
+- Encabezados formateados
+- Fila de ejemplo
+- Listas de validación para Sector Económico y ARL
+- Se usa `xlsx` (SheetJS) para generar en cliente
+
+### 4. Servicio — Método bulk en `empresaService.ts`
+
+```typescript
+async createBulk(empresas: EmpresaFormData[]): Promise<{created: number, errors: {row: number, error: string}[]}>
 ```
 
-### Recurso a modificar
+Inserta cada empresa individualmente para capturar errores de NIT duplicado por fila.
 
-| Recurso | Cambio |
+### 5. Dependencia
+
+Instalar `xlsx` (SheetJS) para parseo y generación de archivos Excel.
+
+## Archivos a crear/modificar
+
+| Archivo | Acción |
 |---|---|
-| Nueva migración SQL | Reemplazar política RLS de `cursos` para usar `has_permission()` |
+| `package.json` | Agregar dependencia `xlsx` |
+| `src/pages/empresas/EmpresasPage.tsx` | Agregar menú DropdownMenu con opciones |
+| `src/components/empresas/ImportarEmpresasDialog.tsx` | Crear — diálogo de importación |
+| `src/utils/empresaPlantilla.ts` | Crear — generación de plantilla + parseo de archivo |
+| `src/services/empresaService.ts` | Agregar método `createBulk` |
 

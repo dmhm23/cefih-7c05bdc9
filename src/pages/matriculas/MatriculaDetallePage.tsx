@@ -166,7 +166,7 @@ export default function MatriculaDetallePage() {
       });
       setHasGrupoCartera(true);
       toast({ title: "Matrícula vinculada a cartera correctamente" });
-      logActivity({ action: "crear", module: "cartera", description: `Vinculó matrícula a cartera`, entityType: "matricula", entityId: id });
+      logActivity({ action: "crear", module: "cartera", description: `Vinculó matrícula de ${persona ? persona.nombres + ' ' + persona.apellidos : ''} a cartera (${tipoResp})`, entityType: "matricula", entityId: id, metadata: { tipo_responsable: tipoResp, valor_cupo: matricula.valorCupo } });
     } catch (e: any) {
       toast({ title: "Error al sincronizar cartera", description: e.message, variant: "destructive" });
     } finally {
@@ -404,7 +404,7 @@ export default function MatriculaDetallePage() {
       }
 
       toast({ title: "Cambios guardados correctamente" });
-      logActivity({ action: "editar", module: "matriculas", description: `Editó la matrícula`, entityType: "matricula", entityId: matricula.id });
+      logActivity({ action: "editar", module: "matriculas", description: `Editó matrícula de ${persona ? persona.nombres + ' ' + persona.apellidos : matricula.personaId}`, entityType: "matricula", entityId: matricula.id, metadata: { campos_modificados: Object.keys(formData) } });
       setFormData({});
       setIsDirty(false);
     } catch {
@@ -446,7 +446,7 @@ export default function MatriculaDetallePage() {
     try {
       await registrarPago.mutateAsync({ id: matricula.id, datosPago: { ctaFactNumero: facturaNumero } });
       toast({ title: "Pago registrado correctamente" });
-      logActivity({ action: "crear", module: "matriculas", description: `Registró pago en matrícula`, entityType: "matricula", entityId: matricula.id });
+      logActivity({ action: "crear", module: "matriculas", description: `Registró pago en matrícula de ${persona ? persona.nombres + ' ' + persona.apellidos : ''} — factura: ${facturaNumero}`, entityType: "matricula", entityId: matricula.id, metadata: { factura_numero: facturaNumero } });
       setPagoDialogOpen(false);
       setFacturaNumero("");
     } catch {

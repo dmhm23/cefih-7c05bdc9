@@ -284,7 +284,7 @@ export default function CursoFormPage() {
           ? camposAdicionalesValores : undefined,
       });
       toast({ title: "Curso creado correctamente" });
-      logActivity({ action: "crear", module: "cursos", description: `Creó un nuevo curso de tipo ${data.tipoFormacion}`, entityType: "curso" });
+      logActivity({ action: "crear", module: "cursos", description: `Creó curso ${data.numeroCurso || '(auto)'} — nivel: ${nivel?.nombreNivel || data.tipoFormacion}`, entityType: "curso", metadata: { nivel: nivel?.nombreNivel, numero_curso: data.numeroCurso, fecha_inicio: data.fechaInicio, entrenador: data.entrenadorNombre } });
       navigate("/cursos");
     } catch (error: any) {
       toast({

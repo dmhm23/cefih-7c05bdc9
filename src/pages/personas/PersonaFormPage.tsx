@@ -140,11 +140,11 @@ export default function PersonaFormPage() {
       if (isEditing) {
         await updatePersona.mutateAsync({ id, data: personaData });
         toast({ title: "Persona actualizada correctamente" });
-        logActivity({ action: "editar", module: "personas", description: `Editó persona ${data.nombres} ${data.apellidos}`, entityType: "persona", entityId: id });
+        logActivity({ action: "editar", module: "personas", description: `Editó persona ${data.nombres} ${data.apellidos} (${data.tipoDocumento} ${data.numeroDocumento})`, entityType: "persona", entityId: id, metadata: { documento: data.numeroDocumento } });
       } else {
         await createPersona.mutateAsync(personaData);
         toast({ title: "Persona creada correctamente" });
-        logActivity({ action: "crear", module: "personas", description: `Creó persona ${data.nombres} ${data.apellidos}`, entityType: "persona" });
+        logActivity({ action: "crear", module: "personas", description: `Creó persona ${data.nombres} ${data.apellidos} (${data.tipoDocumento} ${data.numeroDocumento})`, entityType: "persona", metadata: { tipo_documento: data.tipoDocumento, documento: data.numeroDocumento } });
       }
       navigate("/personas");
     } catch (error: any) {

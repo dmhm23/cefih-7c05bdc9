@@ -80,7 +80,7 @@ export default function CursoDetallePage() {
     try {
       await updateCurso.mutateAsync({ id: curso.id, data: formData, justificacion });
       toast({ title: "Cambios guardados correctamente" });
-      logActivity({ action: "editar", module: "cursos", description: `Editó el curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
+      logActivity({ action: "editar", module: "cursos", description: `Editó el curso ${curso.numeroCurso || ''}—${curso.nombre}`, entityType: "curso", entityId: curso.id, metadata: { campos_modificados: Object.keys(formData), justificacion: justificacion || undefined } });
       setFormData({});
       setIsDirty(false);
     } catch {
@@ -116,7 +116,7 @@ export default function CursoDetallePage() {
       title: isDummy ? "CSV de prueba generado" : "CSV MinTrabajo descargado",
       description: isDummy ? "Se generó un archivo con datos de ejemplo (3 filas dummy)." : `${matriculas.length} registro(s) exportados.`,
     });
-    logActivity({ action: "exportar", module: "cursos", description: `Exportó CSV MinTrabajo del curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
+    logActivity({ action: "exportar", module: "cursos", description: `Exportó CSV MinTrabajo del curso ${curso.numeroCurso || ''}—${curso.nombre} (${matriculas.length} registros)`, entityType: "curso", entityId: curso.id, metadata: { registros: matriculas.length, tipo: "mintrabajo" } });
   };
 
   const handleExportarListado = () => setExportarListadoOpen(true);
@@ -125,7 +125,7 @@ export default function CursoDetallePage() {
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: nuevoEstado });
       toast({ title: `Estado cambiado a ${ESTADO_CURSO_LABELS[nuevoEstado]}` });
-      logActivity({ action: "editar", module: "cursos", description: `Cambió estado del curso ${curso.nombre} a ${nuevoEstado}`, entityType: "curso", entityId: curso.id });
+      logActivity({ action: "editar", module: "cursos", description: `Cambió estado del curso ${curso.numeroCurso || ''}—${curso.nombre} a "${ESTADO_CURSO_LABELS[nuevoEstado]}"`, entityType: "curso", entityId: curso.id, metadata: { estado_anterior: curso.estado, estado_nuevo: nuevoEstado } });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Empresa, EmpresaFormData, ContactoEmpresa, TarifaEmpresa, TarifaEmpresaFormData } from '@/types/empresa';
 import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
+import { fetchAllPaginated } from './_paginated';
 
 function mapContactoRow(row: any): ContactoEmpresa {
   return {
@@ -87,18 +88,24 @@ function mapEmpresaToDb(data: Partial<EmpresaFormData>): Record<string, any> {
 
 export const empresaService = {
   async getAll(): Promise<Empresa[]> {
-    const { data, error } = await supabase
-      .from('empresas')
-      .select('*, contactos_empresa(*)')
-      .is('deleted_at', null)
-      .order('nombre_empresa');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(row => {
-      const empresa = mapEmpresaRow(row);
-      empresa.contactos = ((row as any).contactos_empresa || []).map(mapContactoRow);
-      return empresa;
-    });
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('empresas')
+          .select('*, contactos_empresa(*)')
+          .is('deleted_at', null)
+          .order('nombre_empresa')
+          .range(from, to),
+      );
+      return data.map(row => {
+        const empresa = mapEmpresaRow(row);
+        empresa.contactos = ((row as any).contactos_empresa || []).map(mapContactoRow);
+        return empresa;
+      });
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Empresa | null> {
@@ -116,15 +123,21 @@ export const empresaService = {
   },
 
   async search(query: string): Promise<Empresa[]> {
-    const { data, error } = await supabase
-      .from('empresas')
-      .select('*')
-      .is('deleted_at', null)
-      .or(`nombre_empresa.ilike.%${query}%,nit.ilike.%${query}%,persona_contacto.ilike.%${query}%,email_contacto.ilike.%${query}%`)
-      .order('nombre_empresa');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(mapEmpresaRow);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('empresas')
+          .select('*')
+          .is('deleted_at', null)
+          .or(`nombre_empresa.ilike.%${query}%,nit.ilike.%${query}%,persona_contacto.ilike.%${query}%,email_contacto.ilike.%${query}%`)
+          .order('nombre_empresa')
+          .range(from, to),
+      );
+      return data.map(mapEmpresaRow);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async create(data: EmpresaFormData): Promise<Empresa> {

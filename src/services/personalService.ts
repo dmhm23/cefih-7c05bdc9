@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Personal, PersonalFormData, Cargo, CargoFormData, TipoCargo, AdjuntoPersonal } from '@/types/personal';
 import { ApiError, handleSupabaseError } from './api';
+import { fetchAllPaginated } from './_paginated';
 
 function mapPersonalRow(row: any, cargoNombre?: string): Personal {
   return {
@@ -40,14 +41,20 @@ function mapAdjuntoRow(row: any): AdjuntoPersonal {
 export const personalService = {
   // ============ PERSONAL ============
   async getAll(): Promise<Personal[]> {
-    const { data, error } = await supabase
-      .from('personal')
-      .select('*, cargos(nombre)')
-      .is('deleted_at', null)
-      .order('nombres');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(row => mapPersonalRow(row, (row as any).cargos?.nombre));
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('personal')
+          .select('*, cargos(nombre)')
+          .is('deleted_at', null)
+          .order('nombres')
+          .range(from, to),
+      );
+      return data.map(row => mapPersonalRow(row, (row as any).cargos?.nombre));
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Personal | null> {
@@ -260,14 +267,20 @@ export const personalService = {
 
   // ============ CARGOS ============
   async getAllCargos(): Promise<Cargo[]> {
-    const { data, error } = await supabase
-      .from('cargos')
-      .select('*')
-      .is('deleted_at', null)
-      .order('nombre');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(mapCargoRow);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('cargos')
+          .select('*')
+          .is('deleted_at', null)
+          .order('nombre')
+          .range(from, to),
+      );
+      return data.map(mapCargoRow);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async createCargo(data: CargoFormData): Promise<Cargo> {

@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Persona, PersonaFormData } from '@/types/persona';
 import { ApiError, handleSupabaseError } from './api';
+import { fetchAllPaginated } from './_paginated';
 
 // Map DB enum values to frontend display values
 const TIPO_DOC_DB_TO_FE: Record<string, string> = {
@@ -78,14 +79,20 @@ function mapPersonaToDb(data: Partial<PersonaFormData>): Record<string, any> {
 
 export const personaService = {
   async getAll(): Promise<Persona[]> {
-    const { data, error } = await supabase
-      .from('personas')
-      .select('*')
-      .is('deleted_at', null)
-      .order('nombres');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(mapPersonaRow);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('personas')
+          .select('*')
+          .is('deleted_at', null)
+          .order('nombres')
+          .range(from, to),
+      );
+      return data.map(mapPersonaRow);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Persona | null> {
@@ -115,19 +122,22 @@ export const personaService = {
     const tokens = query.trim().split(/\s+/).filter(t => t.length > 0);
     if (tokens.length === 0) return [];
 
-    let dbQuery = supabase
-      .from('personas')
-      .select('*')
-      .is('deleted_at', null);
-
-    for (const token of tokens) {
-      dbQuery = dbQuery.or(`nombres.ilike.%${token}%,apellidos.ilike.%${token}%,numero_documento.ilike.%${token}%,telefono.ilike.%${token}%`);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) => {
+        let dbQuery = supabase
+          .from('personas')
+          .select('*')
+          .is('deleted_at', null);
+        for (const token of tokens) {
+          dbQuery = dbQuery.or(`nombres.ilike.%${token}%,apellidos.ilike.%${token}%,numero_documento.ilike.%${token}%,telefono.ilike.%${token}%`);
+        }
+        return dbQuery.order('nombres').range(from, to);
+      });
+      return data.map(mapPersonaRow);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
     }
-
-    const { data, error } = await dbQuery.order('nombres');
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(mapPersonaRow);
   },
 
   async create(data: PersonaFormData): Promise<Persona> {

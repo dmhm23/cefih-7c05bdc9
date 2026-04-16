@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Matricula, MatriculaFormData, EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
 import { ApiError, snakeToCamel, camelToSnake, handleSupabaseError } from './api';
+import { fetchAllPaginated } from './_paginated';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -50,14 +51,20 @@ function formToRow(data: Record<string, any>): Record<string, any> {
 
 export const matriculaService = {
   async getAll(): Promise<Matricula[]> {
-    const { data, error } = await supabase
-      .from('matriculas')
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(rowToMatricula);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('matriculas')
+          .select('*')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      return data.map(rowToMatricula);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Matricula | null> {
@@ -82,27 +89,39 @@ export const matriculaService = {
   },
 
   async getByPersonaId(personaId: string): Promise<Matricula[]> {
-    const { data, error } = await supabase
-      .from('matriculas')
-      .select('*')
-      .eq('persona_id', personaId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(rowToMatricula);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('matriculas')
+          .select('*')
+          .eq('persona_id', personaId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      return data.map(rowToMatricula);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getByCursoId(cursoId: string): Promise<Matricula[]> {
-    const { data, error } = await supabase
-      .from('matriculas')
-      .select('*')
-      .eq('curso_id', cursoId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(rowToMatricula);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('matriculas')
+          .select('*')
+          .eq('curso_id', cursoId)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      return data.map(rowToMatricula);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getByEstado(estado: EstadoMatricula): Promise<Matricula[]> {

@@ -68,6 +68,8 @@ import EmpresaDetallePage from "./pages/empresas/EmpresaDetallePage";
 // Admin
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminLogsPage from "./pages/admin/AdminLogsPage";
+import UserActivityLogPage from "./pages/admin/UserActivityLogPage";
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -75,13 +77,16 @@ import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
 import DocumentoRendererPage from "./pages/estudiante/DocumentoRendererPage";
 import PortalGuard from "./pages/estudiante/PortalGuard";
 import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
+import { ActivityLoggerProvider } from "./contexts/ActivityLoggerContext";
 
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout + auth
 const WithLayout = ({ children }: { children: React.ReactNode }) => (
   <AuthGuard>
-    <MainLayout>{children}</MainLayout>
+    <ActivityLoggerProvider>
+      <MainLayout>{children}</MainLayout>
+    </ActivityLoggerProvider>
   </AuthGuard>
 );
 

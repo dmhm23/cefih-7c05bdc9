@@ -152,7 +152,10 @@ export const personaService = {
     return mapPersonaRow(row);
   },
 
-  async createBulk(personas: PersonaFormData[]): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+  async createBulk(
+    personas: PersonaFormData[],
+    onProgress?: (current: number, total: number) => void,
+  ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
     for (let i = 0; i < personas.length; i++) {
@@ -162,6 +165,7 @@ export const personaService = {
       } catch (err: any) {
         errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
       }
+      onProgress?.(i + 1, personas.length);
     }
     return { created, errors };
   },
@@ -197,7 +201,8 @@ export const personaService = {
   async upsertBulk(
     personas: PersonaFormData[],
     existingDocs: Set<string>,
-    updateExisting: boolean
+    updateExisting: boolean,
+    onProgress?: (current: number, total: number) => void,
   ): Promise<{ created: number; updated: number; skipped: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
     let created = 0;
@@ -226,6 +231,7 @@ export const personaService = {
       } catch (err: any) {
         errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
       }
+      onProgress?.(i + 1, personas.length);
     }
     return { created, updated, skipped, errors };
   },

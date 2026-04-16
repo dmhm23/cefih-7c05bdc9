@@ -287,7 +287,8 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         codigo,
       });
       toast({ title: "Certificado generado" });
-      logActivity({ action: "crear", module: "certificacion", description: `Generó certificado individual`, entityType: "certificado", entityId: m.id });
+      const persona = personas.find(p => p.id === m.personaId);
+      logActivity({ action: "crear", module: "certificacion", description: `Generó certificado para ${persona ? persona.nombres + ' ' + persona.apellidos : m.personaId} en curso ${curso.numeroCurso || curso.nombre}`, entityType: "certificado", entityId: m.id, metadata: { curso_id: curso.id, persona_id: m.personaId } });
     } catch {
       toast({ title: "Error al generar certificado", variant: "destructive" });
     }

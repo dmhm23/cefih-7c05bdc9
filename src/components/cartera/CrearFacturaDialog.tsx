@@ -83,7 +83,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
     });
 
     toast({ title: "Factura registrada exitosamente" });
-    logActivity({ action: "crear", module: "cartera", description: `Creó factura ${numeroFactura}`, entityType: "factura" });
+    logActivity({ action: "crear", module: "cartera", description: `Creó factura ${numeroFactura} por ${formatCurrency(totalManualNum)}`, entityType: "factura", metadata: { numero_factura: numeroFactura, total: totalManualNum, matriculas_vinculadas: vincularMatriculas ? selectedIds.length : 0 } });
     onOpenChange(false);
     // Reset
     setSelectedIds([]);

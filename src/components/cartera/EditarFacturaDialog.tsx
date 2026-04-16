@@ -80,7 +80,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
     });
 
     toast({ title: "Factura actualizada exitosamente" });
-    logActivity({ action: "editar", module: "cartera", description: `Editó factura ${numeroFactura}`, entityType: "factura", entityId: factura.id });
+    logActivity({ action: "editar", module: "cartera", description: `Editó factura ${numeroFactura} (total: ${new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(totalNum)})`, entityType: "factura", entityId: factura.id, metadata: { numero_factura: numeroFactura, total: totalNum } });
     onOpenChange(false);
   };
 
@@ -88,7 +88,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
     if (!factura) return;
     await deleteFactura.mutateAsync(factura.id);
     toast({ title: "Factura eliminada exitosamente" });
-    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó factura`, entityType: "factura", entityId: factura.id });
+    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó factura ${factura.numeroFactura}`, entityType: "factura", entityId: factura.id, metadata: { numero_factura: factura.numeroFactura, total: factura.total } });
     setShowDeleteConfirm(false);
     onOpenChange(false);
   };

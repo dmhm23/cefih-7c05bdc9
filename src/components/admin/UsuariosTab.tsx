@@ -95,13 +95,15 @@ export default function UsuariosTab() {
 
   const handleChangeRole = async (userId: string, newRolId: string) => {
     await assignRole.mutateAsync({ userId, rolId: newRolId });
-    logActivity({ action: "editar", module: "admin", description: `Cambió rol de usuario`, entityType: "usuario", entityId: userId });
+    const user = usuarios.find(u => u.id === userId);
+    const rolNombre = roles.find(r => r.id === newRolId)?.nombre || newRolId;
+    logActivity({ action: "editar", module: "admin", description: `Cambió rol de ${user?.email || userId} a "${rolNombre}"`, entityType: "usuario", entityId: userId, metadata: { rol_nuevo: rolNombre, rol_id: newRolId } });
   };
 
   const handleEditSave = async () => {
     if (!editUser) return;
     await updateUser.mutateAsync({ userId: editUser.id, nombres: editNombres });
-    logActivity({ action: "editar", module: "admin", description: `Editó nombre de usuario`, entityType: "usuario", entityId: editUser.id });
+    logActivity({ action: "editar", module: "admin", description: `Editó nombre de usuario a "${editNombres}"`, entityType: "usuario", entityId: editUser.id, metadata: { nombre_nuevo: editNombres } });
     setEditUser(null);
   };
 

@@ -143,11 +143,11 @@ export default function NivelFormPage() {
       if (isEdit && id) {
         await updateNivel.mutateAsync({ id, data: payload });
         toast({ title: "Nivel actualizado correctamente" });
-        logActivity({ action: "editar", module: "niveles", description: `Editó nivel ${data.nombreNivel}`, entityType: "nivel", entityId: id });
+        logActivity({ action: "editar", module: "niveles", description: `Editó nivel "${data.nombreNivel}" (${data.duracionHoras}h)`, entityType: "nivel", entityId: id, metadata: { duracion_horas: data.duracionHoras, documentos: data.documentosRequeridos.length, campos_adicionales: camposAdicionales.length } });
       } else {
         await createNivel.mutateAsync(payload);
         toast({ title: "Nivel creado correctamente" });
-        logActivity({ action: "crear", module: "niveles", description: `Creó nivel ${data.nombreNivel}`, entityType: "nivel" });
+        logActivity({ action: "crear", module: "niveles", description: `Creó nivel "${data.nombreNivel}" (${data.duracionHoras}h)`, entityType: "nivel", metadata: { duracion_horas: data.duracionHoras, documentos: data.documentosRequeridos.length, campos_adicionales: camposAdicionales.length } });
       }
       navigate("/niveles");
     } catch (error: any) {

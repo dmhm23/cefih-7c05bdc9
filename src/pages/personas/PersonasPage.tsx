@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
-import { Plus, Trash2, Download, Filter, Upload, FileDown } from "lucide-react";
+import { Plus, Trash2, Download, Filter, FileDown, FileUp, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
@@ -283,18 +284,27 @@ export default function PersonasPage() {
           <p className="text-sm text-muted-foreground">Gestión de identidad - Hoja de Vida Digital</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => descargarPlantillaPersonas()}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Plantilla
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Importar
-          </Button>
           <Button onClick={() => navigate("/personas/nuevo")}>
             <Plus className="h-4 w-4 mr-2" />
             Nueva Persona
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => descargarPlantillaPersonas()}>
+                <FileDown className="h-4 w-4 mr-2" />
+                Descargar plantilla
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setImportOpen(true)}>
+                <FileUp className="h-4 w-4 mr-2" />
+                Importar personas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

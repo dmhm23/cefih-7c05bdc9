@@ -1,4 +1,5 @@
 import { ChevronDown, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

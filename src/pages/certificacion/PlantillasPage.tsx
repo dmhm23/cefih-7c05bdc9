@@ -19,6 +19,7 @@ import { resolveNivelCursoLabel, getNivelesAsOptions } from "@/utils/resolveNive
 import type { ReglaTipoCertificado } from "@/types/certificado";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 
 const DEFAULT_REGLAS: ReglaTipoCertificado = {
   requierePago: true,

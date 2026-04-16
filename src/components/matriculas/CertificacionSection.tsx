@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Award, Download, ShieldAlert, ShieldCheck, FileWarning, Loader2, RefreshCw } from "lucide-react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EditableField } from "@/components/shared/EditableField";

@@ -145,10 +145,14 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
           const ceTelefono = String(row[12] || '').trim();
           const ceParentesco = String(row[13] || '').trim();
 
-          // Validations
-          const tipoDocumento = TIPO_DOC_MAP[tipoDocRaw] || '';
-          if (!tipoDocRaw) errors.push('Tipo Documento es obligatorio');
-          else if (!tipoDocumento) errors.push(`Tipo Documento "${tipoDocRaw}" no reconocido`);
+          // Validations — solo campos NOT NULL sin default en BD son obligatorios
+          // Tipo documento: si viene vacío, default 'CC'. Si viene con valor inválido, error.
+          let tipoDocumento = TIPO_DOC_MAP[tipoDocRaw] || '';
+          if (!tipoDocRaw) {
+            tipoDocumento = 'CC';
+          } else if (!tipoDocumento) {
+            errors.push(`Tipo Documento "${tipoDocRaw}" no reconocido`);
+          }
 
           if (!numeroDocumento) errors.push('Número Documento es obligatorio');
           if (!nombres) errors.push('Nombres es obligatorio');

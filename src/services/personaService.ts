@@ -64,7 +64,13 @@ function mapPersonaToDb(data: Partial<PersonaFormData>): Record<string, any> {
   if (data.nivelEducativo !== undefined) result.nivel_educativo = data.nivelEducativo || null;
   if (data.email !== undefined) result.email = data.email;
   if (data.telefono !== undefined) result.telefono = data.telefono;
-  if (data.contactoEmergencia !== undefined) result.contacto_emergencia = data.contactoEmergencia;
+  if (data.contactoEmergencia !== undefined) {
+    const ce = data.contactoEmergencia || { nombre: '', telefono: '', parentesco: '' };
+    const nombre = (ce.nombre || '').trim();
+    const telefono = (ce.telefono || '').trim();
+    // El trigger DB exige nombre+telefono juntos si se envía contacto. Si está incompleto, enviar {}.
+    result.contacto_emergencia = (nombre && telefono) ? ce : {};
+  }
   if (data.paisNacimiento !== undefined) result.pais_nacimiento = data.paisNacimiento || null;
   if (data.rh !== undefined) result.rh = data.rh || null;
   return result;

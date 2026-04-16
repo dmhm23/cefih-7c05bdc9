@@ -1,12 +1,13 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormatoById, useFirmasMatricula, useEnviarFormatoDinamico, useInfoAprendizData } from '@/hooks/usePortalEstudiante';
+import { useFormatoRespuesta, useSaveFormatoRespuesta } from '@/hooks/useFormatoRespuestas';
 import PortalFormatoRenderer from '@/components/portal/PortalFormatoRenderer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import type { BloqueSignatureCapture } from '@/types/formatoFormacion';
+import type { BloqueSignatureCapture, BloqueEvaluationQuiz } from '@/types/formatoFormacion';
 
 interface Props {
   formatoId: string;
@@ -19,17 +20,42 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
   const { data: formato, isLoading: loadingFormato } = useFormatoById(formatoId);
   const { data: contextData, isLoading: loadingContext } = useInfoAprendizData(matriculaId);
   const { data: firmas = [], isLoading: loadingFirmas } = useFirmasMatricula(matriculaId);
+  const { data: existingResp, isLoading: loadingResp } = useFormatoRespuesta(matriculaId, formatoId);
   const enviarMutation = useEnviarFormatoDinamico();
+  const saveRespuestaMutation = useSaveFormatoRespuesta();
 
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Hydrate answers from existing response
+  useEffect(() => {
+    if (hydrated || loadingResp) return;
+    if (existingResp) {
+      const saved = existingResp.answers || {};
+      if (Object.keys(saved).length > 0) {
+        setAnswers(saved);
+      }
+      if (existingResp.estado === 'completado') {
+        setSubmitted(true);
+      }
+    }
+    setHydrated(true);
+  }, [existingResp, loadingResp, hydrated]);
 
   const handleAnswerChange = useCallback((key: string, value: unknown) => {
     setAnswers(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const isLoading = loadingFormato || loadingContext || loadingFirmas;
+  const isLoading = loadingFormato || loadingContext || loadingFirmas || loadingResp;
 
-  // Find signature block to extract firma from answers on submit
+  // Detect if format has quiz blocks
+  const hasQuiz = useMemo(() => {
+    if (!formato) return false;
+    return formato.bloques.some(b => b.type === 'evaluation_quiz');
+  }, [formato]);
+
+  // Find signature block
   const signatureBlock = useMemo(() => {
     if (!formato) return undefined;
     return formato.bloques.find(
@@ -37,7 +63,36 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     ) as BloqueSignatureCapture | undefined;
   }, [formato]);
 
-  if (isLoading) {
+  // Quiz retry handler
+  const handleQuizRetry = useCallback(() => {
+    if (!formato) return;
+    // Save current attempt to intentos_evaluacion before retrying
+    const quizBlocks = formato.bloques.filter(b => b.type === 'evaluation_quiz') as BloqueEvaluationQuiz[];
+    const currentAttempt: Record<string, unknown> = { timestamp: new Date().toISOString() };
+    quizBlocks.forEach(qb => {
+      const resultKey = `${qb.id}_result`;
+      if (answers[resultKey]) {
+        currentAttempt[qb.id] = answers[resultKey];
+      }
+    });
+
+    // Save attempt via formato_respuestas (intentos_evaluacion is handled server-side via the answers)
+    const intentosPrevios = (existingResp?.intentosEvaluacion || []) as unknown[];
+    const updatedIntentos = [...intentosPrevios, currentAttempt];
+
+    // Persist the attempt record
+    saveRespuestaMutation.mutate({
+      matriculaId,
+      formatoId,
+      answers: { ...answers, _intentos_evaluacion: updatedIntentos },
+      estado: 'pendiente',
+    });
+
+    // Reset submitted state but keep answers pre-filled for correction
+    setSubmitted(false);
+  }, [formato, answers, existingResp, matriculaId, formatoId, saveRespuestaMutation]);
+
+  if (isLoading || !hydrated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Skeleton className="h-40 w-72 rounded-xl" />
@@ -74,12 +129,28 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
         } : undefined,
       });
 
-      toast({ title: 'Documento enviado correctamente' });
-      navigate('/estudiante/inicio');
+      // Also persist to formato_respuestas as completed
+      saveRespuestaMutation.mutate({
+        matriculaId,
+        formatoId,
+        answers,
+        estado: 'completado',
+      });
+
+      if (hasQuiz) {
+        // Stay on page and show results
+        setSubmitted(true);
+        toast({ title: 'Evaluación enviada correctamente' });
+      } else {
+        toast({ title: 'Documento enviado correctamente' });
+        navigate('/estudiante/inicio');
+      }
     } catch (err: any) {
       toast({ title: 'Error al enviar', description: err.message, variant: 'destructive' });
     }
   };
+
+  const isCompleted = submitted || existingResp?.estado === 'completado';
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,25 +176,41 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           curso={contextData?.curso ?? null}
           answers={answers}
           onAnswerChange={handleAnswerChange}
-          readOnly={false}
+          readOnly={isCompleted && !hasQuiz}
           firmasMatricula={firmas}
+          submitted={submitted}
+          onQuizRetry={handleQuizRetry}
         />
 
-        {/* Submit */}
-        <Button
-          className="w-full"
-          onClick={handleSubmit}
-          disabled={enviarMutation.isPending || needsSignature}
-        >
-          {enviarMutation.isPending ? (
-            'Enviando...'
-          ) : (
-            <>
-              <Send className="h-4 w-4 mr-2" />
-              Enviar documento
-            </>
-          )}
-        </Button>
+        {/* Submit — hide if already completed (unless quiz allows retry) */}
+        {!isCompleted && (
+          <Button
+            className="w-full"
+            onClick={handleSubmit}
+            disabled={enviarMutation.isPending || needsSignature}
+          >
+            {enviarMutation.isPending ? (
+              'Enviando...'
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                {hasQuiz ? 'Enviar evaluación' : 'Enviar documento'}
+              </>
+            )}
+          </Button>
+        )}
+
+        {/* After quiz submission, show back button */}
+        {submitted && hasQuiz && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => navigate('/estudiante/inicio')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Volver al inicio
+          </Button>
+        )}
       </div>
     </div>
   );

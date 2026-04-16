@@ -449,6 +449,50 @@ export type Database = {
           },
         ]
       }
+      cursos_mintrabajo_adjuntos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          curso_id: string
+          fecha_id: string | null
+          id: string
+          nombre: string
+          storage_path: string
+          tamano: number | null
+          tipo_mime: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          curso_id: string
+          fecha_id?: string | null
+          id?: string
+          nombre: string
+          storage_path: string
+          tamano?: number | null
+          tipo_mime?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          curso_id?: string
+          fecha_id?: string | null
+          id?: string
+          nombre?: string
+          storage_path?: string
+          tamano?: number | null
+          tipo_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cursos_mintrabajo_adjuntos_fecha_id_fkey"
+            columns: ["fecha_id"]
+            isOneToOne: false
+            referencedRelation: "cursos_fechas_mintrabajo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentos_matricula: {
         Row: {
           archivo_nombre: string | null

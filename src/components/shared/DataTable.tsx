@@ -93,9 +93,14 @@ export function DataTable<T extends { id: string }>({
   defaultSortKey = "createdAt",
   defaultSortDirection = "desc",
   containerClassName,
+  pageSize = DATATABLE_PAGE_SIZE,
+  itemLabel,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const sentinelRef = useRef<HTMLTableRowElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Filter visible columns based on config
   const visibleColumns = columnConfig

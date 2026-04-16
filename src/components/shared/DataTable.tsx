@@ -269,7 +269,7 @@ export function DataTable<T extends { id: string }>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((item) => {
+              {visibleData.map((item) => {
                 const isSelected = selectedIds.includes(item.id);
                 const isActiveRow = activeRowId === item.id;
                 const showViewButton = isPanelOpen && !isActiveRow && onViewRow;

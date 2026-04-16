@@ -271,6 +271,7 @@ export default function DynamicFormatoPreviewDialog({
 }: Props) {
   const documentRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const { data: entrenador } = usePersonal(curso?.entrenadorId || "");
   const { data: supervisor } = usePersonal(curso?.supervisorId || "");
@@ -328,6 +329,7 @@ export default function DynamicFormatoPreviewDialog({
         estado,
       });
       toast({ title: estado === 'completado' ? "Formato completado" : "Borrador guardado" });
+      logActivity({ action: estado === 'completado' ? "completar" : "editar", module: "formatos", description: `${estado === 'completado' ? "Completó" : "Guardó borrador de"} formato "${formato?.nombre || ""}"`, entityType: "formato_formacion", entityId: formato?.id || "", metadata: { matricula_id: matricula.id, estado, formato_nombre: formato?.nombre } });
       if (estado === 'completado') setEditMode(false);
     } catch (e: any) {
       console.error('Error saving formato respuesta:', e);

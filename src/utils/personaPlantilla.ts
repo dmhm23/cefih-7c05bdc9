@@ -138,7 +138,7 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
           const apellidos = String(row[3] || '').trim();
           const generoRaw = String(row[4] || '').trim();
           const fechaRaw = row[5];
-          const paisNacimiento = String(row[6] || '').trim();
+          const paisRaw = String(row[6] || '').trim();
           const rhRaw = String(row[7] || '').trim();
           const nivelRaw = String(row[8] || '').trim();
           const email = String(row[9] || '').trim();

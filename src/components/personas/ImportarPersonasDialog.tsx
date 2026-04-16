@@ -424,6 +424,10 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
+        {importing && (
+          <ImportProgress current={progress.current} total={progress.total} label="Importando personas" />
+        )}
+
         <DialogFooter>
           {result ? (
             <Button onClick={handleClose}>Cerrar</Button>

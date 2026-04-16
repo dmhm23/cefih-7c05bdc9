@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, X } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { empresaService } from '@/services/empresaService';
 import { EmpresaImportRow, parsearArchivoEmpresas } from '@/utils/empresaPlantilla';
@@ -15,6 +16,13 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+type FilterTab = 'todas' | 'validas' | 'errores';
+
+function hasFieldError(errors: string[], fieldName: string): boolean {
+  const lower = fieldName.toLowerCase();
+  return errors.some(e => e.toLowerCase().includes(lower));
+}
+
 export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
@@ -23,9 +31,25 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const [fileName, setFileName] = useState('');
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
+  const [filter, setFilter] = useState<FilterTab>('todas');
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
   const validRows = rows.filter(r => r.errors.length === 0);
   const errorRows = rows.filter(r => r.errors.length > 0);
+
+  const filteredRows = useMemo(() => {
+    if (filter === 'validas') return validRows;
+    if (filter === 'errores') return errorRows;
+    return rows;
+  }, [rows, validRows, errorRows, filter]);
+
+  const toggleRow = (rowIndex: number) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      next.has(rowIndex) ? next.delete(rowIndex) : next.add(rowIndex);
+      return next;
+    });
+  };
 
   const handleFile = useCallback(async (file: File) => {
     try {
@@ -33,6 +57,8 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
       setRows(parsed);
       setFileName(file.name);
       setResult(null);
+      setFilter('todas');
+      setExpandedRows(new Set());
     } catch {
       toast({ title: 'Error al leer el archivo', variant: 'destructive' });
     }
@@ -80,12 +106,14 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
     setRows([]);
     setFileName('');
     setResult(null);
+    setFilter('todas');
+    setExpandedRows(new Set());
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Importar Empresas</DialogTitle>
         </DialogHeader>
@@ -135,7 +163,8 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
             )}
           </div>
         ) : (
-          <div className="space-y-4 flex-1 min-h-0">
+          <div className="space-y-3 flex-1 min-h-0">
+            {/* File header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
@@ -146,6 +175,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
               </Button>
             </div>
 
+            {/* Summary badges */}
             <div className="flex gap-3">
               <Badge variant="default" className="gap-1">
                 <CheckCircle2 className="h-3 w-3" /> {validRows.length} válidas
@@ -157,31 +187,87 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
               )}
             </div>
 
+            {/* Filter tabs */}
+            <Tabs value={filter} onValueChange={v => setFilter(v as FilterTab)}>
+              <TabsList className="h-8">
+                <TabsTrigger value="todas" className="text-xs px-3 py-1">Todas ({rows.length})</TabsTrigger>
+                <TabsTrigger value="validas" className="text-xs px-3 py-1">Válidas ({validRows.length})</TabsTrigger>
+                <TabsTrigger value="errores" className="text-xs px-3 py-1">Con errores ({errorRows.length})</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            {/* Table */}
             <ScrollArea className="max-h-[300px] border rounded-md">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
-                    <th className="px-3 py-2 text-left">Fila</th>
-                    <th className="px-3 py-2 text-left">Nombre</th>
-                    <th className="px-3 py-2 text-left">NIT</th>
-                    <th className="px-3 py-2 text-left">Estado</th>
+                    <th className="px-2 py-2 text-left w-8"></th>
+                    <th className="px-2 py-2 text-left">Fila</th>
+                    <th className="px-2 py-2 text-left">Nombre</th>
+                    <th className="px-2 py-2 text-left">NIT</th>
+                    <th className="px-2 py-2 text-left">Sector</th>
+                    <th className="px-2 py-2 text-left">ARL</th>
+                    <th className="px-2 py-2 text-left">Estado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(r => (
-                    <tr key={r.rowIndex} className={r.errors.length > 0 ? 'bg-destructive/5' : ''}>
-                      <td className="px-3 py-1.5">{r.rowIndex}</td>
-                      <td className="px-3 py-1.5">{r.nombreEmpresa || '—'}</td>
-                      <td className="px-3 py-1.5">{r.nit || '—'}</td>
-                      <td className="px-3 py-1.5">
-                        {r.errors.length > 0 ? (
-                          <span className="text-destructive text-xs">{r.errors.join('; ')}</span>
-                        ) : (
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  {filteredRows.map(r => {
+                    const hasErrors = r.errors.length > 0;
+                    const isExpanded = expandedRows.has(r.rowIndex);
+                    return (
+                      <>
+                        <tr
+                          key={r.rowIndex}
+                          className={`${hasErrors ? 'bg-destructive/5' : ''} ${hasErrors ? 'cursor-pointer hover:bg-destructive/10' : ''}`}
+                          onClick={() => hasErrors && toggleRow(r.rowIndex)}
+                        >
+                          <td className="px-2 py-1.5">
+                            {hasErrors && (
+                              isExpanded
+                                ? <ChevronDown className="h-3.5 w-3.5 text-destructive" />
+                                : <ChevronRight className="h-3.5 w-3.5 text-destructive" />
+                            )}
+                          </td>
+                          <td className="px-2 py-1.5">{r.rowIndex}</td>
+                          <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'nombre') ? 'bg-destructive/15 rounded' : ''}`}>
+                            {r.nombreEmpresa || '—'}
+                          </td>
+                          <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'nit') ? 'bg-destructive/15 rounded' : ''}`}>
+                            {r.nit || '—'}
+                          </td>
+                          <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'sector') ? 'bg-destructive/15 rounded' : ''}`}>
+                            {r.sectorEconomico || '—'}
+                          </td>
+                          <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'arl') ? 'bg-destructive/15 rounded' : ''}`}>
+                            {r.arl || '—'}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            {hasErrors ? (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                                {r.errors.length} error{r.errors.length > 1 ? 'es' : ''}
+                              </Badge>
+                            ) : (
+                              <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            )}
+                          </td>
+                        </tr>
+                        {hasErrors && isExpanded && (
+                          <tr key={`${r.rowIndex}-errors`} className="bg-destructive/5">
+                            <td colSpan={7} className="px-4 py-2">
+                              <ul className="space-y-1">
+                                {r.errors.map((err, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-xs text-destructive">
+                                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                    <span>{err}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                    </tr>
-                  ))}
+                      </>
+                    );
+                  })}
                 </tbody>
               </table>
             </ScrollArea>

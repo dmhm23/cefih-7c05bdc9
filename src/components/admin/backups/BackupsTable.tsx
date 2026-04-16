@@ -95,7 +95,7 @@ export function BackupsTable({ backups, isLoading, onDownload, onDelete }: Props
                     </Badge>
                   )}
                   {b.estado === "completado" && (
-                    <Badge className="gap-1 bg-green-600 hover:bg-green-600/90">
+                    <Badge className="gap-1">
                       <CheckCircle2 className="h-3 w-3" /> Completado
                     </Badge>
                   )}

@@ -2,116 +2,87 @@
 
 ## Diagnóstico
 
-**Causa raíz confirmada (vía consulta a BD):**
-- `personas` en BD: **3.287 registros activos**
-- Vista muestra: máx **1.000**
+**El campo SÍ se está guardando** — pero como texto crudo en lugar de código ISO, así que la UI no lo puede mostrar.
 
-**Por qué:** PostgREST (la API REST de Supabase) aplica un **límite máximo por defecto de 1000 filas** a cualquier `.select()` que no use paginación explícita. No es un problema del código de Lovable — es un guardrail del servidor para evitar respuestas gigantes.
+**Evidencia (consulta a BD `personas.pais_nacimiento`):**
 
-**Por qué buscar por documento desde matrículas SÍ encuentra a todos:**
-- `MatriculaFormPage` usa `personaService.getByDocumento()` que hace `.eq('numero_documento', ...)` → consulta puntual a BD, no afectada por el límite.
-- `PersonasPage` filtra **client-side** sobre los 1.000 que ya cargó `getAll()` → los que están en BD pero no llegaron al cliente nunca aparecen ni en la lista ni en el buscador.
+| Valor en BD | Cantidad |
+|---|---|
+| `COLOMBIA` | 2.598 |
+| `Colombia` | 637 |
+| `VENEZUELA` | 23 |
+| `Venezuela` | 20 |
+| `CO` | 8 |
+| `República Dominicana` | 1 |
 
-**Servicios afectados (mismo patrón `select('*')` sin paginación):**
+**Por qué se ve vacío:**
+- El catálogo `PAISES` en `formOptions.ts` usa códigos ISO como `value` (`CO`, `VE`, `EC`...) y el nombre como `label` (`Colombia`, `Venezuela`...).
+- En `PersonaDetailSheet`, `MatriculaFormPage` y `MatriculaDetallePage`, el campo País se renderiza como `<select>` cuyas opciones son `PAISES`. Si el valor almacenado es `"COLOMBIA"`, el `<select>` no encuentra una opción con `value === "COLOMBIA"` → muestra blanco.
+- Otros campos (género, RH, nivel educativo) **sí funcionan** porque la plantilla los pasa por `findEnumValue()` que normaliza label→value.
 
-| Servicio | Filas en BD hoy | ¿Afectado hoy? | ¿Riesgo futuro? |
-|---|---|---|---|
-| `personaService.getAll()` | 3.287 | **Sí, ahora mismo** | Crítico |
-| `empresaService.getAll()` | 546 | No | Sí (al crecer) |
-| `matriculaService.getAll()` | 1 | No | Sí |
-| `cursoService.getAll()` | 2 | No | Sí |
-| `certificadoService.getAll()` | 0 | No | Sí |
-| `personalService.getAll()` | 3 | No | Bajo |
-| `nivelFormacionService.getAll()` | pocos | No | Bajo |
-| `plantillaService.getAll()` | pocos | No | Bajo |
-| `excepcionCertificadoService.getAll()` | pocos | No | Bajo |
-| `rolesService.getAll()` | pocos | No | Bajo |
+**Causa raíz** (`src/utils/personaPlantilla.ts` línea 139):
+```ts
+const paisNacimiento = String(row[6] || '').trim();  // ❌ texto crudo, sin mapear
+```
 
-También `personaService.search()` y `empresaService.search()` tienen el mismo techo de 1000 → registros recientes pueden no aparecer en el buscador.
-
-`checkExisting()` ya está bien (chunkea de a 500 con `.in()`).
+A diferencia de:
+```ts
+genero = GENERO_LABEL_TO_VALUE[generoRaw.toLowerCase()];   // ✅ mapeado
+rh = findEnumValue(rhRaw, GRUPOS_SANGUINEOS);              // ✅ mapeado
+nivelEducativo = findEnumValue(nivelRaw, NIVELES_EDUCATIVOS); // ✅ mapeado
+```
 
 ## Solución
 
-Implementar **paginación interna automática** en los `getAll()` y `search()` de los servicios afectados: hacer múltiples requests con `.range(from, to)` en bloques de 1000 hasta agotar los datos. El cliente sigue recibiendo el array completo (transparente para hooks, tablas, exports).
+### 1. Normalizar país en el parser de plantilla
 
-### Helper centralizado
+En `src/utils/personaPlantilla.ts`:
 
-Nuevo archivo `src/services/_paginated.ts`:
+- Aplicar `findEnumValue(paisRaw, PAISES)` igual que con RH/nivel.
+- Aceptar cualquier variante: `"Colombia"`, `"COLOMBIA"`, `"colombia"`, `"CO"`, `"co"` → siempre se guarda `"CO"`.
+- Si no se reconoce, agregar **warning** (no error) y guardar el texto tal cual, para no bloquear cargas con países raros (ej. "Eslovaquia" si no está en el catálogo).
 
-```ts
-// Ejecuta un select paginado en bloques de 1000 hasta traer todo
-export async function fetchAllPaginated<T>(
-  buildQuery: (from: number, to: number) => any,
-  pageSize = 1000,
-): Promise<T[]> {
-  const all: T[] = [];
-  let from = 0;
-  while (true) {
-    const { data, error } = await buildQuery(from, from + pageSize - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all.push(...data);
-    if (data.length < pageSize) break; // última página
-    from += pageSize;
-  }
-  return all;
-}
+### 2. Mejorar la plantilla XLSX
+
+En `descargarPlantillaPersonas()`:
+
+- Agregar **dropdown de validación** en la columna País (igual que tipo doc, género, RH, nivel) con la lista `PAISES.map(p => p.label)`.
+- Cambiar el ejemplo de `"Colombia"` (ya está así, queda igual).
+- Esto previene que el usuario escriba variantes inconsistentes.
+
+### 3. Migración one-shot para limpiar datos existentes
+
+Normalizar los 3.287 registros ya cargados:
+
+```sql
+UPDATE personas SET pais_nacimiento = 'CO' 
+  WHERE upper(trim(pais_nacimiento)) IN ('COLOMBIA', 'CO');
+UPDATE personas SET pais_nacimiento = 'VE' 
+  WHERE upper(trim(pais_nacimiento)) IN ('VENEZUELA', 'VE');
+-- + República Dominicana → 'DO'
+-- + cualquier otro label que se detecte
 ```
 
-### Patrón de uso en cada servicio
+Construir el UPDATE dinámicamente desde `PAISES` para cubrir los 50 países del catálogo.
 
-Reemplazar:
-```ts
-const { data, error } = await supabase.from('personas').select('*').is('deleted_at', null).order('nombres');
-```
-por:
-```ts
-const data = await fetchAllPaginated<any>((from, to) =>
-  supabase.from('personas').select('*').is('deleted_at', null).order('nombres').range(from, to)
-);
-```
+### 4. Defensa en UI (opcional pero recomendado)
 
-### Servicios a actualizar
+En el `<select>` de País, si el valor almacenado no coincide con ninguna opción, mostrar el valor crudo en vez de blanco. Esto evita que datos legados parezcan "perdidos" mientras se migran.
 
-| Archivo | Métodos a paginar |
+Implementación: en `EditableField` (modo select), agregar como opción adicional el `value` actual si no está en la lista.
+
+## Resultado
+
+- **Importaciones nuevas:** "Colombia", "COLOMBIA", "CO" → todos quedan como `"CO"` y se ven correctamente.
+- **Datos existentes:** migración los normaliza, ~3.287 personas pasan a mostrar país correctamente.
+- **Plantilla:** dropdown evita errores futuros.
+- **UI defensiva:** si entra un país no catalogado, no desaparece visualmente.
+
+## Archivos a modificar
+
+| Archivo | Cambio |
 |---|---|
-| `src/services/personaService.ts` | `getAll`, `search` |
-| `src/services/empresaService.ts` | `getAll`, `search` |
-| `src/services/matriculaService.ts` | `getAll`, `getByPersonaId` |
-| `src/services/cursoService.ts` | `getAll` |
-| `src/services/certificadoService.ts` | `getAll` |
-| `src/services/personalService.ts` | `getAll`, `getAllCargos` (defensivo) |
-| `src/services/carteraService.ts` | listados de grupos/facturas/pagos |
-
-> No tocamos `nivelFormacionService`, `plantillaService`, `rolesService`, `excepcionCertificadoService` — datasets siempre pequeños (<200), pero quedan listos para envolver si crecen.
-
-### Verificación posterior
-
-Tras el cambio, en el módulo Personas:
-- El contador inferior (ya implementado con lazy load) mostrará **"Mostrando 100 de 3.287 personas"** en vez de "1.000".
-- El buscador encontrará registros recientes porque el dataset filtrado client-side estará completo.
-- El lazy render de `DataTable` (ya implementado) sigue intacto: solo renderiza 100 filas en DOM, pero el array fuente ya tiene los 3.287.
-
-### Consideraciones
-
-- **Performance:** 3.287 personas → 4 requests paralelos secuenciales de ~150-300ms = ~1s total. Aceptable; se ejecuta una sola vez al cargar la página y queda en caché de React Query.
-- **Memoria:** ~3.000 objetos JSON ligeros = <5MB en memoria. Sin problema.
-- **Compatibilidad:** Los hooks (`usePersonas`, `useEmpresas`, etc.), las tablas, exports y bulk actions no requieren cambios — siguen recibiendo `T[]` completo.
-- **Sin cambios de schema/RLS/migraciones** — solo client-side.
-
-### Mejora adicional opcional (no en este PR)
-
-Para escala futura (>10.000 registros) se recomendaría:
-- Mover búsqueda a server-side (PostgREST query con `.ilike` + `.range`) en lugar de filtrar en cliente.
-- Índices `pg_trgm` sobre `numero_documento`, `nombres`, `apellidos` para acelerar `ILIKE`.
-
-Lo dejamos documentado pero no implementamos ahora para no introducir cambios estructurales.
-
-## Resultado esperado
-
-- Personas: ven los 3.287 (y los que entren después).
-- Buscador encuentra registros recientes.
-- Mismo patrón aplicado preventivamente a empresas, matrículas, cursos, cartera, certificados, personal.
-- Cero regresiones en lazy render, bulk actions, exports ni navegación.
+| `src/utils/personaPlantilla.ts` | Normalizar `paisNacimiento` con `findEnumValue(raw, PAISES)`; agregar validación dropdown en `descargarPlantillaPersonas` |
+| `src/components/shared/EditableField.tsx` | (opcional) si valor no está en options, agregarlo como fallback para que se muestre |
+| Migración SQL | UPDATE masivo `personas.pais_nacimiento` para mapear labels existentes a códigos ISO |
 

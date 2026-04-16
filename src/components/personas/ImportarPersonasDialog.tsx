@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Upload, CheckCircle2, AlertCircle, AlertTriangle, FileSpreadsheet, X, ChevronDown, ChevronRight, Copy, Check, Merge } from 'lucide-react';
 import { CopyableCell } from '@/components/shared/CopyableCell';
+import { ImportProgress } from '@/components/shared/ImportProgress';
 import { useToast } from '@/hooks/use-toast';
 import { personaService } from '@/services/personaService';
 import { PersonaImportRow, parsearArchivoPersonas } from '@/utils/personaPlantilla';
@@ -152,6 +153,7 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
   const handleImport = async () => {
     if (importableRows.length === 0) return;
     setImporting(true);
+    setProgress({ current: 0, total: importableRows.length });
     try {
       const personas = importableRows.map(r => ({
         tipoDocumento: r.tipoDocumento,
@@ -169,7 +171,12 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
           ? { nombre: r.contactoEmergenciaNombre, telefono: r.contactoEmergenciaTelefono, parentesco: r.contactoEmergenciaParentesco }
           : { nombre: '', telefono: '', parentesco: '' },
       }));
-      const res = await personaService.upsertBulk(personas as any, existingDocs, updateExisting);
+      const res = await personaService.upsertBulk(
+        personas as any,
+        existingDocs,
+        updateExisting,
+        (current, total) => setProgress({ current, total }),
+      );
       setResult(res);
       queryClient.invalidateQueries({ queryKey: ['personas'] });
       const parts = [];

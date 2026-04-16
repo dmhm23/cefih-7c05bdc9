@@ -11,6 +11,7 @@ import {
 import { DateField } from "@/components/shared/DateField";
 import { useAgregarFechaAdicional, useEditarFechaAdicional } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { FechaAdicionalMinTrabajo } from "@/types/curso";
 
 interface AddFechaMinTrabajoDialogProps {
@@ -22,6 +23,7 @@ interface AddFechaMinTrabajoDialogProps {
 
 export function AddFechaMinTrabajoDialog({ open, onOpenChange, cursoId, fechaEditar }: AddFechaMinTrabajoDialogProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const agregarFecha = useAgregarFechaAdicional();
   const editarFecha = useEditarFechaAdicional();
   const [fecha, setFecha] = useState("");
@@ -45,9 +47,11 @@ export function AddFechaMinTrabajoDialog({ open, onOpenChange, cursoId, fechaEdi
       if (isEditing && fechaEditar) {
         await editarFecha.mutateAsync({ cursoId, fechaId: fechaEditar.id, data: { fecha, motivo: motivo.trim() } });
         toast({ title: "Fecha adicional actualizada" });
+        logActivity({ action: "editar", module: "cursos", description: `Editó fecha adicional MinTrabajo (${fecha})`, entityType: "curso", entityId: cursoId, metadata: { fecha, motivo: motivo.trim() } });
       } else {
         await agregarFecha.mutateAsync({ id: cursoId, data: { fecha, motivo: motivo.trim() } });
         toast({ title: "Fecha adicional agregada" });
+        logActivity({ action: "crear", module: "cursos", description: `Agregó fecha adicional MinTrabajo (${fecha})`, entityType: "curso", entityId: cursoId, metadata: { fecha, motivo: motivo.trim() } });
       }
       setFecha("");
       setMotivo("");

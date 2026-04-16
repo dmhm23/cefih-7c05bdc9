@@ -10,6 +10,7 @@ import { AddFechaMinTrabajoDialog } from "@/components/cursos/AddFechaMinTrabajo
 import { Curso, FechaAdicionalMinTrabajo } from "@/types/curso";
 import { useActualizarMinTrabajo, useEliminarFechaAdicional } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { parseLocalDate } from "@/utils/dateUtils";
@@ -21,6 +22,7 @@ interface MinTrabajoCardProps {
 
 export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const actualizarMinTrabajo = useActualizarMinTrabajo();
   const eliminarFecha = useEliminarFechaAdicional();
 
@@ -41,6 +43,7 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
         },
       });
       toast({ title: "Registro MinTrabajo actualizado" });
+      logActivity({ action: "editar", module: "cursos", description: `Actualizó registro MinTrabajo del curso ${curso.nombre}`, entityType: "curso", entityId: curso.id, metadata: { registro, fechaPrincipal } });
       setDirty(false);
     } catch {
       toast({ title: "Error al actualizar", variant: "destructive" });
@@ -52,6 +55,7 @@ export function MinTrabajoCard({ curso, readOnly }: MinTrabajoCardProps) {
     try {
       await eliminarFecha.mutateAsync({ cursoId: curso.id, fechaId: fechaToDelete });
       toast({ title: "Fecha adicional eliminada" });
+      logActivity({ action: "eliminar", module: "cursos", description: `Eliminó fecha adicional MinTrabajo del curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
       setFechaToDelete(null);
     } catch {
       toast({ title: "Error al eliminar", variant: "destructive" });

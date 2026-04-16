@@ -330,9 +330,21 @@ export const cursoService = {
   },
 
   async delete(id: string): Promise<void> {
+    const now = new Date().toISOString();
+
+    // Soft-delete all active matriculas of this course first
+    // The DB trigger will cascade to cartera automatically
+    const { error: matError } = await supabase
+      .from('matriculas')
+      .update({ deleted_at: now, activo: false })
+      .eq('curso_id', id)
+      .is('deleted_at', null);
+
+    if (matError) handleSupabaseError(matError);
+
     const { error } = await supabase
       .from('cursos')
-      .update({ deleted_at: new Date().toISOString(), activo: false })
+      .update({ deleted_at: now, activo: false })
       .eq('id', id);
 
     if (error) handleSupabaseError(error);

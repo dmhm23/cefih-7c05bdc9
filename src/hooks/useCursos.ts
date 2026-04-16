@@ -167,3 +167,34 @@ export const useEliminarFechaAdicional = () => {
     },
   });
 };
+
+// ============ ADJUNTOS MINTRABAJO ============
+export const useAdjuntosMinTrabajo = (cursoId: string, fechaId?: string | null) => {
+  return useQuery({
+    queryKey: ['curso', cursoId, 'mintrabajo-adjuntos', fechaId ?? 'principal'],
+    queryFn: () => cursoService.listAdjuntosMinTrabajo(cursoId, fechaId),
+    enabled: !!cursoId,
+  });
+};
+
+export const useAddAdjuntoMinTrabajo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ cursoId, file, fechaId }: { cursoId: string; file: File; fechaId?: string | null }) =>
+      cursoService.addAdjuntoMinTrabajo(cursoId, file, fechaId),
+    onSuccess: (_, { cursoId, fechaId }) => {
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId, 'mintrabajo-adjuntos', fechaId ?? 'principal'] });
+    },
+  });
+};
+
+export const useDeleteAdjuntoMinTrabajo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ adjuntoId }: { adjuntoId: string; cursoId: string; fechaId?: string | null }) =>
+      cursoService.deleteAdjuntoMinTrabajo(adjuntoId),
+    onSuccess: (_, { cursoId, fechaId }) => {
+      queryClient.invalidateQueries({ queryKey: ['curso', cursoId, 'mintrabajo-adjuntos', fechaId ?? 'principal'] });
+    },
+  });
+};

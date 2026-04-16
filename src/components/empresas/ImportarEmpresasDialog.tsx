@@ -216,9 +216,12 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
                 <CheckCircle2 className="h-3 w-3" /> {validRows.length} válidas
               </Badge>
               {errorRows.length > 0 && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertCircle className="h-3 w-3" /> {errorRows.length} con errores
-                </Badge>
+                <>
+                  <Badge variant="destructive" className="gap-1">
+                    <AlertCircle className="h-3 w-3" /> {errorRows.length} con errores
+                  </Badge>
+                  <CopyAllErrorsButton errorRows={errorRows} />
+                </>
               )}
             </div>
 

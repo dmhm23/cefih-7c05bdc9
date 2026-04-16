@@ -67,6 +67,7 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
   const [rows, setRows] = useState<PersonaImportRow[]>([]);
   const [fileName, setFileName] = useState('');
   const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<{ created: number; updated: number; skipped: number; errors: { row: number; error: string }[] } | null>(null);
   const [filter, setFilter] = useState<FilterTab>('todas');
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());

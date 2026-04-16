@@ -137,6 +137,11 @@ export default function FormatoEditorPage() {
       return;
     }
 
+    // Extraer código y versión del bloque encabezado (si existe)
+    const headerBlock = items.find(it => it.type === 'document_header') as any;
+    const codigo = headerBlock?.props?.codigo || '';
+    const version = headerBlock?.props?.version || '';
+
     // Extract flat bloques from items (row2 cols become inline)
     const bloques: Bloque[] = [];
     for (const item of items) {
@@ -151,8 +156,8 @@ export default function FormatoEditorPage() {
     const data: FormatoFormacionFormData = {
       nombre: config.nombre,
       descripcion: config.descripcion,
-      codigo: config.codigo,
-      version: config.version,
+      codigo,
+      version,
       asignacionScope: config.asignacionScope,
       nivelFormacionIds: config.nivelFormacionIds,
       visibleEnMatricula: config.visibleEnMatricula,

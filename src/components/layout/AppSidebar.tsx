@@ -1,4 +1,5 @@
 import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2, Shield, Activity } from "lucide-react";
+import logoFih from "@/assets/logo-fih.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -75,12 +76,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border/50 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
-            S
-          </div>
+          <img src={logoFih} alt="FIH Instructores" className="h-10 w-10 rounded-lg object-contain" />
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="font-semibold text-foreground">SAFA</span>
+              <span className="font-semibold text-foreground">FIH Instructores</span>
               <span className="text-xs text-muted-foreground">Sistema Administrativo</span>
             </div>
           )}

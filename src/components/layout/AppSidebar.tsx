@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useMemo } from "react";
 
 const menuItems = [

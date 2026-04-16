@@ -194,6 +194,18 @@ export function AppSidebar() {
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith("/admin/logs")}
+                    tooltip="Logs de Actividad"
+                  >
+                    <button onClick={() => navigate("/admin/logs")} className="w-full">
+                      <Activity className="h-4 w-4" />
+                      <span>Logs de Actividad</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

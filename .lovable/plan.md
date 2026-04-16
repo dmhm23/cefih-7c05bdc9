@@ -1,166 +1,132 @@
 
 
-# Plan: Rediseño del Sistema de Logs — Precisión y Cobertura Completa
+# Plan: Soft-delete en cascada hacia Cartera
 
-## Diagnóstico del estado actual
+## Problema
 
-### Lo que funciona bien
-- Arquitectura **fire-and-forget** sólida: no bloquea operaciones principales
-- El `ActivityLoggerContext` con auto-log de navegación es correcto
-- La tabla `user_activity_logs` tiene una estructura flexible (metadata JSONB)
-- ~40 puntos de instrumentación distribuidos en 22 archivos
+Cuando se hace soft-delete de una matrícula (directamente o como consecuencia de eliminar un curso/persona), los datos de cartera asociados quedan activos: grupos, facturas, pagos y actividades siguen visibles y contabilizando.
 
-### Problemas identificados
+## Análisis de la cadena
 
-**1. Descripciones genéricas sin contexto útil**
-- `"Editó pago"` → no dice monto, factura ni grupo
-- `"Cambió rol de usuario"` → no dice a qué rol cambió
-- `"Agregó 3 estudiante(s) al curso"` → no dice cuáles estudiantes ni qué curso
-- `"Archivó formato"` → no dice nombre del formato
+- **Persona** → actualmente bloquea eliminación si tiene matrículas activas (no aplica cascada).
+- **Curso** → soft-delete del curso NO elimina las matrículas asociadas automáticamente. Primero hay que propagar.
+- **Matrícula** → es el punto de unión con cartera vía `grupo_cartera_matriculas`.
 
-**2. Falta de metadata estructurada**
-- La mayoría de llamadas pasan `metadata` vacío o no lo usan
-- No se registran campos modificados, valores anteriores/nuevos, montos, nombres de archivos
+## Solución: Trigger de base de datos + ajuste en servicio de cursos
 
-**3. Acciones sin instrumentar (~30 puntos ciegos)**
+### 1. Trigger SQL: al soft-delete de matrícula, limpiar cartera
 
-| Área | Acciones sin log |
+Cuando `matriculas.deleted_at` cambia de NULL a un valor:
+1. Buscar el grupo de cartera vinculado vía `grupo_cartera_matriculas`
+2. Eliminar el vínculo en `grupo_cartera_matriculas`
+3. Recalcular el grupo con `recalcular_grupo_cartera()`
+4. Si el grupo queda sin matrículas vinculadas → soft-delete del grupo, sus facturas y pagos
+5. Registrar actividad en `actividades_cartera`
+
+### 2. Servicio de cursos: al soft-delete de curso, soft-delete de sus matrículas
+
+`cursoService.delete()` actualmente solo marca el curso como eliminado. Se debe agregar que también haga soft-delete de todas las matrículas activas del curso. El trigger del paso 1 se encargará de la cascada hacia cartera.
+
+### 3. Persona: sin cambios
+
+Ya bloquea eliminación si tiene matrículas activas (`PERSONA_CON_MATRICULAS`), por lo que no hay caso de cascada.
+
+## Migración SQL
+
+```sql
+CREATE OR REPLACE FUNCTION public.cascade_softdelete_matricula_cartera()
+  RETURNS trigger
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  SET search_path TO 'public'
+AS $$
+DECLARE
+  _grupo_id UUID;
+  _matriculas_restantes INTEGER;
+BEGIN
+  -- Solo actuar cuando deleted_at cambia de NULL a un valor
+  IF OLD.deleted_at IS NOT NULL OR NEW.deleted_at IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Encontrar grupo de cartera vinculado
+  SELECT grupo_cartera_id INTO _grupo_id
+  FROM public.grupo_cartera_matriculas
+  WHERE matricula_id = NEW.id;
+
+  IF _grupo_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Eliminar el vínculo
+  DELETE FROM public.grupo_cartera_matriculas
+  WHERE matricula_id = NEW.id;
+
+  -- Contar matrículas restantes en el grupo
+  SELECT count(*) INTO _matriculas_restantes
+  FROM public.grupo_cartera_matriculas
+  WHERE grupo_cartera_id = _grupo_id;
+
+  IF _matriculas_restantes = 0 THEN
+    -- Soft-delete de pagos de las facturas del grupo
+    UPDATE public.facturas
+    SET estado = 'anulada', updated_at = now()
+    WHERE grupo_cartera_id = _grupo_id;
+
+    -- Soft-delete del grupo
+    UPDATE public.grupos_cartera
+    SET estado = 'pagado', saldo = 0, total_valor = 0, 
+        total_abonos = 0, updated_at = now()
+    WHERE id = _grupo_id;
+
+    -- Registrar actividad
+    INSERT INTO public.actividades_cartera 
+      (grupo_cartera_id, tipo, descripcion, fecha)
+    VALUES (_grupo_id, 'sistema', 
+      'Grupo liquidado automáticamente por eliminación de matrícula(s)', now());
+  ELSE
+    -- Recalcular con las matrículas restantes
+    PERFORM public.recalcular_grupo_cartera(_grupo_id);
+
+    INSERT INTO public.actividades_cartera 
+      (grupo_cartera_id, tipo, descripcion, fecha)
+    VALUES (_grupo_id, 'sistema', 
+      'Matrícula desvinculada por soft-delete', now());
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_cascade_softdelete_matricula_cartera
+  AFTER UPDATE OF deleted_at ON public.matriculas
+  FOR EACH ROW
+  EXECUTE FUNCTION public.cascade_softdelete_matricula_cartera();
+```
+
+**Nota**: El enum `estado_factura` no tiene valor `'anulada'`. Si no se puede agregar, las facturas simplemente no se tocan y el grupo se recalcula a saldo 0. Se verificará el enum antes de la migración final.
+
+## Código a modificar
+
+| Archivo | Cambio |
 |---|---|
-| **PersonalDetailSheet** | Editar perfil, guardar/eliminar firma, subir/eliminar adjuntos |
-| **MatriculaDetallePage** | Subir documentos, capturar firma, cambiar estado docs |
-| **DocumentosCarga** | Upload de cada documento requerido |
-| **ImportarEmpresasDialog** | Importación masiva (nuevo) |
-| **EmpresaDetailSheet** | Edición inline de empresa |
-| **PersonaDetailSheet** | Edición inline de persona |
-| **PortalFormatoRenderer** | Estudiante completa/firma formato |
-| **ExportarListadoDialog** | Exportación de listados |
-| **GenerarPdfsDialog** | Generación masiva de PDFs |
-| **GeneracionMasivaDialog** | Generación masiva de certificados |
-| **RegistrarPagoDialog** | Le falta metadata del monto |
-| **Login** | No se registra el inicio de sesión |
+| Nueva migración SQL | Trigger `cascade_softdelete_matricula_cartera` |
+| `src/services/cursoService.ts` | En `delete()`, agregar soft-delete de matrículas del curso antes del soft-delete del curso |
 
-## Propuesta de solución
-
-### Estrategia: Enriquecimiento progresivo en componentes
-
-La mejor opción es **mantener la arquitectura actual** (context + `logActivity()` en componentes) pero mejorarla en dos dimensiones:
-
-1. **Enriquecer los logs existentes** con descripciones precisas y metadata estructurada
-2. **Instrumentar los puntos ciegos** donde no hay logs
-
-No se recomienda un enfoque de interceptores o edge functions porque:
-- Las acciones relevantes ya tienen callbacks claros (`onSuccess`, `try/catch`)
-- El contexto semántico (nombre de entidad, campos modificados) solo está disponible en el componente
-- Un interceptor genérico de Supabase produciría logs técnicos, no descriptivos
-
-### Cambios concretos
-
-#### Fase 1: Enriquecer logs existentes (~20 archivos)
-
-Patrón de mejora — Ejemplo antes/después:
+## Flujo resultante
 
 ```text
-ANTES:
-logActivity({ action: "editar", module: "cartera", description: "Editó pago", entityType: "pago", entityId: pago.id })
+Eliminar Curso
+  └─ cursoService.delete() soft-deletes matrículas del curso
+       └─ Trigger DB: por cada matrícula soft-deleted
+            └─ Desvincula de grupo_cartera_matriculas
+            └─ Si grupo queda vacío → liquida grupo + registra actividad
+            └─ Si no → recalcula grupo + registra actividad
 
-DESPUÉS:
-logActivity({
-  action: "editar",
-  module: "cartera",
-  description: `Editó pago de $${pago.valorPago} en factura ${factura.numeroFactura}`,
-  entityType: "pago",
-  entityId: pago.id,
-  metadata: {
-    factura_id: factura.id,
-    valor_anterior: oldValor,
-    valor_nuevo: newValor,
-    metodo_pago: pago.metodoPago,
-  }
-})
+Eliminar Matrícula (directa)
+  └─ Trigger DB: misma lógica
+
+Eliminar Persona
+  └─ Bloqueada si tiene matrículas activas (sin cambio)
 ```
-
-Cada log existente se revisará para:
-- Incluir **nombre/identificador** de la entidad en la descripción
-- Incluir **valores relevantes** en metadata (montos, campos modificados, nombres de archivos)
-- Usar **verbos precisos** en la descripción: "Subió documento de cédula para Juan Pérez" en vez de "Editó matrícula"
-
-#### Fase 2: Instrumentar puntos ciegos (~12 componentes)
-
-| Componente | Acciones a instrumentar |
-|---|---|
-| `PersonalDetailSheet` | `editar` perfil, `subir` firma, `eliminar` firma, `subir` adjunto, `eliminar` adjunto |
-| `MatriculaDetallePage` | `subir` documento requerido, `capturar` firma |
-| `DocumentosCarga` | `subir` archivo por tipo de documento |
-| `ImportarEmpresasDialog` | `importar` empresas masivas (con conteo) |
-| `EmpresaDetailSheet` | `editar` empresa inline |
-| `PersonaDetailSheet` | `editar` persona inline |
-| `ExportarListadoDialog` | `exportar` listado con formato y columnas |
-| `GenerarPdfsDialog` | `generar` PDFs masivos |
-| `GeneracionMasivaDialog` | `generar` certificados masivos |
-| `LoginForm` | `login` exitoso |
-| `PortalFormatoRenderer` | `completar` formato por estudiante |
-| `MainLayout` | `logout` (mover desde AppSidebar si aplica) |
-
-#### Fase 3: Registrar login en `LoginForm.tsx`
-
-```typescript
-logActivity({ action: "login", module: "auth", description: "Inició sesión" });
-```
-
-### Nuevas acciones a agregar al catálogo
-
-| Acción | Uso |
-|---|---|
-| `subir` | Upload de archivo/documento/adjunto |
-| `importar` | Importación masiva desde archivo |
-| `completar` | Formato completado por estudiante |
-| `capturar` | Captura de firma digital |
-| `generar_masivo` | Generación masiva (certificados, PDFs) |
-
-### Archivos a modificar
-
-| Archivo | Tipo de cambio |
-|---|---|
-| `src/pages/cursos/CursoDetallePage.tsx` | Enriquecer metadata |
-| `src/pages/cursos/CursoFormPage.tsx` | Enriquecer descripción |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | Enriquecer + agregar logs de docs/firma |
-| `src/pages/matriculas/MatriculaFormPage.tsx` | Enriquecer metadata |
-| `src/pages/personas/PersonaFormPage.tsx` | Enriquecer metadata |
-| `src/pages/empresas/EmpresaFormPage.tsx` | Enriquecer metadata |
-| `src/pages/formatos/FormatosPage.tsx` | Enriquecer descripción |
-| `src/pages/formatos/FormatoEditorPage.tsx` | Enriquecer metadata |
-| `src/pages/certificacion/PlantillaEditorPage.tsx` | Enriquecer metadata |
-| `src/pages/personal/PersonalFormPage.tsx` | Enriquecer metadata |
-| `src/pages/niveles/NivelFormPage.tsx` | Enriquecer metadata |
-| `src/pages/niveles/NivelDetallePage.tsx` | Enriquecer metadata |
-| `src/components/personal/PersonalDetailSheet.tsx` | **Nuevo**: logs de firma/adjuntos/edición |
-| `src/components/empresas/ImportarEmpresasDialog.tsx` | **Nuevo**: log de importación masiva |
-| `src/components/empresas/EmpresaDetailSheet.tsx` | **Nuevo**: log de edición inline |
-| `src/components/personas/PersonaDetailSheet.tsx` | **Nuevo**: log de edición inline |
-| `src/components/matriculas/DocumentosCarga.tsx` | **Nuevo**: log de upload de documentos |
-| `src/components/cursos/ExportarListadoDialog.tsx` | **Nuevo**: log de exportación |
-| `src/components/cursos/GenerarPdfsDialog.tsx` | **Nuevo**: log de generación masiva |
-| `src/components/cursos/GeneracionMasivaDialog.tsx` | **Nuevo**: log de certificados masivos |
-| `src/components/cartera/EditarPagoDialog.tsx` | Enriquecer con montos |
-| `src/components/cartera/RegistrarPagoDialog.tsx` | Enriquecer con montos |
-| `src/components/cartera/CrearFacturaDialog.tsx` | Enriquecer con datos factura |
-| `src/components/cartera/EditarFacturaDialog.tsx` | Enriquecer con datos factura |
-| `src/components/admin/UsuariosTab.tsx` | Enriquecer (incluir nombre de rol) |
-| `src/components/admin/RolesTab.tsx` | Enriquecer (incluir permisos) |
-| `src/components/LoginForm.tsx` | **Nuevo**: log de login |
-| `src/components/cursos/EnrollmentsTable.tsx` | Enriquecer (nombre estudiante) |
-| `src/pages/admin/UserActivityLogPage.tsx` | Agregar nuevas acciones al filtro y colores |
-| `Docs/sistemaLogs.md` | Actualizar documentación |
-
-### Principios que se mantienen
-
-- **Fire-and-forget**: sin `await`, sin bloqueo
-- **Independencia total**: si se quita un log, nada se rompe
-- **Sin dependencias nuevas**: no se agregan librerías, edge functions ni interceptores
-- **Misma tabla y schema**: `user_activity_logs` no cambia de estructura
-- **Metadata JSONB flexible**: cada acción incluye datos específicos sin cambiar el schema
-
-### Estimación
-
-~30 archivos a modificar, la mayoría con cambios de 2-10 líneas por punto de instrumentación. Es un trabajo extenso pero mecánico y seguro.
 

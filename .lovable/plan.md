@@ -1,57 +1,43 @@
 
 
-# Fix: Rol Auxiliar no puede persistir documentos de requisitos
+# Fix: Auxiliar no puede eliminar (soft-delete) personas ni empresas
 
 ## Diagnóstico
 
-El problema tiene **dos puntos de fallo**:
-
-1. **RLS en tabla `documentos_matricula`**: La política de escritura (`Admin gestiona documentos_matricula`) solo permite UPDATE/INSERT/DELETE a `superadministrador` y `administrador`. El rol "Auxiliar", aunque tiene permisos `matriculas:editar`, es bloqueado por RLS al intentar actualizar el registro del documento tras subirlo.
-
-2. **El archivo sí se sube a Storage** (la política `Autenticados suben archivos` permite a cualquier autenticado subir), pero el UPDATE posterior en `documentos_matricula` para registrar el path, nombre y estado falla silenciosamente por RLS. Resultado: archivo huérfano en storage, registro sin cambios en la tabla.
+Las tablas `personas` y `empresas` tienen la política `"Admin gestiona..."` que solo permite UPDATE/INSERT/DELETE a `superadministrador` y `administrador`. El rol Auxiliar, aunque tenga permisos `personas:editar` y `empresas:editar`, es bloqueado por RLS. La operación de soft-delete (UPDATE de `deleted_at`) falla silenciosamente.
 
 ## Solución
 
-Reemplazar la política RLS hardcodeada de `documentos_matricula` por una que use la función `has_permission()` ya existente. Lo mismo aplica para la tabla `matriculas`, que también tiene políticas hardcodeadas a solo admin/superadmin.
+Reemplazar las políticas RLS hardcodeadas por políticas basadas en `has_permission()`, igual que se hizo para `matriculas` y `documentos_matricula`.
 
-### Cambios en base de datos (migración SQL)
-
-**Tabla `documentos_matricula`** — reemplazar política ALL:
+### Migración SQL
 
 ```sql
--- Eliminar política restrictiva actual
-DROP POLICY "Admin gestiona documentos_matricula" ON public.documentos_matricula;
+-- personas
+DROP POLICY "Admin gestiona personas" ON public.personas;
+CREATE POLICY "Usuarios con permiso gestionan personas"
+  ON public.personas FOR ALL TO authenticated
+  USING (public.has_permission(auth.uid(), 'personas', 'editar'))
+  WITH CHECK (public.has_permission(auth.uid(), 'personas', 'editar'));
 
--- Nueva política: usuarios con permiso matriculas:editar pueden gestionar
-CREATE POLICY "Usuarios con permiso gestionan documentos_matricula"
-  ON public.documentos_matricula FOR ALL
-  TO authenticated
-  USING (public.has_permission(auth.uid(), 'matriculas', 'editar'))
-  WITH CHECK (public.has_permission(auth.uid(), 'matriculas', 'editar'));
+-- empresas
+DROP POLICY "Admin gestiona empresas" ON public.empresas;
+CREATE POLICY "Usuarios con permiso gestionan empresas"
+  ON public.empresas FOR ALL TO authenticated
+  USING (public.has_permission(auth.uid(), 'empresas', 'editar'))
+  WITH CHECK (public.has_permission(auth.uid(), 'empresas', 'editar'));
 ```
 
-**Tabla `matriculas`** — misma corrección:
+### Por qué es seguro
 
-```sql
-DROP POLICY "Admin gestiona matriculas" ON public.matriculas;
+- `has_permission()` es `SECURITY DEFINER` y valida contra `rol_permisos`
+- Superadmin retorna `TRUE` para todo
+- Solo los roles con permiso explícito `personas:editar` o `empresas:editar` podrán modificar datos
+- Las políticas SELECT existentes no se tocan — todos los autenticados siguen pudiendo leer
 
-CREATE POLICY "Usuarios con permiso gestionan matriculas"
-  ON public.matriculas FOR ALL
-  TO authenticated
-  USING (public.has_permission(auth.uid(), 'matriculas', 'editar'))
-  WITH CHECK (public.has_permission(auth.uid(), 'matriculas', 'editar'));
-```
-
-### Por qué esto es seguro
-
-- `has_permission()` es `SECURITY DEFINER` y ya valida contra `rol_permisos`
-- El rol Auxiliar tiene explícitamente `matriculas:editar`, así que pasará la verificación
-- Superadmin retorna `TRUE` para todo dentro de `has_permission()`
-- No se cambia código del frontend, solo las políticas de acceso en la base de datos
-
-### Archivo a modificar
+### Recurso a modificar
 
 | Recurso | Cambio |
 |---|---|
-| Nueva migración SQL | Reemplazar políticas RLS de `documentos_matricula` y `matriculas` para usar `has_permission()` en lugar de roles hardcodeados |
+| Nueva migración SQL | Reemplazar políticas RLS de `personas` y `empresas` para usar `has_permission()` |
 

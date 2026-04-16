@@ -197,7 +197,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
             </Tabs>
 
             {/* Table */}
-            <ScrollArea className="max-h-[300px] border rounded-md">
+            <ScrollArea className="max-h-[45vh] border rounded-md">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>

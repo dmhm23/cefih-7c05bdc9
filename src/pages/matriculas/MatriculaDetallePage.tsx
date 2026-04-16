@@ -78,6 +78,7 @@ export default function MatriculaDetallePage() {
   const location = useLocation();
   const fromPath = (location.state as { from?: string })?.from || "/matriculas";
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [pagoDialogOpen, setPagoDialogOpen] = useState(false);
   const [facturaNumero, setFacturaNumero] = useState("");
   const [formData, setFormData] = useState<Record<string, unknown>>({});
@@ -165,6 +166,7 @@ export default function MatriculaDetallePage() {
       });
       setHasGrupoCartera(true);
       toast({ title: "Matrícula vinculada a cartera correctamente" });
+      logActivity({ action: "crear", module: "cartera", description: `Vinculó matrícula a cartera`, entityType: "matricula", entityId: id });
     } catch (e: any) {
       toast({ title: "Error al sincronizar cartera", description: e.message, variant: "destructive" });
     } finally {
@@ -402,6 +404,7 @@ export default function MatriculaDetallePage() {
       }
 
       toast({ title: "Cambios guardados correctamente" });
+      logActivity({ action: "editar", module: "matriculas", description: `Editó la matrícula`, entityType: "matricula", entityId: matricula.id });
       setFormData({});
       setIsDirty(false);
     } catch {
@@ -443,6 +446,7 @@ export default function MatriculaDetallePage() {
     try {
       await registrarPago.mutateAsync({ id: matricula.id, datosPago: { ctaFactNumero: facturaNumero } });
       toast({ title: "Pago registrado correctamente" });
+      logActivity({ action: "crear", module: "matriculas", description: `Registró pago en matrícula`, entityType: "matricula", entityId: matricula.id });
       setPagoDialogOpen(false);
       setFacturaNumero("");
     } catch {

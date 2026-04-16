@@ -163,27 +163,8 @@ export const personaService = {
     onProgress?: (current: number, total: number) => void,
     onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
-    const errors: { row: number; error: string }[] = [];
-    let created = 0;
-    for (let i = 0; i < personas.length; i++) {
-      const p = personas[i];
-      const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
-      const t0 = performance.now();
-      onLog?.('debug', `[${i + 1}/${personas.length}] Insertando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
-      try {
-        await this.create(p);
-        const dt = Math.round(performance.now() - t0);
-        onLog?.('success', `[${i + 1}/${personas.length}] OK en ${dt}ms`);
-        created++;
-      } catch (err: any) {
-        const dt = Math.round(performance.now() - t0);
-        const msg = err?.message || 'Error desconocido';
-        onLog?.('error', `[${i + 1}/${personas.length}] Falló "${label}" en ${dt}ms — ${msg}`);
-        errors.push({ row: i + 2, error: msg });
-      }
-      onProgress?.(i + 1, personas.length);
-    }
-    return { created, errors };
+    const result = await this._batchInsert(personas, 0, onProgress, onLog);
+    return { created: result.created, errors: result.errors };
   },
 
   async checkExisting(documentos: string[]): Promise<Set<string>> {

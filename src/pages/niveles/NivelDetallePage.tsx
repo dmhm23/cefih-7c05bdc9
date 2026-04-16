@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { ArrowLeft, Pencil, Trash2, FileText, Clock, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
@@ -17,6 +18,7 @@ export default function NivelDetallePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [showDelete, setShowDelete] = useState(false);
 
   const { data: nivel, isLoading } = useNivelFormacion(id || "");
@@ -46,6 +48,7 @@ export default function NivelDetallePage() {
     try {
       await deleteNivel.mutateAsync(nivel.id);
       toast({ title: "Nivel eliminado correctamente" });
+      logActivity({ action: "eliminar", module: "niveles", description: `Eliminó nivel ${nivel.nombreNivel}`, entityType: "nivel", entityId: nivel.id });
       navigate("/niveles");
     } catch (err: any) {
       toast({ title: err?.message || "Error al eliminar el nivel", variant: "destructive" });

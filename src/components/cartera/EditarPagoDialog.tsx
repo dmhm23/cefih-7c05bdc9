@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ const formatCurrency = (v: number) =>
 
 export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updatePago = useUpdatePago();
   const deletePago = useDeletePago();
 
@@ -79,6 +81,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
     });
 
     toast({ title: "Pago actualizado exitosamente" });
+    logActivity({ action: "editar", module: "cartera", description: `Editó pago`, entityType: "pago", entityId: pago.id });
     onOpenChange(false);
   };
 
@@ -86,6 +89,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
     if (!pago) return;
     await deletePago.mutateAsync(pago.id);
     toast({ title: "Pago eliminado exitosamente" });
+    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó pago`, entityType: "pago", entityId: pago.id });
     setShowDeleteConfirm(false);
     onOpenChange(false);
   };

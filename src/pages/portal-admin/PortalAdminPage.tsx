@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ import {
 
 export default function PortalAdminPage() {
   const [confirmDesactivar, setConfirmDesactivar] = useState(false);
+  const { logActivity } = useActivityLogger();
   const { data: config, isLoading } = usePortalAdminConfig();
   const saveDoc = useSaveDocumentoConfig();
   const deleteDoc = useDeleteDocumentoConfig();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ interface Props {
 
 export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = [], personas = [], cursos = [] }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updateFactura = useUpdateFactura();
   const deleteFactura = useDeleteFactura();
 
@@ -78,6 +80,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
     });
 
     toast({ title: "Factura actualizada exitosamente" });
+    logActivity({ action: "editar", module: "cartera", description: `Editó factura ${numeroFactura}`, entityType: "factura", entityId: factura.id });
     onOpenChange(false);
   };
 
@@ -85,6 +88,7 @@ export function EditarFacturaDialog({ open, onOpenChange, factura, matriculas = 
     if (!factura) return;
     await deleteFactura.mutateAsync(factura.id);
     toast({ title: "Factura eliminada exitosamente" });
+    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó factura`, entityType: "factura", entityId: factura.id });
     setShowDeleteConfirm(false);
     onOpenChange(false);
   };

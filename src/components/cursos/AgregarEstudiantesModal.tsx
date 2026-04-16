@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { X, Search, UserPlus, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +47,7 @@ export function AgregarEstudiantesModal({
   const { data: niveles = [] } = useNivelesFormacion();
   const agregarEstudiantes = useAgregarEstudiantesCurso();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const getPersona = (personaId: string): Persona | undefined =>
     personas.find((p) => p.id === personaId);
@@ -111,6 +113,7 @@ export function AgregarEstudiantesModal({
       toast({
         title: `${seleccionados.length} estudiante(s) agregado(s) al curso`,
       });
+      logActivity({ action: "crear", module: "cursos", description: `Agregó ${seleccionados.length} estudiante(s) al curso`, entityType: "curso", entityId: cursoId });
       setSeleccionados([]);
       setBusqueda("");
       onOpenChange(false);

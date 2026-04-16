@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ const formatCurrency = (v: number) =>
 
 export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matriculas, personas, cursos }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const createFactura = useCreateFactura();
 
   const [numeroFactura, setNumeroFactura] = useState("");
@@ -81,6 +83,7 @@ export function CrearFacturaDialog({ open, onOpenChange, grupoCarteraId, matricu
     });
 
     toast({ title: "Factura registrada exitosamente" });
+    logActivity({ action: "crear", module: "cartera", description: `Creó factura ${numeroFactura}`, entityType: "factura" });
     onOpenChange(false);
     // Reset
     setSelectedIds([]);

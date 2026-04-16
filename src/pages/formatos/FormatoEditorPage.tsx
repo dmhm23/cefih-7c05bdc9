@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +21,7 @@ export default function FormatoEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const isNew = !id || id === 'nuevo';
 
   const { data: existing, isLoading } = useFormato(isNew ? undefined : id);
@@ -178,9 +180,11 @@ export default function FormatoEditorPage() {
       if (isNew) {
         await createMutation.mutateAsync(data);
         toast({ title: 'Formato creado correctamente' });
+        logActivity({ action: "crear", module: "formatos", description: `Creó formato ${config.nombre}`, entityType: "formato" });
       } else {
         await updateMutation.mutateAsync({ id: id!, data });
         toast({ title: 'Formato actualizado correctamente' });
+        logActivity({ action: "editar", module: "formatos", description: `Editó formato ${config.nombre}`, entityType: "formato", entityId: id });
       }
       store.markClean();
       setSavedOnce(true);

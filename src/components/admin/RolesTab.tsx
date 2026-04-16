@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Edit2, Trash2, Shield, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const ALL_ACCIONES = ["ver", "crear", "editar", "eliminar"];
 
 export default function RolesTab() {
   const { rolesQuery, createRol, updateRol, deleteRol } = useRoles();
+  const { logActivity } = useActivityLogger();
   const roles = rolesQuery.data || [];
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -101,8 +103,10 @@ export default function RolesTab() {
     try {
       if (editingId) {
         await updateRol.mutateAsync({ id: editingId, nombre, descripcion, permisos: permList });
+        logActivity({ action: "editar", module: "admin", description: `Editó rol ${nombre}`, entityType: "rol", entityId: editingId });
       } else {
         await createRol.mutateAsync({ nombre, descripcion, permisos: permList });
+        logActivity({ action: "crear", module: "admin", description: `Creó rol ${nombre}`, entityType: "rol" });
       }
       setDialogOpen(false);
       resetForm();
@@ -114,6 +118,7 @@ export default function RolesTab() {
   const handleDelete = async () => {
     if (!deleteId) return;
     await deleteRol.mutateAsync(deleteId);
+    logActivity({ action: "eliminar", module: "admin", description: `Eliminó rol`, entityType: "rol", entityId: deleteId });
     setDeleteId(null);
   };
 

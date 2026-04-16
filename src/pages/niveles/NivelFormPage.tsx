@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,6 +50,7 @@ export default function NivelFormPage() {
   const isEdit = !!id;
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [newDocName, setNewDocName] = useState("");
 
@@ -141,9 +143,11 @@ export default function NivelFormPage() {
       if (isEdit && id) {
         await updateNivel.mutateAsync({ id, data: payload });
         toast({ title: "Nivel actualizado correctamente" });
+        logActivity({ action: "editar", module: "niveles", description: `Editó nivel ${data.nombreNivel}`, entityType: "nivel", entityId: id });
       } else {
         await createNivel.mutateAsync(payload);
         toast({ title: "Nivel creado correctamente" });
+        logActivity({ action: "crear", module: "niveles", description: `Creó nivel ${data.nombreNivel}`, entityType: "nivel" });
       }
       navigate("/niveles");
     } catch (error: any) {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -66,6 +67,7 @@ export default function PersonalFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const isEditing = !!id;
   const [isSaving, setIsSaving] = useState(false);
 
@@ -192,6 +194,7 @@ export default function PersonalFormPage() {
       if (isEditing) {
         await updatePersonal.mutateAsync({ id, data: personalData });
         toast({ title: "Perfil actualizado correctamente" });
+        logActivity({ action: "editar", module: "personal", description: `Editó perfil ${data.nombres} ${data.apellidos}`, entityType: "personal", entityId: id });
       } else {
         const newPersonal = await createPersonal.mutateAsync(personalData);
 
@@ -208,6 +211,7 @@ export default function PersonalFormPage() {
         }
 
         toast({ title: "Perfil creado correctamente" });
+        logActivity({ action: "crear", module: "personal", description: `Creó perfil ${data.nombres} ${data.apellidos}`, entityType: "personal" });
       }
       navigate("/gestion-personal");
     } catch (error: any) {

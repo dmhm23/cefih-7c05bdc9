@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2, Shield, Activity } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2, Shield, Activity, Database } from "lucide-react";
 import logoFih from "@/assets/logo-fih.png";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -205,6 +205,18 @@ export function AppSidebar() {
                     <button onClick={() => navigate("/admin/logs")} className="w-full">
                       <Activity className="h-4 w-4" />
                       <span>Logs de Actividad</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith("/admin/backups")}
+                    tooltip="Backups"
+                  >
+                    <button onClick={() => navigate("/admin/backups")} className="w-full">
+                      <Database className="h-4 w-4" />
+                      <span>Backups</span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

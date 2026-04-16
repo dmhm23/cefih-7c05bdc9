@@ -1875,6 +1875,168 @@ export type Database = {
         }
         Relationships: []
       }
+      system_backup_restore_logs: {
+        Row: {
+          archivos_restaurados: number
+          backup_id: string | null
+          completado_at: string | null
+          ejecutado_at: string
+          ejecutado_por: string | null
+          ejecutado_por_email: string | null
+          errores: Json
+          estado: Database["public"]["Enums"]["backup_restore_estado"]
+          filas_insertadas: number
+          filas_omitidas: number
+          id: string
+          incluyo_archivos: boolean
+          modo: Database["public"]["Enums"]["backup_restore_modo"]
+          tablas_afectadas: Json
+        }
+        Insert: {
+          archivos_restaurados?: number
+          backup_id?: string | null
+          completado_at?: string | null
+          ejecutado_at?: string
+          ejecutado_por?: string | null
+          ejecutado_por_email?: string | null
+          errores?: Json
+          estado?: Database["public"]["Enums"]["backup_restore_estado"]
+          filas_insertadas?: number
+          filas_omitidas?: number
+          id?: string
+          incluyo_archivos?: boolean
+          modo: Database["public"]["Enums"]["backup_restore_modo"]
+          tablas_afectadas?: Json
+        }
+        Update: {
+          archivos_restaurados?: number
+          backup_id?: string | null
+          completado_at?: string | null
+          ejecutado_at?: string
+          ejecutado_por?: string | null
+          ejecutado_por_email?: string | null
+          errores?: Json
+          estado?: Database["public"]["Enums"]["backup_restore_estado"]
+          filas_insertadas?: number
+          filas_omitidas?: number
+          id?: string
+          incluyo_archivos?: boolean
+          modo?: Database["public"]["Enums"]["backup_restore_modo"]
+          tablas_afectadas?: Json
+        }
+        Relationships: []
+      }
+      system_backup_schedules: {
+        Row: {
+          activo: boolean
+          alcance: Database["public"]["Enums"]["backup_alcance"]
+          created_at: string
+          created_by: string | null
+          cron_job_id: number | null
+          frecuencia_cron: string
+          frecuencia_legible: string
+          id: string
+          nombre: string
+          proxima_ejecucion: string | null
+          retener_n_ultimos: number
+          ultima_ejecucion: string | null
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          alcance?: Database["public"]["Enums"]["backup_alcance"]
+          created_at?: string
+          created_by?: string | null
+          cron_job_id?: number | null
+          frecuencia_cron: string
+          frecuencia_legible?: string
+          id?: string
+          nombre: string
+          proxima_ejecucion?: string | null
+          retener_n_ultimos?: number
+          ultima_ejecucion?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          alcance?: Database["public"]["Enums"]["backup_alcance"]
+          created_at?: string
+          created_by?: string | null
+          cron_job_id?: number | null
+          frecuencia_cron?: string
+          frecuencia_legible?: string
+          id?: string
+          nombre?: string
+          proxima_ejecucion?: string | null
+          retener_n_ultimos?: number
+          ultima_ejecucion?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_backups: {
+        Row: {
+          alcance: Database["public"]["Enums"]["backup_alcance"]
+          archivos_count: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          error_msg: string | null
+          estado: Database["public"]["Enums"]["backup_estado"]
+          filas_count: number
+          id: string
+          manifest: Json
+          origen: Database["public"]["Enums"]["backup_origen"]
+          schedule_id: string | null
+          storage_path: string | null
+          tablas_count: number
+          tamano_bytes: number
+          tamano_db_bytes: number
+          tamano_files_bytes: number
+        }
+        Insert: {
+          alcance?: Database["public"]["Enums"]["backup_alcance"]
+          archivos_count?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          error_msg?: string | null
+          estado?: Database["public"]["Enums"]["backup_estado"]
+          filas_count?: number
+          id?: string
+          manifest?: Json
+          origen?: Database["public"]["Enums"]["backup_origen"]
+          schedule_id?: string | null
+          storage_path?: string | null
+          tablas_count?: number
+          tamano_bytes?: number
+          tamano_db_bytes?: number
+          tamano_files_bytes?: number
+        }
+        Update: {
+          alcance?: Database["public"]["Enums"]["backup_alcance"]
+          archivos_count?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          error_msg?: string | null
+          estado?: Database["public"]["Enums"]["backup_estado"]
+          filas_count?: number
+          id?: string
+          manifest?: Json
+          origen?: Database["public"]["Enums"]["backup_origen"]
+          schedule_id?: string | null
+          storage_path?: string | null
+          tablas_count?: number
+          tamano_bytes?: number
+          tamano_db_bytes?: number
+          tamano_files_bytes?: number
+        }
+        Relationships: []
+      }
       tarifas_empresa: {
         Row: {
           created_at: string
@@ -2123,6 +2285,15 @@ export type Database = {
         | "sura_arl"
         | "suramericana"
         | "otra_arl"
+      backup_alcance: "db_only" | "completo"
+      backup_estado: "en_progreso" | "completado" | "fallido"
+      backup_origen: "manual" | "programado"
+      backup_restore_estado:
+        | "en_progreso"
+        | "completado"
+        | "fallido"
+        | "parcial"
+      backup_restore_modo: "reemplazar" | "enriquecer"
       categoria_formato:
         | "formacion"
         | "evaluacion"
@@ -2417,6 +2588,16 @@ export const Constants = {
         "suramericana",
         "otra_arl",
       ],
+      backup_alcance: ["db_only", "completo"],
+      backup_estado: ["en_progreso", "completado", "fallido"],
+      backup_origen: ["manual", "programado"],
+      backup_restore_estado: [
+        "en_progreso",
+        "completado",
+        "fallido",
+        "parcial",
+      ],
+      backup_restore_modo: ["reemplazar", "enriquecer"],
       categoria_formato: [
         "formacion",
         "evaluacion",

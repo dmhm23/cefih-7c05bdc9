@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, X, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
+import { CopyableCell } from '@/components/shared/CopyableCell';
 import { useToast } from '@/hooks/use-toast';
 import { empresaService } from '@/services/empresaService';
 import { EmpresaImportRow, parsearArchivoEmpresas } from '@/utils/empresaPlantilla';
@@ -230,10 +231,10 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
                           </td>
                           <td className="px-2 py-1.5">{r.rowIndex}</td>
                           <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'nombre') ? 'bg-destructive/15 rounded' : ''}`}>
-                            {r.nombreEmpresa || '—'}
+                            {r.nombreEmpresa ? <CopyableCell value={r.nombreEmpresa} /> : '—'}
                           </td>
                           <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'nit') ? 'bg-destructive/15 rounded' : ''}`}>
-                            {r.nit || '—'}
+                            {r.nit ? <CopyableCell value={r.nit} /> : '—'}
                           </td>
                           <td className={`px-2 py-1.5 ${hasFieldError(r.errors, 'sector') ? 'bg-destructive/15 rounded' : ''}`}>
                             {r.sectorEconomico || '—'}
@@ -254,14 +255,17 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
                         {hasErrors && isExpanded && (
                           <tr key={`${r.rowIndex}-errors`} className="bg-destructive/5">
                             <td colSpan={7} className="px-4 py-2">
-                              <ul className="space-y-1">
-                                {r.errors.map((err, i) => (
-                                  <li key={i} className="flex items-start gap-2 text-xs text-destructive">
-                                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                                    <span>{err}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                              <div className="flex items-start justify-between gap-2">
+                                <ul className="space-y-1 flex-1">
+                                  {r.errors.map((err, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-xs text-destructive">
+                                      <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                                      <span>{err}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                <CopyErrorsButton rowIndex={r.rowIndex} errors={r.errors} />
+                              </div>
                             </td>
                           </tr>
                         )}

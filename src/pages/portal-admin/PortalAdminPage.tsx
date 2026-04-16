@@ -99,7 +99,7 @@ export default function PortalAdminPage() {
             </p>
             <DocumentosCatalogoTable
               documentos={config?.documentos || []}
-              onSave={(doc) => saveDoc.mutate(doc, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Guardó configuración de documento "${doc.label}"`, metadata: { key: doc.key, label: doc.label } }) })}
+              onSave={(doc) => saveDoc.mutate(doc, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Guardó configuración de documento "${doc.key}"`, metadata: { key: doc.key } }) })}
               onDelete={(key) => deleteDoc.mutate(key, { onSuccess: () => logActivity({ action: "eliminar", module: "portal_estudiante", description: `Eliminó documento del catálogo (${key})`, metadata: { key } }) })}
               onReorder={(keys) => updateOrden.mutate(keys, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Reordenó documentos del catálogo` }) })}
             />

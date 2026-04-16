@@ -13,11 +13,13 @@ import { RowActions, createViewAction, createEditAction, createDeleteAction } fr
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
+import { ImportarPersonasDialog } from "@/components/personas/ImportarPersonasDialog";
 import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
 import { fmtDateLocal } from "@/utils/dateUtils";
+import { descargarPlantillaPersonas } from "@/utils/personaPlantilla";
 
 const STORAGE_KEY = "personas_visible_columns";
 

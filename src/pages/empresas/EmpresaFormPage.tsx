@@ -20,6 +20,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { useEmpresa, useCreateEmpresa, useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useEffect, useState } from "react";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { v4 as uuid } from "uuid";

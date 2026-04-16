@@ -26,6 +26,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { usePersona, useCreatePersona, useUpdatePersona } from "@/hooks/usePersonas";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useEffect } from "react";
 import {
   TIPOS_DOCUMENTO,
@@ -67,6 +68,7 @@ export default function PersonaFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const isEditing = !!id;
 
   const { data: persona, isLoading: isLoadingPersona } = usePersona(id || "");
@@ -138,9 +140,11 @@ export default function PersonaFormPage() {
       if (isEditing) {
         await updatePersona.mutateAsync({ id, data: personaData });
         toast({ title: "Persona actualizada correctamente" });
+        logActivity({ action: "editar", module: "personas", description: `Editó persona ${data.nombres} ${data.apellidos}`, entityType: "persona", entityId: id });
       } else {
         await createPersona.mutateAsync(personaData);
         toast({ title: "Persona creada correctamente" });
+        logActivity({ action: "crear", module: "personas", description: `Creó persona ${data.nombres} ${data.apellidos}`, entityType: "persona" });
       }
       navigate("/personas");
     } catch (error: any) {

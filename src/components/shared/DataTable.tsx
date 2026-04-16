@@ -128,6 +128,37 @@ export function DataTable<T extends { id: string }>({
     return sorted;
   }, [data, sortKey, sortDirection, sortColumn]);
 
+  // Reset visible count when data, filter or sort changes
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [data, sortKey, sortDirection, pageSize]);
+
+  // Visible slice for lazy rendering
+  const visibleData = useMemo(
+    () => sortedData.slice(0, visibleCount),
+    [sortedData, visibleCount]
+  );
+  const hasMore = visibleCount < sortedData.length;
+
+  // IntersectionObserver to load more when sentinel is visible
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    const root = scrollContainerRef.current;
+    if (!sentinel || !root) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + pageSize, sortedData.length));
+        }
+      },
+      { root, rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, pageSize, sortedData.length, visibleCount]);
+
   const handleSort = (column: Column<T>) => {
     if (!column.sortable) return;
     const key = column.sortKey || column.key;

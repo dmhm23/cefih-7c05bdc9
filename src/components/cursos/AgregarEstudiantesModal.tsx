@@ -47,6 +47,7 @@ export function AgregarEstudiantesModal({
   const { data: niveles = [] } = useNivelesFormacion();
   const agregarEstudiantes = useAgregarEstudiantesCurso();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const getPersona = (personaId: string): Persona | undefined =>
     personas.find((p) => p.id === personaId);

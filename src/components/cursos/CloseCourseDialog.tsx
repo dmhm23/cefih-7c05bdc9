@@ -40,6 +40,7 @@ export function CloseCourseDialog({
   onFilterPendientes,
 }: CloseCourseDialogProps) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const cambiarEstado = useCambiarEstadoCurso();
   const [step, setStep] = useState<Step>("idle");
   const [matriculasConDocsIncompletos, setMatriculasConDocsIncompletos] = useState<Matricula[]>([]);
@@ -73,6 +74,7 @@ export function CloseCourseDialog({
     try {
       await cambiarEstado.mutateAsync({ id: curso.id, estado: "cerrado" });
       toast({ title: "Curso cerrado exitosamente" });
+      logActivity({ action: "editar", module: "cursos", description: `Cerró el curso ${curso.nombre}`, entityType: "curso", entityId: curso.id });
       onOpenChange(false);
       setStep("idle");
     } catch (error: any) {

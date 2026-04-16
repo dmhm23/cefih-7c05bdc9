@@ -48,6 +48,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const navigate = useNavigate();
   const { data: grupos = [] } = useGruposCartera();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const removerEstudiante = useRemoverEstudianteCurso();
   const generarCertificado = useGenerarCertificado();
   const { data: certificados } = useCertificadosByCurso(curso.id);
@@ -286,6 +287,7 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
         codigo,
       });
       toast({ title: "Certificado generado" });
+      logActivity({ action: "crear", module: "certificacion", description: `Generó certificado individual`, entityType: "certificado", entityId: m.id });
     } catch {
       toast({ title: "Error al generar certificado", variant: "destructive" });
     }

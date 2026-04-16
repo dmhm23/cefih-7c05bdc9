@@ -96,6 +96,7 @@ export default function PlantillaEditorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const { data: plantilla, isLoading } = usePlantilla(id!);
   const { data: niveles = [] } = useNivelesFormacion();
   const updateMutation = useUpdatePlantilla();
@@ -173,6 +174,7 @@ export default function PlantillaEditorPage() {
         },
       });
       toast({ title: 'Plantilla guardada', description: 'Se ha incrementado la versión.' });
+      logActivity({ action: "editar", module: "certificacion", description: `Guardó plantilla ${plantilla?.nombre || ''}`, entityType: "plantilla", entityId: id });
       setIsDirty(false);
     } catch {
       toast({ title: 'Error', description: 'No se pudo guardar la plantilla.', variant: 'destructive' });
@@ -184,6 +186,7 @@ export default function PlantillaEditorPage() {
     try {
       await rollbackMutation.mutateAsync({ id, version });
       toast({ title: 'Versión restaurada', description: `Se restauró la versión ${version}.` });
+      logActivity({ action: "editar", module: "certificacion", description: `Restauró versión ${version} de plantilla`, entityType: "plantilla", entityId: id });
     } catch {
       toast({ title: 'Error', description: 'No se pudo restaurar la versión.', variant: 'destructive' });
     }

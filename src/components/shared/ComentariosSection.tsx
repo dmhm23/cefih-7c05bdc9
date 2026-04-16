@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useComentarios, useCreateComentario, useUpdateComentario, useDeleteComentario } from "@/hooks/useComentarios";
 import { SeccionComentario } from "@/types/comentario";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 
 interface ComentariosSectionProps {
   entidadId: string;
@@ -24,6 +25,7 @@ export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" 
   const updateComentario = useUpdateComentario();
   const deleteComentario = useDeleteComentario();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const [nuevoTexto, setNuevoTexto] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -45,6 +47,7 @@ export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" 
       });
       setNuevoTexto("");
       toast({ title: "Comentario agregado" });
+      logActivity({ action: "crear", module: seccion, description: `Agregó comentario en sección "${seccion}"`, entityType: "comentario", entityId: entidadId, metadata: { seccion, texto: texto.substring(0, 100) } });
     } catch {
       toast({ title: "Error al agregar comentario", variant: "destructive" });
     }
@@ -57,6 +60,7 @@ export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" 
       setEditingId(null);
       setEditingTexto("");
       toast({ title: "Comentario actualizado" });
+      logActivity({ action: "editar", module: seccion, description: `Editó comentario en sección "${seccion}"`, entityType: "comentario", entityId: editingId });
     } catch {
       toast({ title: "Error al actualizar comentario", variant: "destructive" });
     }
@@ -68,6 +72,7 @@ export function ComentariosSection({ entidadId, seccion, titulo = "Comentarios" 
       await deleteComentario.mutateAsync(deleteId);
       setDeleteId(null);
       toast({ title: "Comentario eliminado" });
+      logActivity({ action: "eliminar", module: seccion, description: `Eliminó comentario en sección "${seccion}"`, entityType: "comentario", entityId: deleteId });
     } catch {
       toast({ title: "Error al eliminar comentario", variant: "destructive" });
     }

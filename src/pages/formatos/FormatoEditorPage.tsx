@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';

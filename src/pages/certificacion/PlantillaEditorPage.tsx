@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Save, ArrowLeft, Link2, FileText, Settings2 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";

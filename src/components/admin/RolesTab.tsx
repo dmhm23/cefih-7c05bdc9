@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Edit2, Trash2, Shield, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

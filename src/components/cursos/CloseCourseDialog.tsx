@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { AlertTriangle, ArrowRight, FileWarning } from "lucide-react";
 import {
   Dialog,

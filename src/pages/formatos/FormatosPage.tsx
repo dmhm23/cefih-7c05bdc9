@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
 import { Plus, Copy, Power, PowerOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

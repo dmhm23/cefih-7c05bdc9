@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { X, Search, UserPlus, AlertTriangle } from "lucide-react";
 import {
   Dialog,

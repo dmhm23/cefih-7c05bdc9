@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
 import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

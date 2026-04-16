@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { ArrowLeft, Pencil, Trash2, FileText, Clock, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";

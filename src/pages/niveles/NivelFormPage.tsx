@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";

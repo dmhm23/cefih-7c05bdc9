@@ -581,7 +581,7 @@ export function MatriculaDetailSheet({
                 reopenMutation.mutate(
                   { respuestaId: resp.id, userId: user.id },
                   {
-                    onSuccess: () => toast({ title: 'Formato reabierto' }),
+                    onSuccess: () => { toast({ title: 'Formato reabierto' }); logActivity({ action: "reabrir", module: "formatos", description: `Reabrió formato para matrícula`, entityType: "formato_formacion", entityId: formatoId, metadata: { matricula_id: matricula.id } }); },
                     onError: (e: any) => toast({ title: 'Error', description: e?.message, variant: 'destructive' }),
                   }
                 );

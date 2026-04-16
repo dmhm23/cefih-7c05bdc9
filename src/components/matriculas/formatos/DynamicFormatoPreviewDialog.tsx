@@ -15,6 +15,7 @@ import { useNivelFormacion } from "@/hooks/useNivelesFormacion";
 import { firmaMatriculaService } from "@/services/firmaMatriculaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import type { FormatoFormacion } from "@/types/formatoFormacion";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";

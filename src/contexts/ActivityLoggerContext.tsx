@@ -2,6 +2,7 @@ import { createContext, useContext, useCallback, useEffect, useRef, ReactNode } 
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Json } from "@/integrations/supabase/types";
 
 interface LogActivityParams {
   action: string;
@@ -39,12 +40,7 @@ export function ActivityLoggerProvider({ children }: { children: ReactNode }) {
         action: params.action,
         module: params.module ?? null,
         description: params.description,
-        entity_type: params.entityType ?? null,
-        entity_id: params.entityId ?? null,
-        metadata: params.metadata ?? {},
-        route: location.pathname,
-      };
-      // fire-and-forget
+        metadata: (params.metadata ?? {}) as Json,
       supabase.from("user_activity_logs").insert([row]).then(() => {});
     },
     [user, perfil, location.pathname],

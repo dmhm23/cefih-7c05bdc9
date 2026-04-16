@@ -75,6 +75,7 @@ export function ImportarPersonasDialog({ open, onOpenChange }: Props) {
   const [existingDocs, setExistingDocs] = useState<Set<string>>(new Set());
   const [checkingBD, setCheckingBD] = useState(false);
   const [updateExisting, setUpdateExisting] = useState(false);
+  const logger = useImportLogger();
 
   const validRows = useMemo(() => rows.filter(r => r.errors.length === 0 && !r.duplicadoEnArchivo), [rows]);
   const errorRows = useMemo(() => rows.filter(r => r.errors.length > 0), [rows]);

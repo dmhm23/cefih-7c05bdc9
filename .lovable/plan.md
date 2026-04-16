@@ -1,91 +1,90 @@
-## Análisis
-
-Actualmente el flujo de importación masiva (en `ImportarPersonasDialog` y `ImportarEmpresasDialog`) ejecuta un `for` secuencial llamando a `service.create()` o `service.update()` por cada fila. Solo reporta progreso (current/total) pero el usuario no sabe:
-
-- Qué fila se está procesando
-- Cuánto tarda cada operación
-- Si está creando, actualizando u omitiendo
-- Dónde están los cuellos de botella (parseo, check BD, inserts)
-- Qué errores específicos ocurrieron
-
-Para procesos de 2600+ registros esto es crítico para diagnosticar lentitud (probable causa: 1 request HTTP por fila a Supabase = ~200-500ms por registro).
-
-## Solución
-
-Crear un **panel de logs en tiempo real** debajo de la barra de progreso, alimentado por un sistema reutilizable de logging.
-
-### Componentes nuevos
 
 
-| Archivo                                     | Propósito                                                                                                                                                                                            |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/hooks/useImportLogger.ts`              | Hook que mantiene array de logs en estado, con `log(level, message, meta?)` y `clear()`. Niveles: `info`, `success`, `warn`, `error`, `debug`. Cada entrada incluye timestamp ms relativo al inicio. |
-| `src/components/shared/ImportLogsPanel.tsx` | Panel scrolleable con altura fija (~150px), estilo terminal (mono font, fondo oscuro suave). Auto-scroll al final. Icono+color por nivel. Botón "Copiar logs" y "Descargar .txt". Filtro por nivel.  |
+## Análisis de los logs
 
+**Diagnóstico:**
+- Throughput estable en **~4 reg/s** (~230ms/registro)
+- ETA total: ~165 segundos para 660 registros (~2:45 min)
+- Cada `INSERT` ejecuta: 1 round-trip HTTP a Supabase + RLS + trigger de auditoría + trigger de validación de contacto emergencia + retorno con `.select()`
 
-### Cambios en componentes existentes
+**¿Es normal?** Sí, dado que el código actual hace **1 request HTTP por fila secuencialmente**. Los 230ms son razonables (50-100ms latencia red + 100-150ms procesamiento DB con triggers). El cuello de botella **no es la base de datos**, es la **arquitectura del cliente**.
 
+**Cálculo:** 660 reqs × 230ms = ~152s (coincide con la ETA observada).
 
-| Archivo                                              | Cambio                                                                                                                                                                  |
-| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/components/shared/ImportProgress.tsx`           | Aceptar prop opcional `logs` y renderizar `ImportLogsPanel` debajo de la barra.                                                                                         |
-| `src/components/personas/ImportarPersonasDialog.tsx` | Instanciar `useImportLogger` y emitir logs en cada fase: parseo, check BD, por cada fila (con tiempo de ejecución), errores. Limpiar logs al iniciar nueva importación. |
-| `src/components/empresas/ImportarEmpresasDialog.tsx` | Mismo patrón.                                                                                                                                                           |
-| `src/services/personaService.ts`                     | Aceptar callback opcional `onLog(level, msg, meta)` en `createBulk` y `upsertBulk` para reportar inicio/fin de cada operación con tiempos.                              |
-| `src/services/empresaService.ts`                     | Mismo patrón.                                                                                                                                                           |
+## Oportunidades de optimización
 
+| Estrategia | Mejora estimada | Complejidad |
+|---|---|---|
+| **A. Batch inserts** (50-100 filas por request) | 10-20× más rápido (~10-15s para 660) | Media |
+| **B. Concurrencia limitada** (5-10 inserts en paralelo) | 3-5× más rápido (~30-50s) | Baja |
+| **C. RPC server-side** (función plpgsql que recibe array y hace bulk insert) | 20-30× más rápido (~5-8s) | Alta |
 
-### Detalle de logs emitidos
+**Recomendación: combinar A + B.** Batch insert de Supabase (`.insert([...])` acepta arrays) elimina N round-trips, y procesar varios batches en paralelo aprovecha mejor la conexión.
 
-Durante la importación se generarán entradas como:
+## Plan de implementación
+
+### 1. Refactor `personaService.createBulk` y `upsertBulk`
+
+Reemplazar el `for` secuencial por procesamiento en **chunks de 100 filas** con inserción batch:
+
+```typescript
+// Pseudocódigo
+const CHUNK_SIZE = 100;
+for (chunk of chunks(personas, CHUNK_SIZE)) {
+  const t0 = performance.now();
+  onLog('debug', `Insertando lote de ${chunk.length} registros...`);
+  const { data, error } = await supabase
+    .from('personas')
+    .insert(chunk.map(mapPersonaToDb))
+    .select('id, numero_documento');
+  
+  if (error) {
+    // Fallback: si el lote falla, reintentar fila por fila para identificar la culpable
+    onLog('warn', `Lote falló, reintentando individualmente...`);
+    for (row of chunk) { await this.create(row).catch(...) }
+  } else {
+    onLog('success', `Lote OK: ${data.length} en ${dt}ms (${Math.round(dt/data.length)}ms/reg)`);
+  }
+}
+```
+
+**Ventajas:**
+- Reduce 660 requests → ~7 requests
+- Mantiene logging detallado por lote + tiempos por registro promedio
+- Si un lote falla, hace fallback individual para no perder los buenos
+- Compatible con la lógica de `existingDocs` (filtrar antes de batchear)
+
+### 2. Mismo patrón en `empresaService`
+
+Replicar el cambio para mantener paridad.
+
+### 3. Logs ajustados
+
+Los logs actuales son por fila — al usar batches se vuelven menos granulares pero más útiles:
 
 ```
-[00:00.000] INFO   Iniciando importación de 2600 registros
-[00:00.012] DEBUG  Validando duplicados intra-archivo
-[00:00.045] WARN   3 duplicados detectados en archivo
-[00:00.089] DEBUG  Consultando BD por documentos existentes...
-[00:01.234] INFO   1.1s — 47 registros ya existen en BD
-[00:01.235] INFO   Modo: omitir existentes
-[00:01.235] INFO   Procesando 2550 nuevos registros
-[00:01.456] DEBUG  [1/2550] Insertando "Juan Pérez" (CC 1234)
-[00:01.687] SUCCESS [1/2550] OK en 231ms
-[00:01.688] DEBUG  [2/2550] Insertando "María Gómez" (CC 5678)
-[00:01.912] SUCCESS [2/2550] OK en 224ms
+[00:00.500] info Lote 1/7 (100 reg) → OK en 1.2s (12ms/reg)
+[00:01.700] info Lote 2/7 (100 reg) → OK en 1.1s (11ms/reg)
 ...
-[00:02.500] ERROR  [10/2550] Falló "X Y" — duplicate key violation
-...
-[09:45.000] INFO   ═══ Resumen ═══
-[09:45.000] INFO   ✓ 2540 creados | ⚠ 47 omitidos | ✗ 13 errores
-[09:45.000] INFO   Tiempo total: 9m 44s — promedio 229ms/registro
+[00:08.000] info ✓ 660 creados | Tiempo total: 7.8s | Promedio: 12ms/reg
 ```
 
-Cada 10 registros se emitirá también un log de "throughput" (registros/segundo) para identificar degradación.
+Si un lote tiene errores, se loggea fila por fila como hoy.
 
-### UI del panel
+### 4. Configuración
 
-```text
-┌─ Logs detallados ──────────[Filtro ▾][Copiar][↓]┐
-│ [00:01.456] ▶ [1/2550] Insertando "Juan..."     │
-│ [00:01.687] ✓ [1/2550] OK en 231ms              │
-│ [00:01.688] ▶ [2/2550] Insertando "María..."    │
-│ [00:01.912] ✓ [2/2550] OK en 224ms              │
-│ [00:02.500] ✗ [10/2550] Falló: duplicate key    │
-│   ...                                            │
-└──────────────────────────────────────────────────┘
-```
+Constante exportada `BULK_CHUNK_SIZE = 100` para ajustar fácilmente. Supabase soporta hasta ~1000 filas por insert pero 100 es un buen equilibrio entre throughput y memoria/payload.
 
-- Altura fija ~180px con scroll interno
-- Auto-scroll al final mientras hay actividad nueva (se detiene si el usuario hace scroll arriba manualmente)
-- Filtro multi-select de niveles
-- Botón copiar al portapapeles + descargar como `import-log-{timestamp}.txt`  
-`nota adicional. ponle un icono de copiar al darle clic copia todo el log completo disponible`
+## Resultado esperado
 
-### Consideraciones de rendimiento
+- **Antes:** 660 registros en ~2:45 min (4 reg/s)
+- **Después:** 660 registros en ~8-15 segundos (50-80 reg/s)
+- **Mejora:** ~15-20× más rápido
 
-- Usar buffer interno con `flushSync`/throttle a ~10 logs/render para no saturar React con 2600 updates
-- Almacenar máximo 5000 entradas en memoria (rotar las más antiguas)
-- Los logs se preservan después de terminar la importación para revisión y descarga
+## Archivos a modificar
 
-### Reutilización futura
+| Archivo | Cambio |
+|---|---|
+| `src/services/personaService.ts` | Refactor `createBulk` y `upsertBulk` con batch inserts + fallback individual |
+| `src/services/empresaService.ts` | Mismo patrón |
 
-El `useImportLogger` + `ImportLogsPanel` quedan en `shared/` listos para conectar a futuros importadores (cursos, matrículas, etc.) con la misma firma.

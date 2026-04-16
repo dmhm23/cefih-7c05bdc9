@@ -201,6 +201,18 @@ export function parsearArchivoPersonas(file: File): Promise<PersonaImportRow[]> 
             if (!nivelEducativo) errors.push(`Nivel Educativo "${nivelRaw}" no reconocido`);
           }
 
+          // País de nacimiento — normalizar a código ISO. Si no se reconoce, conservar texto pero advertir.
+          let paisNacimiento = '';
+          if (paisRaw) {
+            const isoCode = findEnumValue(paisRaw, PAISES as any);
+            if (isoCode) {
+              paisNacimiento = isoCode;
+            } else {
+              paisNacimiento = paisRaw;
+              warnings.push(`País "${paisRaw}" no está en el catálogo, se guardará tal cual`);
+            }
+          }
+
           return {
             rowIndex: idx + 2,
             tipoDocumento: tipoDocumento || tipoDocRaw,

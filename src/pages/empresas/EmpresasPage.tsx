@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Download, Filter } from "lucide-react";
+import { Plus, Trash2, Download, Filter, MoreVertical, FileDown, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, Column } from "@/components/shared/DataTable";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -12,7 +18,9 @@ import { RowActions, createViewAction, createEditAction, createDeleteAction } fr
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { EmpresaDetailSheet } from "@/components/empresas/EmpresaDetailSheet";
+import { ImportarEmpresasDialog } from "@/components/empresas/ImportarEmpresasDialog";
 import { useEmpresas, useDeleteEmpresa } from "@/hooks/useEmpresas";
+import { descargarPlantillaEmpresas } from "@/utils/empresaPlantilla";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";

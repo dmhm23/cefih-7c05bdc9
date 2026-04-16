@@ -174,6 +174,20 @@ export const empresaService = {
     return empresa;
   },
 
+  async createBulk(empresas: EmpresaFormData[]): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+    const errors: { row: number; error: string }[] = [];
+    let created = 0;
+    for (let i = 0; i < empresas.length; i++) {
+      try {
+        await this.create(empresas[i]);
+        created++;
+      } catch (err: any) {
+        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+      }
+    }
+    return { created, errors };
+  },
+
   async delete(id: string): Promise<void> {
     // Soft delete
     const { error } = await supabase

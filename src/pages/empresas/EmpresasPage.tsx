@@ -386,6 +386,8 @@ export default function EmpresasPage() {
         variant="destructive"
         onConfirm={handleBulkDelete}
       />
+
+      <ImportarEmpresasDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

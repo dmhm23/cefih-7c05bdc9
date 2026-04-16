@@ -24,6 +24,12 @@ const ACTION_COLORS: Record<string, string> = {
   completar: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
   capturar: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
   generar_masivo: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  revocar: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  reemitir: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
+  aprobar: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300",
+  rechazar: "bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300",
+  restaurar: "bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200",
+  reabrir: "bg-lime-100 text-lime-800 dark:bg-lime-900 dark:text-lime-200",
 };
 
 const MODULES = [
@@ -33,7 +39,8 @@ const MODULES = [
 
 const ACTIONS = [
   "todas", "navegar", "crear", "editar", "eliminar", "subir", "importar", "exportar", "descargar",
-  "completar", "capturar", "generar_masivo", "login", "logout",
+  "completar", "capturar", "generar_masivo", "revocar", "reemitir", "aprobar", "rechazar",
+  "restaurar", "reabrir", "login", "logout",
 ];
 
 export default function UserActivityLogPage() {

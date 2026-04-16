@@ -323,12 +323,27 @@ export function DataTable<T extends { id: string }>({
                   </TableRow>
                 );
               })}
+              {hasMore && (
+                <TableRow ref={sentinelRef} className="hover:bg-transparent">
+                  <TableCell
+                    colSpan={visibleColumns.length + (selectable ? 1 : 0)}
+                    className="text-center py-4 text-sm text-muted-foreground"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Cargando más registros...
+                    </span>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
       <div className="text-sm text-muted-foreground py-1 px-1">
-        {data.length} {countLabel}
+        {hasMore
+          ? `Mostrando ${visibleData.length.toLocaleString("es-CO")} de ${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`
+          : `${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`}
       </div>
 
       {/* Floating Bulk Actions Bar */}

@@ -45,7 +45,7 @@ export function ActivityLoggerProvider({ children }: { children: ReactNode }) {
         route: location.pathname,
       };
       // fire-and-forget
-      supabase.from("user_activity_logs").insert(row).then(() => {}).catch(() => {});
+      supabase.from("user_activity_logs").insert([row]).then(() => {});
     },
     [user, perfil, location.pathname],
   );
@@ -87,7 +87,7 @@ export function ActivityLoggerProvider({ children }: { children: ReactNode }) {
       metadata: {},
       route: path,
     };
-    supabase.from("user_activity_logs").insert(row).then(() => {}).catch(() => {});
+    supabase.from("user_activity_logs").insert([row]).then(() => {});
   }, [location.pathname, user, perfil]);
 
   return (

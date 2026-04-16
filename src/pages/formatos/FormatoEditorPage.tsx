@@ -156,8 +156,8 @@ export default function FormatoEditorPage() {
     const data: FormatoFormacionFormData = {
       nombre: config.nombre,
       descripcion: config.descripcion,
-      codigo: config.codigo,
-      version: config.version,
+      codigo,
+      version,
       asignacionScope: config.asignacionScope,
       nivelFormacionIds: config.nivelFormacionIds,
       visibleEnMatricula: config.visibleEnMatricula,

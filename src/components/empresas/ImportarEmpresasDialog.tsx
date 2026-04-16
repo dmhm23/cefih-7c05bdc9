@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, CheckCircle2, AlertCircle, FileSpreadsheet, X, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { CopyableCell } from '@/components/shared/CopyableCell';
+import { ImportProgress } from '@/components/shared/ImportProgress';
 import { useToast } from '@/hooks/use-toast';
 import { empresaService } from '@/services/empresaService';
 import { EmpresaImportRow, parsearArchivoEmpresas } from '@/utils/empresaPlantilla';
@@ -65,6 +66,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const [rows, setRows] = useState<EmpresaImportRow[]>([]);
   const [fileName, setFileName] = useState('');
   const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [result, setResult] = useState<{ created: number; errors: { row: number; error: string }[] } | null>(null);
   const [filter, setFilter] = useState<FilterTab>('todas');
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
@@ -108,6 +110,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const handleImport = async () => {
     if (validRows.length === 0) return;
     setImporting(true);
+    setProgress({ current: 0, total: validRows.length });
     try {
       const empresas = validRows.map(r => ({
         nombreEmpresa: r.nombreEmpresa,
@@ -125,7 +128,10 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
         departamento: r.departamento,
         observaciones: r.observaciones,
       }));
-      const res = await empresaService.createBulk(empresas as any);
+      const res = await empresaService.createBulk(
+        empresas as any,
+        (current, total) => setProgress({ current, total }),
+      );
       setResult(res);
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       toast({ title: `${res.created} empresas importadas correctamente` });
@@ -313,6 +319,10 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
               </table>
             </ScrollArea>
           </div>
+        )}
+
+        {importing && (
+          <ImportProgress current={progress.current} total={progress.total} label="Importando empresas" />
         )}
 
         <DialogFooter>

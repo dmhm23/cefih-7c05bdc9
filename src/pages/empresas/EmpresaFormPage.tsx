@@ -20,6 +20,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { useEmpresa, useCreateEmpresa, useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useEffect, useState } from "react";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
 import { v4 as uuid } from "uuid";
@@ -41,6 +42,7 @@ export default function EmpresaFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const isEditing = !!id;
 
   const { data: empresa, isLoading: isLoadingEmpresa } = useEmpresa(id || "");
@@ -123,9 +125,11 @@ export default function EmpresaFormPage() {
       if (isEditing) {
         await updateEmpresa.mutateAsync({ id, data: empresaData });
         toast({ title: "Empresa actualizada correctamente" });
+        logActivity({ action: "editar", module: "empresas", description: `Editó empresa ${data.nombreEmpresa}`, entityType: "empresa", entityId: id });
       } else {
         await createEmpresa.mutateAsync(empresaData);
         toast({ title: "Empresa creada correctamente" });
+        logActivity({ action: "crear", module: "empresas", description: `Creó empresa ${data.nombreEmpresa}`, entityType: "empresa" });
       }
       navigate("/empresas");
     } catch (error: any) {

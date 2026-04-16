@@ -1876,6 +1876,51 @@ export type Database = {
           },
         ]
       }
+      user_activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json | null
+          module: string | null
+          route: string | null
+          user_email: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          route?: string | null
+          user_email: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json | null
+          module?: string | null
+          route?: string | null
+          user_email?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       versiones_formato: {
         Row: {
           creado_por: string | null

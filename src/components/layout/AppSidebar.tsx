@@ -1,4 +1,4 @@
-import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2, Shield } from "lucide-react";
+import { Users, GraduationCap, BookOpen, LayoutDashboard, Settings, LogOut, Layers, UserCog, FileText, Smartphone, Award, ChevronDown, History, FileImage, Wallet, Building2, Shield, Activity } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useMemo } from "react";
 
 const menuItems = [
@@ -46,6 +47,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const { signOut, perfil, permisos } = useAuth();
+  const { logActivity } = useActivityLogger();
   const isCollapsed = state === "collapsed";
 
   const canView = useMemo(() => {
@@ -64,6 +66,7 @@ export function AppSidebar() {
   const isCertificacionActive = location.pathname.startsWith("/certificacion");
 
   const handleLogout = async () => {
+    logActivity({ action: "logout", module: "auth", description: "Cerró sesión" });
     await signOut();
     navigate("/");
   };
@@ -191,6 +194,18 @@ export function AppSidebar() {
                     <button onClick={() => navigate("/admin/dashboard")} className="w-full">
                       <Shield className="h-4 w-4" />
                       <span>Panel Admin</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname.startsWith("/admin/logs")}
+                    tooltip="Logs de Actividad"
+                  >
+                    <button onClick={() => navigate("/admin/logs")} className="w-full">
+                      <Activity className="h-4 w-4" />
+                      <span>Logs de Actividad</span>
                     </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -103,6 +104,7 @@ type MatriculaFormData = z.infer<typeof matriculaSchema>;
 export default function MatriculaFormPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
@@ -278,6 +280,7 @@ export default function MatriculaFormPage() {
           pagado: false,
         });
         toast({ title: "Matrícula creada correctamente" });
+        logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
         if (path === '__back__') window.history.back();
         else navigate(path || '/matriculas');
       } catch (error: any) {
@@ -471,6 +474,7 @@ export default function MatriculaFormPage() {
       }
 
       toast({ title: "Matrícula creada correctamente" });
+      logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
       skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {

@@ -68,6 +68,8 @@ import EmpresaDetallePage from "./pages/empresas/EmpresaDetallePage";
 // Admin
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminLogsPage from "./pages/admin/AdminLogsPage";
+import UserActivityLogPage from "./pages/admin/UserActivityLogPage";
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -75,13 +77,16 @@ import PanelDocumentosPage from "./pages/estudiante/PanelDocumentosPage";
 import DocumentoRendererPage from "./pages/estudiante/DocumentoRendererPage";
 import PortalGuard from "./pages/estudiante/PortalGuard";
 import { PortalEstudianteProvider } from "./contexts/PortalEstudianteContext";
+import { ActivityLoggerProvider } from "./contexts/ActivityLoggerContext";
 
 const queryClient = new QueryClient();
 
 // Wrapper component for pages that need the main layout + auth
 const WithLayout = ({ children }: { children: React.ReactNode }) => (
   <AuthGuard>
-    <MainLayout>{children}</MainLayout>
+    <ActivityLoggerProvider>
+      <MainLayout>{children}</MainLayout>
+    </ActivityLoggerProvider>
   </AuthGuard>
 );
 
@@ -98,7 +103,9 @@ const App = () => (
 
             {/* Admin routes */}
             <Route path="/admin" element={<AdminLoginPage />} />
-            <Route path="/admin/dashboard" element={<AdminGuard><MainLayout><AdminDashboardPage /></MainLayout></AdminGuard>} />
+            <Route path="/admin/dashboard" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminDashboardPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/logs" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminLogsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/logs/:userId" element={<AdminGuard><ActivityLoggerProvider><MainLayout><UserActivityLogPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
 
             {/* Protected routes with layout */}
             <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />

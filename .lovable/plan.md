@@ -1,90 +1,88 @@
 
 
-## Análisis de los logs
+## Análisis
 
-**Diagnóstico:**
-- Throughput estable en **~4 reg/s** (~230ms/registro)
-- ETA total: ~165 segundos para 660 registros (~2:45 min)
-- Cada `INSERT` ejecuta: 1 round-trip HTTP a Supabase + RLS + trigger de auditoría + trigger de validación de contacto emergencia + retorno con `.select()`
+**Situación actual:**
+- `DataTable` recibe `data: T[]` ya filtrado/ordenado en el padre y renderiza **todas** las filas en el DOM de una vez.
+- Con 2000+ registros (típico tras importar personas), el navegador renderiza miles de `<TableRow>` simultáneos → primera pintura lenta, scroll con saltos, interacciones bloqueadas.
+- El contador inferior ya muestra `data.length` (total filtrado), eso se conserva.
 
-**¿Es normal?** Sí, dado que el código actual hace **1 request HTTP por fila secuencialmente**. Los 230ms son razonables (50-100ms latencia red + 100-150ms procesamiento DB con triggers). El cuello de botella **no es la base de datos**, es la **arquitectura del cliente**.
+**Importante:** los datos ya vienen completos del hook (`usePersonas`, `useCursos`, etc.) y se filtran/ordenan client-side. **No vamos a paginar el fetch** — vamos a hacer **virtualización por scroll** (renderizar progresivamente solo los registros visibles). Esto:
+- Mantiene búsqueda, filtros, orden, selección masiva y exports funcionando sobre el dataset completo.
+- Evita reescribir hooks, RLS y endpoints.
+- Da el efecto "cargar 100 por scroll" que pediste.
 
-**Cálculo:** 660 reqs × 230ms = ~152s (coincide con la ETA observada).
+## Solución
 
-## Oportunidades de optimización
+Implementar **lazy render incremental** dentro de `DataTable.tsx`:
 
-| Estrategia | Mejora estimada | Complejidad |
-|---|---|---|
-| **A. Batch inserts** (50-100 filas por request) | 10-20× más rápido (~10-15s para 660) | Media |
-| **B. Concurrencia limitada** (5-10 inserts en paralelo) | 3-5× más rápido (~30-50s) | Baja |
-| **C. RPC server-side** (función plpgsql que recibe array y hace bulk insert) | 20-30× más rápido (~5-8s) | Alta |
+1. **Estado interno** `visibleCount` que arranca en `PAGE_SIZE = 100`.
+2. **IntersectionObserver** sobre una fila centinela colocada al final del `<tbody>`. Cuando entra al viewport del contenedor scrolleable, suma `+100` al `visibleCount`.
+3. **Slice** del array ordenado: `sortedData.slice(0, visibleCount)` es lo único que se renderiza.
+4. **Reset** del `visibleCount` cuando cambia el filtro/búsqueda (detectado por cambio en `data.length` o referencia) y cuando cambia el orden, para que al re-ordenar/filtrar arranque de nuevo desde el inicio.
+5. **Indicador visual** de "Cargando más..." en la fila centinela mientras quedan registros por mostrar.
 
-**Recomendación: combinar A + B.** Batch insert de Supabase (`.insert([...])` acepta arrays) elimina N round-trips, y procesar varios batches en paralelo aprovecha mejor la conexión.
+## Cambios en el contador inferior
 
-## Plan de implementación
-
-### 1. Refactor `personaService.createBulk` y `upsertBulk`
-
-Reemplazar el `for` secuencial por procesamiento en **chunks de 100 filas** con inserción batch:
-
-```typescript
-// Pseudocódigo
-const CHUNK_SIZE = 100;
-for (chunk of chunks(personas, CHUNK_SIZE)) {
-  const t0 = performance.now();
-  onLog('debug', `Insertando lote de ${chunk.length} registros...`);
-  const { data, error } = await supabase
-    .from('personas')
-    .insert(chunk.map(mapPersonaToDb))
-    .select('id, numero_documento');
-  
-  if (error) {
-    // Fallback: si el lote falla, reintentar fila por fila para identificar la culpable
-    onLog('warn', `Lote falló, reintentando individualmente...`);
-    for (row of chunk) { await this.create(row).catch(...) }
-  } else {
-    onLog('success', `Lote OK: ${data.length} en ${dt}ms (${Math.round(dt/data.length)}ms/reg)`);
-  }
-}
-```
-
-**Ventajas:**
-- Reduce 660 requests → ~7 requests
-- Mantiene logging detallado por lote + tiempos por registro promedio
-- Si un lote falla, hace fallback individual para no perder los buenos
-- Compatible con la lógica de `existingDocs` (filtrar antes de batchear)
-
-### 2. Mismo patrón en `empresaService`
-
-Replicar el cambio para mantener paridad.
-
-### 3. Logs ajustados
-
-Los logs actuales son por fila — al usar batches se vuelven menos granulares pero más útiles:
+Texto actualizado para diferenciar visibles vs totales:
 
 ```
-[00:00.500] info Lote 1/7 (100 reg) → OK en 1.2s (12ms/reg)
-[00:01.700] info Lote 2/7 (100 reg) → OK en 1.1s (11ms/reg)
-...
-[00:08.000] info ✓ 660 creados | Tiempo total: 7.8s | Promedio: 12ms/reg
+Mostrando 100 de 2.547 personas
 ```
 
-Si un lote tiene errores, se loggea fila por fila como hoy.
+Cuando ya están todos cargados:
 
-### 4. Configuración
+```
+2.547 personas
+```
 
-Constante exportada `BULK_CHUNK_SIZE = 100` para ajustar fácilmente. Supabase soporta hasta ~1000 filas por insert pero 100 es un buen equilibrio entre throughput y memoria/payload.
+Formato con separador de miles (`toLocaleString('es-CO')`).
 
-## Resultado esperado
+## Detalle UI del centinela
 
-- **Antes:** 660 registros en ~2:45 min (4 reg/s)
-- **Después:** 660 registros en ~8-15 segundos (50-80 reg/s)
-- **Mejora:** ~15-20× más rápido
+Última fila del `<tbody>` (cuando `visibleCount < total`):
+
+```
+┌────────────────────────────────────────────┐
+│         ⟳  Cargando más registros...       │   ← se autoexpande al hacer scroll
+└────────────────────────────────────────────┘
+```
+
+Usa `IntersectionObserver` con `root` apuntando al div scrolleable de la tabla (`overflow-auto h-full`) y `rootMargin: "200px"` para precargar antes de llegar al fondo (scroll fluido sin parpadeo).
+
+## Comportamiento con interacciones existentes
+
+| Acción | Comportamiento |
+|---|---|
+| Búsqueda/filtro/orden | Resetea `visibleCount` a 100 |
+| Selección masiva ("seleccionar todos") | Sigue marcando **todos** los IDs del dataset filtrado, no solo los visibles |
+| Bulk actions | Operan sobre todos los seleccionados (no solo los renderizados) |
+| Click en "Ver" | Funciona igual; navegación prev/next sigue usando el array completo |
+| Exportar | Exporta el dataset completo filtrado |
+| Sticky header | Conservado (ya está implementado) |
+
+## Configuración
+
+Constante exportada en `DataTable.tsx`:
+
+```ts
+const PAGE_SIZE = 100; // lazy load chunk
+```
+
+Prop opcional `pageSize` por si alguna tabla específica quiere otro valor.
 
 ## Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/services/personaService.ts` | Refactor `createBulk` y `upsertBulk` con batch inserts + fallback individual |
-| `src/services/empresaService.ts` | Mismo patrón |
+| `src/components/shared/DataTable.tsx` | Añadir `visibleCount` + `IntersectionObserver` + fila centinela + slice de `sortedData` + actualizar texto del contador inferior |
+
+**No requiere cambios en:** páginas (`PersonasPage`, `EmpresasPage`, `MatriculasPage`, `CursosListView`, `NivelesPage`, `FormatosPage`, `CarteraPage`, `GestionPersonalPage`) — todas usan `DataTable` y heredan la mejora automáticamente.
+
+## Resultado esperado
+
+- 2000 registros: pintura inicial **<150ms** (vs varios segundos hoy)
+- Scroll fluido a 60fps
+- Contador siempre visible: `Mostrando X de Y registros`
+- Compatible con todas las tablas existentes sin regresiones
 

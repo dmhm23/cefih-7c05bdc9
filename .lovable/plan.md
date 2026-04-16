@@ -1,55 +1,157 @@
 
 
-# Exportar listado con selector de columnas desde Cursos
+# Plan: Sistema de Logs de Actividad de Usuario
 
 ## Resumen
 
-Reemplazar la exportación directa actual (`handleExportarListado`) por un modal que permita al usuario elegir qué columnas incluir en el archivo CSV antes de descargarlo. Las columnas disponibles cubrirán datos de Personas, Matrículas y Cursos.
+Implementar un sistema de registro de actividad de usuario (user activity logs) completamente desacoplado del código de negocio, accesible desde el panel de administración en `/admin/logs`. El sistema registrará acciones como navegación, guardado, eliminación, exportación y cualquier interacción relevante, asociadas al usuario autenticado.
 
-## Componente nuevo: `ExportarListadoDialog`
+## Principio arquitectónico: fire-and-forget desacoplado
 
-**Archivo:** `src/components/cursos/ExportarListadoDialog.tsx`
+El sistema se basa en un **hook global** (`useActivityLogger`) que:
+- Se inicializa una sola vez en el `MainLayout`
+- Escucha automáticamente navegación de rutas (sin tocar componentes)
+- Expone una función `logActivity()` que se puede llamar desde cualquier lugar
+- Las llamadas a `logActivity()` son **fire-and-forget**: si fallan, no afectan la funcionalidad del sistema
+- Si un componente no tiene logs, simplemente no genera registros — nada se rompe
 
-Un Dialog modal que:
-- Recibe `curso`, `matriculas`, `personas` y controla `open/onOpenChange`
-- Define un catálogo de ~30 columnas exportables, cada una con `key`, `header`, `visible` (por defecto), y una función `resolver(persona, matricula, curso) => string`
-- Usa checkboxes para seleccionar/deseleccionar columnas
-- Incluye botones "Seleccionar todas" / "Deseleccionar todas"
-- Botón "Exportar CSV" que genera y descarga el archivo con las columnas seleccionadas
+## 1. Tabla de base de datos: `user_activity_logs`
 
-### Columnas seleccionadas por defecto
-1. Nombre completo (nombres + apellidos)
-2. Cédula (número documento)
-3. Nivel de formación (resuelto desde `nivelFormacionId`)
-4. Duración en horas del curso
-5. Nombre empresa
-6. Representante legal
-7. NIT
-8. ARL
+```sql
+CREATE TABLE public.user_activity_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  user_email TEXT NOT NULL,
+  user_name TEXT,
+  action TEXT NOT NULL,           -- 'navegar', 'crear', 'editar', 'eliminar', 'exportar', 'descargar', 'login', 'logout', etc.
+  module TEXT,                     -- 'cursos', 'matriculas', 'personas', etc.
+  description TEXT NOT NULL,       -- Descripción legible: "Guardó cambios en curso FI-25-04-01"
+  entity_type TEXT,                -- 'curso', 'matricula', 'persona', etc.
+  entity_id UUID,                  -- ID de la entidad afectada
+  metadata JSONB DEFAULT '{}'::JSONB,  -- Datos adicionales (campos modificados, valores, etc.)
+  route TEXT,                      -- Ruta en la que ocurrió: /cursos/abc-123
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-### Catálogo completo de columnas disponibles
-Agrupadas por origen:
+CREATE INDEX idx_ual_user_id ON public.user_activity_logs(user_id);
+CREATE INDEX idx_ual_created_at ON public.user_activity_logs(created_at DESC);
+CREATE INDEX idx_ual_module ON public.user_activity_logs(module);
+```
 
-**Persona:** tipo documento, número documento, nombres, apellidos, nombre completo, género, fecha nacimiento, país nacimiento, RH, nivel educativo, email, teléfono, contacto emergencia (nombre, teléfono, parentesco)
+RLS: solo lectura para superadmin/admin, inserción para cualquier autenticado.
 
-**Matrícula:** estado, tipo vinculación, empresa nombre, empresa NIT, representante legal, cargo, ARL, EPS, sector económico, área trabajo, valor cupo, abono, pagado, fecha inicio, fecha fin, contacto cobro nombre, contacto cobro celular
+## 2. Hook global: `useActivityLogger`
 
-**Curso:** número curso, nivel formación, tipo formación, duración horas, duración días, fecha inicio curso, fecha fin curso, entrenador, supervisor, lugar
+**Archivo:** `src/hooks/useActivityLogger.ts`
 
-### Resolución de labels
-Reutilizar las funciones `findLabel` y `capitalize` de `csvMinTrabajo.ts` (exportarlas si son privadas) y el hook `useResolveNivel` para resolver el nombre del nivel de formación.
+```typescript
+// Interfaz pública
+logActivity(params: {
+  action: string;
+  module?: string;
+  description: string;
+  entityType?: string;
+  entityId?: string;
+  metadata?: Record<string, unknown>;
+}): void  // fire-and-forget, no async
+```
 
-## Integración en `CursoDetallePage`
+Características:
+- Obtiene `user_id`, `email`, `name` del contexto de autenticación
+- Inserta en `user_activity_logs` sin `await` (catch silencioso)
+- **Auto-log de navegación**: usa `useLocation` para registrar cada cambio de ruta automáticamente (acción `navegar`)
+- **Auto-log de login/logout**: escucha `onAuthStateChange`
 
-- Agregar estado `exportarListadoOpen`
-- Reemplazar `handleExportarListado` por `() => setExportarListadoOpen(true)`
-- Renderizar `<ExportarListadoDialog>` pasando curso, matriculas, personas
+## 3. Contexto global: `ActivityLoggerContext`
 
-## Archivos a modificar
+**Archivo:** `src/contexts/ActivityLoggerContext.tsx`
 
-| Archivo | Cambio |
+Provee `logActivity` a toda la aplicación vía contexto, sin necesidad de pasar props. Se monta en `App.tsx` envolviendo las rutas protegidas.
+
+## 4. Instrumentación de acciones existentes (~50 puntos)
+
+Se agregarán llamadas `logActivity(...)` en los callbacks de éxito de las mutaciones existentes. Estas llamadas son opcionales y no bloquean la ejecución.
+
+### Acciones identificadas por módulo:
+
+| Módulo | Acciones a registrar |
 |---|---|
-| `src/components/cursos/ExportarListadoDialog.tsx` | **Nuevo** — Modal con selector de columnas y generación CSV |
-| `src/utils/csvMinTrabajo.ts` | Exportar `capitalize`, `findLabel`, `cleanDocumento`, `formatDate` como funciones públicas |
-| `src/pages/cursos/CursoDetallePage.tsx` | Reemplazar exportación directa por apertura del modal |
+| **Auth** | Login, logout |
+| **Dashboard** | Navegación (automático) |
+| **Personas** | Crear, editar, eliminar persona |
+| **Empresas** | Crear, editar, eliminar empresa |
+| **Matrículas** | Crear, editar, cambiar estado, subir/eliminar documento, registrar pago, reabrir formato, guardar formato |
+| **Cursos** | Crear, editar, cambiar estado, cerrar curso, exportar MinTrabajo, exportar listado, generar PDFs masivos, agregar/remover estudiantes |
+| **Niveles** | Crear, editar, eliminar nivel |
+| **Personal** | Crear, editar, eliminar personal, subir/eliminar firma, subir/eliminar adjunto |
+| **Formatos** | Crear, editar, duplicar, eliminar formato |
+| **Cartera** | Crear/editar/eliminar factura, registrar/editar/eliminar pago |
+| **Certificación** | Generar certificado, revocar, crear/editar plantilla |
+| **Portal Admin** | Configurar documentos, habilitar/deshabilitar niveles |
+| **Admin** | Crear usuario, asignar rol, editar usuario, eliminar usuario, crear/editar/eliminar rol |
+
+### Patrón de instrumentación (ejemplo):
+
+```typescript
+// En CursoDetallePage.tsx, después del toast de éxito:
+toast({ title: "Cambios guardados correctamente" });
+logActivity({
+  action: "editar",
+  module: "cursos",
+  description: `Editó el curso ${curso.nombre}`,
+  entityType: "curso",
+  entityId: curso.id,
+});
+```
+
+## 5. Interfaz de administración
+
+### Ruta: `/admin/logs`
+
+**Archivo:** `src/pages/admin/AdminLogsPage.tsx`
+
+Vista principal con tabla de usuarios que tienen actividad registrada:
+- Columnas: nombre, email, rol, cantidad de acciones, última actividad
+- Buscador por nombre/email
+- Click en fila → navega a `/admin/logs/:userId`
+
+### Ruta: `/admin/logs/:userId`
+
+**Archivo:** `src/pages/admin/UserActivityLogPage.tsx`
+
+Vista de detalle con:
+- Encabezado: nombre del usuario, email, rol
+- Filtros: rango de fechas, módulo, tipo de acción
+- Tabla cronológica descendente con columnas:
+  - Fecha/hora (formateada Colombia UTC-5)
+  - Acción (badge con color)
+  - Módulo
+  - Descripción
+  - Detalle expandible (metadata JSON si existe)
+
+### Sidebar
+
+Agregar enlace "Logs de Actividad" en la sección Administración del sidebar, visible solo para superadministrador.
+
+## 6. Archivos a crear/modificar
+
+| Archivo | Tipo | Descripción |
+|---|---|---|
+| Migración SQL | Nuevo | Tabla `user_activity_logs` + índices + RLS |
+| `src/hooks/useActivityLogger.ts` | Nuevo | Hook con auto-log de navegación |
+| `src/contexts/ActivityLoggerContext.tsx` | Nuevo | Contexto global para `logActivity` |
+| `src/services/activityLogService.ts` | Nuevo | Queries de lectura para la interfaz admin |
+| `src/pages/admin/AdminLogsPage.tsx` | Nuevo | Lista de usuarios con actividad |
+| `src/pages/admin/UserActivityLogPage.tsx` | Nuevo | Historial de un usuario |
+| `src/App.tsx` | Modificar | Agregar rutas `/admin/logs` y `/admin/logs/:userId`, montar contexto |
+| `src/components/layout/AppSidebar.tsx` | Modificar | Enlace "Logs" en sección admin |
+| ~25 archivos de páginas/componentes | Modificar | Agregar llamadas `logActivity()` en callbacks existentes |
+
+## 7. Garantías de independencia
+
+- Si `logActivity` falla → se silencia, la operación principal continúa
+- Si un componente nuevo no tiene `logActivity` → funciona normalmente, sin error
+- Si se elimina una llamada a `logActivity` → no hay efecto secundario
+- La tabla `user_activity_logs` no tiene foreign keys hacia otras tablas (solo guarda `user_id` como texto/UUID sin constraint externo)
+- El contexto es opcional: si no está montado, `logActivity` es un no-op
 

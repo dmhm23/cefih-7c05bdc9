@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Eye, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { BulkActionsBar, BulkAction } from "./BulkActionsBar";
 import { ColumnConfig } from "./ColumnSelector";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export const DATATABLE_PAGE_SIZE = 100;
 
 export interface Column<T> {
   key: string;
@@ -50,6 +53,9 @@ interface DataTableProps<T> {
   defaultSortDirection?: SortDirection;
   // Layout
   containerClassName?: string;
+  // Lazy load
+  pageSize?: number;
+  itemLabel?: string;
 }
 
 function getSortValue<T>(item: T, column: Column<T> | undefined, sortKey: string): string | number {
@@ -87,9 +93,14 @@ export function DataTable<T extends { id: string }>({
   defaultSortKey = "createdAt",
   defaultSortDirection = "desc",
   containerClassName,
+  pageSize = DATATABLE_PAGE_SIZE,
+  itemLabel,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState(defaultSortKey);
   const [sortDirection, setSortDirection] = useState<SortDirection>(defaultSortDirection);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  const sentinelRef = useRef<HTMLTableRowElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Filter visible columns based on config
   const visibleColumns = columnConfig
@@ -116,6 +127,37 @@ export function DataTable<T extends { id: string }>({
     );
     return sorted;
   }, [data, sortKey, sortDirection, sortColumn]);
+
+  // Reset visible count when data, filter or sort changes
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [data, sortKey, sortDirection, pageSize]);
+
+  // Visible slice for lazy rendering
+  const visibleData = useMemo(
+    () => sortedData.slice(0, visibleCount),
+    [sortedData, visibleCount]
+  );
+  const hasMore = visibleCount < sortedData.length;
+
+  // IntersectionObserver to load more when sentinel is visible
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    const root = scrollContainerRef.current;
+    if (!sentinel || !root) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + pageSize, sortedData.length));
+        }
+      },
+      { root, rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, pageSize, sortedData.length, visibleCount]);
 
   const handleSort = (column: Column<T>) => {
     if (!column.sortable) return;
@@ -188,7 +230,7 @@ export function DataTable<T extends { id: string }>({
   return (
     <div className={cn("flex flex-col min-h-0 w-full", containerClassName)} data-table-container>
       <div className="flex-1 min-h-0 rounded-lg border overflow-hidden">
-        <div className="overflow-auto h-full">
+        <div className="overflow-auto h-full" ref={scrollContainerRef}>
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/80">
@@ -227,7 +269,7 @@ export function DataTable<T extends { id: string }>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((item) => {
+              {visibleData.map((item) => {
                 const isSelected = selectedIds.includes(item.id);
                 const isActiveRow = activeRowId === item.id;
                 const showViewButton = isPanelOpen && !isActiveRow && onViewRow;
@@ -281,12 +323,27 @@ export function DataTable<T extends { id: string }>({
                   </TableRow>
                 );
               })}
+              {hasMore && (
+                <TableRow ref={sentinelRef} className="hover:bg-transparent">
+                  <TableCell
+                    colSpan={visibleColumns.length + (selectable ? 1 : 0)}
+                    className="text-center py-4 text-sm text-muted-foreground"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Cargando más registros...
+                    </span>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
       </div>
       <div className="text-sm text-muted-foreground py-1 px-1">
-        {data.length} {countLabel}
+        {hasMore
+          ? `Mostrando ${visibleData.length.toLocaleString("es-CO")} de ${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`
+          : `${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`}
       </div>
 
       {/* Floating Bulk Actions Bar */}

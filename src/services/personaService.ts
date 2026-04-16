@@ -166,6 +166,70 @@ export const personaService = {
     return { created, errors };
   },
 
+  async checkExisting(documentos: string[]): Promise<Set<string>> {
+    if (documentos.length === 0) return new Set();
+    // Supabase .in() has a limit, chunk in batches of 500
+    const result = new Set<string>();
+    for (let i = 0; i < documentos.length; i += 500) {
+      const chunk = documentos.slice(i, i + 500);
+      const { data, error } = await supabase
+        .from('personas')
+        .select('numero_documento')
+        .in('numero_documento', chunk)
+        .is('deleted_at', null);
+      if (error) handleSupabaseError(error);
+      (data || []).forEach(r => result.add(r.numero_documento));
+    }
+    return result;
+  },
+
+  async getIdByDocumento(numeroDocumento: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('personas')
+      .select('id')
+      .eq('numero_documento', numeroDocumento)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (error) handleSupabaseError(error);
+    return data?.id || null;
+  },
+
+  async upsertBulk(
+    personas: PersonaFormData[],
+    existingDocs: Set<string>,
+    updateExisting: boolean
+  ): Promise<{ created: number; updated: number; skipped: number; errors: { row: number; error: string }[] }> {
+    const errors: { row: number; error: string }[] = [];
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (let i = 0; i < personas.length; i++) {
+      const p = personas[i];
+      try {
+        if (existingDocs.has(p.numeroDocumento)) {
+          if (updateExisting) {
+            const id = await this.getIdByDocumento(p.numeroDocumento);
+            if (id) {
+              await this.update(id, p);
+              updated++;
+            } else {
+              skipped++;
+            }
+          } else {
+            skipped++;
+          }
+        } else {
+          await this.create(p);
+          created++;
+        }
+      } catch (err: any) {
+        errors.push({ row: i + 2, error: err?.message || 'Error desconocido' });
+      }
+    }
+    return { created, updated, skipped, errors };
+  },
+
   async delete(id: string): Promise<void> {
     // Verificar si tiene matrículas asociadas
     const { count, error: countError } = await supabase

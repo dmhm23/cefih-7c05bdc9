@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 export default function UsuariosTab() {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const { perfil } = useAuth();
   const { rolesQuery, usuariosQuery, assignRole, updateUser, resetPassword, deleteUser } = useRoles();
   const roles = rolesQuery.data || [];
@@ -79,6 +80,7 @@ export default function UsuariosTab() {
       }
 
       toast({ title: "¡Usuario creado!", description: `Se creó el usuario ${email}` });
+      logActivity({ action: "crear", module: "admin", description: `Creó usuario ${email}`, entityType: "usuario" });
       setNombres("");
       setEmail("");
       setPassword("");
@@ -93,11 +95,12 @@ export default function UsuariosTab() {
 
   const handleChangeRole = async (userId: string, newRolId: string) => {
     await assignRole.mutateAsync({ userId, rolId: newRolId });
-  };
+    logActivity({ action: "editar", module: "admin", description: `Cambió rol de usuario`, entityType: "usuario", entityId: userId });
 
   const handleEditSave = async () => {
     if (!editUser) return;
     await updateUser.mutateAsync({ userId: editUser.id, nombres: editNombres });
+    logActivity({ action: "editar", module: "admin", description: `Editó nombre de usuario`, entityType: "usuario", entityId: editUser.id });
     setEditUser(null);
   };
 
@@ -112,6 +115,7 @@ export default function UsuariosTab() {
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     await deleteUser.mutateAsync(deleteTarget.id);
+    logActivity({ action: "eliminar", module: "admin", description: `Eliminó usuario ${deleteTarget.email}`, entityType: "usuario", entityId: deleteTarget.id });
     setDeleteTarget(null);
   };
 

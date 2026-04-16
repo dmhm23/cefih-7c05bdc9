@@ -113,6 +113,7 @@ export function AgregarEstudiantesModal({
       toast({
         title: `${seleccionados.length} estudiante(s) agregado(s) al curso`,
       });
+      logActivity({ action: "crear", module: "cursos", description: `Agregó ${seleccionados.length} estudiante(s) al curso`, entityType: "curso", entityId: cursoId });
       setSeleccionados([]);
       setBusqueda("");
       onOpenChange(false);

@@ -1,67 +1,44 @@
 
 
-## Análisis del problema
+## Análisis
 
-Mirando `ImportarEmpresasDialog.tsx` (mismo patrón en `ImportarPersonasDialog.tsx`), la estructura del `DialogContent` es:
+Actualmente en `src/utils/personaPlantilla.ts` se marcan como **errores obligatorios**:
+- Tipo Documento
+- Número Documento
+- Nombres
+- Apellidos
 
-```
-DialogHeader
-{contenido condicional: dropzone | result | tabla con ScrollArea max-h-[45vh]}
-{importing && <ImportProgress />}   ← se inserta aquí como hermano
-DialogFooter
-```
+El resto (género, fecha, RH, nivel educativo, contacto emergencia, etc.) ya son opcionales pero validan formato si se proveen.
 
-**Causas raíz:**
+El trigger DB `validar_contacto_emergencia` exige que **si** se envía contacto emergencia, tenga `nombre` y `telefono`. Si va vacío (`{}`) no falla.
 
-1. **No hay reserva de espacio**: `ImportProgress` se monta como hermano flex-item dentro del `DialogContent` (que es `flex flex-col`). El `ScrollArea` de la tabla tiene `max-h-[45vh]` fijo y el `DialogContent` tiene `max-h-[85vh]`. Cuando aparece la barra, el contenido total puede exceder el alto del modal y la barra termina visualmente solapada con la tabla porque el contenedor padre del bloque de tabla (`flex-1 min-h-0`) no cede espacio.
+## Plan
 
-2. **Sin separador visual**: `ImportProgress` solo tiene `bg-muted/30` con borde sutil; no se distingue del fondo del modal.
+Relajar todas las validaciones obligatorias excepto las mínimas que la base de datos exige por NOT NULL sin default:
 
-3. **Posicionamiento ambiguo**: Al estar entre el contenido y el footer sin un separador, parece "flotar" sobre la tabla en lugar de ser una sección propia.
+**Campos que SÍ deben permanecer obligatorios** (NOT NULL en BD sin default útil):
+- `numero_documento` (NOT NULL, sin default)
+- `nombres` (NOT NULL, sin default)
+- `apellidos` (NOT NULL, sin default)
 
-4. **En el screenshot**: La barra (h-2) queda detrás del texto de las filas porque el contenedor scrolleable de la tabla extiende su altura y la barra se renderiza encima visualmente.
+**Campos que pasan a ser opcionales** (todos los demás):
+- Tipo documento → si viene vacío, usar default `CC` (la BD ya tiene default `cedula_ciudadania`)
+- Género, fecha nacimiento, RH, nivel educativo, email, teléfono, país, contacto emergencia → completamente opcionales
 
-## Solución propuesta
+## Cambios
 
-**Estrategia**: Convertir el `ImportProgress` durante el estado `importing` en una **sección fija anclada arriba del footer**, con separador visual claro, y reducir el `max-h` de la tabla cuando está activa para garantizar que no haya solapamiento.
+### `src/utils/personaPlantilla.ts`
 
-### Cambios
+1. **Quitar el error** "Tipo Documento es obligatorio" — si viene vacío, asignar `'CC'` por defecto.
+2. Mantener: errores solo para `numeroDocumento`, `nombres`, `apellidos` vacíos.
+3. Mantener: errores de **formato** (valores no reconocidos en enums) cuando el usuario sí proporciona un valor inválido — esto evita corromper datos.
+4. Contacto emergencia: si solo se llenan algunos sub-campos (ej. solo nombre sin teléfono), enviar el objeto completo vacío `{}` para evitar el trigger DB que exige nombre+teléfono juntos. Es decir: solo enviar `contacto_emergencia` cuando AMBOS (nombre y teléfono) estén presentes; en caso contrario, enviar `{}`.
 
-| Archivo | Cambio |
-|---|---|
-| `src/components/shared/ImportProgress.tsx` | Mejorar estilo: fondo más sólido (`bg-background`), borde superior marcado, padding generoso, barra más gruesa (`h-3`), tipografía más jerárquica. |
-| `src/components/personas/ImportarPersonasDialog.tsx` | Envolver el bloque de tabla en un contenedor que reduzca su `max-h` cuando `importing` es true. Agregar separador (`border-t`) antes del `ImportProgress`. Asegurar que el progress quede entre el contenido y el footer con margen claro. |
-| `src/components/empresas/ImportarEmpresasDialog.tsx` | Mismo ajuste. |
+### `src/services/personaService.ts`
 
-### Detalle visual
+En `mapPersonaToDb`, cuando `contactoEmergencia` viene con datos parciales (falta nombre o teléfono), enviar `{}` en lugar del objeto incompleto, para no disparar el trigger `validar_contacto_emergencia`.
 
-**ImportProgress mejorado:**
-- Quitar el `border` propio y `bg-muted/30`
-- Usar `border-t-2 border-primary/20 bg-card px-6 py-4` para que sea una franja horizontal completa anclada al ancho del modal
-- Barra de progreso `h-3` (más visible)
-- Layout: ícono + label a la izquierda, contador a la derecha, barra debajo
+## Resultado
 
-**Diálogo:**
-- Cambiar la `ScrollArea` de la tabla de `max-h-[45vh]` a una clase condicional: `max-h-[35vh]` cuando `importing`, `max-h-[45vh]` normal — para liberar espacio vertical
-- El `ImportProgress` se renderiza con `-mx-6` (compensando el padding del DialogContent) para ocupar todo el ancho como franja
-- Footer queda separado naturalmente
-
-### Resultado esperado
-
-```text
-┌─────────────────────────────────┐
-│ Importar Personas           [X] │
-├─────────────────────────────────┤
-│ archivo.xlsx              [X]   │
-│ [badges] [tabs]                 │
-│ ┌─────────────────────────────┐ │
-│ │ tabla con scroll (35vh)     │ │
-│ └─────────────────────────────┘ │
-├═════════════════════════════════┤  ← franja completa
-│ ⟳ Importando personas... 71/2600│
-│ ████████░░░░░░░░░░░░░░░░░ 3%   │
-├─────────────────────────────────┤
-│              [Cancelar][Importando]│
-└─────────────────────────────────┘
-```
+El usuario podrá cargar archivos con solo 3 columnas mínimas (Número Documento, Nombres, Apellidos) y el resto se importará tal cual venga, con valores por defecto seguros.
 

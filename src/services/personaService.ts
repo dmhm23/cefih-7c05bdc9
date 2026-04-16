@@ -163,27 +163,8 @@ export const personaService = {
     onProgress?: (current: number, total: number) => void,
     onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
-    const errors: { row: number; error: string }[] = [];
-    let created = 0;
-    for (let i = 0; i < personas.length; i++) {
-      const p = personas[i];
-      const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
-      const t0 = performance.now();
-      onLog?.('debug', `[${i + 1}/${personas.length}] Insertando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
-      try {
-        await this.create(p);
-        const dt = Math.round(performance.now() - t0);
-        onLog?.('success', `[${i + 1}/${personas.length}] OK en ${dt}ms`);
-        created++;
-      } catch (err: any) {
-        const dt = Math.round(performance.now() - t0);
-        const msg = err?.message || 'Error desconocido';
-        onLog?.('error', `[${i + 1}/${personas.length}] Falló "${label}" en ${dt}ms — ${msg}`);
-        errors.push({ row: i + 2, error: msg });
-      }
-      onProgress?.(i + 1, personas.length);
-    }
-    return { created, errors };
+    const result = await this._batchInsert(personas, 0, onProgress, onLog);
+    return { created: result.created, errors: result.errors };
   },
 
   async checkExisting(documentos: string[]): Promise<Set<string>> {
@@ -222,64 +203,158 @@ export const personaService = {
     onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; updated: number; skipped: number; errors: { row: number; error: string }[] }> {
     const errors: { row: number; error: string }[] = [];
-    let created = 0;
     let updated = 0;
     let skipped = 0;
     const total = personas.length;
-    const startTs = performance.now();
 
     onLog?.('info', `Procesando ${total} registro(s) — modo: ${updateExisting ? 'actualizar existentes' : 'omitir existentes'}`);
 
+    // Separar nuevos vs existentes
+    const nuevos: { p: PersonaFormData; originalIdx: number }[] = [];
+    const existentes: { p: PersonaFormData; originalIdx: number }[] = [];
     for (let i = 0; i < total; i++) {
       const p = personas[i];
-      const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
-      const idx = `[${i + 1}/${total}]`;
-      const t0 = performance.now();
-      try {
-        if (existingDocs.has(p.numeroDocumento)) {
-          if (updateExisting) {
-            onLog?.('debug', `${idx} Actualizando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
+      if (existingDocs.has(p.numeroDocumento)) {
+        existentes.push({ p, originalIdx: i });
+      } else {
+        nuevos.push({ p, originalIdx: i });
+      }
+    }
+
+    let processedCount = 0;
+
+    // 1) Procesar existentes (omitir o actualizar uno por uno)
+    if (existentes.length > 0) {
+      if (!updateExisting) {
+        skipped = existentes.length;
+        onLog?.('info', `Omitiendo ${skipped} registro(s) ya existente(s)`);
+        processedCount += existentes.length;
+        onProgress?.(processedCount, total);
+      } else {
+        onLog?.('info', `Actualizando ${existentes.length} registro(s) existente(s) (uno por uno)`);
+        for (const { p, originalIdx } of existentes) {
+          const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
+          const t0 = performance.now();
+          try {
             const id = await this.getIdByDocumento(p.numeroDocumento);
             if (id) {
               await this.update(id, p);
               const dt = Math.round(performance.now() - t0);
-              onLog?.('success', `${idx} Actualizado en ${dt}ms`);
+              onLog?.('success', `[${originalIdx + 1}] Actualizado "${label}" en ${dt}ms`);
               updated++;
             } else {
-              onLog?.('warn', `${idx} No se encontró ID para "${label}", omitido`);
+              onLog?.('warn', `[${originalIdx + 1}] No se encontró ID para "${label}"`);
               skipped++;
             }
-          } else {
-            onLog?.('debug', `${idx} Omitido "${label}" (ya existe)`);
-            skipped++;
+          } catch (err: any) {
+            const msg = err?.message || 'Error desconocido';
+            onLog?.('error', `[${originalIdx + 1}] Falló actualización "${label}" — ${msg}`);
+            errors.push({ row: originalIdx + 2, error: msg });
           }
-        } else {
-          onLog?.('debug', `${idx} Insertando "${label}" (${p.tipoDocumento} ${p.numeroDocumento})`);
-          await this.create(p);
-          const dt = Math.round(performance.now() - t0);
-          onLog?.('success', `${idx} Creado en ${dt}ms`);
-          created++;
+          processedCount++;
+          onProgress?.(processedCount, total);
         }
-      } catch (err: any) {
-        const dt = Math.round(performance.now() - t0);
-        const msg = err?.message || 'Error desconocido';
-        onLog?.('error', `${idx} Falló "${label}" en ${dt}ms — ${msg}`);
-        errors.push({ row: i + 2, error: msg });
-      }
-      onProgress?.(i + 1, total);
-
-      // Throughput cada 10 registros
-      if ((i + 1) % 10 === 0 && i + 1 < total) {
-        const elapsedSec = (performance.now() - startTs) / 1000;
-        const rps = (i + 1) / elapsedSec;
-        const remaining = Math.round((total - (i + 1)) / rps);
-        onLog?.(
-          'info',
-          `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${i + 1}/${total})`,
-        );
       }
     }
-    return { created, updated, skipped, errors };
+
+    // 2) Insertar nuevos por lotes
+    const batchResult = await this._batchInsert(
+      nuevos.map(n => n.p),
+      processedCount,
+      (current, _t) => onProgress?.(current, total),
+      onLog,
+      nuevos.map(n => n.originalIdx),
+    );
+
+    return {
+      created: batchResult.created,
+      updated,
+      skipped,
+      errors: [...errors, ...batchResult.errors],
+    };
+  },
+
+  /**
+   * Inserción por lotes. Reduce 1 request/fila a 1 request/CHUNK_SIZE filas.
+   * Si un lote falla, hace fallback fila a fila para identificar la culpable.
+   */
+  async _batchInsert(
+    personas: PersonaFormData[],
+    progressOffset: number,
+    onProgress?: (current: number, total: number) => void,
+    onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
+    originalIndices?: number[],
+  ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+    const CHUNK_SIZE = 100;
+    const errors: { row: number; error: string }[] = [];
+    let created = 0;
+    const total = personas.length;
+    if (total === 0) return { created, errors };
+
+    const startTs = performance.now();
+    const totalLotes = Math.ceil(total / CHUNK_SIZE);
+    onLog?.('info', `Insertando ${total} registro(s) en ${totalLotes} lote(s) de hasta ${CHUNK_SIZE}`);
+
+    let processed = 0;
+    for (let loteIdx = 0; loteIdx < totalLotes; loteIdx++) {
+      const start = loteIdx * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, total);
+      const chunk = personas.slice(start, end);
+      const indices = originalIndices ? originalIndices.slice(start, end) : null;
+
+      const t0 = performance.now();
+      onLog?.('debug', `Lote ${loteIdx + 1}/${totalLotes}: enviando ${chunk.length} registro(s)…`);
+
+      const dbRows = chunk.map(p => mapPersonaToDb(p));
+      const { data, error } = await supabase
+        .from('personas')
+        .insert(dbRows as any)
+        .select('id, numero_documento');
+
+      if (error) {
+        const dt = Math.round(performance.now() - t0);
+        onLog?.('warn', `Lote ${loteIdx + 1}/${totalLotes} falló en ${dt}ms — ${error.message}. Reintentando fila por fila…`);
+        // Fallback fila a fila para identificar las culpables
+        for (let j = 0; j < chunk.length; j++) {
+          const p = chunk[j];
+          const label = `${p.nombres || ''} ${p.apellidos || ''}`.trim() || '(sin nombre)';
+          const rowOrig = indices ? indices[j] + 1 : start + j + 1;
+          const tFila = performance.now();
+          try {
+            await this.create(p);
+            const dtFila = Math.round(performance.now() - tFila);
+            onLog?.('success', `[${rowOrig}] OK individual "${label}" en ${dtFila}ms`);
+            created++;
+          } catch (err: any) {
+            const msg = err?.message || 'Error desconocido';
+            onLog?.('error', `[${rowOrig}] Falló "${label}" — ${msg}`);
+            errors.push({ row: (indices ? indices[j] : start + j) + 2, error: msg });
+          }
+          processed++;
+          onProgress?.(progressOffset + processed, total);
+        }
+      } else {
+        const dt = Math.round(performance.now() - t0);
+        const inserted = data?.length || chunk.length;
+        const promedio = Math.round(dt / inserted);
+        onLog?.('success', `Lote ${loteIdx + 1}/${totalLotes} OK: ${inserted} reg en ${dt}ms (~${promedio}ms/reg)`);
+        created += inserted;
+        processed += chunk.length;
+        onProgress?.(progressOffset + processed, total);
+      }
+
+      // Throughput global cada lote
+      const elapsedSec = (performance.now() - startTs) / 1000;
+      if (elapsedSec > 0 && processed < total) {
+        const rps = processed / elapsedSec;
+        const remaining = Math.round((total - processed) / Math.max(rps, 0.1));
+        onLog?.('info', `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${processed}/${total})`);
+      }
+    }
+
+    const totalSec = ((performance.now() - startTs) / 1000).toFixed(1);
+    onLog?.('info', `Inserción completada: ${created} OK, ${errors.length} error(es) en ${totalSec}s`);
+    return { created, errors };
   },
 
   async delete(id: string): Promise<void> {

@@ -179,41 +179,102 @@ export const empresaService = {
     onProgress?: (current: number, total: number) => void,
     onLog?: (level: 'info' | 'success' | 'warn' | 'error' | 'debug', msg: string, meta?: Record<string, any>) => void,
   ): Promise<{ created: number; errors: { row: number; error: string }[] }> {
+    const CHUNK_SIZE = 100;
     const errors: { row: number; error: string }[] = [];
     let created = 0;
     const total = empresas.length;
+    if (total === 0) return { created, errors };
+
     const startTs = performance.now();
-    onLog?.('info', `Procesando ${total} empresa(s)`);
+    const totalLotes = Math.ceil(total / CHUNK_SIZE);
+    onLog?.('info', `Insertando ${total} empresa(s) en ${totalLotes} lote(s) de hasta ${CHUNK_SIZE}`);
 
-    for (let i = 0; i < total; i++) {
-      const e = empresas[i];
-      const label = e.nombreEmpresa || '(sin nombre)';
-      const idx = `[${i + 1}/${total}]`;
+    let processed = 0;
+    for (let loteIdx = 0; loteIdx < totalLotes; loteIdx++) {
+      const start = loteIdx * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, total);
+      const chunk = empresas.slice(start, end);
+
       const t0 = performance.now();
-      onLog?.('debug', `${idx} Insertando "${label}" (NIT ${e.nit})`);
-      try {
-        await this.create(e);
-        const dt = Math.round(performance.now() - t0);
-        onLog?.('success', `${idx} Creada en ${dt}ms`);
-        created++;
-      } catch (err: any) {
-        const dt = Math.round(performance.now() - t0);
-        const msg = err?.message || 'Error desconocido';
-        onLog?.('error', `${idx} Falló "${label}" en ${dt}ms — ${msg}`);
-        errors.push({ row: i + 2, error: msg });
-      }
-      onProgress?.(i + 1, total);
+      onLog?.('debug', `Lote ${loteIdx + 1}/${totalLotes}: enviando ${chunk.length} empresa(s)…`);
 
-      if ((i + 1) % 10 === 0 && i + 1 < total) {
-        const elapsedSec = (performance.now() - startTs) / 1000;
-        const rps = (i + 1) / elapsedSec;
-        const remaining = Math.round((total - (i + 1)) / rps);
-        onLog?.(
-          'info',
-          `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${i + 1}/${total})`,
-        );
+      // NOTA: insert batch sin contactos. Los contactos se insertan después por empresa.
+      const dbRows = chunk.map(e => mapEmpresaToDb(e));
+      const { data, error } = await supabase
+        .from('empresas')
+        .insert(dbRows as any)
+        .select('id, nit');
+
+      if (error) {
+        const dt = Math.round(performance.now() - t0);
+        onLog?.('warn', `Lote ${loteIdx + 1}/${totalLotes} falló en ${dt}ms — ${error.message}. Reintentando fila por fila…`);
+        for (let j = 0; j < chunk.length; j++) {
+          const e = chunk[j];
+          const label = e.nombreEmpresa || '(sin nombre)';
+          const rowOrig = start + j + 1;
+          const tFila = performance.now();
+          try {
+            await this.create(e);
+            const dtFila = Math.round(performance.now() - tFila);
+            onLog?.('success', `[${rowOrig}] OK individual "${label}" en ${dtFila}ms`);
+            created++;
+          } catch (err: any) {
+            const msg = err?.message || 'Error desconocido';
+            onLog?.('error', `[${rowOrig}] Falló "${label}" — ${msg}`);
+            errors.push({ row: start + j + 2, error: msg });
+          }
+          processed++;
+          onProgress?.(processed, total);
+        }
+      } else {
+        const dt = Math.round(performance.now() - t0);
+        const inserted = data?.length || chunk.length;
+        const promedio = Math.round(dt / inserted);
+        onLog?.('success', `Lote ${loteIdx + 1}/${totalLotes} OK: ${inserted} empresa(s) en ${dt}ms (~${promedio}ms/reg)`);
+
+        // Insertar contactos en bloque para las empresas que los traen
+        const empresasConContactos: { id: string; contactos: any[] }[] = [];
+        const nitToId = new Map<string, string>();
+        (data || []).forEach((r: any) => nitToId.set(r.nit, r.id));
+        for (const e of chunk) {
+          const id = nitToId.get(e.nit);
+          if (id && e.contactos?.length) {
+            empresasConContactos.push({ id, contactos: e.contactos });
+          }
+        }
+        if (empresasConContactos.length > 0) {
+          const contactRows = empresasConContactos.flatMap(ec =>
+            ec.contactos.map(c => ({
+              empresa_id: ec.id,
+              nombre: c.nombre,
+              telefono: c.telefono,
+              email: c.email,
+              es_principal: c.esPrincipal,
+            })),
+          );
+          const { error: cErr } = await supabase.from('contactos_empresa').insert(contactRows as any);
+          if (cErr) {
+            onLog?.('warn', `Contactos del lote ${loteIdx + 1}: ${cErr.message}`);
+          } else {
+            onLog?.('debug', `Lote ${loteIdx + 1}: ${contactRows.length} contacto(s) insertado(s)`);
+          }
+        }
+
+        created += inserted;
+        processed += chunk.length;
+        onProgress?.(processed, total);
+      }
+
+      const elapsedSec = (performance.now() - startTs) / 1000;
+      if (elapsedSec > 0 && processed < total) {
+        const rps = processed / elapsedSec;
+        const remaining = Math.round((total - processed) / Math.max(rps, 0.1));
+        onLog?.('info', `Throughput: ${rps.toFixed(1)} reg/s — ETA ~${remaining}s (${processed}/${total})`);
       }
     }
+
+    const totalSec = ((performance.now() - startTs) / 1000).toFixed(1);
+    onLog?.('info', `Inserción completada: ${created} OK, ${errors.length} error(es) en ${totalSec}s`);
     return { created, errors };
   },
 

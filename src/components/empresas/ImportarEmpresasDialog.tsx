@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface Props {
 
 export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const queryClient = useQueryClient();
   const [rows, setRows] = useState<EmpresaImportRow[]>([]);
   const [fileName, setFileName] = useState('');
@@ -66,6 +68,7 @@ export function ImportarEmpresasDialog({ open, onOpenChange }: Props) {
       setResult(res);
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       toast({ title: `${res.created} empresas importadas correctamente` });
+      logActivity({ action: "importar", module: "empresas", description: `Importó ${res.created} empresa(s) desde archivo "${fileName}"`, entityType: "empresa", metadata: { archivo: fileName, total_filas: rows.length, importadas: res.created, errores: res.errors.length } });
     } catch {
       toast({ title: 'Error al importar', variant: 'destructive' });
     } finally {

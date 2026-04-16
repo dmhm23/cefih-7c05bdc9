@@ -474,7 +474,7 @@ export default function MatriculaFormPage() {
       }
 
       toast({ title: "Matrícula creada correctamente" });
-      logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para persona ${selectedPersona?.nombres} ${selectedPersona?.apellidos}`, entityType: "matricula" });
+      logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para ${selectedPersona?.nombres} ${selectedPersona?.apellidos} (${selectedPersona?.numeroDocumento || ''})${selectedCurso ? ` en curso ${selectedCurso.numeroCurso || selectedCurso.nombre}` : ''}`, entityType: "matricula", metadata: { persona_id: data.personaId, curso_id: data.cursoId, tipo_vinculacion: data.tipoVinculacion, valor_cupo: data.valorCupo } });
       skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {

@@ -194,7 +194,7 @@ export default function PersonalFormPage() {
       if (isEditing) {
         await updatePersonal.mutateAsync({ id, data: personalData });
         toast({ title: "Perfil actualizado correctamente" });
-        logActivity({ action: "editar", module: "personal", description: `Editó perfil ${data.nombres} ${data.apellidos}`, entityType: "personal", entityId: id });
+        logActivity({ action: "editar", module: "personal", description: `Editó perfil ${data.nombres} ${data.apellidos} (${cargo?.nombre || ''})`, entityType: "personal", entityId: id, metadata: { cargo: cargo?.nombre } });
       } else {
         const newPersonal = await createPersonal.mutateAsync(personalData);
 
@@ -211,7 +211,7 @@ export default function PersonalFormPage() {
         }
 
         toast({ title: "Perfil creado correctamente" });
-        logActivity({ action: "crear", module: "personal", description: `Creó perfil ${data.nombres} ${data.apellidos}`, entityType: "personal" });
+        logActivity({ action: "crear", module: "personal", description: `Creó perfil ${data.nombres} ${data.apellidos} (${cargo?.nombre || ''})`, entityType: "personal", metadata: { cargo: cargo?.nombre, adjuntos: tempFiles.length, tiene_firma: !!tempFirma } });
       }
       navigate("/gestion-personal");
     } catch (error: any) {

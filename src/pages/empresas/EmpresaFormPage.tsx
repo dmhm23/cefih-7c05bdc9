@@ -125,11 +125,11 @@ export default function EmpresaFormPage() {
       if (isEditing) {
         await updateEmpresa.mutateAsync({ id, data: empresaData });
         toast({ title: "Empresa actualizada correctamente" });
-        logActivity({ action: "editar", module: "empresas", description: `Editó empresa ${data.nombreEmpresa}`, entityType: "empresa", entityId: id });
+        logActivity({ action: "editar", module: "empresas", description: `Editó empresa ${data.nombreEmpresa} (NIT: ${data.nit})`, entityType: "empresa", entityId: id, metadata: { nit: data.nit, contactos: contactos.length } });
       } else {
         await createEmpresa.mutateAsync(empresaData);
         toast({ title: "Empresa creada correctamente" });
-        logActivity({ action: "crear", module: "empresas", description: `Creó empresa ${data.nombreEmpresa}`, entityType: "empresa" });
+        logActivity({ action: "crear", module: "empresas", description: `Creó empresa ${data.nombreEmpresa} (NIT: ${data.nit})`, entityType: "empresa", metadata: { nit: data.nit, contactos: contactos.length } });
       }
       navigate("/empresas");
     } catch (error: any) {

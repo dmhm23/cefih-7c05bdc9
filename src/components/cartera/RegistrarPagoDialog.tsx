@@ -72,7 +72,7 @@ export function RegistrarPagoDialog({ open, onOpenChange, factura }: Props) {
     });
 
     toast({ title: "Pago registrado exitosamente" });
-    logActivity({ action: "crear", module: "cartera", description: `Registró pago en factura ${factura.numeroFactura}`, entityType: "pago" });
+    logActivity({ action: "crear", module: "cartera", description: `Registró pago de ${formatCurrency(valor)} en factura ${factura.numeroFactura} (${METODO_PAGO_LABELS[metodoPago]})`, entityType: "pago", metadata: { factura_id: factura.id, factura_numero: factura.numeroFactura, valor, metodo_pago: metodoPago, saldo_pendiente: saldoPendiente - valor } });
     onOpenChange(false);
     setValorPagoNum(undefined);
     setMetodoOtro("");

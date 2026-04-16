@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
 import { Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, Plus, Trash2, Star } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
@@ -33,6 +34,7 @@ export function EmpresaDetailSheet({
 }: EmpresaDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updateEmpresa = useUpdateEmpresa();
   const { data: matriculas = [] } = useMatriculas();
   const [formData, setFormData] = useState<Partial<EmpresaFormData>>({});
@@ -96,6 +98,7 @@ export function EmpresaDetailSheet({
         }
       });
       toast({ title: "Cambios guardados correctamente" });
+      logActivity({ action: "editar", module: "empresas", description: `Editó empresa "${getValue("nombreEmpresa")}" desde panel lateral`, entityType: "empresa", entityId: empresa.id, metadata: { campos_modificados: Object.keys(formData) } });
       setFormData({});
       setIsDirty(false);
     } catch {

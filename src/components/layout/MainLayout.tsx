@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "./AppSidebar";
 import { Separator } from "@/components/ui/separator";
 import { LogOut } from "lucide-react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -42,6 +43,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const { perfil, user, signOut } = useAuth();
+  const { logActivity } = useActivityLogger();
 
   useEffect(() => {
     preloadNiveles();
@@ -57,6 +59,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const displayEmail = perfil?.email || user?.email || "";
 
   const handleLogout = async () => {
+    logActivity({ action: "logout", module: "auth", description: "Cerró sesión" });
     await signOut();
     navigate("/");
   };

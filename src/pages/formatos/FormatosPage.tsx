@@ -116,7 +116,8 @@ export default function FormatosPage() {
     try {
       await toggleActMutation.mutateAsync(toggleId);
       toast({ title: toggleActivo ? "Formato desactivado" : "Formato activado" });
-      logActivity({ action: "editar", module: "formatos", description: `${toggleActivo ? "Desactivó" : "Activó"} formato`, entityType: "formato", entityId: toggleId });
+      const fmt = formatos.find(f => f.id === toggleId);
+      logActivity({ action: "editar", module: "formatos", description: `${toggleActivo ? "Desactivó" : "Activó"} formato "${fmt?.nombre || ''}"`, entityType: "formato", entityId: toggleId, metadata: { nombre: fmt?.nombre, codigo: fmt?.codigo } });
     } catch { toast({ title: "Error al cambiar estado", variant: "destructive" }); }
     setToggleId(null);
   };
@@ -133,7 +134,8 @@ export default function FormatosPage() {
     try {
       await archiveMutation.mutateAsync(id);
       toast({ title: "Formato archivado" });
-      logActivity({ action: "eliminar", module: "formatos", description: `Archivó formato`, entityType: "formato", entityId: id });
+      const fmt = formatos.find(f => f.id === id);
+      logActivity({ action: "eliminar", module: "formatos", description: `Archivó formato "${fmt?.nombre || ''}"`, entityType: "formato", entityId: id, metadata: { nombre: fmt?.nombre, codigo: fmt?.codigo } });
     } catch { toast({ title: "Error al archivar", variant: "destructive" }); }
   };
 

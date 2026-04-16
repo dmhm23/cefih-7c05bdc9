@@ -81,7 +81,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
     });
 
     toast({ title: "Pago actualizado exitosamente" });
-    logActivity({ action: "editar", module: "cartera", description: `Editó pago`, entityType: "pago", entityId: pago.id });
+    logActivity({ action: "editar", module: "cartera", description: `Editó pago de ${formatCurrency(valorPagoNum)} (${METODO_PAGO_LABELS[metodoPago]})`, entityType: "pago", entityId: pago.id, metadata: { valor_anterior: pago.valorPago, valor_nuevo: valorPagoNum, metodo_pago: metodoPago } });
     onOpenChange(false);
   };
 
@@ -89,7 +89,7 @@ export function EditarPagoDialog({ open, onOpenChange, pago }: Props) {
     if (!pago) return;
     await deletePago.mutateAsync(pago.id);
     toast({ title: "Pago eliminado exitosamente" });
-    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó pago`, entityType: "pago", entityId: pago.id });
+    logActivity({ action: "eliminar", module: "cartera", description: `Eliminó pago de ${formatCurrency(pago.valorPago)}`, entityType: "pago", entityId: pago.id, metadata: { valor: pago.valorPago } });
     setShowDeleteConfirm(false);
     onOpenChange(false);
   };

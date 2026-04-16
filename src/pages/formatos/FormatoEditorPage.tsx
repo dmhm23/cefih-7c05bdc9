@@ -185,11 +185,11 @@ export default function FormatoEditorPage() {
       if (isNew) {
         await createMutation.mutateAsync(data);
         toast({ title: 'Formato creado correctamente' });
-        logActivity({ action: "crear", module: "formatos", description: `Creó formato ${config.nombre}`, entityType: "formato" });
+        logActivity({ action: "crear", module: "formatos", description: `Creó formato "${config.nombre}" (${config.categoria})`, entityType: "formato", metadata: { nombre: config.nombre, categoria: config.categoria, bloques: items.length } });
       } else {
         await updateMutation.mutateAsync({ id: id!, data });
         toast({ title: 'Formato actualizado correctamente' });
-        logActivity({ action: "editar", module: "formatos", description: `Editó formato ${config.nombre}`, entityType: "formato", entityId: id });
+        logActivity({ action: "editar", module: "formatos", description: `Editó formato "${config.nombre}" (${config.categoria})`, entityType: "formato", entityId: id, metadata: { nombre: config.nombre, categoria: config.categoria, bloques: items.length } });
       }
       store.markClean();
       setSavedOnce(true);

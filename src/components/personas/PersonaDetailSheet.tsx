@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
@@ -50,6 +51,7 @@ export function PersonaDetailSheet({
 }: PersonaDetailSheetProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logActivity } = useActivityLogger();
   const updatePersona = useUpdatePersona();
   const { data: matriculas = [] } = useMatriculasByPersona(persona?.id || "");
   const resolveNivel = useResolveNivel();
@@ -92,6 +94,7 @@ export function PersonaDetailSheet({
         data: formData,
       });
       toast({ title: "Cambios guardados correctamente" });
+      logActivity({ action: "editar", module: "personas", description: `Editó persona "${persona.nombres} ${persona.apellidos}" desde panel lateral`, entityType: "persona", entityId: persona.id, metadata: { campos_modificados: Object.keys(formData) } });
       setFormData({});
       setIsDirty(false);
     } catch (error) {

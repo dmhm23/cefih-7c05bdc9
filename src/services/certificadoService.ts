@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { CertificadoGenerado, CertificadoFormData } from '@/types/certificado';
+import { fetchAllPaginated } from './_paginated';
 
 function mapCertificado(row: any): CertificadoGenerado {
   return {
@@ -25,12 +26,14 @@ function mapCertificado(row: any): CertificadoGenerado {
 
 export const certificadoService = {
   async getAll(): Promise<CertificadoGenerado[]> {
-    const { data, error } = await supabase
-      .from('certificados')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(mapCertificado);
+    const data = await fetchAllPaginated<any>((from, to) =>
+      supabase
+        .from('certificados')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, to),
+    );
+    return data.map(mapCertificado);
   },
 
   async getById(id: string): Promise<CertificadoGenerado | undefined> {

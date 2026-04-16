@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Curso, CursoFormData, EstadoCurso, FechaAdicionalMinTrabajo } from '@/types/curso';
 import { ApiError, handleSupabaseError } from './api';
+import { fetchAllPaginated } from './_paginated';
 
 // Map DB estado to frontend estado
 const ESTADO_DB_TO_FE: Record<string, EstadoCurso> = {
@@ -72,14 +73,20 @@ function mapCursoRow(row: any): Curso {
 
 export const cursoService = {
   async getAll(): Promise<Curso[]> {
-    const { data, error } = await supabase
-      .from('cursos')
-      .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false });
-
-    if (error) handleSupabaseError(error);
-    return (data || []).map(mapCursoRow);
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('cursos')
+          .select('*, entrenador:personal!cursos_entrenador_id_fkey(nombres, apellidos), supervisor:personal!cursos_supervisor_id_fkey(nombres, apellidos), matriculas!matriculas_curso_id_fkey(id)')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      return data.map(mapCursoRow);
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return [];
+    }
   },
 
   async getById(id: string): Promise<Curso | null> {

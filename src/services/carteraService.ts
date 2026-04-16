@@ -9,6 +9,7 @@ import type {
   TipoActividadCartera,
   TipoResponsable,
 } from '@/types/cartera';
+import { fetchAllPaginated } from './_paginated';
 
 // ─── helpers: map DB rows to domain types ─────────────────
 
@@ -196,13 +197,15 @@ export async function asignarMatriculaACartera(params: {
 export const carteraService = {
   // Responsables
   async getResponsables(): Promise<ResponsablePago[]> {
-    const { data, error } = await supabase
-      .from('responsables_pago')
-      .select('*')
-      .is('deleted_at', null)
-      .order('nombre');
-    if (error) throw error;
-    return (data || []).map(mapResponsable);
+    const data = await fetchAllPaginated<any>((from, to) =>
+      supabase
+        .from('responsables_pago')
+        .select('*')
+        .is('deleted_at', null)
+        .order('nombre')
+        .range(from, to),
+    );
+    return data.map(mapResponsable);
   },
 
   async getResponsableById(id: string): Promise<ResponsablePago | null> {
@@ -237,12 +240,14 @@ export const carteraService = {
 
   // Grupos
   async getGrupos(): Promise<GrupoCartera[]> {
-    const { data, error } = await supabase
-      .from('grupos_cartera')
-      .select('*, grupo_cartera_matriculas(matricula_id)')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(row => ({
+    const data = await fetchAllPaginated<any>((from, to) =>
+      supabase
+        .from('grupos_cartera')
+        .select('*, grupo_cartera_matriculas(matricula_id)')
+        .order('created_at', { ascending: false })
+        .range(from, to),
+    );
+    return data.map(row => ({
       ...mapGrupo(row),
       matriculaIds: (row.grupo_cartera_matriculas || []).map((gcm: any) => gcm.matricula_id),
     }));

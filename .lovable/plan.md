@@ -1,39 +1,55 @@
 
 
-# Fix: Duración del curso no se actualiza al cambiar fechas
+# Exportar listado con selector de columnas desde Cursos
 
-## Diagnóstico
+## Resumen
 
-En `CourseInfoCard.tsx` (línea 83), la prioridad de resolución es:
+Reemplazar la exportación directa actual (`handleExportarListado`) por un modal que permita al usuario elegir qué columnas incluir en el archivo CSV antes de descargarlo. Las columnas disponibles cubrirán datos de Personas, Matrículas y Cursos.
 
-```typescript
-const duracionActual = (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? duracionDiasCalculada;
-```
+## Componente nuevo: `ExportarListadoDialog`
 
-El problema es que `curso.duracionDias` (valor persistido en DB, por defecto `0`) **siempre está definido**, así que `duracionDiasCalculada` nunca se alcanza como fallback. Además, cuando el usuario cambia una fecha, `handleFechaChange` llama a `onFieldChange("duracionDias", ...)` pero hay una condición de carrera: la lectura de `formData` dentro de `handleFechaChange` puede tener valores stale del render anterior.
+**Archivo:** `src/components/cursos/ExportarListadoDialog.tsx`
 
-## Corrección
+Un Dialog modal que:
+- Recibe `curso`, `matriculas`, `personas` y controla `open/onOpenChange`
+- Define un catálogo de ~30 columnas exportables, cada una con `key`, `header`, `visible` (por defecto), y una función `resolver(persona, matricula, curso) => string`
+- Usa checkboxes para seleccionar/deseleccionar columnas
+- Incluye botones "Seleccionar todas" / "Deseleccionar todas"
+- Botón "Exportar CSV" que genera y descarga el archivo con las columnas seleccionadas
 
-**Archivo:** `src/components/cursos/CourseInfoCard.tsx`
+### Columnas seleccionadas por defecto
+1. Nombre completo (nombres + apellidos)
+2. Cédula (número documento)
+3. Nivel de formación (resuelto desde `nivelFormacionId`)
+4. Duración en horas del curso
+5. Nombre empresa
+6. Representante legal
+7. NIT
+8. ARL
 
-1. **Simplificar la resolución de duración**: usar `duracionDiasCalculada` directamente como fuente de verdad cuando las fechas están presentes, y solo permitir override manual si el usuario edita explícitamente el campo de duración.
+### Catálogo completo de columnas disponibles
+Agrupadas por origen:
 
-2. **Cambiar la prioridad**: 
-   ```typescript
-   // Antes (roto):
-   const duracionActual = (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? duracionDiasCalculada;
-   
-   // Después (correcto):
-   const duracionActual = duracionDiasCalculada || (formData.duracionDias as number | undefined) ?? curso.duracionDias ?? 0;
-   ```
-   
-   Esto asegura que cuando hay fechas válidas, la duración calculada siempre se muestre. El campo de duración manual solo aplica si no hay fecha fin.
+**Persona:** tipo documento, número documento, nombres, apellidos, nombre completo, género, fecha nacimiento, país nacimiento, RH, nivel educativo, email, teléfono, contacto emergencia (nombre, teléfono, parentesco)
 
-3. **Asegurar que el valor calculado se persista al guardar**: En `handleFechaChange`, eliminar la dependencia de `formData` stale — usar directamente los valores conocidos del curso como fallback.
+**Matrícula:** estado, tipo vinculación, empresa nombre, empresa NIT, representante legal, cargo, ARL, EPS, sector económico, área trabajo, valor cupo, abono, pagado, fecha inicio, fecha fin, contacto cobro nombre, contacto cobro celular
 
-## Archivo a modificar
+**Curso:** número curso, nivel formación, tipo formación, duración horas, duración días, fecha inicio curso, fecha fin curso, entrenador, supervisor, lugar
+
+### Resolución de labels
+Reutilizar las funciones `findLabel` y `capitalize` de `csvMinTrabajo.ts` (exportarlas si son privadas) y el hook `useResolveNivel` para resolver el nombre del nivel de formación.
+
+## Integración en `CursoDetallePage`
+
+- Agregar estado `exportarListadoOpen`
+- Reemplazar `handleExportarListado` por `() => setExportarListadoOpen(true)`
+- Renderizar `<ExportarListadoDialog>` pasando curso, matriculas, personas
+
+## Archivos a modificar
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/cursos/CourseInfoCard.tsx` | Corregir prioridad de `duracionActual` para usar `duracionDiasCalculada` como fuente primaria cuando hay fechas válidas |
+| `src/components/cursos/ExportarListadoDialog.tsx` | **Nuevo** — Modal con selector de columnas y generación CSV |
+| `src/utils/csvMinTrabajo.ts` | Exportar `capitalize`, `findLabel`, `cleanDocumento`, `formatDate` como funciones públicas |
+| `src/pages/cursos/CursoDetallePage.tsx` | Reemplazar exportación directa por apertura del modal |
 

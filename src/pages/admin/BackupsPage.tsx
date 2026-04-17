@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Database, Plus, Calendar, Upload, ShieldAlert } from "lucide-react";
+import { Database, Plus, Calendar, Upload } from "lucide-react";
 import { useBackups } from "@/hooks/useBackups";
 import { BackupsTable } from "@/components/admin/backups/BackupsTable";
 import { CrearBackupDialog } from "@/components/admin/backups/CrearBackupDialog";
+import { SchedulesManager } from "@/components/admin/backups/SchedulesManager";
+import { ImportarBackupSection } from "@/components/admin/backups/ImportarBackupSection";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -63,26 +64,11 @@ const BackupsPage = () => {
         </TabsContent>
 
         <TabsContent value="programaciones">
-          <Card className="p-8 text-center text-muted-foreground">
-            <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium text-foreground mb-1">Programaciones automáticas</p>
-            <p className="text-sm">
-              Próximamente: define respaldos recurrentes (diarios, semanales) con retención
-              configurable. Esta sección se habilita en la siguiente fase del sistema de backups.
-            </p>
-          </Card>
+          <SchedulesManager />
         </TabsContent>
 
         <TabsContent value="importar">
-          <Card className="p-8 text-center text-muted-foreground">
-            <ShieldAlert className="h-10 w-10 mx-auto mb-3 opacity-40" />
-            <p className="font-medium text-foreground mb-1">Restauración desde backup</p>
-            <p className="text-sm max-w-lg mx-auto">
-              Próximamente: sube un archivo .zip de backup y restaura en modo "Reemplazar"
-              (wipe + restore) o "Enriquecer" (solo agrega datos faltantes). Incluye validación
-              de esquema y confirmación textual obligatoria.
-            </p>
-          </Card>
+          <ImportarBackupSection />
         </TabsContent>
       </Tabs>
 

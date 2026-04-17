@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/shared/IconButton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { GripVertical, Pencil, Trash2, Plus } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { GripVertical, Pencil, Info } from 'lucide-react';
 import { PortalDocumentoConfigAdmin } from '@/types/portalAdmin';
 import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';
 import { DocumentoConfigDialog } from './DocumentoConfigDialog';
-import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {
   DndContext,
   closestCenter,
@@ -35,7 +34,6 @@ const TIPO_LABELS: Record<string, string> = {
 interface Props {
   documentos: PortalDocumentoConfigAdmin[];
   onSave: (doc: PortalDocumentoConfigAdmin) => void;
-  onDelete: (key: string) => void;
   onReorder: (keys: string[]) => void;
 }
 
@@ -43,12 +41,10 @@ function SortableRow({
   doc,
   allDocs,
   onEdit,
-  onDelete,
 }: {
   doc: PortalDocumentoConfigAdmin;
   allDocs: PortalDocumentoConfigAdmin[];
   onEdit: (doc: PortalDocumentoConfigAdmin) => void;
-  onDelete: (key: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: doc.key });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
@@ -90,18 +86,16 @@ function SortableRow({
       </TableCell>
       <TableCell>
         <div className="flex gap-1">
-          <IconButton tooltip="Editar" className="h-8 w-8" onClick={() => onEdit(doc)}><Pencil className="h-4 w-4" /></IconButton>
-          <IconButton tooltip="Eliminar" className="h-8 w-8" onClick={() => onDelete(doc.key)}><Trash2 className="h-4 w-4 text-destructive" /></IconButton>
+          <IconButton tooltip="Editar dependencias y niveles" className="h-8 w-8" onClick={() => onEdit(doc)}><Pencil className="h-4 w-4" /></IconButton>
         </div>
       </TableCell>
     </TableRow>
   );
 }
 
-export function DocumentosCatalogoTable({ documentos, onSave, onDelete, onReorder }: Props) {
+export function DocumentosCatalogoTable({ documentos, onSave, onReorder }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDoc, setEditDoc] = useState<PortalDocumentoConfigAdmin | null>(null);
-  const [deleteKey, setDeleteKey] = useState<string | null>(null);
 
   const sorted = [...documentos].sort((a, b) => a.orden - b.orden);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -120,18 +114,16 @@ export function DocumentosCatalogoTable({ documentos, onSave, onDelete, onReorde
     setDialogOpen(true);
   };
 
-  const handleAdd = () => {
-    setEditDoc(null);
-    setDialogOpen(true);
-  };
-
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button onClick={handleAdd} size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Agregar documento
-        </Button>
-      </div>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-sm">
+          Los formatos se agregan o quitan del portal desde <strong>Gestión de Formatos</strong>,
+          activando "Visible en portal estudiante". Aquí puedes ajustar el orden, las dependencias
+          y los niveles habilitados.
+        </AlertDescription>
+      </Alert>
 
       <div className="rounded-md border">
         <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
@@ -150,7 +142,7 @@ export function DocumentosCatalogoTable({ documentos, onSave, onDelete, onReorde
             <SortableContext items={sorted.map(d => d.key)} strategy={verticalListSortingStrategy}>
               <TableBody>
                 {sorted.map(doc => (
-                  <SortableRow key={doc.key} doc={doc} allDocs={sorted} onEdit={handleEdit} onDelete={setDeleteKey} />
+                  <SortableRow key={doc.key} doc={doc} allDocs={sorted} onEdit={handleEdit} />
                 ))}
               </TableBody>
             </SortableContext>
@@ -165,15 +157,6 @@ export function DocumentosCatalogoTable({ documentos, onSave, onDelete, onReorde
         existingKeys={documentos.map(d => d.key)}
         allDocumentos={documentos}
         onSave={onSave}
-      />
-
-      <ConfirmDialog
-        open={!!deleteKey}
-        onOpenChange={(open) => { if (!open) setDeleteKey(null); }}
-        title="Eliminar documento"
-        description="¿Estás seguro de eliminar este documento del catálogo? Se eliminará también de las dependencias de otros documentos."
-        onConfirm={() => { if (deleteKey) { onDelete(deleteKey); setDeleteKey(null); } }}
-        variant="destructive"
       />
     </div>
   );

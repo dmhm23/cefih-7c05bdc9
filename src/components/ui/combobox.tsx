@@ -19,6 +19,7 @@ import {
 export interface ComboboxOption {
   value: string;
   label: string;
+  disabled?: boolean;
 }
 
 interface ComboboxProps {
@@ -74,10 +75,13 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.label}
+                  disabled={option.disabled}
                   onSelect={() => {
+                    if (option.disabled) return;
                     onValueChange?.(option.value === value ? "" : option.value);
                     setOpen(false);
                   }}
+                  className={cn(option.disabled && "opacity-50 cursor-not-allowed")}
                 >
                   <Check
                     className={cn(

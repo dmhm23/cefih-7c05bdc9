@@ -40,7 +40,29 @@ export function useUpdateFormato() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<FormatoFormacionFormData> }) =>
       formatoFormacionService.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (result: any) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY });
+      // Phase 1.2: surface portal sync side-effects
+      const sync = result?.__portalSync;
+      if (sync?.changed) {
+        import('sonner').then(({ toast }) => {
+          switch (sync.action) {
+            case 'added':
+              toast.success('Formato agregado al catálogo del Portal Estudiante');
+              break;
+            case 'reactivated':
+              toast.success('Formato reactivado en el Portal Estudiante');
+              break;
+            case 'deactivated':
+              toast.info('Formato removido del Portal Estudiante');
+              break;
+            case 'updated':
+              toast.success('Catálogo del Portal sincronizado');
+              break;
+          }
+        });
+      }
+    },
   });
 }
 

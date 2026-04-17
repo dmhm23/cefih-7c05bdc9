@@ -50,21 +50,33 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
     documento?.nivelesHabilitados || []
   );
 
-  // Filter formatos: only visible_en_portal_estudiante + activo, exclude already added
-  const availableFormatos = useMemo(() => {
+  // Filter formatos eligibles para el portal: activos + no archivados + visibles en portal.
+  // NO se excluyen los ya agregados; en su lugar se muestran deshabilitados con una etiqueta
+  // explicativa, para que el usuario entienda por qué no puede volver a agregarlos.
+  const eligibleFormatos = useMemo(() => {
     if (!formatos) return [];
     return formatos.filter(f =>
       f.visibleEnPortalEstudiante &&
       f.activo &&
-      f.estado !== 'archivado' &&
-      !existingKeys.includes(f.id)
+      f.estado !== 'archivado'
     );
-  }, [formatos, existingKeys]);
+  }, [formatos]);
+
+  const existingKeysSet = useMemo(() => new Set(existingKeys), [existingKeys]);
 
   const formatoOptions = useMemo(() =>
-    availableFormatos.map(f => ({ value: f.id, label: f.nombre })),
-    [availableFormatos]
+    eligibleFormatos.map(f => {
+      const yaAgregado = existingKeysSet.has(f.id);
+      return {
+        value: f.id,
+        label: yaAgregado ? `${f.nombre} — Ya está en el portal` : f.nombre,
+        disabled: yaAgregado,
+      };
+    }),
+    [eligibleFormatos, existingKeysSet]
   );
+
+  const hayDisponiblesNuevos = formatoOptions.some(o => !o.disabled);
 
   useEffect(() => {
     if (open) {
@@ -142,9 +154,14 @@ export function DocumentoConfigDialog({ open, onOpenChange, documento, existingK
                 emptyMessage="No hay formatos disponibles para el portal"
                 disabled={loadingFormatos}
               />
-              {availableFormatos.length === 0 && !loadingFormatos && (
+              {eligibleFormatos.length === 0 && !loadingFormatos && (
                 <p className="text-xs text-muted-foreground">
                   No hay formatos con "Visible en portal estudiante" activo. Activa esta opción en Gestión de Formatos.
+                </p>
+              )}
+              {eligibleFormatos.length > 0 && !hayDisponiblesNuevos && !loadingFormatos && (
+                <p className="text-xs text-muted-foreground">
+                  Todos los formatos elegibles ya están registrados en el portal.
                 </p>
               )}
             </div>

@@ -70,61 +70,84 @@ function categoriaToPorTipo(categoria: string): string {
   }
 }
 
-async function syncPortalConfig(formato: FormatoFormacion): Promise<void> {
+export type PortalSyncResult =
+  | { changed: false }
+  | { changed: true; action: 'added' | 'reactivated' | 'updated' | 'deactivated' };
+
+async function syncPortalConfig(formato: FormatoFormacion): Promise<PortalSyncResult> {
   try {
     const { data: existing } = await supabase
       .from('portal_config_documentos')
-      .select('id, activo')
+      .select('id, activo, label, niveles_habilitados')
       .eq('formato_id', formato.id)
       .maybeSingle();
 
     if (formato.visibleEnPortalEstudiante && formato.activo) {
       if (existing) {
+        const niveles = formato.nivelFormacionIds || [];
+        const currentNiveles = (existing.niveles_habilitados as string[]) || [];
+        const sameLabel = existing.label === formato.nombre;
+        const sameNiveles =
+          currentNiveles.length === niveles.length &&
+          currentNiveles.every((n) => niveles.includes(n));
+
         if (!existing.activo) {
           await supabase
             .from('portal_config_documentos')
-            .update({ activo: true, label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
+            .update({ activo: true, label: formato.nombre, niveles_habilitados: niveles })
             .eq('id', existing.id);
-        } else {
-          // Always sync niveles
+          return { changed: true, action: 'reactivated' };
+        }
+
+        if (!sameLabel || !sameNiveles) {
           await supabase
             .from('portal_config_documentos')
-            .update({ label: formato.nombre, niveles_habilitados: formato.nivelFormacionIds || [] })
+            .update({ label: formato.nombre, niveles_habilitados: niveles })
             .eq('id', existing.id);
+          return { changed: true, action: 'updated' };
         }
-      } else {
-        const { data: maxOrden } = await supabase
-          .from('portal_config_documentos')
-          .select('orden')
-          .order('orden', { ascending: false })
-          .limit(1)
-          .maybeSingle();
 
-        const nextOrden = ((maxOrden?.orden as number) || 0) + 1;
-
-        await supabase
-          .from('portal_config_documentos')
-          .insert({
-            key: formato.id,
-            label: formato.nombre,
-            tipo: categoriaToPorTipo(formato.categoria) as any,
-            descripcion: formato.descripcion || '',
-            orden: nextOrden,
-            formato_id: formato.id,
-            niveles_habilitados: formato.nivelFormacionIds || [],
-            depende_de: [],
-            activo: true,
-            obligatorio: true,
-          } as any);
+        return { changed: false };
       }
-    } else if (existing && existing.activo) {
+
+      const { data: maxOrden } = await supabase
+        .from('portal_config_documentos')
+        .select('orden')
+        .order('orden', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextOrden = ((maxOrden?.orden as number) || 0) + 1;
+
+      await supabase
+        .from('portal_config_documentos')
+        .insert({
+          key: formato.id,
+          label: formato.nombre,
+          tipo: categoriaToPorTipo(formato.categoria) as any,
+          descripcion: formato.descripcion || '',
+          orden: nextOrden,
+          formato_id: formato.id,
+          niveles_habilitados: formato.nivelFormacionIds || [],
+          depende_de: [],
+          activo: true,
+          obligatorio: true,
+        } as any);
+      return { changed: true, action: 'added' };
+    }
+
+    if (existing && existing.activo) {
       await supabase
         .from('portal_config_documentos')
         .update({ activo: false })
         .eq('id', existing.id);
+      return { changed: true, action: 'deactivated' };
     }
+
+    return { changed: false };
   } catch (e) {
     console.warn('Error syncing portal config:', e);
+    return { changed: false };
   }
 }
 

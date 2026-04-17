@@ -206,7 +206,7 @@ export const formatoFormacionService = {
     return rowToFormato(inserted);
   },
 
-  update: async (id: string, data: Partial<FormatoFormacionFormData>): Promise<FormatoFormacion> => {
+  update: async (id: string, data: Partial<FormatoFormacionFormData>): Promise<FormatoFormacion & { __portalSync?: PortalSyncResult }> => {
     const row = formToRow(data);
 
     const { data: updated, error } = await supabase
@@ -219,10 +219,10 @@ export const formatoFormacionService = {
     if (error) handleSupabaseError(error);
     const formato = rowToFormato(updated);
 
-    // Phase 5: Auto-sync portal_config_documentos
-    await syncPortalConfig(formato);
+    // Phase 5: Auto-sync portal_config_documentos (with visible side-effect signal)
+    const portalSync = await syncPortalConfig(formato);
 
-    return formato;
+    return { ...formato, __portalSync: portalSync };
   },
 
   toggleActivo: async (id: string): Promise<FormatoFormacion> => {

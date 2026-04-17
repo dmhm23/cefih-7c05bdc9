@@ -178,7 +178,7 @@ export function SchedulesManager() {
         onOpenChange={(o) => !o && setDeletingId(null)}
         title="Eliminar programación"
         description="Se eliminará la programación y se cancelará su ejecución automática. Los backups históricos no se ven afectados."
-        confirmLabel="Eliminar"
+        confirmText="Eliminar"
         variant="destructive"
         onConfirm={() => {
           if (deletingId) remove(deletingId);

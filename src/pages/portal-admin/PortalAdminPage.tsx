@@ -12,7 +12,6 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import {
   usePortalAdminConfig,
   useSaveDocumentoConfig,
-  useDeleteDocumentoConfig,
   useTogglePortalGlobal,
   useUpdateOrdenDocumentos,
   useUpdateHabilitacionNivel,
@@ -23,7 +22,6 @@ export default function PortalAdminPage() {
   const { logActivity } = useActivityLogger();
   const { data: config, isLoading } = usePortalAdminConfig();
   const saveDoc = useSaveDocumentoConfig();
-  const deleteDoc = useDeleteDocumentoConfig();
   const toggleGlobal = useTogglePortalGlobal();
   const updateOrden = useUpdateOrdenDocumentos();
   const updateNivel = useUpdateHabilitacionNivel();
@@ -100,7 +98,6 @@ export default function PortalAdminPage() {
             <DocumentosCatalogoTable
               documentos={config?.documentos || []}
               onSave={(doc) => saveDoc.mutate(doc, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Guardó configuración de documento "${doc.key}"`, metadata: { key: doc.key } }) })}
-              onDelete={(key) => deleteDoc.mutate(key, { onSuccess: () => logActivity({ action: "eliminar", module: "portal_estudiante", description: `Eliminó documento del catálogo (${key})`, metadata: { key } }) })}
               onReorder={(keys) => updateOrden.mutate(keys, { onSuccess: () => logActivity({ action: "editar", module: "portal_estudiante", description: `Reordenó documentos del catálogo` }) })}
             />
           </section>

@@ -19,3 +19,4 @@ export * from './respuestas/respuestaService';
 export * from './renderTemplate';
 export * from './formatoFormacionService';
 export * from './portalDinamicoService';
+export * from './blocks';

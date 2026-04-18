@@ -20,10 +20,12 @@ import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";
-import BloqueHealthConsentRenderer from "@/components/matriculas/formatos/bloques/BloqueHealthConsentRenderer";
-import BloqueDataAuthorizationRenderer from "@/components/matriculas/formatos/bloques/BloqueDataAuthorizationRenderer";
-import BloqueEvaluationQuizRenderer from "@/components/matriculas/formatos/bloques/BloqueEvaluationQuizRenderer";
-import BloqueSatisfactionSurveyRenderer from "@/components/matriculas/formatos/bloques/BloqueSatisfactionSurveyRenderer";
+import {
+  BloqueHealthConsentRenderer,
+  BloqueDataAuthorizationRenderer,
+  BloqueEvaluationQuizRenderer,
+  BloqueSatisfactionSurveyRenderer,
+} from "@/modules/formatos/plugins/safa/blocks/portal";
 
 // ---------------------------------------------------------------------------
 // Types

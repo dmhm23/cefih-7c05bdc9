@@ -13,10 +13,12 @@ import { format, addDays, differenceInCalendarDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { parseLocalDate } from "@/utils/dateUtils";
 import { ChevronDown } from "lucide-react";
-import BloqueHealthConsentRenderer from "./bloques/BloqueHealthConsentRenderer";
-import BloqueDataAuthorizationRenderer from "./bloques/BloqueDataAuthorizationRenderer";
-import BloqueEvaluationQuizRenderer from "./bloques/BloqueEvaluationQuizRenderer";
-import BloqueSatisfactionSurveyRenderer from "./bloques/BloqueSatisfactionSurveyRenderer";
+import {
+  BloqueHealthConsentRenderer,
+  BloqueDataAuthorizationRenderer,
+  BloqueEvaluationQuizRenderer,
+  BloqueSatisfactionSurveyRenderer,
+} from "@/modules/formatos/plugins/safa/blocks/portal";
 
 // ---------------------------------------------------------------------------
 // Sub-components

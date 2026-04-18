@@ -108,6 +108,53 @@ export const empresaService = {
     }
   },
 
+  /**
+   * Paginación server-side con búsqueda y filtros para listados grandes.
+   * Devuelve un page de empresas + total. Trae contactos para el listado.
+   */
+  async getPage(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    sectorEconomico?: string;
+    arl?: string;
+  }): Promise<{ rows: Empresa[]; total: number }> {
+    const { page, pageSize, search, sectorEconomico, arl } = params;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('empresas')
+      .select('*, contactos_empresa(*)', { count: 'exact' })
+      .is('deleted_at', null);
+
+    if (sectorEconomico && sectorEconomico !== 'todos') {
+      query = query.eq('sector_economico', sectorEconomico as any);
+    }
+    if (arl && arl !== 'todos') {
+      query = query.eq('arl', arl as any);
+    }
+
+    if (search && search.trim()) {
+      const tokens = search.trim().split(/\s+/).filter(t => t.length > 0);
+      for (const token of tokens) {
+        const safe = token.replace(/[%,()]/g, '');
+        query = query.or(
+          `nombre_empresa.ilike.%${safe}%,nit.ilike.%${safe}%,persona_contacto.ilike.%${safe}%,email_contacto.ilike.%${safe}%`
+        );
+      }
+    }
+
+    const { data, error, count } = await query.order('nombre_empresa').range(from, to);
+    if (error) handleSupabaseError(error);
+    const rows = (data || []).map(row => {
+      const empresa = mapEmpresaRow(row);
+      empresa.contactos = ((row as any).contactos_empresa || []).map(mapContactoRow);
+      return empresa;
+    });
+    return { rows, total: count ?? 0 };
+  },
+
   async getById(id: string): Promise<Empresa | null> {
     const { data, error } = await supabase
       .from('empresas')

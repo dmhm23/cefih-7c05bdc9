@@ -1,169 +1,140 @@
 
 
-## Plan de refactorización: Módulo de Formatos como librería desacoplada
+## Plan: Migración 100% al nuevo módulo `@/modules/formatos`
 
-### Diagnóstico de acoplamiento actual
+### Mi recomendación (importante leer antes)
 
-**Acoplamientos rígidos identificados:**
+**No recrear los formatos desde cero.** Los 7 formatos vivos en BD ya están en el formato correcto (motor `bloques`, `key = formato_id::text`, sin componentes legacy). El módulo nuevo los lee/escribe sin transformación. Recrearlos:
+- destruiría 6 respuestas reales y 3 firmas de estudiantes,
+- generaría re-trabajo manual de ~6 horas,
+- no aporta nada técnico (la "limpieza" real está en el código, no en los datos).
 
-1. **Tipos de bloque cerrados** (`TipoBloque` en `formatoFormacion.ts`): 25+ tipos hard-coded incluyendo bloques específicos del dominio (`health_consent`, `evaluation_quiz`, `satisfaction_survey`, `attendance_by_day`, `signature_aprendiz/entrenador/supervisor`). Imposible añadir un bloque sin tocar el core.
-
-2. **Catálogo de auto-fields hard-coded** (`resolveAutoField.ts` + `autoFieldCatalog.ts`): un `switch` con 50+ casos vinculados a entidades del dominio (`Persona`, `Matricula`, `Curso`, `Personal`). El módulo importa tipos de negocio directamente.
-
-3. **Servicio acoplado a Supabase y al esquema** (`formatoFormacionService.ts`): usa `supabase` directamente, mapea columnas snake/camel, conoce `portal_config_documentos`, `firmas_matricula`, `formato_respuestas`, `matriculas`, `niveles_formacion`.
-
-4. **Renderers acoplados al dominio**:
-   - `PortalFormatoRenderer.tsx` (750 líneas) y `DynamicFormatoDocument.tsx` (747 líneas) importan `Persona`, `Matricula`, `Curso`, `Personal`.
-   - Lógica de firma reutilizable y herencia entre formatos vive en el renderer.
-
-5. **Auto-sync con módulos externos** dentro del servicio: `syncPortalConfig` escribe en `portal_config_documentos`. `procesarEventoFirmaCompletada` (en `portalDinamicoService`) busca formatos por `eventos_disparadores` y escribe `formato_respuestas` para otros formatos.
-
-6. **Triggers SQL acoplados al dominio**: `autogenerar_formato_respuestas`, `sync_formato_respuestas_to_portal`, `sync_portal_to_formato_respuestas`, `get_formatos_for_matricula` conocen `matriculas`, `cursos`, `niveles_formacion`, `portal_config_documentos`.
-
-7. **Editor acoplado a hooks del dominio** (`FormatoConfigSheet.tsx` usa `useNivelesFormacion`).
+Lo que sí está sucio es la **capa de código alrededor**: wrapper duplicado, tipos paralelos, renderers monolíticos de 750 líneas, resolvers hardcoded, store legacy. Eso sí lo eliminamos.
 
 ---
 
-### Arquitectura objetivo
+### Diagnóstico
 
-```text
-+------------------------------------------------------+
-|              APP (host: SAFA u otro)                 |
-|  Adapters de dominio (Persona, Matrícula, Curso...)  |
-+----------------------|--------|----------------------+
-                       v        ^
-              +-------------------------+
-              |   FormatBuilder Gateway |  (interfaz pública estable)
-              +-------------------------+
-                       |        ^
-                       v        |
-+------------------------------------------------------+
-|         @formatos/core  (librería independiente)     |
-|  - Editor (bloques, canvas, inspector)               |
-|  - Renderer (semántico + documental)                 |
-|  - Motor de tokens / autocompletado                  |
-|  - Validación, versionado, dependencias              |
-|  - Tipos genéricos, sin referencias a dominio        |
-+------------------------------------------------------+
-                       |        ^
-                       v        |
-              +-------------------------+
-              |   StorageAdapter (port) |  (CRUD + eventos)
-              +-------------------------+
-                  ^               ^
-       Supabase impl         InMemory / REST / otros
-```
-
-**Principio**: el módulo no conoce `Persona`, `Matrícula`, `Supabase`, `Portal`, `Cartera`. Solo conoce: `Formato`, `Bloque`, `Respuesta`, `TokenContext`, `EventBus`, `StorageAdapter`.
+| Capa | Estado | Acción |
+|---|---|---|
+| Datos en BD (7 formatos vivos) | Sanos, ya en formato nuevo | **Conservar** |
+| 4 formatos seed soft-deleted (`a0000000-…`) | Borrados, sin uso | **Hard-delete** |
+| 2 respuestas huérfanas al seed `…01` | Apuntan a formato a eliminar | **Hard-delete** (datos de prueba) |
+| Tabla `versiones_formato` | 0 registros | **DROP** |
+| Wrapper `formatoFormacionService.ts` | Capa duplicada sobre el gateway | **Eliminar** |
+| Tipos `@/types/formatoFormacion.ts` | Duplicados de `core/types` | **Eliminar** y migrar imports al gateway |
+| Hook `useFormatosFormacion.ts` | Usa wrapper | **Reescribir** sobre `formatosGateway` directo |
+| `resolveAutoField.ts` + `autoFieldCatalog.ts` + `tokenSources.ts` | Switch hardcoded de 50 casos | **Eliminar** — ya migrado a `safa-tokens/` |
+| `bloqueConstants.ts` | Catálogo estático de bloques | **Eliminar** — el `BlockRegistry` es la fuente |
+| `useFormatoEditorStore.ts` | Store del editor con tipos legacy | **Mover** a `modules/formatos/core/editor/store/` |
+| `portalDinamicoService.ts` | Cascada de firmas client-side | **Eliminar** — se reemplaza con listener del evento `respuesta.completed` dentro del módulo |
+| Renderers `DynamicFormatoDocument` (747 L) y `PortalFormatoRenderer` (750 L) | Switches gigantes acoplados al dominio | **Refactor profundo**: cada bloque registra su propio renderer en el plugin SAFA |
+| Renderers de bloques (`BloqueHealthConsentRenderer`, etc.) | Ya están separados parcialmente | **Mover** a `plugins/safa/blocks/` y registrar en el `BlockRegistry` |
 
 ---
 
-### Fases priorizadas
+### Fases
 
-#### Fase A — Definir contratos (Gateway + Ports)
-Crear `src/modules/formatos/contracts/` con:
-- `FormatoGateway`: API pública (`getFormatos`, `getFormatoById`, `saveFormato`, `submitRespuesta`, `subscribeEvents`).
-- `StoragePort`: interfaz CRUD que oculta Supabase (`fetchFormato`, `persistFormato`, `fetchRespuesta`, `persistRespuesta`).
-- `TokenResolverPort`: interfaz `(token: string, context: unknown) => string | null` — sin tipos de dominio.
-- `BlockRegistryPort`: registro extensible de tipos de bloque (`register(type, definition)`).
-- `EventBusPort`: emisor/suscriptor de eventos del módulo (`formato.created`, `respuesta.completed`, `signature.captured`).
+**Fase 1 — Limpieza de datos (BD)**
+- Hard-delete de los 4 formatos seed `a0000000-…`
+- Hard-delete de las 2 respuestas huérfanas (matrícula de prueba que diligenció el seed)
+- Migración para borrar tabla `versiones_formato` (0 registros, sin uso)
+- Migración para borrar columna `formatos_formacion.legacy_component_id` (todos NULL)
+- Migración para borrar columnas `legacy_component_id`, `motor_render = 'plantilla_html'` ya no se usa — verificar antes de borrar
 
-#### Fase B — Core puro (sin dominio)
-- Mover editor (`editor/*`), tipos base (`Bloque`, `Formato`, `Respuesta`), validaciones, versionado a `src/modules/formatos/core/`.
-- Refactorizar `TipoBloque` de unión cerrada a registro extensible: cada bloque declara su `schema`, `editorComponent`, `rendererComponent`, `defaultProps`.
-- Bloques específicos del dominio (`health_consent`, `evaluation_quiz`, `signature_aprendiz`, `attendance_by_day`) salen del core y se registran como **plugins de dominio** en `src/modules/formatos/plugins/safa/`.
+**Fase 2 — Extender el `BlockRegistry` con renderers por bloque**
+- Ampliar `BlockRegistryPort` con `editorComponent?` y `rendererComponent?` opcionales por bloque
+- Registrar en `plugins/safa/registerSafaPlugins.ts` el renderer de cada uno de los 25 tipos de bloque (los 4 ya tienen componente: HealthConsent, EvaluationQuiz, DataAuthorization, SatisfactionSurvey; los demás se extraen de los switches)
+- Crear `core/renderer/FormatoRenderer.tsx` genérico que itera bloques y delega al `rendererComponent` registrado
+- Cada renderer recibe `(bloque, value, onChange, ctx)` — `ctx` viene del `tokenContext` SAFA
 
-#### Fase C — Token engine extensible
-- Reemplazar el `switch` de `resolveAutoField` por un **registry de resolvers**: cada namespace (`persona.*`, `curso.*`, `firma.*`) registra su resolver. El core solo orquesta.
-- Adaptadores SAFA: `src/modules/formatos/adapters/safa-tokens/` registra resolvers para `persona`, `matricula`, `curso`, `personal`, `firma`.
+**Fase 3 — Reemplazar renderers monolíticos**
+- `PortalFormatoRenderer.tsx` → wrapper de 100 líneas que construye `tokenContext` SAFA y llama al `FormatoRenderer` core
+- `DynamicFormatoDocument.tsx` → idem para vista documental
+- Eliminar los 4 archivos `Bloque*Renderer.tsx` de `matriculas/formatos/bloques/` (movidos a `plugins/safa/blocks/`)
 
-#### Fase D — Storage adapter Supabase
-- Implementar `SupabaseStoragePort` en `src/modules/formatos/adapters/supabase/`. Único lugar que importa `@/integrations/supabase/client`.
-- Mover `rowToFormato`, `formToRow`, queries de `formato_respuestas` y `firmas_matricula` aquí.
+**Fase 4 — Cascada de firmas dentro del módulo**
+- Mover lógica de `procesarEventoFirmaCompletada` a un listener interno del módulo: `events.on('respuesta.completed', ...)` que detecte bloques `signature_capture` con `tipoFirmante` y propague a otros formatos automáticos
+- Eliminar `portalDinamicoService.ts` completo
+- `usePortalEstudiante` y `DynamicPortalRenderer` consumen `formatosGateway` directo
 
-#### Fase E — Eventos en lugar de side-effects ocultos
-- Eliminar `syncPortalConfig` del servicio. Reemplazar por evento `formato.visibilityChanged` que el host (SAFA) escucha y decide si sincronizar `portal_config_documentos`.
-- Eliminar `procesarEventoFirmaCompletada` del cliente. Reemplazar por evento `signature.captured` que el host maneja (idealmente vía trigger SQL en el host, no en la librería).
-- Triggers SQL del dominio (`sync_formato_respuestas_to_portal`, etc.) salen del paquete: viven en migraciones del host SAFA, no del módulo.
+**Fase 5 — Eliminar capa wrapper**
+- Reescribir `useFormatosFormacion.ts` para llamar a `formatosGateway` directamente (el handler `formato.visibilityChanged` se mueve a un listener registrado en `modules/formatos/index.ts` o en `App.tsx` como bootstrap)
+- `formatoFormacionService.ts` → eliminar
+- `@/types/formatoFormacion.ts` → eliminar; todos los consumidores importan de `@/modules/formatos`
+- Migrar imports en los ~40 archivos consumidores con un script de reemplazo
 
-#### Fase F — Renderers desacoplados
-- `FormatoRenderer` core recibe `(formato, respuesta, tokenContext, blockRegistry)` y renderiza. No importa `Persona` ni `Matricula`.
-- `PortalFormatoRenderer` y `DynamicFormatoDocument` se vuelven **wrappers SAFA** que construyen el `tokenContext` desde el dominio y pasan al renderer core.
+**Fase 6 — Eliminar resolvers legacy**
+- `resolveAutoField.ts`, `autoFieldCatalog.ts`, `tokenSources.ts`, `bloqueConstants.ts`, `renderTemplate.ts` (utils) → eliminar
+- Verificar que `safa-tokens/registerSafaTokens.ts` cubre todos los namespaces previos
+- Migrar los componentes del editor (`InspectorFields`, `BlockCatalog`, etc.) a leer del `BlockRegistry` y `TokenRegistry`
 
-#### Fase G — Empaquetado opcional
-- Estructurar `src/modules/formatos/` con `package.json` interno y `index.ts` exportando solo el Gateway y tipos públicos.
-- Listo para extraer a paquete npm (`@safa/formatos`) cuando se quiera.
+**Fase 7 — Mover store del editor al módulo**
+- `useFormatoEditorStore.ts` → `src/modules/formatos/core/editor/useEditorStore.ts`
+- Tipos del store usan `Bloque` del core (no de `@/types/formatoFormacion`)
+
+**Fase 8 — Verificación end-to-end**
+- Crear un formato nuevo desde el editor
+- Asignarlo a un nivel y publicarlo en portal
+- Diligenciar como estudiante con firma
+- Verificar cascada a formato automático
+- Verificar conteo correcto en panel admin
 
 ---
 
-### Estructura de carpetas resultante
+### Estructura final
 
 ```text
 src/modules/formatos/
-├── core/                    # 100% genérico, sin dominio
-│   ├── types/               # Formato, Bloque, Respuesta, Token
-│   ├── editor/              # Canvas, Inspector, BlockCatalog
-│   ├── renderer/            # FormatoRenderer (semántico + doc)
-│   ├── engine/              # token resolution, validation, dependencies
-│   └── registry/            # BlockRegistry, TokenResolverRegistry
-├── contracts/               # Ports (interfaces)
-│   ├── StoragePort.ts
-│   ├── TokenResolverPort.ts
-│   ├── BlockRegistryPort.ts
-│   └── EventBusPort.ts
-├── adapters/                # implementaciones concretas
-│   ├── supabase/            # StoragePort + Supabase
-│   └── safa-tokens/         # resolvers para Persona/Matrícula/Curso
-├── plugins/                 # bloques de dominio
-│   └── safa/                # health_consent, evaluation_quiz, signature_*
-├── gateway/                 # FormatoGateway: API pública del módulo
-└── index.ts                 # exporta solo Gateway + tipos públicos
+├── core/
+│   ├── types/          # Formato, Bloque, Respuesta
+│   ├── editor/         # store + componentes UI editor
+│   ├── renderer/       # FormatoRenderer genérico
+│   ├── engine/         # tokens, validación
+│   └── registry/       # BlockRegistry (con renderers), TokenRegistry, EventBus
+├── contracts/          # Ports
+├── adapters/
+│   ├── supabase/       # único lugar con import de supabase
+│   └── safa-tokens/    # resolvers persona/curso/firma...
+├── plugins/safa/
+│   ├── blocks/         # renderers SAFA por tipo de bloque
+│   ├── listeners/      # cascada de firmas
+│   └── registerSafaPlugins.ts
+├── gateway/            # FormatoGateway
+└── index.ts            # bootstrap singleton
+
+src/  (lo que queda fuera)
+├── pages/formatos/     # FormatosPage, FormatoEditorPage (consumen gateway)
+├── pages/estudiante/   # DynamicPortalRenderer (consume gateway)
+└── components/portal/PortalFormatoRenderer.tsx  # wrapper SAFA delgado
 ```
 
-El resto de la app consume **solo** `import { FormatoGateway } from '@/modules/formatos'`.
+---
+
+### Archivos eliminados
+
+`src/services/formatoFormacionService.ts`, `src/services/portalDinamicoService.ts`, `src/services/formatoRespuestaService.ts`, `src/types/formatoFormacion.ts`, `src/utils/resolveAutoField.ts`, `src/utils/renderTemplate.ts`, `src/data/autoFieldCatalog.ts`, `src/data/tokenSources.ts`, `src/data/bloqueConstants.ts`, `src/components/matriculas/formatos/bloques/Bloque*Renderer.tsx` (4), `src/stores/useFormatoEditorStore.ts` (movido).
 
 ---
 
-### Plan de migración incremental (no big-bang)
+### Migraciones SQL
 
-1. **Fase A + B (estructura + contratos)**: crear carpetas, mover archivos sin cambiar lógica. Re-exports temporales en ubicaciones antiguas para no romper imports.
-2. **Fase C (tokens)**: registry funcionando en paralelo al `switch`. Migrar resolvers uno a uno.
-3. **Fase D (storage)**: introducir `StoragePort`. `formatoFormacionService` se vuelve un wrapper sobre el adapter Supabase.
-4. **Fase E (eventos)**: emitir eventos sin quitar el side-effect. Cuando el host los maneje, eliminar el side-effect del core.
-5. **Fase F (renderers)**: renderer core nuevo + wrappers SAFA. Deprecar los renderers acoplados gradualmente.
-6. **Fase G (empaquetado)**: solo cuando A-F estén estables.
-
-Cada fase es entregable independiente y reversible.
+1. `DELETE FROM formato_respuestas WHERE formato_id IN ('a0000000-…01','…02','…03','…04')`
+2. `DELETE FROM formatos_formacion WHERE id LIKE 'a0000000-0000-4000-8000-%'`
+3. `DROP TABLE IF EXISTS versiones_formato`
+4. `ALTER TABLE formatos_formacion DROP COLUMN legacy_component_id`
 
 ---
 
-### Beneficios
+### Riesgos
 
-- **Escalabilidad**: añadir un bloque nuevo = registrar plugin, sin tocar el core.
-- **Testabilidad**: core puro testeable con `InMemoryStoragePort`.
-- **Reutilización**: módulo extraíble a otros proyectos cambiando solo adapters.
-- **Mantenibilidad**: bug en sincronización de portal se arregla en el host, no en el motor de formatos.
-- **Resuelve los problemas previos**: la cascada de firmas y la sincronización portal pasan a ser responsabilidad del host (vía eventos o triggers SQL del host), eliminando la fragilidad cliente-side actual.
+- Refactor de los 2 renderers de 750 líneas es el cambio más delicado. Se hace bloque por bloque y se prueba cada uno antes de borrar el legacy.
+- Los ~40 consumidores que importan de `@/types/formatoFormacion` se migran con búsqueda/reemplazo automatizado; el TypeScript build los detecta todos.
+- Las 6 respuestas reales en BD se conservan intactas; el módulo nuevo las lee con la misma estructura.
 
 ---
 
-### Riesgos y mitigación
+### Entrega incremental
 
-- **Riesgo**: regresiones en flujos críticos (matrícula, portal, certificación).  
-  **Mitigación**: migración por re-export, tests de integración antes de cada fase, feature flag para alternar entre `formatoFormacionService` viejo y nuevo Gateway.
-
-- **Riesgo**: triggers SQL del dominio quedan huérfanos.  
-  **Mitigación**: documentar en `Docs/sincronizacionPortalFormatos.md` qué triggers son responsabilidad del host SAFA vs del módulo.
-
-- **Esfuerzo estimado**: ~6 fases incrementales. Sugiero arrancar con **Fase A + B** (estructura + mover archivos sin lógica nueva) para validar la arquitectura antes de invertir en C-G.
-
----
-
-### Pregunta antes de implementar
-
-¿Cómo quieres arrancar?
-
-- **Opción 1 (recomendada)**: Ejecutar **solo Fase A + B** primero — crear la estructura, mover archivos al nuevo namespace `src/modules/formatos/`, definir contratos, sin cambiar lógica todavía. Permite validar el diseño antes de invertir en el resto.
-- **Opción 2**: Ejecutar **Fase A → D** completas (estructura + tokens + storage adapter) en una sola tanda. Más impacto, mayor riesgo.
-- **Opción 3**: Plan completo A-G secuencial (varias entregas).
+Fases 1+5+6 (limpieza + wrapper + resolvers) son independientes y se pueden hacer en una primera entrega. Fases 2+3 (renderers) son lo más grande — segunda entrega. Fases 4+7+8 cierran el ciclo.
 

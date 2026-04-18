@@ -356,23 +356,25 @@ export default function PersonasPage() {
       </div>
 
 
-      <DataTable
-        data={filteredPersonas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron personas"
-        onRowClick={handleRowClick}
-        countLabel="personas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedPersona?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredPersonas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron personas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} personas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedPersona?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
 
       {/* Detail Sheet */}
       <PersonaDetailSheet

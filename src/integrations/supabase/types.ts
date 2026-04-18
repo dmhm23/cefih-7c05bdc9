@@ -903,6 +903,50 @@ export type Database = {
           },
         ]
       }
+      formato_versiones: {
+        Row: {
+          bloques: Json
+          created_at: string
+          descripcion: string | null
+          encabezado_config: Json | null
+          formato_id: string
+          id: string
+          modificado_por: string | null
+          nombre: string
+          version: number
+        }
+        Insert: {
+          bloques?: Json
+          created_at?: string
+          descripcion?: string | null
+          encabezado_config?: Json | null
+          formato_id: string
+          id?: string
+          modificado_por?: string | null
+          nombre: string
+          version: number
+        }
+        Update: {
+          bloques?: Json
+          created_at?: string
+          descripcion?: string | null
+          encabezado_config?: Json | null
+          formato_id?: string
+          id?: string
+          modificado_por?: string | null
+          nombre?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "formato_versiones_formato_id_fkey"
+            columns: ["formato_id"]
+            isOneToOne: false
+            referencedRelation: "formatos_formacion"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formatos_formacion: {
         Row: {
           activo: boolean

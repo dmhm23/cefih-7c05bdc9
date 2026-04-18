@@ -1,0 +1,8 @@
+{
+  "name": "@formatos/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Motor desacoplado de gestión de formatos. Vive en src/modules/formatos/ hasta que se extraiga.",
+  "main": "./index.ts",
+  "sideEffects": false
+}

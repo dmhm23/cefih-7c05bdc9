@@ -1,8 +1,8 @@
 import DOMPurify from 'dompurify';
-import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization, BloqueDocumentHeader } from '@/types/formatoFormacion';
-import { BLOQUE_TYPE_LABELS } from '@/data/bloqueConstants';
+import type { Bloque, BloqueEvaluationQuiz, BloqueSatisfactionSurvey, BloqueHealthConsent, BloqueDataAuthorization, BloqueDocumentHeader } from '@/modules/formatos/plugins/safa';
+import { BLOQUE_TYPE_LABELS } from '@/modules/formatos/plugins/safa';
 import { Badge } from '@/components/ui/badge';
-import { getAutoFieldLabel } from '@/data/autoFieldCatalog';
+import { getAutoFieldLabel } from '@/modules/formatos/plugins/safa';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, AlertCircle, ImageIcon } from 'lucide-react';

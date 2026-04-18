@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "@/components/ui/button";
 import { PenTool, RotateCcw, Save, CheckCircle2, RefreshCw } from "lucide-react";
-import type { FirmaMatricula } from "@/types/formatoFormacion";
+import type { FirmaMatricula } from "@/modules/formatos/plugins/safa";
 
 interface PortalSignatureCaptureProps {
   blockId: string;

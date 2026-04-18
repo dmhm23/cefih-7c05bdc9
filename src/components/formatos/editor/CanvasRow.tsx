@@ -3,10 +3,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/modules/formatos/core/editor/useEditorStore';
 import BlockPreview from './BlockPreview';
 import { Badge } from '@/components/ui/badge';
-import type { Bloque, TipoBloque } from '@/types/formatoFormacion';
+import type { Bloque, TipoBloque } from '@/modules/formatos/plugins/safa';
 
 interface CanvasRowProps {
   row: Row2Block | Row1Block;

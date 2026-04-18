@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatoRespuestaService } from '@/services/formatoRespuestaService';
+import { formatoRespuestaService } from '@/modules/formatos/plugins/safa';
 
 const KEY = ['formato-respuestas'];
 

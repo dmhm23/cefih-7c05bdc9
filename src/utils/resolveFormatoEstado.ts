@@ -1,4 +1,4 @@
-import type { FormatoFormacion, FormatoRespuesta, EstadoFormatoRespuesta } from '@/types/formatoFormacion';
+import type { FormatoFormacion, FormatoRespuesta, EstadoFormatoRespuesta } from '@/modules/formatos/plugins/safa';
 
 /**
  * Resolves the display estado for a formato within a matrícula,

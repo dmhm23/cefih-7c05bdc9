@@ -3,8 +3,8 @@ import DOMPurify from "dompurify";
 import { Info, FileText, ClipboardCheck, ShieldCheck, Heart, PenTool, BarChart3, CalendarDays } from "lucide-react";
 import PortalSectionCard from "./PortalSectionCard";
 import PortalSignatureCapture from "./PortalSignatureCapture";
-import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
-import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
+import { getAutoFieldLabel } from "@/modules/formatos/plugins/safa";
+import { resolveAutoFieldValue, AutoFieldContext } from "@/modules/formatos/plugins/safa";
 import type {
   FormatoFormacion,
   Bloque,
@@ -15,8 +15,8 @@ import type {
   BloqueDataAuthorization,
   BloqueEvaluationQuiz,
   BloqueSatisfactionSurvey,
-} from "@/types/formatoFormacion";
-import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
+} from "@/modules/formatos/plugins/safa";
+import type { Row2Block, Row1Block } from "@/modules/formatos/core/editor/useEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";

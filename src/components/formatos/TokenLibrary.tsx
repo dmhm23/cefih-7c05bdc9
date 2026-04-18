@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getTokenCategories, TokenDefinition } from '@/data/tokenSources';
+import { getTokenCategories, TokenDefinition } from '@/modules/formatos/plugins/safa';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';

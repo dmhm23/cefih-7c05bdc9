@@ -1,10 +1,10 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import DOMPurify from "dompurify";
 import DocumentHeader from "@/components/shared/DocumentHeader";
-import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
-import { resolveAutoFieldValue, AutoFieldContext } from "@/utils/resolveAutoField";
-import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta, BloqueSignatureCapture, SignatureCaptureMode } from "@/types/formatoFormacion";
-import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
+import { getAutoFieldLabel } from "@/modules/formatos/plugins/safa";
+import { resolveAutoFieldValue, AutoFieldContext } from "@/modules/formatos/plugins/safa";
+import type { FormatoFormacion, Bloque, AutoFieldKey, FirmaMatricula, FormatoRespuesta, BloqueSignatureCapture, SignatureCaptureMode } from "@/modules/formatos/plugins/safa";
+import type { Row2Block, Row1Block } from "@/modules/formatos/core/editor/useEditorStore";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";

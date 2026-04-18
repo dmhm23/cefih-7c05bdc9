@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { handleSupabaseError, snakeToCamel } from './api';
-import type { FirmaMatricula, TipoFirmaMatricula } from '@/types/formatoFormacion';
+import type { FirmaMatricula, TipoFirmaMatricula } from '@/modules/formatos/plugins/safa';
 
 function rowToFirma(row: any): FirmaMatricula {
   return snakeToCamel<FirmaMatricula>(row);

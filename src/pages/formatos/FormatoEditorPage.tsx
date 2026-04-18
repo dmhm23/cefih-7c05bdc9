@@ -5,8 +5,8 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useFormato, useUpdateFormato, useCreateFormato, useSaveVersion } from '@/hooks/useFormatosFormacion';
-import { useFormatoEditorStore, type EditorItem, type FormatoConfig } from '@/stores/useFormatoEditorStore';
-import type { FormatoFormacion, FormatoFormacionFormData, Bloque } from '@/types/formatoFormacion';
+import { useFormatoEditorStore, type EditorItem, type FormatoConfig } from '@/modules/formatos/core/editor/useEditorStore';
+import type { FormatoFormacion, FormatoFormacionFormData, Bloque } from '@/modules/formatos/plugins/safa';
 
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import EditorHeader from '@/components/formatos/editor/EditorHeader';

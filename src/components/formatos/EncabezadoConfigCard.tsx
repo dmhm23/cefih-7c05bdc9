@@ -2,10 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { EncabezadoConfig } from '@/types/formatoFormacion';
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
+import { EncabezadoConfig } from '@/modules/formatos/plugins/safa';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
 import { LayoutGrid } from 'lucide-react';
-import type { TipoBloque } from '@/types/formatoFormacion';
+import type { TipoBloque } from '@/modules/formatos/plugins/safa';
 
 interface EncabezadoConfigCardProps {
   config: EncabezadoConfig;

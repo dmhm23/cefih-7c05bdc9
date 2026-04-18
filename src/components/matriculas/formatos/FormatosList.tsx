@@ -2,7 +2,7 @@ import { FileText, Eye, Download, Lock, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
-import type { EstadoFormatoRespuesta } from "@/types/formatoFormacion";
+import type { EstadoFormatoRespuesta } from "@/modules/formatos/plugins/safa";
 
 interface FormatoItem {
   id: string;

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Download } from "lucide-react";
 import FormatoPreviewDocument from "./FormatoPreviewDocument";
-import type { FormatoFormacion } from "@/types/formatoFormacion";
+import type { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 
 const PRINT_STYLES = `
   @page { size: A4 portrait; margin: 12mm; }

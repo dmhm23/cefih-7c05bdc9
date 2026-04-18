@@ -2,9 +2,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
 import BlockPreview from './BlockPreview';
-import type { Bloque } from '@/types/formatoFormacion';
+import type { Bloque } from '@/modules/formatos/plugins/safa';
 
 interface CanvasBlockProps {
   block: Bloque;

@@ -1,7 +1,7 @@
 import type { Matricula } from '@/types/matricula';
 import type { Persona } from '@/types/persona';
 import type { Curso } from '@/types/curso';
-import type { FormatoFormacion } from '@/types/formatoFormacion';
+import type { FormatoFormacion } from '@/modules/formatos/plugins/safa';
 import type { EstadoGrupoCartera } from '@/types/cartera';
 import { ESTADO_GRUPO_CARTERA_LABELS } from '@/types/cartera';
 import { resolveNivelCursoLabel } from '@/utils/resolveNivelLabel';

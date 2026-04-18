@@ -54,7 +54,7 @@ import { DocumentosCarga } from "@/components/matriculas/DocumentosCarga";
 import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
-import { FormatoFormacion } from "@/types/formatoFormacion";
+import { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,

@@ -1,9 +1,9 @@
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { Badge } from "@/components/ui/badge";
-import { getAutoFieldLabel } from "@/data/autoFieldCatalog";
-import { BLOQUE_TYPE_LABELS } from "@/data/bloqueConstants";
-import type { FormatoFormacion, Bloque } from "@/types/formatoFormacion";
-import type { Row2Block, Row1Block } from "@/stores/useFormatoEditorStore";
+import { getAutoFieldLabel } from "@/modules/formatos/plugins/safa";
+import { BLOQUE_TYPE_LABELS } from "@/modules/formatos/plugins/safa";
+import type { FormatoFormacion, Bloque } from "@/modules/formatos/plugins/safa";
+import type { Row2Block, Row1Block } from "@/modules/formatos/core/editor/useEditorStore";
 import DOMPurify from "dompurify";
 
 // ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { portalEstudianteService, MatriculaVigenteResult, LoginResultado } from '@/services/portalEstudianteService';
-import { portalDinamicoService, EnviarFormatoDinamicoParams } from '@/services/portalDinamicoService';
+import { portalDinamicoService, EnviarFormatoDinamicoParams } from '@/modules/formatos/plugins/safa';
 import { DocumentoPortalEstado } from '@/types/portalEstudiante';
 import { snakeToCamel } from '@/services/api';
-import type { FormatoFormacion, FirmaMatricula } from '@/types/formatoFormacion';
+import type { FormatoFormacion, FirmaMatricula } from '@/modules/formatos/plugins/safa';
 
 export function useBuscarMatriculaVigente(cedula: string | null) {
   return useQuery<{ resultado: LoginResultado; data?: MatriculaVigenteResult }>({

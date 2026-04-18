@@ -22,11 +22,13 @@ import {
   consumePortalSync,
   type PortalSyncResult,
 } from './listeners/portalSyncListener';
+import { registerFirmaCascadeListener } from './listeners/firmaCascadeListener';
 
 export type { PortalSyncResult };
 
-// Conectamos el listener una sola vez al cargar el plugin SAFA.
+// Conectamos los listeners una sola vez al cargar el plugin SAFA.
 registerPortalSyncListener();
+registerFirmaCascadeListener();
 
 const PLANTILLAS_BASE: PlantillaBase[] = [
   {

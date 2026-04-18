@@ -1,12 +1,65 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { personaService } from '@/services/personaService';
-import { PersonaFormData } from '@/types/persona';
+import { PersonaFormData, Persona } from '@/types/persona';
 
+const PAGE_SIZE = 200;
+
+/**
+ * Lista completa de personas (legacy). Mantenido para compatibilidad con vistas
+ * que aún la consumen, pero NO usar en pantallas con muchos registros.
+ */
 export const usePersonas = () => {
   return useQuery({
     queryKey: ['personas'],
     queryFn: () => personaService.getAll(),
+    staleTime: 5 * 60 * 1000,
   });
+};
+
+/**
+ * Paginación infinita con búsqueda y filtros server-side.
+ * Carga 200 filas por petición y va concatenando al hacer scroll.
+ *
+ * @param params Filtros y búsqueda. Cambiar cualquiera resetea la paginación.
+ * @returns array plano `personas`, `total`, `isLoading`, `fetchNextPage`, `hasNextPage`.
+ */
+export const usePersonasPaginated = (params: {
+  search?: string;
+  genero?: string;
+  nivelEducativo?: string;
+}) => {
+  const { search = '', genero = 'todos', nivelEducativo = 'todos' } = params;
+
+  const query = useInfiniteQuery({
+    queryKey: ['personas', 'paginated', { search, genero, nivelEducativo }],
+    queryFn: ({ pageParam = 0 }) =>
+      personaService.getPage({ page: pageParam, pageSize: PAGE_SIZE, search, genero, nivelEducativo }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.rows.length, 0);
+      return loaded < lastPage.total ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const personas: Persona[] = useMemo(
+    () => query.data?.pages.flatMap(p => p.rows) ?? [],
+    [query.data],
+  );
+  const total = query.data?.pages[0]?.total ?? 0;
+
+  return {
+    personas,
+    total,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+    refetch: query.refetch,
+  };
 };
 
 export const usePersona = (id: string) => {

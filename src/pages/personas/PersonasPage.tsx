@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, FileDown, FileUp, MoreVertical } from "lucide-react";
@@ -15,7 +15,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { ImportarPersonasDialog } from "@/components/personas/ImportarPersonasDialog";
-import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
+import { usePersonasPaginated, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";
@@ -66,7 +66,18 @@ export default function PersonasPage() {
     });
   });
 
-  const { data: personas = [], isLoading } = usePersonas();
+  const {
+    personas,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = usePersonasPaginated({
+    search: searchQuery,
+    genero: typeof filters.genero === 'string' ? filters.genero : 'todos',
+    nivelEducativo: typeof filters.nivelEducativo === 'string' ? filters.nivelEducativo : 'todos',
+  });
   const deletePersona = useDeletePersona();
 
   // Persist column config
@@ -94,22 +105,26 @@ export default function PersonasPage() {
     return value && value !== "todos";
   }).length;
 
-  const filteredPersonas = personas.filter((p) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      p.numeroDocumento.includes(searchQuery) ||
-      p.nombres.toLowerCase().includes(query) ||
-      p.apellidos.toLowerCase().includes(query) ||
-      `${p.nombres} ${p.apellidos}`.toLowerCase().includes(query) ||
-      (p.telefono?.includes(searchQuery) ?? false) ||
-      (p.email?.toLowerCase().includes(query) ?? false);
+  // Búsqueda y filtros se ejecutan server-side; `personas` ya viene filtrado.
+  const filteredPersonas = personas;
 
-    const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;
-    const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
 
-    return matchesSearch && matchesGenero && matchesNivel;
-  });
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, personas.length]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -341,23 +356,25 @@ export default function PersonasPage() {
       </div>
 
 
-      <DataTable
-        data={filteredPersonas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron personas"
-        onRowClick={handleRowClick}
-        countLabel="personas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedPersona?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredPersonas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron personas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} personas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedPersona?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
 
       {/* Detail Sheet */}
       <PersonaDetailSheet

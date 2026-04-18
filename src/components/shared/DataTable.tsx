@@ -427,7 +427,7 @@ export function DataTable<T extends { id: string }>({
       </div>
       <div className="text-sm text-muted-foreground py-1 px-1">
         {hasMore
-          ? `Mostrando ${visibleData.length.toLocaleString("es-CO")} de ${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`
+          ? `Mostrando ${visibleData.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`
           : `${data.length.toLocaleString("es-CO")} ${itemLabel ?? countLabel}`}
       </div>
 

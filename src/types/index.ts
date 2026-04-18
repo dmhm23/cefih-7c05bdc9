@@ -11,6 +11,6 @@ export * from './curso';
 export * from './audit';
 export * from './nivelFormacion';
 export * from './personal';
-export * from './formatoFormacion';
+export * from '@/modules/formatos/plugins/safa/types';
 export * from './certificado';
 export * from './cartera';

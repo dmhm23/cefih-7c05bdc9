@@ -20,7 +20,14 @@ export interface BlockDefinition<TProps = Record<string, unknown>> {
   defaultProps?: TProps;
   /** Componente que renderiza el bloque dentro del editor (modo edición). */
   EditorComponent?: ComponentType<{ block: BlockInstance<TProps>; onChange: (b: BlockInstance<TProps>) => void }>;
-  /** Componente que renderiza el bloque en el render final (preview, portal, PDF). */
+  /**
+   * Componente que renderiza el bloque en el render final (preview, portal, PDF).
+   *
+   * Nota (Fase B/2025-04): expuesto en el contrato pero todavía no consumido
+   * por los renderers monolíticos `PortalFormatoRenderer` y
+   * `DynamicFormatoDocument`. Sirve como puerta lista para que cada bloque
+   * registre su propio render sin tocar los switches actuales.
+   */
   RendererComponent?: ComponentType<{ block: BlockInstance<TProps>; value: unknown; onChange?: (v: unknown) => void; readOnly?: boolean }>;
   /** Componente custom para inspector (panel de propiedades). */
   InspectorComponent?: ComponentType<{ block: BlockInstance<TProps>; onChange: (b: BlockInstance<TProps>) => void }>;

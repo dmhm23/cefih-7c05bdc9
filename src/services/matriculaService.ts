@@ -67,6 +67,103 @@ export const matriculaService = {
     }
   },
 
+  /**
+   * Página server-side con búsqueda y filtros aplicados en BD.
+   *
+   * - search: multi-término AND sobre nombres, apellidos, numero_documento, telefono
+   *   (usa join inner a personas para poder filtrar)
+   * - tipoVinculacion: 'todos' | 'sin_asignar' | EstadoVinculacion
+   * - nivelFormacionId: 'todos' | UUID
+   * - estadoCurso: 'todos' | 'asignado' | 'sin_asignar'
+   *
+   * Devuelve también un mapa persona resumido (id → {nombres, apellidos, numero_documento})
+   * para evitar tener que cargar todas las personas en el cliente.
+   */
+  async getPage(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    tipoVinculacion?: string;
+    nivelFormacionId?: string;
+    estadoCurso?: string;
+  }): Promise<{
+    rows: Matricula[];
+    total: number;
+    personasResumen: Record<string, { nombres: string; apellidos: string; numeroDocumento: string }>;
+  }> {
+    const {
+      page,
+      pageSize,
+      search = '',
+      tipoVinculacion = 'todos',
+      nivelFormacionId = 'todos',
+      estadoCurso = 'todos',
+    } = params;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    try {
+      let query = supabase
+        .from('matriculas')
+        .select(
+          `*, personas!inner(id, nombres, apellidos, numero_documento, telefono)`,
+          { count: 'exact' },
+        )
+        .is('deleted_at', null);
+
+      // Búsqueda multi-término (AND) sobre los campos de la persona
+      const terms = search.trim().split(/\s+/).filter(Boolean);
+      for (const term of terms) {
+        const escaped = term.replace(/[%_,()]/g, '\\$&');
+        query = query.or(
+          `nombres.ilike.%${escaped}%,apellidos.ilike.%${escaped}%,numero_documento.ilike.%${escaped}%,telefono.ilike.%${escaped}%`,
+          { foreignTable: 'personas' },
+        );
+      }
+
+      if (tipoVinculacion !== 'todos') {
+        if (tipoVinculacion === 'sin_asignar') {
+          query = query.is('tipo_vinculacion', null);
+        } else {
+          query = query.eq('tipo_vinculacion', tipoVinculacion as any);
+        }
+      }
+
+      if (nivelFormacionId !== 'todos') {
+        query = query.eq('nivel_formacion_id', nivelFormacionId);
+      }
+
+      if (estadoCurso === 'asignado') {
+        query = query.not('curso_id', 'is', null);
+      } else if (estadoCurso === 'sin_asignar') {
+        query = query.is('curso_id', null);
+      }
+
+      query = query.order('created_at', { ascending: false }).range(from, to);
+
+      const { data, error, count } = await query;
+      if (error) handleSupabaseError(error);
+
+      const rows = (data || []).map(rowToMatricula);
+      const personasResumen: Record<string, { nombres: string; apellidos: string; numeroDocumento: string }> = {};
+      for (const row of (data || []) as any[]) {
+        const p = row.personas;
+        if (p?.id) {
+          personasResumen[p.id] = {
+            nombres: p.nombres || '',
+            apellidos: p.apellidos || '',
+            numeroDocumento: p.numero_documento || '',
+          };
+        }
+      }
+
+      return { rows, total: count ?? rows.length, personasResumen };
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return { rows: [], total: 0, personasResumen: {} };
+    }
+  },
+
   async getById(id: string): Promise<Matricula | null> {
     const { data, error } = await supabase
       .from('matriculas')

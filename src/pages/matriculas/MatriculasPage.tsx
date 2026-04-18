@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
@@ -14,8 +14,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
-import { useMatriculas, useDeleteMatricula } from "@/hooks/useMatriculas";
-import { usePersonas } from "@/hooks/usePersonas";
+import { useMatriculasPaginated, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { Matricula } from "@/types";
@@ -88,26 +87,44 @@ export default function MatriculasPage() {
     });
   });
 
-  const { data: matriculas = [], isLoading } = useMatriculas();
-  const { data: personas = [] } = usePersonas();
+
+  const {
+    matriculas,
+    personasResumen,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useMatriculasPaginated({
+    search: searchQuery,
+    tipoVinculacion: typeof filters.tipoVinculacion === 'string' ? filters.tipoVinculacion : 'todos',
+    nivelFormacionId: typeof filters.nivelFormacion === 'string' ? filters.nivelFormacion : 'todos',
+    estadoCurso: typeof filters.estadoCurso === 'string' ? filters.estadoCurso : 'todos',
+  });
   const { data: cursos = [] } = useCursos();
   const { data: niveles = [] } = useNivelesFormacion();
   const resolveNivel = useResolveNivel();
   const deleteMatricula = useDeleteMatricula();
 
-  // Load cartera status from DB
+  // Load cartera status from DB para las matrículas actualmente cargadas
   const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});
   useEffect(() => {
+    if (matriculas.length === 0) return;
+    const ids = matriculas.map(m => m.id);
     (async () => {
       const { data } = await supabase
         .from("grupo_cartera_matriculas")
-        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)");
+        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)")
+        .in("matricula_id", ids);
       if (data) {
-        const map: Record<string, EstadoGrupoCartera> = {};
-        for (const row of data as any[]) {
-          map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
-        }
-        setCarteraMap(map);
+        setCarteraMap(prev => {
+          const map: Record<string, EstadoGrupoCartera> = { ...prev };
+          for (const row of data as any[]) {
+            map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
+          }
+          return map;
+        });
       }
     })();
   }, [matriculas]);
@@ -183,13 +200,12 @@ export default function MatriculasPage() {
   }).length;
 
   const getPersonaNombre = (personaId: string) => {
-    const persona = personas.find((p) => p.id === personaId);
-    return persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
+    const p = personasResumen[personaId];
+    return p ? `${p.nombres} ${p.apellidos}` : "N/A";
   };
 
   const getPersonaDocumento = (personaId: string) => {
-    const persona = personas.find((p) => p.id === personaId);
-    return persona?.numeroDocumento || "N/A";
+    return personasResumen[personaId]?.numeroDocumento || "N/A";
   };
 
   const getCursoNombre = (cursoId: string) => {
@@ -197,35 +213,14 @@ export default function MatriculasPage() {
     return curso?.nombre || "N/A";
   };
 
+  // Búsqueda y filtros (tipoVinculacion, nivelFormacion, estadoCurso) se aplican server-side.
+  // Estado documental y cartera se filtran client-side porque dependen de subqueries no incluidas.
   const filteredMatriculas = matriculas.filter((m) => {
-    const persona = personas.find((p) => p.id === m.personaId);
-    
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      persona?.numeroDocumento.includes(searchQuery) ||
-      persona?.nombres.toLowerCase().includes(query) ||
-      persona?.apellidos.toLowerCase().includes(query) ||
-      `${persona?.nombres ?? ''} ${persona?.apellidos ?? ''}`.toLowerCase().includes(query) ||
-      (persona?.telefono?.includes(searchQuery) ?? false);
-
     const estadoDoc = getEstadoDocumental(m).toLowerCase();
     const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;
     const estadoCartera = getEstadoCartera(m);
     const matchesCartera = filters.estadoCartera === "todos" || estadoCartera === filters.estadoCartera;
-
-    const matchesTipoVinculacion =
-      filters.tipoVinculacion === "todos" ||
-      (filters.tipoVinculacion === "sin_asignar" ? !m.tipoVinculacion : m.tipoVinculacion === filters.tipoVinculacion);
-
-    const matchesNivelFormacion =
-      filters.nivelFormacion === "todos" || m.nivelFormacionId === filters.nivelFormacion;
-
-    const matchesEstadoCurso =
-      filters.estadoCurso === "todos" ||
-      (filters.estadoCurso === "asignado" ? !!m.cursoId : !m.cursoId);
-
-    return matchesSearch && matchesEstadoDoc && matchesCartera && matchesTipoVinculacion && matchesNivelFormacion && matchesEstadoCurso;
+    return matchesEstadoDoc && matchesCartera;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {
@@ -304,6 +299,23 @@ export default function MatriculasPage() {
       },
     },
   ];
+
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, matriculas.length]);
 
   const columns: Column<Matricula>[] = [
     {
@@ -532,24 +544,25 @@ export default function MatriculasPage() {
       </div>
 
 
-      <DataTable
-        data={filteredMatriculas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron matrículas"
-        onRowClick={handleRowClick}
-        countLabel="matrículas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedMatricula?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
-
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredMatriculas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron matrículas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} matrículas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedMatricula?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
       {/* Detail Sheet */}
       <MatriculaDetailSheet
         open={selectedIndex !== null}

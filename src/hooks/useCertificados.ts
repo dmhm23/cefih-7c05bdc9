@@ -1,9 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { certificadoService } from '@/services/certificadoService';
-import type { CertificadoFormData } from '@/types/certificado';
+import type { CertificadoFormData, CertificadoGenerado } from '@/types/certificado';
+
+const PAGE_SIZE = 200;
 
 export function useCertificados() {
-  return useQuery({ queryKey: ['certificados'], queryFn: certificadoService.getAll });
+  return useQuery({ queryKey: ['certificados'], queryFn: certificadoService.getAll, staleTime: 5 * 60 * 1000 });
+}
+
+/**
+ * Paginación infinita server-side con búsqueda por código y filtros.
+ */
+export function useCertificadosPaginated(params: {
+  search?: string;
+  estado?: string;
+  excepcional?: string;
+}) {
+  const { search = '', estado = 'todos', excepcional = 'todos' } = params;
+  const query = useInfiniteQuery({
+    queryKey: ['certificados', 'paginated', { search, estado, excepcional }],
+    queryFn: ({ pageParam = 0 }) =>
+      certificadoService.getPage({ page: pageParam, pageSize: PAGE_SIZE, search, estado, excepcional }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.rows.length, 0);
+      return loaded < lastPage.total ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const certificados: CertificadoGenerado[] = useMemo(
+    () => query.data?.pages.flatMap(p => p.rows) ?? [],
+    [query.data],
+  );
+  const total = query.data?.pages[0]?.total ?? 0;
+
+  return {
+    certificados,
+    total,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+  };
 }
 
 export function useCertificado(id: string) {

@@ -36,6 +36,45 @@ export const certificadoService = {
     return data.map(mapCertificado);
   },
 
+  /**
+   * Paginación server-side con búsqueda por código y filtros.
+   */
+  async getPage(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    estado?: string;
+    excepcional?: string;
+  }): Promise<{ rows: CertificadoGenerado[]; total: number }> {
+    const { page, pageSize, search, estado, excepcional } = params;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('certificados')
+      .select('*', { count: 'exact' });
+
+    if (estado && estado !== 'todos') {
+      query = query.eq('estado', estado as any);
+    }
+    if (excepcional && excepcional !== 'todos') {
+      query = query.eq('autorizado_excepcional', excepcional === 'si');
+    }
+    if (search && search.trim()) {
+      const safe = search.trim().replace(/[%,()]/g, '');
+      query = query.ilike('codigo', `%${safe}%`);
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+    return {
+      rows: (data || []).map(mapCertificado),
+      total: count ?? 0,
+    };
+  },
+
   async getById(id: string): Promise<CertificadoGenerado | undefined> {
     const { data, error } = await supabase
       .from('certificados')

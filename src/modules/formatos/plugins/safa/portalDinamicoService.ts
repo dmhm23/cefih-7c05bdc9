@@ -1,0 +1,158 @@
+/**
+ * Servicio SAFA del Portal Estudiante para envío de formatos dinámicos.
+ *
+ * Antes vivía en `src/services/portalDinamicoService.ts`. Migrado al plugin
+ * SAFA porque su flujo (matrícula → formato_respuestas → documentos_portal →
+ * firmas_matricula → cascada de firmas) es específico del host.
+ */
+import { supabase } from '@/integrations/supabase/client';
+import { firmaMatriculaService } from '@/services/firmaMatriculaService';
+import type { FirmaMatricula } from './types';
+
+export interface EnviarFormatoDinamicoParams {
+  matriculaId: string;
+  formatoId: string;
+  documentoKey: string;
+  answers: Record<string, unknown>;
+  firmaPayload?: {
+    firmaBase64: string;
+    tipoFirmante: 'aprendiz' | 'entrenador' | 'supervisor';
+    esOrigenFirma: boolean;
+  };
+}
+
+export const portalDinamicoService = {
+  async enviarFormatoDinamico(params: EnviarFormatoDinamicoParams): Promise<void> {
+    const { matriculaId, formatoId, documentoKey, answers, firmaPayload } = params;
+    const now = new Date().toISOString();
+
+    const { error: frError } = await supabase
+      .from('formato_respuestas')
+      .upsert({
+        matricula_id: matriculaId,
+        formato_id: formatoId,
+        estado: 'completado',
+        answers: answers as any,
+        completado_at: now,
+      } as any, { onConflict: 'matricula_id,formato_id' });
+    if (frError) throw frError;
+
+    const { error: dpError } = await supabase
+      .from('documentos_portal')
+      .upsert({
+        matricula_id: matriculaId,
+        documento_key: documentoKey,
+        estado: 'completado',
+        enviado_en: now,
+        firma_data: firmaPayload?.firmaBase64 || null,
+        metadata: answers as any,
+      } as any, { onConflict: 'matricula_id,documento_key' });
+    if (dpError) throw dpError;
+
+    if (firmaPayload && firmaPayload.esOrigenFirma) {
+      await firmaMatriculaService.upsert({
+        matriculaId,
+        tipo: firmaPayload.tipoFirmante,
+        firmaBase64: firmaPayload.firmaBase64,
+        formatoOrigenId: formatoId,
+        autorizaReutilizacion: true,
+        ip: null,
+        userAgent: navigator.userAgent || null,
+      });
+
+      await this.procesarEventoFirmaCompletada(matriculaId, formatoId, firmaPayload.firmaBase64);
+    }
+  },
+
+  async procesarEventoFirmaCompletada(
+    matriculaId: string,
+    sourceFormatoId: string,
+    firmaBase64: string,
+  ): Promise<void> {
+    const { data: matricula } = await supabase
+      .from('matriculas')
+      .select('nivel_formacion_id')
+      .eq('id', matriculaId)
+      .single();
+    if (!matricula) return;
+
+    const nivelId = matricula.nivel_formacion_id;
+
+    const { data: formatos, error } = await supabase
+      .from('formatos_formacion')
+      .select('id, bloques, eventos_disparadores, niveles_asignados')
+      .eq('activo', true)
+      .eq('es_automatico', true)
+      .is('deleted_at', null)
+      .neq('id', sourceFormatoId);
+    if (error || !formatos) return;
+
+    const targets = formatos.filter((f: any) => {
+      const raw = f.eventos_disparadores;
+      const eventos = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (!Array.isArray(eventos) || !eventos.includes('firma_completada')) return false;
+      const niveles = f.niveles_asignados as string[] | null;
+      if (niveles && niveles.length > 0 && nivelId && !niveles.includes(nivelId)) return false;
+      return true;
+    });
+
+    for (const formato of targets) {
+      const bloques = (typeof formato.bloques === 'string'
+        ? JSON.parse(formato.bloques)
+        : formato.bloques) as Array<{ id: string; type: string; props?: any }>;
+
+      const answers: Record<string, unknown> = {};
+      const sigBlock = bloques.find((b) => b.type === 'signature_capture');
+      if (sigBlock) answers[sigBlock.id] = firmaBase64;
+
+      const attendanceBlocks = bloques.filter((b) => b.type === 'attendance_by_day');
+      for (const attBlock of attendanceBlocks) {
+        const firmaMode = attBlock.props?.firmaMode;
+        if (firmaMode === 'reuse_if_available' || firmaMode === 'reuse_required') {
+          answers[attBlock.id] = { firmaHeredada: firmaBase64 };
+        }
+      }
+
+      await supabase
+        .from('formato_respuestas')
+        .upsert({
+          matricula_id: matriculaId,
+          formato_id: formato.id,
+          estado: 'completado',
+          answers: answers as any,
+          completado_at: new Date().toISOString(),
+        } as any, { onConflict: 'matricula_id,formato_id' });
+    }
+  },
+
+  async getFormatoById(formatoId: string) {
+    const { data, error } = await supabase
+      .from('formatos_formacion')
+      .select('*')
+      .eq('id', formatoId)
+      .is('deleted_at', null)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getFirmasMatricula(matriculaId: string): Promise<FirmaMatricula[]> {
+    return firmaMatriculaService.getByMatricula(matriculaId);
+  },
+
+  resolveReusableSignature(
+    firmas: FirmaMatricula[],
+    tipoFirmante: 'aprendiz' | 'entrenador' | 'supervisor',
+    formatoOrigenId?: string,
+  ): FirmaMatricula | null {
+    const eligible = firmas.filter((f) => f.tipo === tipoFirmante && f.autorizaReutilizacion);
+    if (formatoOrigenId) {
+      const exact = eligible.find((f) => f.formatoOrigenId === formatoOrigenId);
+      if (exact) return exact;
+    }
+    if (eligible.length === 0) return null;
+    return eligible.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )[0];
+  },
+};

@@ -1,15 +1,84 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { matriculaService } from '@/services/matriculaService';
 import { driveService } from '@/services/driveService';
 import { crearDocumentosMatricula } from '@/services/documentoService';
 
-import { EstadoMatricula, DocumentoRequerido } from '@/types/matricula';
+import { EstadoMatricula, DocumentoRequerido, Matricula } from '@/types/matricula';
 
+const PAGE_SIZE = 200;
+
+/**
+ * Lista completa de matrículas (legacy). Usar solo donde no hay tabla principal.
+ */
 export const useMatriculas = () => {
   return useQuery({
     queryKey: ['matriculas'],
     queryFn: () => matriculaService.getAll(),
+    staleTime: 5 * 60 * 1000,
   });
+};
+
+/**
+ * Paginación infinita server-side con búsqueda y filtros.
+ * Devuelve también un mapa de personas resumido (cargado vía join, sin fetch global).
+ */
+export const useMatriculasPaginated = (params: {
+  search?: string;
+  tipoVinculacion?: string;
+  nivelFormacionId?: string;
+  estadoCurso?: string;
+}) => {
+  const {
+    search = '',
+    tipoVinculacion = 'todos',
+    nivelFormacionId = 'todos',
+    estadoCurso = 'todos',
+  } = params;
+
+  const query = useInfiniteQuery({
+    queryKey: ['matriculas', 'paginated', { search, tipoVinculacion, nivelFormacionId, estadoCurso }],
+    queryFn: ({ pageParam = 0 }) =>
+      matriculaService.getPage({
+        page: pageParam,
+        pageSize: PAGE_SIZE,
+        search,
+        tipoVinculacion,
+        nivelFormacionId,
+        estadoCurso,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.rows.length, 0);
+      return loaded < lastPage.total ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const matriculas: Matricula[] = useMemo(
+    () => query.data?.pages.flatMap(p => p.rows) ?? [],
+    [query.data],
+  );
+  const personasResumen = useMemo(() => {
+    const merged: Record<string, { nombres: string; apellidos: string; numeroDocumento: string }> = {};
+    for (const page of query.data?.pages ?? []) {
+      Object.assign(merged, page.personasResumen);
+    }
+    return merged;
+  }, [query.data]);
+  const total = query.data?.pages[0]?.total ?? 0;
+
+  return {
+    matriculas,
+    personasResumen,
+    total,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+    refetch: query.refetch,
+  };
 };
 
 export const useMatricula = (id: string) => {

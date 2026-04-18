@@ -6,8 +6,11 @@
  * a su propio resolver puro.
  */
 import type { TokenResolverPort, TokenContext } from '../../contracts/TokenResolverPort';
-import { resolveAutoFieldValue, type AutoFieldContext } from '@/modules/formatos/plugins/safa';
-import type { AutoFieldKey } from '@/modules/formatos/plugins/safa';
+import {
+  resolveAutoFieldValue,
+  type AutoFieldContext,
+} from '../../plugins/safa/autoFields/resolveAutoField';
+import type { AutoFieldKey } from '../../plugins/safa/types';
 
 const SAFA_NAMESPACES = [
   // Aprendiz

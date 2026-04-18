@@ -253,6 +253,56 @@ export const carteraService = {
     }));
   },
 
+  /**
+   * Paginación server-side de grupos con join al responsable de pago.
+   * Soporta búsqueda por nombre/NIT del responsable y filtros por tipo/estado.
+   */
+  async getGruposPage(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    tipo?: string;
+    estado?: string;
+  }): Promise<{ rows: (GrupoCartera & { responsable?: ResponsablePago })[]; total: number }> {
+    const { page, pageSize, search, tipo, estado } = params;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('grupos_cartera')
+      .select(
+        '*, grupo_cartera_matriculas(matricula_id), responsables_pago!inner(*)',
+        { count: 'exact' },
+      )
+      .is('responsables_pago.deleted_at', null);
+
+    if (estado && estado !== 'todos') {
+      query = query.eq('estado', estado as any);
+    }
+    if (tipo && tipo !== 'todos') {
+      query = query.eq('responsables_pago.tipo', tipo as any);
+    }
+    if (search && search.trim()) {
+      const safe = search.trim().replace(/[%,()]/g, '');
+      query = query.or(
+        `nombre.ilike.%${safe}%,nit.ilike.%${safe}%`,
+        { foreignTable: 'responsables_pago' },
+      );
+    }
+
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+
+    const rows = (data || []).map((row: any) => ({
+      ...mapGrupo(row),
+      matriculaIds: (row.grupo_cartera_matriculas || []).map((gcm: any) => gcm.matricula_id),
+      responsable: row.responsables_pago ? mapResponsable(row.responsables_pago) : undefined,
+    }));
+    return { rows, total: count ?? 0 };
+  },
+
   async getGrupoById(id: string): Promise<GrupoCartera | null> {
     const { data, error } = await supabase
       .from('grupos_cartera')

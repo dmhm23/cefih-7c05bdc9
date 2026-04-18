@@ -362,24 +362,25 @@ export default function EmpresasPage() {
         />
       </div>
 
-      <DataTable
-        data={filteredEmpresas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron empresas"
-        onRowClick={handleRowClick}
-        countLabel="empresas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedEmpresa?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
-
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredEmpresas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron empresas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} empresas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedEmpresa?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
       <EmpresaDetailSheet
         open={selectedIndex !== null}
         onOpenChange={(open) => !open && setSelectedIndex(null)}

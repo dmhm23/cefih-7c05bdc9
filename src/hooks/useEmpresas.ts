@@ -1,12 +1,58 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { empresaService } from '@/services/empresaService';
-import { EmpresaFormData, TarifaEmpresaFormData } from '@/types/empresa';
+import { EmpresaFormData, TarifaEmpresaFormData, Empresa } from '@/types/empresa';
 
+const PAGE_SIZE = 200;
+
+/**
+ * Lista completa de empresas (legacy). Usar solo donde no hay tabla principal.
+ */
 export const useEmpresas = () => {
   return useQuery({
     queryKey: ['empresas'],
     queryFn: () => empresaService.getAll(),
+    staleTime: 5 * 60 * 1000,
   });
+};
+
+/**
+ * Paginación infinita server-side con búsqueda y filtros.
+ */
+export const useEmpresasPaginated = (params: {
+  search?: string;
+  sectorEconomico?: string;
+  arl?: string;
+}) => {
+  const { search = '', sectorEconomico = 'todos', arl = 'todos' } = params;
+  const query = useInfiniteQuery({
+    queryKey: ['empresas', 'paginated', { search, sectorEconomico, arl }],
+    queryFn: ({ pageParam = 0 }) =>
+      empresaService.getPage({ page: pageParam, pageSize: PAGE_SIZE, search, sectorEconomico, arl }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.rows.length, 0);
+      return loaded < lastPage.total ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const empresas: Empresa[] = useMemo(
+    () => query.data?.pages.flatMap(p => p.rows) ?? [],
+    [query.data],
+  );
+  const total = query.data?.pages[0]?.total ?? 0;
+
+  return {
+    empresas,
+    total,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+    refetch: query.refetch,
+  };
 };
 
 export const useEmpresa = (id: string) => {

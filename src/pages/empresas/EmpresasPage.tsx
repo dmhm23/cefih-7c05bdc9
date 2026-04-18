@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, MoreVertical, FileDown, FileUp } from "lucide-react";
@@ -20,7 +20,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { EmpresaDetailSheet } from "@/components/empresas/EmpresaDetailSheet";
 import { ImportarEmpresasDialog } from "@/components/empresas/ImportarEmpresasDialog";
-import { useEmpresas, useDeleteEmpresa } from "@/hooks/useEmpresas";
+import { useEmpresasPaginated, useDeleteEmpresa } from "@/hooks/useEmpresas";
 import { descargarPlantillaEmpresas } from "@/utils/empresaPlantilla";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
@@ -71,7 +71,18 @@ export default function EmpresasPage() {
     });
   });
 
-  const { data: empresas = [], isLoading } = useEmpresas();
+  const {
+    empresas,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useEmpresasPaginated({
+    search: searchQuery,
+    sectorEconomico: typeof filters.sectorEconomico === 'string' ? filters.sectorEconomico : 'todos',
+    arl: typeof filters.arl === 'string' ? filters.arl : 'todos',
+  });
   const { data: matriculas = [] } = useMatriculas();
   const deleteEmpresa = useDeleteEmpresa();
 
@@ -109,20 +120,25 @@ export default function EmpresasPage() {
     return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
   };
 
-  const filteredEmpresas = empresas.filter((e) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      e.nombreEmpresa.toLowerCase().includes(query) ||
-      e.nit.includes(searchQuery) ||
-      e.personaContacto.toLowerCase().includes(query) ||
-      e.emailContacto.toLowerCase().includes(query);
+  // Búsqueda y filtros se ejecutan server-side; `empresas` ya viene filtrado.
+  const filteredEmpresas = empresas;
 
-    const matchesSector = filters.sectorEconomico === "todos" || e.sectorEconomico === filters.sectorEconomico;
-    const matchesArl = filters.arl === "todos" || e.arl === filters.arl;
-
-    return matchesSearch && matchesSector && matchesArl;
-  });
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, empresas.length]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -346,24 +362,25 @@ export default function EmpresasPage() {
         />
       </div>
 
-      <DataTable
-        data={filteredEmpresas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron empresas"
-        onRowClick={handleRowClick}
-        countLabel="empresas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedEmpresa?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
-
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredEmpresas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron empresas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} empresas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedEmpresa?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
       <EmpresaDetailSheet
         open={selectedIndex !== null}
         onOpenChange={(open) => !open && setSelectedIndex(null)}

@@ -1,9 +1,50 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { carteraService, asignarMatriculaACartera } from '@/services/carteraService';
-import { MetodoPago, TipoActividadCartera, TipoResponsable } from '@/types/cartera';
+import { MetodoPago, TipoActividadCartera, TipoResponsable, GrupoCartera, ResponsablePago } from '@/types/cartera';
+
+const PAGE_SIZE = 100;
 
 export const useGruposCartera = () =>
-  useQuery({ queryKey: ['cartera', 'grupos'], queryFn: () => carteraService.getGrupos() });
+  useQuery({ queryKey: ['cartera', 'grupos'], queryFn: () => carteraService.getGrupos(), staleTime: 5 * 60 * 1000 });
+
+/**
+ * Paginación infinita server-side de grupos de cartera con join al responsable.
+ */
+export const useGruposCarteraPaginated = (params: {
+  search?: string;
+  tipo?: string;
+  estado?: string;
+}) => {
+  const { search = '', tipo = 'todos', estado = 'todos' } = params;
+  const query = useInfiniteQuery({
+    queryKey: ['cartera', 'grupos', 'paginated', { search, tipo, estado }],
+    queryFn: ({ pageParam = 0 }) =>
+      carteraService.getGruposPage({ page: pageParam, pageSize: PAGE_SIZE, search, tipo, estado }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + p.rows.length, 0);
+      return loaded < lastPage.total ? allPages.length : undefined;
+    },
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+
+  const grupos: (GrupoCartera & { responsable?: ResponsablePago })[] = useMemo(
+    () => query.data?.pages.flatMap(p => p.rows) ?? [],
+    [query.data],
+  );
+  const total = query.data?.pages[0]?.total ?? 0;
+
+  return {
+    grupos,
+    total,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage ?? false,
+  };
+};
 
 export const useGrupoCartera = (id: string) =>
   useQuery({ queryKey: ['cartera', 'grupo', id], queryFn: () => carteraService.getGrupoById(id), enabled: !!id });

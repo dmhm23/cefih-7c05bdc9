@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Wallet, Filter, AlertTriangle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/shared/SearchInput";
 import { FilterPopover, FilterConfig } from "@/components/shared/FilterPopover";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { DataTable, Column } from "@/components/shared/DataTable";
-import { useGruposCartera, useResponsablesPago } from "@/hooks/useCartera";
+import { useGruposCarteraPaginated } from "@/hooks/useCartera";
 import { GrupoCartera, ResponsablePago, TIPO_RESPONSABLE_LABELS } from "@/types/cartera";
 
 const TIPO_OPTIONS = [
@@ -36,41 +36,39 @@ type GrupoRow = GrupoCartera & { responsable?: ResponsablePago };
 
 export default function CarteraPage() {
   const navigate = useNavigate();
-  const { data: grupos = [], isLoading: loadingGrupos } = useGruposCartera();
-  const { data: responsables = [], isLoading: loadingResp } = useResponsablesPago();
-
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({ tipo: "todos", estado: "todos" });
 
-  const rows: GrupoRow[] = useMemo(() => {
-    return grupos.map(g => ({
-      ...g,
-      responsable: responsables.find(r => r.id === g.responsablePagoId),
-    }));
-  }, [grupos, responsables]);
+  const {
+    grupos,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useGruposCarteraPaginated({
+    search,
+    tipo: typeof filters.tipo === 'string' ? filters.tipo : 'todos',
+    estado: typeof filters.estado === 'string' ? filters.estado : 'todos',
+  });
 
-  const filtered = useMemo(() => {
-    let result = rows;
-
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(r =>
-        r.responsable?.nombre.toLowerCase().includes(q) ||
-        r.responsable?.nit.toLowerCase().includes(q)
-      );
-    }
-
-    if (filters.tipo && filters.tipo !== "todos") {
-      result = result.filter(r => r.responsable?.tipo === filters.tipo);
-    }
-
-    if (filters.estado && filters.estado !== "todos") {
-      result = result.filter(r => r.estado === filters.estado);
-    }
-
-    return result;
-  }, [rows, search, filters]);
+  // Auto-prefetch al hacer scroll cerca del final
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, grupos.length]);
 
   const activeFilterCount = Object.values(filters).filter(
     v => (Array.isArray(v) ? v.length > 0 : v && v !== "todos")
@@ -190,14 +188,17 @@ export default function CarteraPage() {
       </div>
 
 
-      <DataTable
-        data={filtered}
-        columns={columns}
-        isLoading={loadingGrupos || loadingResp}
-        onRowClick={(row) => navigate(`/cartera/${row.id}`)}
-        emptyMessage="No se encontraron grupos de cartera."
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={grupos}
+          columns={columns}
+          isLoading={isLoading}
+          onRowClick={(row) => navigate(`/cartera/${row.id}`)}
+          emptyMessage="No se encontraron grupos de cartera."
+          countLabel={`de ${total.toLocaleString('es-CO')} grupos`}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
     </div>
   );
 }

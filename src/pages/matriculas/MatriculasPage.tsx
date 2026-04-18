@@ -200,13 +200,12 @@ export default function MatriculasPage() {
   }).length;
 
   const getPersonaNombre = (personaId: string) => {
-    const persona = personas.find((p) => p.id === personaId);
-    return persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
+    const p = personasResumen[personaId];
+    return p ? `${p.nombres} ${p.apellidos}` : "N/A";
   };
 
   const getPersonaDocumento = (personaId: string) => {
-    const persona = personas.find((p) => p.id === personaId);
-    return persona?.numeroDocumento || "N/A";
+    return personasResumen[personaId]?.numeroDocumento || "N/A";
   };
 
   const getCursoNombre = (cursoId: string) => {
@@ -214,35 +213,14 @@ export default function MatriculasPage() {
     return curso?.nombre || "N/A";
   };
 
+  // Búsqueda y filtros (tipoVinculacion, nivelFormacion, estadoCurso) se aplican server-side.
+  // Estado documental y cartera se filtran client-side porque dependen de subqueries no incluidas.
   const filteredMatriculas = matriculas.filter((m) => {
-    const persona = personas.find((p) => p.id === m.personaId);
-    
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      persona?.numeroDocumento.includes(searchQuery) ||
-      persona?.nombres.toLowerCase().includes(query) ||
-      persona?.apellidos.toLowerCase().includes(query) ||
-      `${persona?.nombres ?? ''} ${persona?.apellidos ?? ''}`.toLowerCase().includes(query) ||
-      (persona?.telefono?.includes(searchQuery) ?? false);
-
     const estadoDoc = getEstadoDocumental(m).toLowerCase();
     const matchesEstadoDoc = filters.estadoDocumental === "todos" || estadoDoc === filters.estadoDocumental;
     const estadoCartera = getEstadoCartera(m);
     const matchesCartera = filters.estadoCartera === "todos" || estadoCartera === filters.estadoCartera;
-
-    const matchesTipoVinculacion =
-      filters.tipoVinculacion === "todos" ||
-      (filters.tipoVinculacion === "sin_asignar" ? !m.tipoVinculacion : m.tipoVinculacion === filters.tipoVinculacion);
-
-    const matchesNivelFormacion =
-      filters.nivelFormacion === "todos" || m.nivelFormacionId === filters.nivelFormacion;
-
-    const matchesEstadoCurso =
-      filters.estadoCurso === "todos" ||
-      (filters.estadoCurso === "asignado" ? !!m.cursoId : !m.cursoId);
-
-    return matchesSearch && matchesEstadoDoc && matchesCartera && matchesTipoVinculacion && matchesNivelFormacion && matchesEstadoCurso;
+    return matchesEstadoDoc && matchesCartera;
   });
 
   const handleFilterChange = (key: string, value: string | string[]) => {

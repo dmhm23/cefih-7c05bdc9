@@ -229,5 +229,21 @@ export interface PlantillaBase {
   thumbnail?: string;
 }
 
-// Re-exporta el tipo nominal del core para quien lo necesite genérico
-export type { Bloque as CoreBloque, Formato as CoreFormato } from '../../core/types';
+// ---------------------------------------------------------------------------
+// Re-exports de tipos del core que el host SAFA usa con frecuencia
+// ---------------------------------------------------------------------------
+export type {
+  AsignacionScope,
+  MotorRender,
+  CategoriaFormato,
+  ModoDiligenciamiento,
+  EstadoFormato,
+  EncabezadoConfig,
+  TipoDependencia,
+  CondicionDependencia,
+  FormatoDependencia,
+  EventoDisparador,
+  FormatoVersion,
+  Bloque as CoreBloque,
+  Formato as CoreFormato,
+} from '../../core/types';

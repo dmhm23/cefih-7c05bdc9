@@ -7,7 +7,7 @@
  */
 import { supabase } from '@/integrations/supabase/client';
 import { firmaMatriculaService } from '@/services/firmaMatriculaService';
-import type { FirmaMatricula } from '../types';
+import type { FirmaMatricula } from './types';
 
 export interface EnviarFormatoDinamicoParams {
   matriculaId: string;

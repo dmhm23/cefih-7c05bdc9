@@ -923,7 +923,6 @@ export type Database = {
           eventos_disparadores: Json
           html_template: string | null
           id: string
-          legacy_component_id: string | null
           modo_diligenciamiento: string
           motor_render: Database["public"]["Enums"]["motor_render"]
           niveles_asignados: string[] | null
@@ -960,7 +959,6 @@ export type Database = {
           eventos_disparadores?: Json
           html_template?: string | null
           id?: string
-          legacy_component_id?: string | null
           modo_diligenciamiento?: string
           motor_render?: Database["public"]["Enums"]["motor_render"]
           niveles_asignados?: string[] | null
@@ -997,7 +995,6 @@ export type Database = {
           eventos_disparadores?: Json
           html_template?: string | null
           id?: string
-          legacy_component_id?: string | null
           modo_diligenciamiento?: string
           motor_render?: Database["public"]["Enums"]["motor_render"]
           niveles_asignados?: string[] | null
@@ -2127,44 +2124,6 @@ export type Database = {
         }
         Relationships: []
       }
-      versiones_formato: {
-        Row: {
-          creado_por: string | null
-          created_at: string
-          css_template: string | null
-          formato_id: string
-          html_template: string
-          id: string
-          version: number
-        }
-        Insert: {
-          creado_por?: string | null
-          created_at?: string
-          css_template?: string | null
-          formato_id: string
-          html_template?: string
-          id?: string
-          version?: number
-        }
-        Update: {
-          creado_por?: string | null
-          created_at?: string
-          css_template?: string | null
-          formato_id?: string
-          html_template?: string
-          id?: string
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "versiones_formato_formato_id_fkey"
-            columns: ["formato_id"]
-            isOneToOne: false
-            referencedRelation: "formatos_formacion"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -2214,7 +2173,6 @@ export type Database = {
           eventos_disparadores: Json
           html_template: string | null
           id: string
-          legacy_component_id: string | null
           modo_diligenciamiento: string
           motor_render: Database["public"]["Enums"]["motor_render"]
           niveles_asignados: string[] | null

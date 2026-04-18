@@ -71,7 +71,18 @@ export default function EmpresasPage() {
     });
   });
 
-  const { data: empresas = [], isLoading } = useEmpresas();
+  const {
+    empresas,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useEmpresasPaginated({
+    search: searchQuery,
+    sectorEconomico: typeof filters.sectorEconomico === 'string' ? filters.sectorEconomico : 'todos',
+    arl: typeof filters.arl === 'string' ? filters.arl : 'todos',
+  });
   const { data: matriculas = [] } = useMatriculas();
   const deleteEmpresa = useDeleteEmpresa();
 

@@ -66,7 +66,18 @@ export default function PersonasPage() {
     });
   });
 
-  const { data: personas = [], isLoading } = usePersonas();
+  const {
+    personas,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = usePersonasPaginated({
+    search: searchQuery,
+    genero: typeof filters.genero === 'string' ? filters.genero : 'todos',
+    nivelEducativo: typeof filters.nivelEducativo === 'string' ? filters.nivelEducativo : 'todos',
+  });
   const deletePersona = useDeletePersona();
 
   // Persist column config
@@ -94,22 +105,26 @@ export default function PersonasPage() {
     return value && value !== "todos";
   }).length;
 
-  const filteredPersonas = personas.filter((p) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      p.numeroDocumento.includes(searchQuery) ||
-      p.nombres.toLowerCase().includes(query) ||
-      p.apellidos.toLowerCase().includes(query) ||
-      `${p.nombres} ${p.apellidos}`.toLowerCase().includes(query) ||
-      (p.telefono?.includes(searchQuery) ?? false) ||
-      (p.email?.toLowerCase().includes(query) ?? false);
+  // Búsqueda y filtros se ejecutan server-side; `personas` ya viene filtrado.
+  const filteredPersonas = personas;
 
-    const matchesGenero = filters.genero === "todos" || p.genero === filters.genero;
-    const matchesNivel = filters.nivelEducativo === "todos" || p.nivelEducativo === filters.nivelEducativo;
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
 
-    return matchesSearch && matchesGenero && matchesNivel;
-  });
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, personas.length]);
 
   const handleDelete = async () => {
     if (!deleteId) return;

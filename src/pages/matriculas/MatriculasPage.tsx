@@ -87,26 +87,44 @@ export default function MatriculasPage() {
     });
   });
 
-  const { data: matriculas = [], isLoading } = useMatriculas();
-  const { data: personas = [] } = usePersonas();
+
+  const {
+    matriculas,
+    personasResumen,
+    total,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useMatriculasPaginated({
+    search: searchQuery,
+    tipoVinculacion: typeof filters.tipoVinculacion === 'string' ? filters.tipoVinculacion : 'todos',
+    nivelFormacionId: typeof filters.nivelFormacion === 'string' ? filters.nivelFormacion : 'todos',
+    estadoCurso: typeof filters.estadoCurso === 'string' ? filters.estadoCurso : 'todos',
+  });
   const { data: cursos = [] } = useCursos();
   const { data: niveles = [] } = useNivelesFormacion();
   const resolveNivel = useResolveNivel();
   const deleteMatricula = useDeleteMatricula();
 
-  // Load cartera status from DB
+  // Load cartera status from DB para las matrículas actualmente cargadas
   const [carteraMap, setCarteraMap] = useState<Record<string, EstadoGrupoCartera>>({});
   useEffect(() => {
+    if (matriculas.length === 0) return;
+    const ids = matriculas.map(m => m.id);
     (async () => {
       const { data } = await supabase
         .from("grupo_cartera_matriculas")
-        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)");
+        .select("matricula_id, grupo_cartera_id, grupos_cartera!inner(estado)")
+        .in("matricula_id", ids);
       if (data) {
-        const map: Record<string, EstadoGrupoCartera> = {};
-        for (const row of data as any[]) {
-          map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
-        }
-        setCarteraMap(map);
+        setCarteraMap(prev => {
+          const map: Record<string, EstadoGrupoCartera> = { ...prev };
+          for (const row of data as any[]) {
+            map[row.matricula_id] = row.grupos_cartera?.estado || "sin_facturar";
+          }
+          return map;
+        });
       }
     })();
   }, [matriculas]);

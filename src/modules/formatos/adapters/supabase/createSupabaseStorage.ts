@@ -174,24 +174,26 @@ export function createSupabaseStorage(): StoragePort {
     async saveVersion(formatoId) {
       const { data: formato } = await supabase
         .from('formatos_formacion')
-        .select('html_template, css_template, version')
+        .select('nombre, descripcion, bloques, encabezado_config')
         .eq('id', formatoId)
         .single();
       if (!formato) throw new ApiError('Formato no encontrado', 404);
       const { data: versions } = await supabase
-        .from('versiones_formato')
+        .from('formato_versiones' as any)
         .select('version')
         .eq('formato_id', formatoId)
         .order('version', { ascending: false })
         .limit(1);
-      const nextVersion = ((versions?.[0]?.version || 0) as number) + 1;
+      const nextVersion = (((versions as any)?.[0]?.version || 0) as number) + 1;
       const { data: inserted, error } = await supabase
-        .from('versiones_formato')
+        .from('formato_versiones' as any)
         .insert({
           formato_id: formatoId,
           version: nextVersion,
-          html_template: formato.html_template || '',
-          css_template: formato.css_template,
+          nombre: formato.nombre,
+          descripcion: formato.descripcion,
+          bloques: formato.bloques,
+          encabezado_config: formato.encabezado_config,
         })
         .select()
         .single();
@@ -201,27 +203,30 @@ export function createSupabaseStorage(): StoragePort {
 
     async fetchVersions(formatoId) {
       const { data, error } = await supabase
-        .from('versiones_formato')
+        .from('formato_versiones' as any)
         .select('*')
         .eq('formato_id', formatoId)
         .order('version', { ascending: false });
       if (error) handleSupabaseError(error);
-      return (data || []).map((v: any) => snakeToCamel<FormatoVersion>(v));
+      return ((data as any[]) || []).map((v: any) => snakeToCamel<FormatoVersion>(v));
     },
 
     async restoreVersion(formatoId, versionId) {
       const { data: ver } = await supabase
-        .from('versiones_formato')
+        .from('formato_versiones' as any)
         .select('*')
         .eq('id', versionId)
         .eq('formato_id', formatoId)
         .single();
       if (!ver) throw new ApiError('Versión no encontrada', 404);
+      const v = ver as any;
       const { data: updated, error } = await supabase
         .from('formatos_formacion')
         .update({
-          html_template: ver.html_template,
-          css_template: ver.css_template,
+          nombre: v.nombre,
+          descripcion: v.descripcion,
+          bloques: v.bloques,
+          encabezado_config: v.encabezado_config,
         })
         .eq('id', formatoId)
         .select()

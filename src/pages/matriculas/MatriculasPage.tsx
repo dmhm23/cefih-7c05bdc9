@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
@@ -14,8 +14,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
-import { useMatriculas, useDeleteMatricula } from "@/hooks/useMatriculas";
-import { usePersonas } from "@/hooks/usePersonas";
+import { useMatriculasPaginated, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { Matricula } from "@/types";

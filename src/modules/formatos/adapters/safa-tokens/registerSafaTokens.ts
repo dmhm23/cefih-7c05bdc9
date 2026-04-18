@@ -1,13 +1,16 @@
 /**
  * Adapter SAFA: registra resolvers de token sobre el TokenResolverPort.
  *
- * Reutiliza el switch existente en `@/utils/resolveAutoField` para no duplicar
+ * Reutiliza el switch existente en `@/modules/formatos/plugins/safa` para no duplicar
  * lógica de negocio. Cuando esté estable, cada namespace puede extraerse
  * a su propio resolver puro.
  */
 import type { TokenResolverPort, TokenContext } from '../../contracts/TokenResolverPort';
-import { resolveAutoFieldValue, type AutoFieldContext } from '@/utils/resolveAutoField';
-import type { AutoFieldKey } from '@/types/formatoFormacion';
+import {
+  resolveAutoFieldValue,
+  type AutoFieldContext,
+} from '../../plugins/safa/autoFields/resolveAutoField';
+import type { AutoFieldKey } from '../../plugins/safa/types';
 
 const SAFA_NAMESPACES = [
   // Aprendiz

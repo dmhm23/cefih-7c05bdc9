@@ -1,5 +1,5 @@
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
-import { BLOQUE_TYPE_LABELS, BLOQUE_ICONS } from '@/data/bloqueConstants';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
+import { BLOQUE_TYPE_LABELS, BLOQUE_ICONS } from '@/modules/formatos/plugins/safa';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';

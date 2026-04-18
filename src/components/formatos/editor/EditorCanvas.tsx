@@ -14,10 +14,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore, type Row2Block, type Row1Block } from '@/modules/formatos/core/editor/useEditorStore';
 import CanvasBlock from './CanvasBlock';
 import CanvasRow from './CanvasRow';
-import type { TipoBloque, Bloque } from '@/types/formatoFormacion';
+import type { TipoBloque, Bloque } from '@/modules/formatos/plugins/safa';
 
 export default function EditorCanvas() {
   const { items, docTitle, setDocTitle, setSelected, reorderBlock, addBlock, addRow2, addRow1 } = useFormatoEditorStore();

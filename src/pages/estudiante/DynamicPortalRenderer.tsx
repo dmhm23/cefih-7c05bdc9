@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import type { BloqueSignatureCapture, BloqueEvaluationQuiz } from '@/types/formatoFormacion';
+import type { BloqueSignatureCapture, BloqueEvaluationQuiz } from '@/modules/formatos/plugins/safa';
 
 interface Props {
   formatoId: string;

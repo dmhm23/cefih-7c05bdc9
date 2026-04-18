@@ -3,7 +3,7 @@ import { DocumentoPortalConfig, DocumentoPortalEstado } from '@/types/portalEstu
 import { Matricula } from '@/types/matricula';
 import { Persona } from '@/types/persona';
 import { Curso } from '@/types/curso';
-import { FormatoFormacion } from '@/types/formatoFormacion';
+import { FormatoFormacion } from '@/modules/formatos/plugins/safa';
 
 export type LoginResultado = 'ok' | 'persona_no_encontrada' | 'sin_curso' | 'curso_cerrado' | 'portal_deshabilitado';
 

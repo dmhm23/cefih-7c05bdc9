@@ -29,7 +29,7 @@ import { HistorialVersiones } from "./HistorialVersiones";
 import type { Matricula } from "@/types/matricula";
 import type { Persona } from "@/types/persona";
 import type { Curso } from "@/types/curso";
-import type { FormatoFormacion } from "@/types/formatoFormacion";
+import type { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import type { EstadoCertificado } from "@/types/certificado";
 
 interface Props {

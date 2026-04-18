@@ -10,7 +10,7 @@ import { ColumnSelector, ColumnConfig } from "@/components/shared/ColumnSelector
 import { RowActions } from "@/components/shared/RowActions";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useFormatos, useToggleFormatoActivo, useDuplicateFormato, useArchiveFormato, useDeleteFormato } from "@/hooks/useFormatosFormacion";
-import { FormatoFormacion, CategoriaFormato } from "@/types/formatoFormacion";
+import { FormatoFormacion, CategoriaFormato } from "@/modules/formatos/plugins/safa";
 
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";

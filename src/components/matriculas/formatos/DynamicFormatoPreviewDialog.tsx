@@ -16,7 +16,7 @@ import { firmaMatriculaService } from "@/services/firmaMatriculaService";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
-import type { FormatoFormacion } from "@/types/formatoFormacion";
+import type { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";

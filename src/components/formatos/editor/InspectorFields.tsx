@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
-import type { Bloque, TipoBloque, VisibilityRule } from '@/types/formatoFormacion';
-import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/data/autoFieldCatalog';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
+import type { Bloque, TipoBloque, VisibilityRule } from '@/modules/formatos/plugins/safa';
+import { AUTO_FIELD_CATALOG, AUTO_FIELD_CATEGORIES } from '@/modules/formatos/plugins/safa';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';

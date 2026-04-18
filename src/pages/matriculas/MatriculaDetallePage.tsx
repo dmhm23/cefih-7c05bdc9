@@ -39,7 +39,7 @@ import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
-import { FormatoFormacion } from "@/types/formatoFormacion";
+import { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import {
   TIPOS_VINCULACION,
   AREAS_TRABAJO,

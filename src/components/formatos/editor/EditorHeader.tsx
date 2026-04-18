@@ -6,7 +6,7 @@ import {
   Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
 
 const CATEGORIA_LABELS: Record<string, string> = {
   formacion: 'Formación',

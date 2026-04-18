@@ -18,7 +18,7 @@ import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
 import { personalService } from "@/services/personalService";
 import DynamicFormatoDocument from "@/components/matriculas/formatos/DynamicFormatoDocument";
-import type { FormatoFormacion } from "@/types/formatoFormacion";
+import type { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import type { Persona } from "@/types/persona";
 import type { Matricula } from "@/types/matricula";
 import type { Curso } from "@/types/curso";

@@ -7,9 +7,9 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFormatoEditorStore } from '@/stores/useFormatoEditorStore';
+import { useFormatoEditorStore } from '@/modules/formatos/core/editor/useEditorStore';
 import TokenLibrary from '@/components/formatos/TokenLibrary';
-import type { TipoBloque } from '@/types/formatoFormacion';
+import type { TipoBloque } from '@/modules/formatos/plugins/safa';
 import type { LucideIcon } from 'lucide-react';
 
 interface PaletteItem {

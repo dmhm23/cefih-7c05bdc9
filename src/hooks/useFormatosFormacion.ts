@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { formatoFormacionService } from '@/services/formatoFormacionService';
-import { FormatoFormacionFormData } from '@/types/formatoFormacion';
+import { formatoFormacionService } from '@/modules/formatos/plugins/safa';
+import { FormatoFormacionFormData } from '@/modules/formatos/plugins/safa';
 
 const QUERY_KEY = ['formatos-formacion'];
 

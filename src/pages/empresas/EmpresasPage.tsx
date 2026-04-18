@@ -120,20 +120,25 @@ export default function EmpresasPage() {
     return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
   };
 
-  const filteredEmpresas = empresas.filter((e) => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch =
-      !searchQuery ||
-      e.nombreEmpresa.toLowerCase().includes(query) ||
-      e.nit.includes(searchQuery) ||
-      e.personaContacto.toLowerCase().includes(query) ||
-      e.emailContacto.toLowerCase().includes(query);
+  // Búsqueda y filtros se ejecutan server-side; `empresas` ya viene filtrado.
+  const filteredEmpresas = empresas;
 
-    const matchesSector = filters.sectorEconomico === "todos" || e.sectorEconomico === filters.sectorEconomico;
-    const matchesArl = filters.arl === "todos" || e.arl === filters.arl;
-
-    return matchesSearch && matchesSector && matchesArl;
-  });
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, empresas.length]);
 
   const handleDelete = async () => {
     if (!deleteId) return;

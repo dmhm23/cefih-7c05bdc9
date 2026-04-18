@@ -95,6 +95,58 @@ export const personaService = {
     }
   },
 
+  /**
+   * Paginación server-side con búsqueda y filtros.
+   * Devuelve un page de personas + total para paginación infinita.
+   * Solo trae las columnas necesarias para el listado (no JSONB pesado ni firma).
+   */
+  async getPage(params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    genero?: string;
+    nivelEducativo?: string;
+  }): Promise<{ rows: Persona[]; total: number }> {
+    const { page, pageSize, search, genero, nivelEducativo } = params;
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    // Columnas mínimas para la grilla (~50% menos payload que select '*')
+    const COLS = 'id,tipo_documento,numero_documento,nombres,apellidos,genero,pais_nacimiento,fecha_nacimiento,rh,nivel_educativo,email,telefono,contacto_emergencia,firma_storage_path,created_at,updated_at';
+
+    let query = supabase
+      .from('personas')
+      .select(COLS, { count: 'exact' })
+      .is('deleted_at', null);
+
+    // Filtros
+    if (genero && genero !== 'todos') {
+      const dbGenero = GENERO_FE_TO_DB[genero] || genero;
+      query = query.eq('genero', dbGenero as any);
+    }
+    if (nivelEducativo && nivelEducativo !== 'todos') {
+      query = query.eq('nivel_educativo', nivelEducativo as any);
+    }
+
+    // Búsqueda multi-término (AND entre tokens, OR entre campos)
+    if (search && search.trim()) {
+      const tokens = search.trim().split(/\s+/).filter(t => t.length > 0);
+      for (const token of tokens) {
+        const safe = token.replace(/[%,()]/g, '');
+        query = query.or(
+          `nombres.ilike.%${safe}%,apellidos.ilike.%${safe}%,numero_documento.ilike.%${safe}%,telefono.ilike.%${safe}%,email.ilike.%${safe}%`
+        );
+      }
+    }
+
+    const { data, error, count } = await query.order('nombres').range(from, to);
+    if (error) handleSupabaseError(error);
+    return {
+      rows: (data || []).map(mapPersonaRow),
+      total: count ?? 0,
+    };
+  },
+
   async getById(id: string): Promise<Persona | null> {
     const { data, error } = await supabase
       .from('personas')

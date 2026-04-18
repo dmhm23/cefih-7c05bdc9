@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, FileDown, FileUp, MoreVertical } from "lucide-react";
@@ -15,7 +15,7 @@ import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { PersonaDetailSheet } from "@/components/personas/PersonaDetailSheet";
 import { ImportarPersonasDialog } from "@/components/personas/ImportarPersonasDialog";
-import { usePersonas, useDeletePersona } from "@/hooks/usePersonas";
+import { usePersonasPaginated, useDeletePersona } from "@/hooks/usePersonas";
 import { Persona } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { GENEROS, NIVELES_EDUCATIVOS } from "@/data/formOptions";

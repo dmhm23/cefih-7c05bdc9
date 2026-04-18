@@ -300,6 +300,23 @@ export default function MatriculasPage() {
     },
   ];
 
+  // Auto-prefetch de siguientes páginas mientras el usuario hace scroll en la tabla.
+  const containerWatcherRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const wrapper = containerWatcherRef.current;
+    if (!wrapper) return;
+    const scroller = wrapper.querySelector('[data-table-container] .overflow-auto') as HTMLElement | null;
+    if (!scroller) return;
+    const onScroll = () => {
+      const remaining = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+      if (remaining < 600) fetchNextPage();
+    };
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => scroller.removeEventListener('scroll', onScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, matriculas.length]);
+
   const columns: Column<Matricula>[] = [
     {
       key: "fechaCreacion",
@@ -527,24 +544,25 @@ export default function MatriculasPage() {
       </div>
 
 
-      <DataTable
-        data={filteredMatriculas}
-        columns={columns}
-        columnConfig={columnConfig}
-        isLoading={isLoading}
-        emptyMessage="No se encontraron matrículas"
-        onRowClick={handleRowClick}
-        countLabel="matrículas"
-        selectable
-        selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        bulkActions={bulkActions}
-        isPanelOpen={selectedIndex !== null}
-        activeRowId={selectedMatricula?.id}
-        onViewRow={handleViewRow}
-        containerClassName="flex-1 min-h-0 mt-4"
-      />
-
+      <div ref={containerWatcherRef} className="flex-1 min-h-0 mt-4 flex flex-col">
+        <DataTable
+          data={filteredMatriculas}
+          columns={columns}
+          columnConfig={columnConfig}
+          isLoading={isLoading}
+          emptyMessage="No se encontraron matrículas"
+          onRowClick={handleRowClick}
+          countLabel={`de ${total.toLocaleString('es-CO')} matrículas`}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={setSelectedIds}
+          bulkActions={bulkActions}
+          isPanelOpen={selectedIndex !== null}
+          activeRowId={selectedMatricula?.id}
+          onViewRow={handleViewRow}
+          containerClassName="flex-1 min-h-0"
+        />
+      </div>
       {/* Detail Sheet */}
       <MatriculaDetailSheet
         open={selectedIndex !== null}

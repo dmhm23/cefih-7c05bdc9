@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula, useUploadConsolidado } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula, useUploadConsolidado, useDeleteConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
@@ -104,6 +104,7 @@ export function MatriculaDetailSheet({
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
   const uploadConsolidado = useUploadConsolidado();
+  const deleteConsolidado = useDeleteConsolidado();
   const updateDocumento = useUpdateDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
@@ -264,12 +265,26 @@ export function MatriculaDetailSheet({
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,
         documentoId,
-        data: { estado: 'pendiente', fechaCarga: undefined, urlDrive: undefined, archivoNombre: undefined, archivoTamano: undefined } as any,
+        data: { estado: 'pendiente', fechaCarga: null, urlDrive: null, archivoNombre: null, archivoTamano: null } as any,
       });
       toast({ title: "Documento eliminado" });
       logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó documento de matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { documento_id: documentoId } });
     } catch {
       toast({ title: "Error al eliminar documento", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteConsolidado = async (storagePath: string, documentosIds: string[]) => {
+    try {
+      await deleteConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        storagePath,
+        documentosIds,
+      });
+      toast({ title: `Consolidado eliminado (${documentosIds.length} requisitos)` });
+      logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó PDF consolidado cubriendo ${documentosIds.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { storage_path: storagePath } });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al eliminar consolidado", variant: "destructive" });
     }
   };
 
@@ -570,8 +585,9 @@ export function MatriculaDetailSheet({
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
             onUploadConsolidado={handleUploadConsolidado}
+            onDeleteConsolidado={handleDeleteConsolidado}
             onFechaChange={handleDocFechaChange}
-            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
+            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending || deleteConsolidado.isPending}
             compact
           />
         </DetailSection>

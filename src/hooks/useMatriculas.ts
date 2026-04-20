@@ -258,6 +258,55 @@ export const useUploadDocumento = () => {
 };
 
 /**
+ * Elimina un consolidado: limpia los N documentos que comparten el mismo
+ * storage_path en una matrícula y borra el blob de Storage.
+ */
+export const useDeleteConsolidado = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      matriculaId,
+      storagePath,
+      documentosIds,
+    }: {
+      matriculaId: string;
+      storagePath: string;
+      documentosIds: string[];
+    }) => {
+      if (!storagePath) throw new Error('storage_path requerido para eliminar consolidado');
+      if (documentosIds.length === 0) throw new Error('No hay documentos para limpiar');
+
+      // Reset masivo de los N documentos
+      await Promise.all(
+        documentosIds.map((documentoId) =>
+          matriculaService.updateDocumento(matriculaId, documentoId, {
+            estado: 'pendiente',
+            fechaCarga: null,
+            urlDrive: null,
+            archivoNombre: null,
+            archivoTamano: null,
+          } as unknown as Partial<DocumentoRequerido>),
+        ),
+      );
+
+      // Borrar blob de Storage (best-effort, no romper si falla)
+      try {
+        await driveService.deleteFile(storagePath);
+      } catch (err) {
+        console.warn('No se pudo borrar blob del consolidado:', err);
+      }
+
+      return { count: documentosIds.length };
+    },
+    onSuccess: (_, { matriculaId }) => {
+      queryClient.invalidateQueries({ queryKey: ['matricula', matriculaId] });
+      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+};
+
+/**
  * Sube un PDF consolidado y marca todos los documentos cubiertos
  * con el mismo storage_path / nombre de archivo.
  */

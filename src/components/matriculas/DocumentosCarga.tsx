@@ -93,7 +93,7 @@ export function DocumentosCarga({
   const consolidadoRow = useMemo(
     () =>
       documentos.find(
-        (d) => d.tipo === "consolidado" && d.estado === "cargado" && d.urlDrive,
+        (d) => d.tipo === "consolidado" && d.estado === "cargado" && d.storagePath,
       ),
     [documentos],
   );
@@ -333,7 +333,7 @@ export function DocumentosCarga({
               className="h-7 px-2 text-xs"
               onClick={() =>
                 openPreview({
-                  storageKey: consolidadoRow.urlDrive,
+                  storageKey: consolidadoRow.storagePath,
                   blobKey: "__consolidado__",
                   fallbackName: consolidadoRow.archivoNombre ?? "Consolidado",
                 })
@@ -348,7 +348,7 @@ export function DocumentosCarga({
               onClick={() =>
                 setConfirmDeleteConsolidado({
                   id: consolidadoRow.id,
-                  storagePath: consolidadoRow.urlDrive,
+                  storagePath: consolidadoRow.storagePath,
                   nombre: consolidadoRow.archivoNombre ?? "Consolidado",
                   tipos: tiposCubiertos,
                 })
@@ -432,12 +432,12 @@ export function DocumentosCarga({
                           className="h-7 w-7 p-0"
                           onClick={() =>
                             openPreview({
-                              storageKey: doc.urlDrive,
+                              storageKey: doc.storagePath,
                               blobKey: doc.id,
                               fallbackName: doc.archivoNombre ?? doc.nombre,
                             })
                           }
-                          disabled={!doc.urlDrive && !hasBlob}
+                          disabled={!doc.storagePath && !hasBlob}
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </Button>

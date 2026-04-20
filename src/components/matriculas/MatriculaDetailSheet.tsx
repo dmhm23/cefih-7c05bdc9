@@ -264,7 +264,7 @@ export function MatriculaDetailSheet({
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,
         documentoId,
-        data: { estado: 'pendiente', fechaCarga: null, urlDrive: null, archivoNombre: null, archivoTamano: null } as any,
+        data: { estado: 'pendiente', fechaCarga: null, storagePath: null, archivoNombre: null, archivoTamano: null } as any,
       });
       toast({ title: "Documento eliminado" });
       logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó documento de matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { documento_id: documentoId } });

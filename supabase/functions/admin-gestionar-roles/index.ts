@@ -306,6 +306,8 @@ Deno.serve(async (req) => {
 
     return jsonRes({ error: "Acción no reconocida" }, 400);
   } catch (err) {
-    return jsonRes({ error: (err as Error).message }, 500);
+    const e = err as Error;
+    console.error("[admin-gestionar-roles] Unhandled error:", e.message, e.stack);
+    return jsonRes({ error: e.message || "Error interno", stack: e.stack }, 500);
   }
 });

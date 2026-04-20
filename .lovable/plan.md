@@ -1,63 +1,61 @@
 
 
-## Plan: Corregir nombres de cursos y "Error al guardar" en edición
+## Plan: Corregir "Cannot coerce the result to a single JSON object" al editar cursos
 
 ### Diagnóstico
 
-Identifiqué **un único bug raíz** que causa ambos síntomas (confirmado con logs de Postgres: `invalid input value for enum tipo_formacion: "b62b5715-..."`):
+El error ocurre por **dos bugs combinados** en `src/services/cursoService.ts → update()`:
 
-En `CourseInfoCard.tsx`, el dropdown "Tipo de Formación" guarda en dos campos al cambiar:
+**Bug 1 — `numeroCurso` no se mapea a la columna `nombre`:**
+El campo "Número del Curso" en la UI escribe en `formData.numeroCurso`, pero el service solo lee `data.nombre`. El cambio se descarta silenciosamente.
+
+**Bug 2 — UPDATE con payload vacío + `.single()`:**
+Cuando el usuario edita solo campos que no se mapean a columnas reales (`numeroCurso`, `entrenadorNombre`, `supervisorNombre`, o `tipoFormacion` cuando se omite por validación de enum), el objeto `dbData` queda en `{}`. PostgREST ejecuta `UPDATE ... SET () WHERE id=...` → no devuelve filas → `.single()` lanza `PGRST116: Cannot coerce the result to a single JSON object`.
+
+### ¿Afecta a otros campos?
+
+Sí, el error se reproduce siempre que **todos** los campos editados sean uno de estos:
+- `numeroCurso` (no mapeado — bug 1)
+- `entrenadorNombre` / `supervisorNombre` (campos derivados, no van a BD)
+- `tipoFormacion` con valor inválido (omitido por la validación de enum)
+
+**No falla** cuando se edita junto a algún campo válido (fechas, duración, capacidad, entrenador_id, supervisor_id, nivel_formacion_id, estado), porque entonces `dbData` no está vacío.
+
+### Solución (1 archivo)
+
+**`src/services/cursoService.ts` → función `update`:**
+
+1. **Mapear `numeroCurso` → `nombre`** para que el cambio se persista. El trigger `autogenerar_nombre_curso` ya respeta nombres no vacíos en INSERT; en UPDATE no se ejecuta el trigger BEFORE INSERT, así que la edición manual del número se persiste sin generar nuevo consecutivo.
+
+2. **Ignorar campos derivados** (`entrenadorNombre`, `supervisorNombre`) — son snapshots reconstruidos desde el JOIN.
+
+3. **Guardar contra UPDATE vacío:** si tras filtrar `dbData` queda sin claves, no llamar al UPDATE — devolver el curso actual con `getById(id)`. Esto evita el error PGRST116 y comunica el éxito sin operación inútil.
+
 ```ts
-onFieldChange("nivelFormacionId", v);   // OK — UUID
-onFieldChange("tipoFormacion", v);      // BUG — pone UUID donde debería ir el enum
-```
+// Pseudo-código del fix
+if (data.numeroCurso !== undefined) dbData.nombre = data.numeroCurso;
+if (data.nombre !== undefined) dbData.nombre = data.nombre; // legacy fallback
+// (entrenadorNombre / supervisorNombre se ignoran intencionalmente)
 
-Esto produce dos efectos en cadena:
-
-1. **Nombres "Reentrenamiento" / "Trabajador Autorizado" en lugar del nombre real del nivel:** Al renderizar la lista, el helper `getCursoLabel` resuelve el nivel con `resolveNivel(c.nivelFormacionId || c.tipoFormacion)`. Cuando `nivelFormacionId` no se grabó correctamente o el dropdown se desincroniza, cae al `tipoFormacion` legacy y muestra el alias genérico ("Reentrenamiento", "Trabajador Autorizado").
-
-2. **"Error al guardar":** Al hacer update, el service envía el UUID al campo `tipo_formacion` de la BD (que es un enum estricto: `formacion_inicial | reentrenamiento | jefe_area | coordinador_alturas`). Postgres rechaza con "invalid input value for enum" → el toast genérico muestra "Error al guardar" sin detalle.
-
-Adicionalmente, el toast de error no muestra el mensaje real del backend, lo que ocultó el problema. También el formulario de **creación** (`CursoFormPage.tsx`) ya hace lo correcto: deriva `tipoFormacion` desde `nivel.tipoFormacion`. Solo falla la **edición**.
-
-### Cambios técnicos
-
-**1. `src/components/cursos/CourseInfoCard.tsx`** — Al cambiar el dropdown de nivel, derivar `tipoFormacion` desde el objeto `nivel` (no asignar el UUID):
-```ts
-onChange={(v) => {
-  const nivel = niveles.find(n => n.id === v);
-  onFieldChange("nivelFormacionId", v);
-  if (nivel?.tipoFormacion) {
-    onFieldChange("tipoFormacion", nivel.tipoFormacion); // valor enum válido
-  }
-}}
-```
-
-**2. `src/services/cursoService.ts` (función `update`)** — Defensa adicional: si `tipoFormacion` no es un valor válido del enum, omitirlo del update en lugar de enviarlo y romper. Lista válida: `formacion_inicial | reentrenamiento | jefe_area | coordinador_alturas` (junto con sus alias frontend `trabajador_autorizado | jefe_area | reentrenamiento | coordinador_ta` que sí están en `TIPO_FE_TO_DB`).
-
-**3. `src/pages/cursos/CursoDetallePage.tsx`** — Mejorar el manejo de error del toast para mostrar el mensaje real:
-```ts
-} catch (error: any) {
-  toast({ 
-    title: "Error al guardar",
-    description: error?.message || "Revise los campos e intente nuevamente",
-    variant: "destructive"
-  });
+if (Object.keys(dbData).length === 0) {
+  const curso = await cursoService.getById(id);
+  if (!curso) throw new ApiError('Curso no encontrado', 404);
+  return curso;
 }
+// ...UPDATE normal con .single()
 ```
-
-**4. Limpieza opcional (sin migración):** No hace falta migración SQL — los cursos existentes en BD tienen `tipo_formacion = 'formacion_inicial'` correcto. El bug solo afectaba el **intento de update**, que era rechazado por Postgres y no llegaba a persistirse.
 
 ### Validación post-cambio
 
-- **Editar un curso existente:** cambiar el nivel de formación, modificar duración/horas, guardar. Debe persistir sin "Error al guardar".
-- **Lista de cursos:** la columna "Curso" debe mostrar `{numeroCurso}—{nombreCompletoDelNivel}` (ej. `FIH-A-26-04-03—Trabajador autorizado`) en lugar de solo "Reentrenamiento" o "Trabajador Autorizado".
-- **Header del detalle de curso:** mismo formato correcto.
-- **Crear curso nuevo:** debe seguir funcionando igual (no se toca el flujo de creación, que ya estaba bien).
+- Editar **solo** "Número del curso" y guardar → debe persistir el nuevo número sin error.
+- Editar solo entrenador o supervisor → debe persistir el ID y refrescar el nombre desde el JOIN.
+- Editar varios campos a la vez (caso ya funcional) → sigue funcionando.
+- El número editado manualmente debe aparecer en la columna "Curso" del listado y en el header del detalle.
+- El trigger de autogeneración no se dispara en UPDATE, así que no se consume un consecutivo extra.
 
-### Sin impacto en otras áreas
+### Sin impacto adicional
 
-- No modifica el esquema de BD ni triggers.
-- No afecta cursos ya creados ni matrículas vinculadas.
-- No cambia la generación automática del número de curso.
+- No requiere migración SQL.
+- No modifica la lógica del trigger `autogenerar_nombre_curso` ni la tabla `curso_consecutivos`.
+- No afecta el flujo de creación de cursos.
 

@@ -1,37 +1,63 @@
 
 
-## Plan: Corregir RLS de `curso_consecutivos`
+## Plan: Corregir nombres de cursos y "Error al guardar" en edición
 
-### Problema
-La tabla `curso_consecutivos` (consecutivos para autogenerar el número de curso) tiene una política RLS que solo permite escribir a `superadministrador` y `administrador`. Cuando un usuario con rol **Auxiliar** (u otro rol con permiso `cursos.editar`) crea un curso, el trigger `autogenerar_nombre_curso` intenta hacer `INSERT/UPDATE` en `curso_consecutivos` con los permisos del usuario y la RLS lo bloquea.
+### Diagnóstico
 
-### Solución
-Convertir la función trigger `autogenerar_nombre_curso` a `SECURITY DEFINER` para que el `UPSERT` sobre `curso_consecutivos` se ejecute con los permisos del owner de la función (postgres), sin depender del rol del usuario que crea el curso. Es el patrón estándar para triggers que escriben en tablas de soporte internas.
+Identifiqué **un único bug raíz** que causa ambos síntomas (confirmado con logs de Postgres: `invalid input value for enum tipo_formacion: "b62b5715-..."`):
 
-Adicionalmente, alinear la política RLS de `curso_consecutivos` con el sistema de permisos granular para que sea consistente con el resto (cursos, matriculas, personas usan `has_permission`).
-
-### Cambios técnicos (1 migración SQL)
-
-1. **Recrear `autogenerar_nombre_curso` con `SECURITY DEFINER`** y `SET search_path = public`. Mantener exactamente la misma lógica (UPSERT atómico con `RETURNING`). Esto resuelve el bloqueo inmediatamente sin importar el rol del usuario.
-
-2. **Actualizar la política RLS de `curso_consecutivos`** para usar `has_permission(auth.uid(), 'cursos', 'editar')` en lugar de la lista hardcoded de roles. Así, cualquier usuario con permiso para gestionar cursos puede operar (aunque el trigger ya bypassa esto, mantiene la coherencia del modelo).
-
-```sql
-DROP POLICY "Admin gestiona curso_consecutivos" ON public.curso_consecutivos;
-
-CREATE POLICY "Usuarios con permiso gestionan curso_consecutivos"
-ON public.curso_consecutivos FOR ALL TO authenticated
-USING (has_permission(auth.uid(), 'cursos', 'editar'))
-WITH CHECK (has_permission(auth.uid(), 'cursos', 'editar'));
+En `CourseInfoCard.tsx`, el dropdown "Tipo de Formación" guarda en dos campos al cambiar:
+```ts
+onFieldChange("nivelFormacionId", v);   // OK — UUID
+onFieldChange("tipoFormacion", v);      // BUG — pone UUID donde debería ir el enum
 ```
 
+Esto produce dos efectos en cadena:
+
+1. **Nombres "Reentrenamiento" / "Trabajador Autorizado" en lugar del nombre real del nivel:** Al renderizar la lista, el helper `getCursoLabel` resuelve el nivel con `resolveNivel(c.nivelFormacionId || c.tipoFormacion)`. Cuando `nivelFormacionId` no se grabó correctamente o el dropdown se desincroniza, cae al `tipoFormacion` legacy y muestra el alias genérico ("Reentrenamiento", "Trabajador Autorizado").
+
+2. **"Error al guardar":** Al hacer update, el service envía el UUID al campo `tipo_formacion` de la BD (que es un enum estricto: `formacion_inicial | reentrenamiento | jefe_area | coordinador_alturas`). Postgres rechaza con "invalid input value for enum" → el toast genérico muestra "Error al guardar" sin detalle.
+
+Adicionalmente, el toast de error no muestra el mensaje real del backend, lo que ocultó el problema. También el formulario de **creación** (`CursoFormPage.tsx`) ya hace lo correcto: deriva `tipoFormacion` desde `nivel.tipoFormacion`. Solo falla la **edición**.
+
+### Cambios técnicos
+
+**1. `src/components/cursos/CourseInfoCard.tsx`** — Al cambiar el dropdown de nivel, derivar `tipoFormacion` desde el objeto `nivel` (no asignar el UUID):
+```ts
+onChange={(v) => {
+  const nivel = niveles.find(n => n.id === v);
+  onFieldChange("nivelFormacionId", v);
+  if (nivel?.tipoFormacion) {
+    onFieldChange("tipoFormacion", nivel.tipoFormacion); // valor enum válido
+  }
+}}
+```
+
+**2. `src/services/cursoService.ts` (función `update`)** — Defensa adicional: si `tipoFormacion` no es un valor válido del enum, omitirlo del update en lugar de enviarlo y romper. Lista válida: `formacion_inicial | reentrenamiento | jefe_area | coordinador_alturas` (junto con sus alias frontend `trabajador_autorizado | jefe_area | reentrenamiento | coordinador_ta` que sí están en `TIPO_FE_TO_DB`).
+
+**3. `src/pages/cursos/CursoDetallePage.tsx`** — Mejorar el manejo de error del toast para mostrar el mensaje real:
+```ts
+} catch (error: any) {
+  toast({ 
+    title: "Error al guardar",
+    description: error?.message || "Revise los campos e intente nuevamente",
+    variant: "destructive"
+  });
+}
+```
+
+**4. Limpieza opcional (sin migración):** No hace falta migración SQL — los cursos existentes en BD tienen `tipo_formacion = 'formacion_inicial'` correcto. El bug solo afectaba el **intento de update**, que era rechazado por Postgres y no llegaba a persistirse.
+
 ### Validación post-cambio
-- El usuario "Alturas" (rol Auxiliar con permiso `cursos.editar`) debe poder crear un curso completo sin error de RLS.
-- El número de curso debe seguir generándose correctamente con el patrón configurado en el nivel de formación (`prefijo-tipo-AA-MM-NN`).
-- Los administradores y superadministradores deben mantener su capacidad de crear cursos sin cambios.
+
+- **Editar un curso existente:** cambiar el nivel de formación, modificar duración/horas, guardar. Debe persistir sin "Error al guardar".
+- **Lista de cursos:** la columna "Curso" debe mostrar `{numeroCurso}—{nombreCompletoDelNivel}` (ej. `FIH-A-26-04-03—Trabajador autorizado`) en lugar de solo "Reentrenamiento" o "Trabajador Autorizado".
+- **Header del detalle de curso:** mismo formato correcto.
+- **Crear curso nuevo:** debe seguir funcionando igual (no se toca el flujo de creación, que ya estaba bien).
 
 ### Sin impacto en otras áreas
-- No se modifica la lógica de generación del consecutivo.
-- No se cambia el esquema de la tabla.
-- No afecta cursos ya creados.
+
+- No modifica el esquema de BD ni triggers.
+- No afecta cursos ya creados ni matrículas vinculadas.
+- No cambia la generación automática del número de curso.
 

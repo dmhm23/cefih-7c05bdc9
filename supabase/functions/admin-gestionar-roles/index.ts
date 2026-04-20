@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
         tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
       }
 
-      const { error } = await supabaseAdmin.auth.admin.updateUser(targetUserId, {
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
         password: tempPassword,
       });
 

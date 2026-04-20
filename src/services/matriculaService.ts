@@ -9,13 +9,20 @@ import { fetchAllPaginated } from './_paginated';
 
 /** Map a DB row (snake_case) to the frontend Matricula shape */
 function rowToMatricula(row: any): Matricula {
-  const m = snakeToCamel<any>(row);
-  // Map firma_storage_path → firmaBase64 is not applicable; keep storage path
-  // documentos come from a separate query
+  // Extract embedded documentos_matricula (if present from join) before snakeToCamel
+  const embeddedDocs = Array.isArray(row?.documentos_matricula) ? row.documentos_matricula : null;
+  const { documentos_matricula: _omit, personas: _omitP, ...rest } = row ?? {};
+  const m = snakeToCamel<any>(rest);
+
+  // Map embedded docs to partial DocumentoRequerido shape (fields needed by list views)
+  const documentos = embeddedDocs
+    ? embeddedDocs.map((d: any) => snakeToCamel<DocumentoRequerido>(d))
+    : [];
+
   return {
     ...m,
     firmaBase64: undefined, // firma lives in storage, not inline
-    documentos: [], // populated separately
+    documentos, // partial when from list query, full when from getById
   } as Matricula;
 }
 
@@ -55,7 +62,7 @@ export const matriculaService = {
       const data = await fetchAllPaginated<any>((from, to) =>
         supabase
           .from('matriculas')
-          .select('*')
+          .select('*, documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)')
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .range(from, to),
@@ -106,7 +113,7 @@ export const matriculaService = {
       let query = supabase
         .from('matriculas')
         .select(
-          `*, personas!inner(id, nombres, apellidos, numero_documento, telefono)`,
+          `*, personas!inner(id, nombres, apellidos, numero_documento, telefono), documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)`,
           { count: 'exact' },
         )
         .is('deleted_at', null);
@@ -208,7 +215,7 @@ export const matriculaService = {
       const data = await fetchAllPaginated<any>((from, to) =>
         supabase
           .from('matriculas')
-          .select('*')
+          .select('*, documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)')
           .eq('curso_id', cursoId)
           .is('deleted_at', null)
           .order('created_at', { ascending: false })

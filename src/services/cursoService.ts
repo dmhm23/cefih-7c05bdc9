@@ -203,7 +203,17 @@ export const cursoService = {
     if (data.estado !== undefined) dbData.estado = ESTADO_FE_TO_DB[data.estado] || data.estado;
     if (data.horasTotales !== undefined) dbData.duracion_horas = data.horasTotales;
     if (data.duracionDias !== undefined) dbData.duracion_dias = data.duracionDias;
+    // numeroCurso (UI) y nombre (legacy) ambos persisten en columna `nombre`
+    if ((data as any).numeroCurso !== undefined) dbData.nombre = (data as any).numeroCurso;
     if (data.nombre !== undefined) dbData.nombre = data.nombre;
+    // entrenadorNombre / supervisorNombre son derivados (JOIN), se ignoran intencionalmente
+
+    // Guard: si no hay columnas reales para actualizar, evitar UPDATE vacío (PGRST116)
+    if (Object.keys(dbData).length === 0) {
+      const curso = await cursoService.getById(id);
+      if (!curso) throw new ApiError('Curso no encontrado', 404);
+      return curso;
+    }
 
     const { data: row, error } = await supabase
       .from('cursos')

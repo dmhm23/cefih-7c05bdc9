@@ -9,13 +9,20 @@ import { fetchAllPaginated } from './_paginated';
 
 /** Map a DB row (snake_case) to the frontend Matricula shape */
 function rowToMatricula(row: any): Matricula {
-  const m = snakeToCamel<any>(row);
-  // Map firma_storage_path → firmaBase64 is not applicable; keep storage path
-  // documentos come from a separate query
+  // Extract embedded documentos_matricula (if present from join) before snakeToCamel
+  const embeddedDocs = Array.isArray(row?.documentos_matricula) ? row.documentos_matricula : null;
+  const { documentos_matricula: _omit, personas: _omitP, ...rest } = row ?? {};
+  const m = snakeToCamel<any>(rest);
+
+  // Map embedded docs to partial DocumentoRequerido shape (fields needed by list views)
+  const documentos = embeddedDocs
+    ? embeddedDocs.map((d: any) => snakeToCamel<DocumentoRequerido>(d))
+    : [];
+
   return {
     ...m,
     firmaBase64: undefined, // firma lives in storage, not inline
-    documentos: [], // populated separately
+    documentos, // partial when from list query, full when from getById
   } as Matricula;
 }
 

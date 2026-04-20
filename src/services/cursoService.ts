@@ -186,7 +186,14 @@ export const cursoService = {
 
   async update(id: string, data: Partial<CursoFormData>, justificacion?: string): Promise<Curso> {
     const dbData: Record<string, any> = {};
-    if (data.tipoFormacion !== undefined) dbData.tipo_formacion = TIPO_FE_TO_DB[data.tipoFormacion] || data.tipoFormacion;
+    if (data.tipoFormacion !== undefined) {
+      const mapped = TIPO_FE_TO_DB[data.tipoFormacion] || data.tipoFormacion;
+      const VALID_DB_TIPOS = ['formacion_inicial', 'reentrenamiento', 'jefe_area', 'coordinador_alturas'];
+      if (VALID_DB_TIPOS.includes(mapped)) {
+        dbData.tipo_formacion = mapped;
+      }
+      // Si no es válido (ej. UUID por bug previo), se omite del update para no romper el enum
+    }
     if (data.nivelFormacionId !== undefined) dbData.nivel_formacion_id = data.nivelFormacionId || null;
     if (data.fechaInicio !== undefined) dbData.fecha_inicio = data.fechaInicio || null;
     if (data.fechaFin !== undefined) dbData.fecha_fin = data.fechaFin || null;

@@ -83,8 +83,12 @@ export default function CursoDetallePage() {
       logActivity({ action: "editar", module: "cursos", description: `Editó el curso ${curso.numeroCurso || ''}—${curso.nombre}`, entityType: "curso", entityId: curso.id, metadata: { campos_modificados: Object.keys(formData), justificacion: justificacion || undefined } });
       setFormData({});
       setIsDirty(false);
-    } catch {
-      toast({ title: "Error al guardar", variant: "destructive" });
+    } catch (error: any) {
+      toast({
+        title: "Error al guardar",
+        description: error?.message || "Revise los campos e intente nuevamente",
+        variant: "destructive",
+      });
     }
   };
 

@@ -256,3 +256,59 @@ export const useUploadDocumento = () => {
     },
   });
 };
+
+/**
+ * Sube un PDF consolidado y marca todos los documentos cubiertos
+ * con el mismo storage_path / nombre de archivo.
+ */
+export const useUploadConsolidado = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      matriculaId,
+      file,
+      documentosIds,
+      tiposIncluidos,
+      metadata,
+    }: {
+      matriculaId: string;
+      file: File;
+      documentosIds: string[];
+      tiposIncluidos: string[];
+      metadata?: { cursoId?: string; personaNombre?: string; personaCedula?: string };
+    }) => {
+      if (documentosIds.length === 0) {
+        throw new Error('Debe seleccionar al menos un requisito para incluir en el consolidado');
+      }
+
+      const { storagePath } = await driveService.uploadConsolidado(
+        matriculaId,
+        file,
+        tiposIncluidos,
+        metadata,
+      );
+
+      const fechaCarga = new Date().toISOString().split('T')[0];
+
+      // Actualizar cada documento cubierto con el mismo storage_path
+      await Promise.all(
+        documentosIds.map((documentoId) =>
+          matriculaService.updateDocumento(matriculaId, documentoId, {
+            estado: 'cargado',
+            fechaCarga,
+            urlDrive: storagePath,
+            archivoNombre: file.name,
+            archivoTamano: file.size,
+          } as Partial<DocumentoRequerido>),
+        ),
+      );
+
+      return { storagePath, count: documentosIds.length };
+    },
+    onSuccess: (_, { matriculaId }) => {
+      queryClient.invalidateQueries({ queryKey: ['matricula', matriculaId] });
+      queryClient.invalidateQueries({ queryKey: ['matriculas'] });
+    },
+  });
+};

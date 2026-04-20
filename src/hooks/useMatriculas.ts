@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { matriculaService } from '@/services/matriculaService';
 import { driveService } from '@/services/driveService';
 import { crearDocumentosMatricula } from '@/services/documentoService';
+import { supabase } from '@/integrations/supabase/client';
 
 import { EstadoMatricula, DocumentoRequerido, Matricula } from '@/types/matricula';
 
@@ -258,8 +259,28 @@ export const useUploadDocumento = () => {
 };
 
 /**
- * Elimina un consolidado: limpia los N documentos que comparten el mismo
- * storage_path en una matrícula y borra el blob de Storage.
+ * Codifica la lista de tipos cubiertos por un consolidado en el campo `nombre`
+ * con un patrón parseable: "Consolidado: cedula|arl|examen_medico".
+ */
+export const buildConsolidadoNombre = (tipos: string[]): string => {
+  const limpios = tipos.filter(Boolean);
+  return `Consolidado: ${limpios.join('|')}`;
+};
+
+/**
+ * Devuelve los tipos cubiertos por una fila tipo='consolidado' a partir de su `nombre`.
+ * Devuelve [] si no se puede parsear.
+ */
+export const parseConsolidadoTipos = (nombre?: string | null): string[] => {
+  if (!nombre) return [];
+  const m = nombre.match(/^Consolidado:\s*(.+)$/i);
+  if (!m) return [];
+  return m[1].split('|').map((t) => t.trim()).filter(Boolean);
+};
+
+/**
+ * Elimina un consolidado: borra la fila única tipo='consolidado' + el blob de Storage.
+ * Las filas individuales no se tocan (siguen 'pendiente'); volverán a estar disponibles.
  */
 export const useDeleteConsolidado = () => {
   const queryClient = useQueryClient();
@@ -267,37 +288,33 @@ export const useDeleteConsolidado = () => {
   return useMutation({
     mutationFn: async ({
       matriculaId,
+      consolidadoId,
       storagePath,
-      documentosIds,
     }: {
       matriculaId: string;
-      storagePath: string;
-      documentosIds: string[];
+      consolidadoId: string;
+      storagePath?: string | null;
     }) => {
-      if (!storagePath) throw new Error('storage_path requerido para eliminar consolidado');
-      if (documentosIds.length === 0) throw new Error('No hay documentos para limpiar');
+      if (!consolidadoId) throw new Error('consolidadoId requerido');
 
-      // Reset masivo de los N documentos
-      await Promise.all(
-        documentosIds.map((documentoId) =>
-          matriculaService.updateDocumento(matriculaId, documentoId, {
-            estado: 'pendiente',
-            fechaCarga: null,
-            urlDrive: null,
-            archivoNombre: null,
-            archivoTamano: null,
-          } as unknown as Partial<DocumentoRequerido>),
-        ),
-      );
+      // Borrar la fila del consolidado
+      const { error } = await supabase
+        .from('documentos_matricula')
+        .delete()
+        .eq('id', consolidadoId)
+        .eq('matricula_id', matriculaId);
+      if (error) throw new Error(error.message);
 
-      // Borrar blob de Storage (best-effort, no romper si falla)
-      try {
-        await driveService.deleteFile(storagePath);
-      } catch (err) {
-        console.warn('No se pudo borrar blob del consolidado:', err);
+      // Borrar blob de Storage (best-effort)
+      if (storagePath) {
+        try {
+          await driveService.deleteFile(storagePath);
+        } catch (err) {
+          console.warn('No se pudo borrar blob del consolidado:', err);
+        }
       }
 
-      return { count: documentosIds.length };
+      return { ok: true };
     },
     onSuccess: (_, { matriculaId }) => {
       queryClient.invalidateQueries({ queryKey: ['matricula', matriculaId] });
@@ -307,8 +324,9 @@ export const useDeleteConsolidado = () => {
 };
 
 /**
- * Sube un PDF consolidado y marca todos los documentos cubiertos
- * con el mismo storage_path / nombre de archivo.
+ * Sube un PDF consolidado: inserta o actualiza UNA SOLA fila tipo='consolidado'
+ * en documentos_matricula. Las filas individuales siguen 'pendiente' y se
+ * consideran "cubiertas" lógicamente cuando esta fila las nombra.
  */
 export const useUploadConsolidado = () => {
   const queryClient = useQueryClient();
@@ -317,17 +335,15 @@ export const useUploadConsolidado = () => {
     mutationFn: async ({
       matriculaId,
       file,
-      documentosIds,
       tiposIncluidos,
       metadata,
     }: {
       matriculaId: string;
       file: File;
-      documentosIds: string[];
       tiposIncluidos: string[];
       metadata?: { cursoId?: string; personaNombre?: string; personaCedula?: string };
     }) => {
-      if (documentosIds.length === 0) {
+      if (tiposIncluidos.length === 0) {
         throw new Error('Debe seleccionar al menos un requisito para incluir en el consolidado');
       }
 
@@ -339,21 +355,58 @@ export const useUploadConsolidado = () => {
       );
 
       const fechaCarga = new Date().toISOString().split('T')[0];
+      const nombre = buildConsolidadoNombre(tiposIncluidos);
 
-      // Actualizar cada documento cubierto con el mismo storage_path
-      await Promise.all(
-        documentosIds.map((documentoId) =>
-          matriculaService.updateDocumento(matriculaId, documentoId, {
+      // Buscar fila consolidado existente para esta matrícula
+      const { data: existente } = await supabase
+        .from('documentos_matricula')
+        .select('id, storage_path')
+        .eq('matricula_id', matriculaId)
+        .eq('tipo', 'consolidado')
+        .maybeSingle();
+
+      const oldStoragePath = existente?.storage_path as string | null | undefined;
+
+      if (existente?.id) {
+        const { error } = await supabase
+          .from('documentos_matricula')
+          .update({
             estado: 'cargado',
-            fechaCarga,
-            urlDrive: storagePath,
-            archivoNombre: file.name,
-            archivoTamano: file.size,
-          } as Partial<DocumentoRequerido>),
-        ),
-      );
+            nombre,
+            storage_path: storagePath,
+            archivo_nombre: file.name,
+            archivo_tamano: file.size,
+            fecha_carga: fechaCarga,
+          })
+          .eq('id', existente.id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from('documentos_matricula')
+          .insert({
+            matricula_id: matriculaId,
+            tipo: 'consolidado',
+            nombre,
+            estado: 'cargado',
+            storage_path: storagePath,
+            archivo_nombre: file.name,
+            archivo_tamano: file.size,
+            fecha_carga: fechaCarga,
+            opcional: false,
+          });
+        if (error) throw new Error(error.message);
+      }
 
-      return { storagePath, count: documentosIds.length };
+      // Si reemplaza un blob anterior diferente, limpiarlo
+      if (oldStoragePath && oldStoragePath !== storagePath) {
+        try {
+          await driveService.deleteFile(oldStoragePath);
+        } catch (err) {
+          console.warn('No se pudo borrar blob anterior del consolidado:', err);
+        }
+      }
+
+      return { storagePath, count: tiposIncluidos.length };
     },
     onSuccess: (_, { matriculaId }) => {
       queryClient.invalidateQueries({ queryKey: ['matricula', matriculaId] });

@@ -240,12 +240,11 @@ export function MatriculaDetailSheet({
     }
   };
 
-  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+  const handleUploadConsolidado = async (file: File, _documentosIds: string[], tiposIncluidos: string[]) => {
     try {
       await uploadConsolidado.mutateAsync({
         matriculaId: matricula.id,
         file,
-        documentosIds,
         tiposIncluidos,
         metadata: {
           cursoId: matricula.cursoId,
@@ -253,8 +252,8 @@ export function MatriculaDetailSheet({
           personaCedula: persona?.numeroDocumento,
         },
       });
-      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
-      logActivity({ action: "subir", module: "matriculas", description: `Subió PDF consolidado "${file.name}" cubriendo ${documentosIds.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, tipos: tiposIncluidos } });
+      toast({ title: `PDF consolidado cargado (${tiposIncluidos.length} requisitos)` });
+      logActivity({ action: "subir", module: "matriculas", description: `Subió PDF consolidado "${file.name}" cubriendo ${tiposIncluidos.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, tipos: tiposIncluidos } });
     } catch (error: any) {
       toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
     }
@@ -274,15 +273,15 @@ export function MatriculaDetailSheet({
     }
   };
 
-  const handleDeleteConsolidado = async (storagePath: string, documentosIds: string[]) => {
+  const handleDeleteConsolidado = async (consolidadoId: string, storagePath?: string | null) => {
     try {
       await deleteConsolidado.mutateAsync({
         matriculaId: matricula.id,
-        storagePath,
-        documentosIds,
+        consolidadoId,
+        storagePath: storagePath ?? undefined,
       });
-      toast({ title: `Consolidado eliminado (${documentosIds.length} requisitos)` });
-      logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó PDF consolidado cubriendo ${documentosIds.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { storage_path: storagePath } });
+      toast({ title: "Consolidado eliminado" });
+      logActivity({ action: "eliminar", module: "matriculas", description: `Eliminó PDF consolidado`, entityType: "matricula", entityId: matricula.id, metadata: { storage_path: storagePath } });
     } catch (error: any) {
       toast({ title: error?.message || "Error al eliminar consolidado", variant: "destructive" });
     }

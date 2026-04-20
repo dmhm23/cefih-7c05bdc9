@@ -1,83 +1,90 @@
+## Plan: Plantilla fija de exportación, columna "Código del estudiante" y descarga individual
+
+### 1. Plantilla fija con orden exacto de columnas
+
+Hoy `ExportarListadoDialog` permite seleccionar libremente columnas, lo que rompe la consistencia. Se introducirá una **plantilla oficial fija** (preset) con tus 10 columnas en orden estricto, marcada por defecto al abrir el modal:
 
 
-## Plan: Desacoplar el Portal del Estudiante del `curso_id`
+| #   | Columna                        | Origen                                         |
+| --- | ------------------------------ | ---------------------------------------------- |
+| 1   | Nombre Empresa                 | `matricula.empresaNombre` (o "Independiente")  |
+| 2   | Representante Legal            | `matricula.empresaRepresentanteLegal`          |
+| 3   | NIT                            | `matricula.empresaNit`                         |
+| 4   | Tipo de Documento              | `persona.tipoDocumento` (label)                |
+| 5   | Número de Cédula               | `persona.numeroDocumento`                      |
+| 6   | Nombre Completo del Estudiante | `persona.nombres + apellidos`                  |
+| 7   | ARL                            | `matricula.arl` (label)                        |
+| 8   | Nivel de Formación             | `resolveNivel(curso.nivelFormacionId)`         |
+| 9   | Duración                       | `curso.horasTotales` + " h"                    |
+| 10  | Código del Estudiante          | `useCodigosCurso(curso).codigos[m.id]` (nuevo) |
 
-### Principio rector
-La **matrícula activa con `nivel_formacion_id`** es la única condición para habilitar el Portal. El curso pasa a ser **contexto complementario** (fechas, nombre), nunca requisito de acceso ni fuente del nivel.
 
----
+**Cómo se aplica el orden:** la exportación dejará de iterar sobre `COLUMN_CATALOG` y pasará a iterar sobre un arreglo `PLANTILLA_OFICIAL` con el orden anterior. Las columnas seleccionadas en checkboxes se reordenarán según ese arreglo antes de armar el CSV — así nunca se exporta en un orden distinto al oficial. Y cuando el usuario añada más columnas, entonces se añaden despues de las columnas de la plantilla_oficial dentro del mismo archivo.
 
-### Cambios estructurales
+### 2. Nueva columna "Código del Estudiante" en el catálogo del modal
 
-#### 1. Base de datos — migración SQL única
+Actualmente `COLUMN_CATALOG` no tiene esta columna porque el código se calcula vía `useCodigosCurso` (hook), no leyendo un campo plano. La solución estructural:
 
-**A. Reescribir `login_portal_estudiante`:**
-- Eliminar el `JOIN` obligatorio a `cursos`. Pasarlo a `LEFT JOIN`.
-- Condición de acceso válida: `matriculas.deleted_at IS NULL AND activo = TRUE AND nivel_formacion_id IS NOT NULL`.
-- Selección de la matrícula a usar (en este orden):
-  1. Matrícula activa con `nivel_formacion_id` y curso en estado `programado` o `en_curso`.
-  2. Matrícula activa con `nivel_formacion_id` y **sin curso**.
-  3. Matrícula activa con `nivel_formacion_id` y curso `cerrado`/`cancelado` → devuelve `curso_cerrado` solo si **no hay** ninguna otra matrícula válida.
-- Devolver siempre el `tipo_formacion` resuelto desde `niveles_formacion` (vía `matriculas.nivel_formacion_id`), no desde el curso.
-- Cuando no haya curso, devolver `curso_id = NULL`, `curso_nombre = nombre del nivel`, `curso_tipo_formacion` desde el nivel.
-- Resultados posibles: `ok`, `portal_deshabilitado`, `sin_matricula` (nuevo, reemplaza `sin_curso` cuando no hay matrícula con nivel), `persona_no_encontrada`. Mantener `curso_cerrado` como caso residual.
+- **Recibir el mapa de códigos como prop**: `CursoDetallePage` ya invoca `useCodigosCurso` indirectamente en `EnrollmentsTable`. Levantamos su uso al padre y lo pasamos al `ExportarListadoDialog` como `codigosEstudiante: Record<string, string>`.
+- **Agregar al catálogo** un nuevo `ColumnDef` `m_codigo_estudiante` con resolver `(p, m) => codigosEstudiante[m.id] ?? ""`. Para no romper la firma actual del resolver, se añade un parámetro opcional `extras` al `ColumnDef.resolver` que transporta el mapa.
+- En el agrupamiento del modal aparece bajo grupo **"Curso"** (o nuevo grupo **"Estudiante"** si quieres separarlo).
+- Marcado por defecto = `true` cuando carga la plantilla oficial.
 
-**B. Reescribir `get_documentos_portal`:**
-- Resolver el nivel con `COALESCE(matriculas.nivel_formacion_id, cursos.nivel_formacion_id)` — la matrícula manda, el curso es fallback.
-- Cambiar `JOIN cursos` por `LEFT JOIN cursos` para soportar matrículas sin curso.
-- Resto de la lógica (`niveles_habilitados`, dependencias) intacta.
+**Sin tocar lo construido:** el catálogo libre sigue funcionando igual; solo se agregan (a) la nueva columna y (b) un botón "Restaurar plantilla oficial" arriba del modal que setea selección y orden a los 10 campos.
 
-**C. Verificar consistencia con funciones ya alineadas:**
-- `get_formatos_for_matricula`: ya prioriza `matriculas.nivel_formacion_id`. No se toca.
-- `autogenerar_formato_respuestas`: ya usa `matriculas.nivel_formacion_id`. No se toca.
+### 3. Descarga individual por estudiante (CSV personal)
 
-#### 2. Frontend
+Se agrega una nueva acción en cada fila de `EnrollmentsTable.tsx`, junto a "Ver matrícula" y "Remover": **"Descargar CSV del estudiante"** (icono `Download`).
 
-**A. `src/services/portalEstudianteService.ts`**
-- `mapMinimalCurso`: tolerar `curso_id = NULL`. Cuando no haya curso, construir un objeto sintético con `id=null`, `nombre = curso_nombre devuelto por el RPC`, sin fechas.
-- Manejar el nuevo resultado `sin_matricula`.
+**Comportamiento:**
 
-**B. `src/contexts/PortalEstudianteContext.tsx`**
-- `PortalSession`: hacer `cursoFechaInicio`, `cursoFechaFin` opcionales (ya lo son) y aceptar `matriculaId` sin requerir curso.
+- Reutiliza exactamente el mismo `COLUMN_CATALOG` y resolvers existentes (cero duplicación).
+- Genera un CSV con **una sola fila** correspondiente a esa matrícula y persona.
+- Por defecto exporta **todas** las columnas disponibles del catálogo (Persona + Matrícula + Curso + Código del Estudiante) — así obtienes "toda la información que tenemos" del estudiante en un solo archivo.
+- Nombre de archivo: `Curso_{numeroCurso}_{cedula}_{ApellidoNombre}.csv`.
+- Misma codificación, separador y formato que el listado masivo.
 
-**C. `src/pages/estudiante/PortalGuard.tsx`**
-- Si la sesión no trae `cursoFechaInicio`/`cursoFechaFin`, omitir validación de vigencia por fechas. La protección de acceso vive en el RPC del backend.
-- Mantener el redirect a `/estudiante` solo cuando no haya `session`.
+**Disponibilidad:** acción visible tanto en el listado del curso (`EnrollmentsTable`) como — opcionalmente — desde el listado general de matrículas. Para mantener el alcance acotado y rápido, se entrega primero en `EnrollmentsTable`. Si lo quieres en `MatriculasPage` también, se replica con el mismo helper.
 
-**D. `src/pages/estudiante/AccesoEstudiantePage.tsx`** (revisar mensajes)
-- Mapear el nuevo resultado `sin_matricula` a un mensaje claro: *"No se encontró una matrícula activa para esta cédula"*.
-- Mantener mensajes existentes para `curso_cerrado`, `portal_deshabilitado`, `persona_no_encontrada`.
+### 4. Refactor mínimo de soporte
 
-**E. `src/pages/estudiante/PanelDocumentosPage.tsx` y vistas dependientes**
-- Mostrar el nombre del curso solo cuando exista; si no, mostrar el nombre del nivel como contexto.
-- Ocultar fechas de curso si vienen vacías.
+Para evitar duplicar lógica, se extrae una función pura:
 
----
+```ts
+// src/utils/exportCursoListado.ts (nuevo)
+export function buildCursoListadoCsv(
+  matriculas: Matricula[],
+  personaMap: Map<string, Persona>,
+  curso: Curso,
+  resolveNivel,
+  codigosEstudiante: Record<string, string>,
+  columnasSeleccionadas: ColumnDef[]
+): { content: string; filename: string }
+```
+
+Tanto el modal masivo como la descarga individual la consumen. Sin cambios de contrato en hooks/services.
 
 ### Archivos tocados
 
-| Archivo | Tipo de cambio |
-|---|---|
-| `supabase/migrations/<timestamp>_portal_acceso_por_matricula.sql` | Nueva migración con redefinición de `login_portal_estudiante` y `get_documentos_portal` |
-| `src/services/portalEstudianteService.ts` | Tolerar `curso_id NULL`; manejar resultado `sin_matricula` |
-| `src/contexts/PortalEstudianteContext.tsx` | Confirmar opcionalidad de fechas de curso |
-| `src/pages/estudiante/PortalGuard.tsx` | Omitir validación de fechas si no hay curso |
-| `src/pages/estudiante/AccesoEstudiantePage.tsx` | Mapear nuevo resultado `sin_matricula` |
-| `src/pages/estudiante/PanelDocumentosPage.tsx` | Render condicional del bloque de curso |
+
+| Archivo                                           | Cambio                                                                                                                                                                            |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/utils/exportCursoListado.ts`                 | **Nuevo.** Función pura `buildCursoListadoCsv` + constante `PLANTILLA_OFICIAL_KEYS` con los 10 keys en orden                                                                      |
+| `src/components/cursos/ExportarListadoDialog.tsx` | Añadir columna `m_codigo_estudiante`, recibir prop `codigosEstudiante`, botón "Restaurar plantilla oficial", reordenar selección según `PLANTILLA_OFICIAL_KEYS` antes de exportar |
+| `src/components/cursos/EnrollmentsTable.tsx`      | Nueva acción de fila "Descargar CSV del estudiante" usando `buildCursoListadoCsv` + el mapa `codigosMapa` ya disponible                                                           |
+| `src/pages/cursos/CursoDetallePage.tsx`           | Pasar `codigosEstudiante` al `ExportarListadoDialog` (obtenido vía `useCodigosCurso(curso)`)                                                                                      |
+
 
 ### Validación post-cambio
 
-- **Estudiantes reportados (`1110535624`, `93411594`, `1030618422`)** con matrícula activa y nivel Reentrenamiento: deben entrar al portal y ver los documentos del nivel, exista o no curso vigente.
-- **Matrícula con nivel y sin curso:** debe acceder y ver documentos derivados del nivel.
-- **Matrícula con nivel y curso vigente:** flujo actual sin cambios.
-- **Persona sin ninguna matrícula con nivel:** mensaje `sin_matricula`.
-- **Persona con todas sus matrículas en cursos cerrados pero con nivel:** debe entrar igualmente (la matrícula sigue siendo válida; el cierre del curso no inhabilita el portal).
-- **Persona sin personas en BD:** `persona_no_encontrada`.
+- Abrir "Exportar listado" → ver el botón "Restaurar plantilla oficial" → al pulsarlo quedan marcadas exactamente las 10 columnas pedidas y el CSV sale en ese orden.
+- La columna "Código del Estudiante" aparece como opción en el catálogo (grupo "Curso") y se exporta con el código real (`FIH-R-26-04-01`, etc.).
+- Desde la fila de un estudiante, click en "Descargar CSV del estudiante" → archivo con una fila y todas las columnas del catálogo, incluyendo el código.
+- El listado masivo previo sigue funcionando igual cuando se selecciona manualmente cualquier subconjunto distinto de la plantilla oficial.
 
 ### Sin impacto colateral
 
-- No modifica esquema de tablas ni triggers.
-- No afecta generación automática de `formato_respuestas` (ya alineada).
-- Lógica de cierre de curso, certificación y cartera intactas.
-- Vista interna de matrículas (`/matriculas`) no se toca.
-
+- No toca BD, RPCs ni triggers.
+- No afecta el CSV MinTrabajo (ese flujo es independiente).
+- No cambia la lógica de `useCodigosCurso` ni `EnrollmentsTable` fuera de la nueva acción.
+- No rompe selecciones libres existentes; la plantilla oficial es **opt-in** con el botón.

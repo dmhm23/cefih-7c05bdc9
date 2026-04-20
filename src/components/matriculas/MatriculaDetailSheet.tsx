@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula, useUploadConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
@@ -103,6 +103,7 @@ export function MatriculaDetailSheet({
   const reopenMutation = useReopenFormatoRespuesta();
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
+  const uploadConsolidado = useUploadConsolidado();
   const updateDocumento = useUpdateDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();

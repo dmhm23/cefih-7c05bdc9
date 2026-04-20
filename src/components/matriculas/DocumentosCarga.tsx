@@ -26,7 +26,7 @@ interface DocumentosCargaProps {
   documentos: DocumentoRequerido[];
   onUpload: (documentoId: string, file: File) => void;
   onDelete?: (documentoId: string) => void;
-  onUploadConsolidado?: (file: File, tiposIncluidos: string[]) => void;
+  onUploadConsolidado?: (file: File, documentosIds: string[], tiposIncluidos: string[]) => void | Promise<void>;
   onFechaChange?: (documentoId: string, field: string, value: string) => void;
   isUploading?: boolean;
   compact?: boolean;
@@ -94,15 +94,28 @@ export function DocumentosCarga({
     setTimeout(() => setUploadingDocId(null), 1200);
   };
 
+  const resolveConsolidadoTargets = () => {
+    const seleccionados = tiposSeleccionados.length > 0
+      ? documentos.filter((d) => tiposSeleccionados.includes(d.tipo) && d.estado === "pendiente")
+      : documentos.filter((d) => d.estado === "pendiente");
+    return {
+      documentosIds: seleccionados.map((d) => d.id),
+      tiposIncluidos: seleccionados.map((d) => d.tipo),
+    };
+  };
+
   const handleConsolidadoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!validateFileSize(file)) return;
+    const { documentosIds, tiposIncluidos } = resolveConsolidadoTargets();
+    if (documentosIds.length === 0) {
+      toast.error("Selecciona al menos un requisito para incluir en el consolidado");
+      return;
+    }
     if (onUploadConsolidado) {
-      const tipos = tiposSeleccionados.length > 0
-        ? tiposSeleccionados
-        : documentos.filter((d) => d.estado === "pendiente").map((d) => d.tipo);
-      onUploadConsolidado(file, tipos);
+      onUploadConsolidado(file, documentosIds, tiposIncluidos);
+      setTiposSeleccionados([]);
     }
     const reader = new FileReader();
     reader.onload = () => {
@@ -368,11 +381,14 @@ export function DocumentosCarga({
               accept=".pdf"
               onFile={(file) => {
                 if (!validateFileSize(file)) return;
+                const { documentosIds, tiposIncluidos } = resolveConsolidadoTargets();
+                if (documentosIds.length === 0) {
+                  toast.error("Selecciona al menos un requisito para incluir en el consolidado");
+                  return;
+                }
                 if (onUploadConsolidado) {
-                  const tipos = tiposSeleccionados.length > 0
-                    ? tiposSeleccionados
-                    : documentos.filter((d) => d.estado === "pendiente").map((d) => d.tipo);
-                  onUploadConsolidado(file, tipos);
+                  onUploadConsolidado(file, documentosIds, tiposIncluidos);
+                  setTiposSeleccionados([]);
                 }
                 const reader = new FileReader();
                 reader.onload = () => {

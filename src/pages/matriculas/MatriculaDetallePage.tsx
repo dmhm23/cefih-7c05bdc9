@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
-import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
+import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento, useUploadConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
@@ -98,6 +98,7 @@ export default function MatriculaDetallePage() {
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
   const uploadDocumento = useUploadDocumento();
+  const uploadConsolidado = useUploadConsolidado();
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const resolveNivel = useResolveNivel();

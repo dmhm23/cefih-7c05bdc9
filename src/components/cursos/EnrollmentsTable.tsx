@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash, FileDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
@@ -35,6 +35,9 @@ import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
+import { COLUMN_CATALOG, buildCursoListadoCsv } from "@/utils/exportCursoListado";
+import { downloadCsv } from "@/utils/csvMinTrabajo";
 import { useQuery } from "@tanstack/react-query";
 
 interface EnrollmentsTableProps {

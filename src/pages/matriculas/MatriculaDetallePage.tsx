@@ -483,12 +483,11 @@ export default function MatriculaDetallePage() {
     }
   };
 
-  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+  const handleUploadConsolidado = async (file: File, _documentosIds: string[], tiposIncluidos: string[]) => {
     try {
       await uploadConsolidado.mutateAsync({
         matriculaId: matricula.id,
         file,
-        documentosIds,
         tiposIncluidos,
         metadata: {
           cursoId: matricula.cursoId,
@@ -496,7 +495,7 @@ export default function MatriculaDetallePage() {
           personaCedula: persona?.numeroDocumento,
         },
       });
-      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
+      toast({ title: `PDF consolidado cargado (${tiposIncluidos.length} requisitos)` });
     } catch (error: any) {
       toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
     }
@@ -521,14 +520,14 @@ export default function MatriculaDetallePage() {
     }
   };
 
-  const handleDeleteConsolidado = async (storagePath: string, documentosIds: string[]) => {
+  const handleDeleteConsolidado = async (consolidadoId: string, storagePath?: string | null) => {
     try {
       await deleteConsolidado.mutateAsync({
         matriculaId: matricula.id,
-        storagePath,
-        documentosIds,
+        consolidadoId,
+        storagePath: storagePath ?? undefined,
       });
-      toast({ title: `Consolidado eliminado (${documentosIds.length} requisitos)` });
+      toast({ title: "Consolidado eliminado" });
     } catch (error: any) {
       toast({ title: error?.message || "Error al eliminar consolidado", variant: "destructive" });
     }

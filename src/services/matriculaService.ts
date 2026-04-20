@@ -62,7 +62,7 @@ export const matriculaService = {
       const data = await fetchAllPaginated<any>((from, to) =>
         supabase
           .from('matriculas')
-          .select('*')
+          .select('*, documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)')
           .is('deleted_at', null)
           .order('created_at', { ascending: false })
           .range(from, to),

@@ -239,7 +239,26 @@ export function MatriculaDetailSheet({
     }
   };
 
-  const handleDeleteDoc = async (documentoId: string) => {
+  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+    try {
+      await uploadConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        file,
+        documentosIds,
+        tiposIncluidos,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
+      logActivity({ action: "subir", module: "matriculas", description: `Subió PDF consolidado "${file.name}" cubriendo ${documentosIds.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, tipos: tiposIncluidos } });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
+    }
+  };
+
     try {
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,

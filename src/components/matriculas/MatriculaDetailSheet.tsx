@@ -259,6 +259,7 @@ export function MatriculaDetailSheet({
     }
   };
 
+  const handleDeleteDoc = async (documentoId: string) => {
     try {
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,
@@ -568,8 +569,9 @@ export function MatriculaDetailSheet({
             documentos={fullMatricula?.documentos || matricula.documentos}
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
+            onUploadConsolidado={handleUploadConsolidado}
             onFechaChange={handleDocFechaChange}
-            isUploading={uploadDocumento.isPending}
+            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
             compact
           />
         </DetailSection>

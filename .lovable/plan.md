@@ -1,89 +1,112 @@
-## Plan: Reset correcto al eliminar consolidado + UX completa de "documento cargado"
+## Plan: Consolidado como un único documento + Vista previa real para todos
 
-### Causas raíz (3 problemas distintos)
+### Causa raíz del modelo actual
 
-**Problema 1 — Eliminar no resetea el documento en BD:**
-En `handleDeleteDoc` (líneas 504-521 de `MatriculaDetallePage.tsx` e idéntico en `MatriculaDetailSheet.tsx`) se envían los campos a limpiar como `undefined`. Al pasar por `camelToSnake` y luego por el `.update()` de Supabase, las propiedades con valor `undefined` **se eliminan del payload JSON** — Supabase nunca recibe la instrucción de limpiar `storage_path`, `archivo_nombre`, `archivo_tamano`, `fecha_carga`. Resultado: el `estado` sí pasa a `pendiente`, pero los demás campos quedan intactos → al recargar, la fila aparece como "pendiente" pero con archivo, y como el contador usa `estado !== 'pendiente'` el progreso baja correctamente, pero el usuario ve inconsistencias.
+Hoy el consolidado **clona** el mismo `storage_path` en N filas de `documentos_matricula`. Eso obliga a:
 
-**Problema 2 — En modo Consolidado, eliminar uno solo deja huérfanos a los demás:**
-El consolidado marca N documentos con el **mismo `storage_path**`. Si el usuario elimina uno, los otros N-1 siguen apuntando al mismo PDF que ya nadie referencia visualmente. Pero el caso reportado es peor: el usuario está en modo consolidado, no ve botones de eliminar individuales (los checkboxes del consolidado no muestran acciones), entonces "elimina" desde otra parte y los contadores no se refrescan porque el `consolidadoPreview` local **persiste en estado de React** aunque la BD haya cambiado.
+- Eliminar N registros para "borrar" un solo PDF.
+- Mostrar UI con cascada ("solo este / todos") que es confusa.
+- No hay vista previa real desde Storage (solo blob en memoria que se pierde al refrescar).
 
-**Problema 3 — Faltan acciones visibles en modo Consolidado tras la carga:**  
-El bloque "Requisitos incluidos en el PDF" (líneas 348-373) sólo renderiza un checkbox + badge cuando el documento está cargado. **No hay vista del archivo cargado, botón de vista previa, ni botón de eliminar, ni confirmación**. Toda la UX de gestión post-carga vive sólo en el modo Individual (líneas 311-334). Solo existe vista previa de inmediato.
+### Nuevo modelo (semánticamente correcto)
 
-### Solución propuesta
+**Una sola fila `tipo='consolidado'**` en `documentos_matricula` representa el PDF consolidado. Esa fila guarda en sus columnas existentes la lista de requisitos que cubre (en `nombre`, formato `"Consolidado (cedula, arl, examen_medico)"`). Las filas individuales originales **permanecen `pendiente**` y se consideran "cubiertas" lógicamente cuando existe una fila consolidado activa que las nombra.
 
-**1. Persistir correctamente la limpieza en BD**
-
-En `handleDeleteDoc` (en ambos archivos) cambiar `undefined` por `null`. El `camelToSnake` preserva `null` y Supabase lo persiste como `NULL` en la columna:
-
-```ts
-data: {
-  estado: 'pendiente',
-  fechaCarga: null,
-  urlDrive: null,
-  archivoNombre: null,
-  archivoTamano: null,
-} as any
+```text
+ANTES (mal):                          AHORA (bien):
+┌─ cedula      cargado  /AAA.pdf      ┌─ cedula      Cargado (Siempre y cuando el 
+                                      usuario haya seleccionado en el consolidad)
+├─ arl         cargado  /AAA.pdf      ├─ arl         Cargado (Siempre y cuando el 
+                                      usuario haya seleccionado en el consolidad)
+└─ examen_med  cargado  /AAA.pdf      ├─ examen_med  Cargado (Siempre y cuando el 
+                                      usuario haya seleccionado en el consolidad)
+                                      └─ consolidado cargado /AAA.pdf  ← cubre cedula+arl+examen_med
 ```
 
-**2. Eliminación en cascada del consolidado (semánticamente correcta)**
+### Cambios técnicos
 
-Cuando un documento eliminado tiene `storage_path` y existen **otros documentos de la misma matrícula con el mismo `storage_path**`, ofrecer dos rutas:
+**1. `useUploadConsolidado` (refactor en `src/hooks/useMatriculas.ts`)**
 
-- **Si el usuario elimina desde modo Individual:** confirmar con `ConfirmDialog` que dice *"Este archivo cubre N requisitos. ¿Eliminar de todos o solo de este?"* — dos botones: **"Solo este"** (limpia 1 fila) o **"Todos"** (limpia las N filas y borra el blob de Storage).
-- **Si el usuario elimina desde modo Consolidado:** acción única "Eliminar consolidado" que limpia las N filas + borra el blob.
+- Subir el PDF a Storage (igual que hoy).
+- Buscar fila existente `tipo='consolidado'` para esa matrícula:
+  - Si existe → `update`: nuevo `storage_path`, `archivo_nombre`, `archivo_tamano`, `fecha_carga`, `nombre` recalculado con la nueva lista de tipos.
+  - Si no existe → `insert` una nueva fila `tipo='consolidado'`, `estado='cargado'` con esos mismos campos.
+- **Ya no actualiza** las filas individuales.
+- Persistir la lista de tipos cubiertos en `nombre` con un patrón parseable: `"Consolidado: cedula|arl|examen_medico"` (delimitador `|` después del prefijo `Consolidado:` ).
 
-Nuevo hook `useDeleteConsolidado(matriculaId, storagePath)` en `useMatriculas.ts`:
+**2. `useDeleteConsolidado` (refactor)**
 
-1. Buscar todos los documentos de la matrícula con ese `storage_path`.
-2. Hacer `update` masivo seteando los 5 campos a `null` / `'pendiente'`.
-3. Llamar a `driveService.deleteFile(storagePath)` para limpiar Storage.
-4. Invalidar queries.
+- Recibe únicamente `{ matriculaId, consolidadoId, storagePath }`.
+- Borra **una sola fila** (`delete` o reset según preferencia → preferimos `delete` físico de la fila tipo `consolidado` para no dejar registros vacíos, manteniendo intactos los pendientes individuales).
+- Borra el blob de Storage (`driveService.deleteFile`).
 
-**3. UX completa en modo Consolidado tras la carga**
+**3. `DocumentosCarga.tsx` (refactor)**
 
-Refactorizar el bloque "Requisitos incluidos en el PDF" para que cada fila cargada muestre:
+- Detección del consolidado: buscar la fila `tipo='consolidado' && estado='cargado'`. Esa fila es la **única fuente de verdad** del consolidado.
+- Parsear `nombre` para extraer `tiposCubiertos[]`.
+- **Cómputo de progreso**: un requisito individual se cuenta como "completado" si:
+  - Su propia fila está `cargado` (modo individual), **o**
+  - Su `tipo` está en `tiposCubiertos[]` del consolidado activo.
+- **Modo Consolidado**:
+  - Cabecera "Consolidado activo": nombre archivo, N requisitos, botones **Ver** y **Eliminar**.
+  - Checklist debajo: muestra cada requisito; los cubiertos por el consolidado se marcan visualmente como "Cubierto por consolidado" (sin checkbox accionable, sin botón de eliminar individual).
+  - Solo un único punto de eliminación: el botón "Eliminar" de la cabecera del consolidado.
+- **Modo Individual**: sigue funcionando igual para cargas/eliminaciones individuales. Si existe consolidado activo, los requisitos cubiertos se muestran en estado "Cubierto por consolidado" (no editables, sin acciones — para tocarlos hay que ir a modo Consolidado y eliminarlo primero).
+- Eliminar el `AlertDialog` de cascada "Solo este / Todos" — ya no aplica.
 
-- Nombre del documento + badge "Cargado".
-- Nombre de archivo + tamaño (mismo `renderFileInfo`).
-- Acciones a la derecha (mismo `DropdownMenu` del modo individual): **Vista previa**, **Volver a cargar** (re-sube y cubre los mismos tipos), **Eliminar** (con `ConfirmDialog` "¿Deseas eliminar el consolidado? Se quitará de los N requisitos cubiertos").
+**4. Vista previa real (Storage signed URL) — para individuales y consolidado**
 
-Cuando todos los documentos del consolidado están cargados con el mismo `storage_path`, mostrar en cabecera del bloque un panel resumen: *"Consolidado activo: `nombre_archivo.pdf` (N requisitos cubiertos)"* + acciones globales de Vista previa y Eliminar.
+- Crear un helper local `usePreviewArchivo(storagePath)` o una función `openPreview(doc)` que:
+  - Si hay blob en memoria (`previews[docId]` o `consolidadoPreview`) → usarlo.
+  - Si no → llamar `driveService.getSignedUrl(doc.urlDrive)` y usar la URL firmada.
+- Reemplazar el panel inline actual por `**ArchivoPreviewDialog**` (ya existe en `src/components/cartera/ArchivoPreviewDialog.tsx`), que abre un modal con iframe para PDFs y `<img>` para imágenes. Esto unifica con el resto del sistema.
+- El icono de "Ver" (👁) aparece en:
+  - Cada fila cargada en modo Individual (junto al `MoreHorizontal` o reemplazándolo por un icono dedicado más visible).
+  - Cabecera del consolidado en modo Consolidado.
+- Botón "Ver" deshabilitado solo si no hay `urlDrive` ni blob.
 
-**4. Limpiar `consolidadoPreview` y `previews` locales tras eliminar**
+**5. Limpiar handlers en parents**
 
-`DocumentosCarga` mantiene `consolidadoPreview` en estado local. Cuando los documentos eliminados pasan a `pendiente`, debe sincronizarse:
+- `MatriculaDetallePage.tsx` y `MatriculaDetailSheet.tsx`:
+  - `handleDeleteConsolidado(consolidadoId, storagePath)` con nueva firma (un solo id).
+  - `handleUploadConsolidado(file, tiposIncluidos)` — ya no recibe `documentosIds` (no hay filas a actualizar).
 
-- Detectar vía `useEffect` que ya no existe ningún documento `cargado` con archivo del consolidado actual → `setConsolidadoPreview(null)`.
-- Hacer lo mismo con `previews[docId]` cuando un doc individual pasa a `pendiente`.
+### Migración del estado existente
 
-**5. ConfirmDialog estándar**
+Para matrículas que ya tienen consolidado **viejo** (N filas con el mismo `storage_path`):
 
-Usar `ConfirmDialog` ya existente en `src/components/shared/ConfirmDialog.tsx` con `variant="destructive"` para todos los borrados.
+- Detectarlo en runtime en `DocumentosCarga` (igual que hoy con `consolidadoGroups`).
+- Mostrar banner discreto "Migrar consolidado al nuevo formato" → un click ejecuta:
+  - Crea la fila `tipo='consolidado'` con los datos del grupo.
+  - Resetea las N filas individuales a `pendiente` (limpia `storage_path`, etc.).
+  - **No** borra el blob.
+- Alternativa más simple: una migración SQL one-shot que haga lo mismo automáticamente. **Preferimos la migración SQL** para no dejar deuda visible al usuario.
 
 ### Archivos tocados
 
 
-| Archivo                                              | Cambio                                                                                                                                                                                                                       |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/pages/matriculas/MatriculaDetallePage.tsx`      | `handleDeleteDoc`: `undefined` → `null`; añadir `handleDeleteConsolidado`; pasar prop `onDeleteConsolidado`                                                                                                                  |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Idem                                                                                                                                                                                                                         |
-| `src/hooks/useMatriculas.ts`                         | Nuevo `useDeleteConsolidado` que actualiza N docs + borra blob de Storage                                                                                                                                                    |
-| `src/components/matriculas/DocumentosCarga.tsx`      | Acciones (preview/recargar/eliminar) en modo consolidado por requisito y a nivel global; `useEffect` para sincronizar `consolidadoPreview` y `previews` cuando cambia el estado de los docs; `ConfirmDialog` antes de borrar |
+| Archivo                                              | Cambio                                                                                                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/migrations/<nueva>.sql`                    | Migrar consolidados existentes: crear fila `tipo='consolidado'` por grupo y resetear las N filas duplicadas                                                                                 |
+| `src/hooks/useMatriculas.ts`                         | `useUploadConsolidado`: insert/update **una sola** fila `tipo='consolidado'`. `useDeleteConsolidado`: borra una sola fila + blob                                                            |
+| `src/components/matriculas/DocumentosCarga.tsx`      | Detección por `tipo='consolidado'`; parseo de tipos cubiertos desde `nombre`; cómputo de progreso unificado; eliminar UI de cascada; integrar `ArchivoPreviewDialog` para Vista previa real |
+| `src/pages/matriculas/MatriculaDetallePage.tsx`      | Ajustar firmas de `handleUploadConsolidado` y `handleDeleteConsolidado`                                                                                                                     |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Idem                                                                                                                                                                                        |
+| `src/services/documentoService.ts`                   | Asegurar que `crearDocumentosMatricula` y `sincronizarDocumentos` no creen ni toquen filas `tipo='consolidado'`                                                                             |
 
 
 ### Validación post-cambio
 
-- Modo Consolidado → cargar PDF que cubre 6 requisitos → ver "Consolidado activo: archivo.pdf (6 requisitos)" con acciones Vista previa / Eliminar.
-- Click en Eliminar → modal *"¿Deseas eliminar el consolidado?"* → confirmar → los 6 requisitos vuelven a `pendiente`, contador 0/6, barra al 0%, checkboxes habilitados, blob borrado de Storage.
-- Modo Individual → eliminar un doc cubierto por consolidado → modal con dos botones "Solo este" / "Todos".
-- Recargar la página tras eliminar → la BD refleja el reset correctamente (no quedan campos huérfanos).
-- Cargar un solo doc individual → eliminar desde el `DropdownMenu` → modal de confirmación → reset visual + BD.
+- Modo Consolidado → seleccionar 6 requisitos → soltar PDF → en BD aparece **una sola fila** nueva `tipo='consolidado'`, las 6 filas originales siguen `pendiente`. Progreso 6/6.
+- Click "Ver" en la cabecera del consolidado → abre `ArchivoPreviewDialog` con el PDF firmado desde Storage.
+- Click "Eliminar" en cabecera → confirmación → borra **una sola fila** + blob. Progreso 0/6, los 6 requisitos vuelven a estar disponibles.
+- Modo Individual → cargar 1 doc → click "Ver" → abre `ArchivoPreviewDialog` con signed URL. Click "Eliminar" → reset de esa fila únicamente.
+- Recargar la página → estado consistente con BD.
+- Matrículas viejas (ya cargadas antes) → la migración SQL las normaliza al abrir.
 
 ### Sin impacto colateral
 
-- El flujo de carga (individual y consolidado) que ya funciona no se toca.
-- No requiere migración SQL ni cambios de enum.
-- `driveService.deleteFile` ya existe y está sin uso → ahora se invoca.
-- El `useUploadConsolidado` se mantiene tal cual.
+- No cambia el enum (`consolidado` ya existe).
+- No afecta certificación, cartera, cursos ni portal.
+- `documentoService.sincronizarDocumentos` sigue usando `tipos_requeridos` del nivel, que **no incluye** `consolidado` → la fila consolidado nunca se borra como "sobrante" porque el filtro adicional `archivoNombre` la protege.
+- El conteo de "matrículas incompletas" del dashboard usa `estado='pendiente' AND opcional=false`. Con el nuevo modelo, las filas individuales cubiertas por consolidado seguirían `pendiente` en BD → habría que ajustar el cómputo del lado servidor o aceptar el desfase. **Decisión**: en una iteración posterior se revisará la RPC `get_dashboard_stats`; por ahora se asume que basta con la consistencia visual en la página de matrícula.

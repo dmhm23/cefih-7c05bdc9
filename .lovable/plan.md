@@ -1,61 +1,83 @@
 
 
-## Plan: Corregir "Cannot coerce the result to a single JSON object" al editar cursos
+## Plan: Desacoplar el Portal del Estudiante del `curso_id`
 
-### Diagnóstico
+### Principio rector
+La **matrícula activa con `nivel_formacion_id`** es la única condición para habilitar el Portal. El curso pasa a ser **contexto complementario** (fechas, nombre), nunca requisito de acceso ni fuente del nivel.
 
-El error ocurre por **dos bugs combinados** en `src/services/cursoService.ts → update()`:
+---
 
-**Bug 1 — `numeroCurso` no se mapea a la columna `nombre`:**
-El campo "Número del Curso" en la UI escribe en `formData.numeroCurso`, pero el service solo lee `data.nombre`. El cambio se descarta silenciosamente.
+### Cambios estructurales
 
-**Bug 2 — UPDATE con payload vacío + `.single()`:**
-Cuando el usuario edita solo campos que no se mapean a columnas reales (`numeroCurso`, `entrenadorNombre`, `supervisorNombre`, o `tipoFormacion` cuando se omite por validación de enum), el objeto `dbData` queda en `{}`. PostgREST ejecuta `UPDATE ... SET () WHERE id=...` → no devuelve filas → `.single()` lanza `PGRST116: Cannot coerce the result to a single JSON object`.
+#### 1. Base de datos — migración SQL única
 
-### ¿Afecta a otros campos?
+**A. Reescribir `login_portal_estudiante`:**
+- Eliminar el `JOIN` obligatorio a `cursos`. Pasarlo a `LEFT JOIN`.
+- Condición de acceso válida: `matriculas.deleted_at IS NULL AND activo = TRUE AND nivel_formacion_id IS NOT NULL`.
+- Selección de la matrícula a usar (en este orden):
+  1. Matrícula activa con `nivel_formacion_id` y curso en estado `programado` o `en_curso`.
+  2. Matrícula activa con `nivel_formacion_id` y **sin curso**.
+  3. Matrícula activa con `nivel_formacion_id` y curso `cerrado`/`cancelado` → devuelve `curso_cerrado` solo si **no hay** ninguna otra matrícula válida.
+- Devolver siempre el `tipo_formacion` resuelto desde `niveles_formacion` (vía `matriculas.nivel_formacion_id`), no desde el curso.
+- Cuando no haya curso, devolver `curso_id = NULL`, `curso_nombre = nombre del nivel`, `curso_tipo_formacion` desde el nivel.
+- Resultados posibles: `ok`, `portal_deshabilitado`, `sin_matricula` (nuevo, reemplaza `sin_curso` cuando no hay matrícula con nivel), `persona_no_encontrada`. Mantener `curso_cerrado` como caso residual.
 
-Sí, el error se reproduce siempre que **todos** los campos editados sean uno de estos:
-- `numeroCurso` (no mapeado — bug 1)
-- `entrenadorNombre` / `supervisorNombre` (campos derivados, no van a BD)
-- `tipoFormacion` con valor inválido (omitido por la validación de enum)
+**B. Reescribir `get_documentos_portal`:**
+- Resolver el nivel con `COALESCE(matriculas.nivel_formacion_id, cursos.nivel_formacion_id)` — la matrícula manda, el curso es fallback.
+- Cambiar `JOIN cursos` por `LEFT JOIN cursos` para soportar matrículas sin curso.
+- Resto de la lógica (`niveles_habilitados`, dependencias) intacta.
 
-**No falla** cuando se edita junto a algún campo válido (fechas, duración, capacidad, entrenador_id, supervisor_id, nivel_formacion_id, estado), porque entonces `dbData` no está vacío.
+**C. Verificar consistencia con funciones ya alineadas:**
+- `get_formatos_for_matricula`: ya prioriza `matriculas.nivel_formacion_id`. No se toca.
+- `autogenerar_formato_respuestas`: ya usa `matriculas.nivel_formacion_id`. No se toca.
 
-### Solución (1 archivo)
+#### 2. Frontend
 
-**`src/services/cursoService.ts` → función `update`:**
+**A. `src/services/portalEstudianteService.ts`**
+- `mapMinimalCurso`: tolerar `curso_id = NULL`. Cuando no haya curso, construir un objeto sintético con `id=null`, `nombre = curso_nombre devuelto por el RPC`, sin fechas.
+- Manejar el nuevo resultado `sin_matricula`.
 
-1. **Mapear `numeroCurso` → `nombre`** para que el cambio se persista. El trigger `autogenerar_nombre_curso` ya respeta nombres no vacíos en INSERT; en UPDATE no se ejecuta el trigger BEFORE INSERT, así que la edición manual del número se persiste sin generar nuevo consecutivo.
+**B. `src/contexts/PortalEstudianteContext.tsx`**
+- `PortalSession`: hacer `cursoFechaInicio`, `cursoFechaFin` opcionales (ya lo son) y aceptar `matriculaId` sin requerir curso.
 
-2. **Ignorar campos derivados** (`entrenadorNombre`, `supervisorNombre`) — son snapshots reconstruidos desde el JOIN.
+**C. `src/pages/estudiante/PortalGuard.tsx`**
+- Si la sesión no trae `cursoFechaInicio`/`cursoFechaFin`, omitir validación de vigencia por fechas. La protección de acceso vive en el RPC del backend.
+- Mantener el redirect a `/estudiante` solo cuando no haya `session`.
 
-3. **Guardar contra UPDATE vacío:** si tras filtrar `dbData` queda sin claves, no llamar al UPDATE — devolver el curso actual con `getById(id)`. Esto evita el error PGRST116 y comunica el éxito sin operación inútil.
+**D. `src/pages/estudiante/AccesoEstudiantePage.tsx`** (revisar mensajes)
+- Mapear el nuevo resultado `sin_matricula` a un mensaje claro: *"No se encontró una matrícula activa para esta cédula"*.
+- Mantener mensajes existentes para `curso_cerrado`, `portal_deshabilitado`, `persona_no_encontrada`.
 
-```ts
-// Pseudo-código del fix
-if (data.numeroCurso !== undefined) dbData.nombre = data.numeroCurso;
-if (data.nombre !== undefined) dbData.nombre = data.nombre; // legacy fallback
-// (entrenadorNombre / supervisorNombre se ignoran intencionalmente)
+**E. `src/pages/estudiante/PanelDocumentosPage.tsx` y vistas dependientes**
+- Mostrar el nombre del curso solo cuando exista; si no, mostrar el nombre del nivel como contexto.
+- Ocultar fechas de curso si vienen vacías.
 
-if (Object.keys(dbData).length === 0) {
-  const curso = await cursoService.getById(id);
-  if (!curso) throw new ApiError('Curso no encontrado', 404);
-  return curso;
-}
-// ...UPDATE normal con .single()
-```
+---
+
+### Archivos tocados
+
+| Archivo | Tipo de cambio |
+|---|---|
+| `supabase/migrations/<timestamp>_portal_acceso_por_matricula.sql` | Nueva migración con redefinición de `login_portal_estudiante` y `get_documentos_portal` |
+| `src/services/portalEstudianteService.ts` | Tolerar `curso_id NULL`; manejar resultado `sin_matricula` |
+| `src/contexts/PortalEstudianteContext.tsx` | Confirmar opcionalidad de fechas de curso |
+| `src/pages/estudiante/PortalGuard.tsx` | Omitir validación de fechas si no hay curso |
+| `src/pages/estudiante/AccesoEstudiantePage.tsx` | Mapear nuevo resultado `sin_matricula` |
+| `src/pages/estudiante/PanelDocumentosPage.tsx` | Render condicional del bloque de curso |
 
 ### Validación post-cambio
 
-- Editar **solo** "Número del curso" y guardar → debe persistir el nuevo número sin error.
-- Editar solo entrenador o supervisor → debe persistir el ID y refrescar el nombre desde el JOIN.
-- Editar varios campos a la vez (caso ya funcional) → sigue funcionando.
-- El número editado manualmente debe aparecer en la columna "Curso" del listado y en el header del detalle.
-- El trigger de autogeneración no se dispara en UPDATE, así que no se consume un consecutivo extra.
+- **Estudiantes reportados (`1110535624`, `93411594`, `1030618422`)** con matrícula activa y nivel Reentrenamiento: deben entrar al portal y ver los documentos del nivel, exista o no curso vigente.
+- **Matrícula con nivel y sin curso:** debe acceder y ver documentos derivados del nivel.
+- **Matrícula con nivel y curso vigente:** flujo actual sin cambios.
+- **Persona sin ninguna matrícula con nivel:** mensaje `sin_matricula`.
+- **Persona con todas sus matrículas en cursos cerrados pero con nivel:** debe entrar igualmente (la matrícula sigue siendo válida; el cierre del curso no inhabilita el portal).
+- **Persona sin personas en BD:** `persona_no_encontrada`.
 
-### Sin impacto adicional
+### Sin impacto colateral
 
-- No requiere migración SQL.
-- No modifica la lógica del trigger `autogenerar_nombre_curso` ni la tabla `curso_consecutivos`.
-- No afecta el flujo de creación de cursos.
+- No modifica esquema de tablas ni triggers.
+- No afecta generación automática de `formato_respuestas` (ya alineada).
+- Lógica de cierre de curso, certificación y cartera intactas.
+- Vista interna de matrículas (`/matriculas`) no se toca.
 

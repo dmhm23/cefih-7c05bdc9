@@ -13,6 +13,7 @@ import logoEmpresa from '@/assets/logo-empresa.png';
 const ERROR_MESSAGES: Record<LoginResultado, string> = {
   ok: '',
   persona_no_encontrada: 'No se encontró una persona registrada con este número de documento.',
+  sin_matricula: 'No se encontró una matrícula activa con nivel de formación asignado para este documento. Contacta a tu centro de formación.',
   sin_curso: 'Tienes una matrícula registrada, pero aún no has sido asignado a un curso. Contacta a tu centro de formación.',
   curso_cerrado: 'Tu curso ha finalizado. Si necesitas acceder a tus documentos, contacta a tu centro de formación.',
   portal_deshabilitado: 'El acceso al portal ha sido deshabilitado para tu matrícula. Contacta a tu centro de formación.',

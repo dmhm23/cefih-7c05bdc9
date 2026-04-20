@@ -5,7 +5,7 @@ import { Persona } from '@/types/persona';
 import { Curso } from '@/types/curso';
 import { FormatoFormacion } from '@/modules/formatos/plugins/safa';
 
-export type LoginResultado = 'ok' | 'persona_no_encontrada' | 'sin_curso' | 'curso_cerrado' | 'portal_deshabilitado';
+export type LoginResultado = 'ok' | 'persona_no_encontrada' | 'sin_matricula' | 'sin_curso' | 'curso_cerrado' | 'portal_deshabilitado';
 
 export interface MatriculaVigenteResult {
   matricula: Matricula;
@@ -38,8 +38,8 @@ function mapMinimalPersona(row: any): Persona {
 
 function mapMinimalCurso(row: any): Curso {
   return {
-    id: row.curso_id,
-    nombre: row.curso_nombre,
+    id: row.curso_id ?? null,
+    nombre: row.curso_nombre ?? 'Portal del Estudiante',
     tipoFormacion: row.curso_tipo_formacion,
   } as unknown as Curso;
 }

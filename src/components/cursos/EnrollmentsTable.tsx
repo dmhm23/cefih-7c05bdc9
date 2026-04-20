@@ -57,6 +57,39 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
   const { codigos: codigosMapa } = useCodigosCurso(curso);
+  const resolveNivel = useResolveNivel();
+
+  const personaMap = useMemo(() => new Map(personas.map((p) => [p.id, p])), [personas]);
+
+  const handleDescargarCsvEstudiante = useCallback((m: Matricula) => {
+    const persona = personaMap.get(m.personaId);
+    if (!persona) {
+      toast({ title: "Persona no encontrada", variant: "destructive" });
+      return;
+    }
+    // Exporta TODAS las columnas del catálogo para entregar la información completa.
+    const { content } = buildCursoListadoCsv({
+      matriculas: [m],
+      personaMap,
+      curso,
+      resolveNivel,
+      codigosEstudiante: codigosMapa,
+      columnasSeleccionadas: COLUMN_CATALOG,
+    });
+    const cedula = (persona.numeroDocumento || "sin-doc").replace(/[^a-zA-Z0-9]/g, "");
+    const nombre = `${persona.apellidos || ""}${persona.nombres || ""}`.replace(/[^a-zA-Z0-9]/g, "");
+    const filename = `Curso_${curso.numeroCurso || curso.id}_${cedula}_${nombre}.csv`;
+    downloadCsv(content, filename);
+    toast({ title: "CSV del estudiante descargado", description: `${persona.nombres} ${persona.apellidos}` });
+    logActivity({
+      action: "exportar",
+      module: "cursos",
+      description: `Exportó CSV individual de ${persona.nombres} ${persona.apellidos} (curso ${curso.numeroCurso || curso.nombre})`,
+      entityType: "matricula",
+      entityId: m.id,
+      metadata: { curso_id: curso.id, persona_id: persona.id },
+    });
+  }, [personaMap, curso, resolveNivel, codigosMapa, toast, logActivity]);
 
   // --- Fetch formatos requeridos para el nivel del curso ---
   const { data: formatosRequeridos = [] } = useQuery({

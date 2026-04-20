@@ -102,8 +102,11 @@ export function CourseInfoCard({ curso, formData, onFieldChange, readOnly }: Cou
             value={formData.nivelFormacionId ?? curso.nivelFormacionId ?? ""}
             displayValue={nivelLabel}
             onChange={(v) => {
+              const nivel = niveles.find((n) => n.id === v);
               onFieldChange("nivelFormacionId", v);
-              onFieldChange("tipoFormacion", v);
+              if (nivel?.tipoFormacion) {
+                onFieldChange("tipoFormacion", nivel.tipoFormacion);
+              }
             }}
             type="select"
             options={tipoFormacionOptions}

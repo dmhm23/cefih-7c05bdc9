@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2, Info } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Upload, FileCheck, ExternalLink, ChevronDown, ChevronUp, Eye, FileText, X, Loader2, MoreHorizontal, Trash2, Info, Files } from "lucide-react";
 import { FileDropZone } from "@/components/shared/FileDropZone";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -10,6 +10,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { DateField } from "@/components/shared/DateField";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DocumentoRequerido } from "@/types/matricula";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -27,6 +38,8 @@ interface DocumentosCargaProps {
   onUpload: (documentoId: string, file: File) => void;
   onDelete?: (documentoId: string) => void;
   onUploadConsolidado?: (file: File, documentosIds: string[], tiposIncluidos: string[]) => void | Promise<void>;
+  /** Borra el consolidado (todas las filas que comparten storagePath + blob de Storage) */
+  onDeleteConsolidado?: (storagePath: string, documentosIds: string[]) => void | Promise<void>;
   onFechaChange?: (documentoId: string, field: string, value: string) => void;
   isUploading?: boolean;
   compact?: boolean;
@@ -49,6 +62,7 @@ export function DocumentosCarga({
   onUpload,
   onDelete,
   onUploadConsolidado,
+  onDeleteConsolidado,
   onFechaChange,
   isUploading,
   compact,
@@ -60,10 +74,70 @@ export function DocumentosCarga({
   const [activePreview, setActivePreview] = useState<string | null>(null);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [consolidadoPreview, setConsolidadoPreview] = useState<PreviewData | null>(null);
+  const [activeConsolidadoPreview, setActiveConsolidadoPreview] = useState(false);
+
+  // Confirmaciones
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<DocumentoRequerido | null>(null);
+  const [confirmCascade, setConfirmCascade] = useState<{ doc: DocumentoRequerido; siblings: DocumentoRequerido[] } | null>(null);
+  const [confirmDeleteConsolidado, setConfirmDeleteConsolidado] = useState<{ storagePath: string; ids: string[]; nombre?: string } | null>(null);
 
   const completados = documentos.filter((d) => d.estado !== "pendiente").length;
   const total = documentos.length;
   const progress = total > 0 ? (completados / total) * 100 : 0;
+
+  /**
+   * Detección del consolidado activo: documentos cargados que comparten exactamente
+   * el mismo storage_path (urlDrive) entre 2 o más filas.
+   */
+  const consolidadoGroups = useMemo(() => {
+    const map = new Map<string, DocumentoRequerido[]>();
+    for (const d of documentos) {
+      if (d.estado === "cargado" && d.urlDrive) {
+        const arr = map.get(d.urlDrive) ?? [];
+        arr.push(d);
+        map.set(d.urlDrive, arr);
+      }
+    }
+    // Sólo grupos con >=2 documentos cuentan como "consolidado"
+    return Array.from(map.entries())
+      .filter(([, docs]) => docs.length >= 2)
+      .map(([storagePath, docs]) => ({
+        storagePath,
+        docs,
+        nombre: docs[0].archivoNombre ?? "Consolidado",
+        tamano: docs[0].archivoTamano,
+      }));
+  }, [documentos]);
+
+  // Sincronizar consolidadoPreview local: si ningún doc cargado comparte el storage_path,
+  // limpiar el preview en memoria.
+  useEffect(() => {
+    if (!consolidadoPreview) return;
+    const stillExists = documentos.some(
+      (d) => d.estado === "cargado" && d.archivoNombre === consolidadoPreview.name,
+    );
+    if (!stillExists && consolidadoGroups.length === 0) {
+      setConsolidadoPreview(null);
+      setActiveConsolidadoPreview(false);
+    }
+  }, [documentos, consolidadoPreview, consolidadoGroups.length]);
+
+  // Sincronizar previews individuales: limpiar cuando un doc vuelve a `pendiente`.
+  useEffect(() => {
+    setPreviews((prev) => {
+      const next: Record<string, PreviewData> = {};
+      for (const [docId, data] of Object.entries(prev)) {
+        const doc = documentos.find((d) => d.id === docId);
+        if (doc && doc.estado !== "pendiente") next[docId] = data;
+      }
+      return next;
+    });
+    // Si el preview activo dejó de existir, cerrar
+    if (activePreview) {
+      const doc = documentos.find((d) => d.id === activePreview);
+      if (!doc || doc.estado === "pendiente") setActivePreview(null);
+    }
+  }, [documentos, activePreview]);
 
   const validateFileSize = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
@@ -90,7 +164,6 @@ export function DocumentosCarga({
     storePreview(docId, file);
     setUploadingDocId(docId);
     onUpload(docId, file);
-    // simulate upload end after a short delay (the real state comes from the hook)
     setTimeout(() => setUploadingDocId(null), 1200);
   };
 
@@ -104,9 +177,7 @@ export function DocumentosCarga({
     };
   };
 
-  const handleConsolidadoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleConsolidadoUpload = (file: File) => {
     if (!validateFileSize(file)) return;
     const { documentosIds, tiposIncluidos } = resolveConsolidadoTargets();
     if (documentosIds.length === 0) {
@@ -125,12 +196,49 @@ export function DocumentosCarga({
     reader.readAsDataURL(file);
   };
 
+  /**
+   * Click en eliminar de un documento individual.
+   * Si comparte storage_path con otros (consolidado) → ofrecer cascada.
+   * Si es único → confirmar simple.
+   */
+  const requestDeleteDoc = (doc: DocumentoRequerido) => {
+    if (doc.urlDrive) {
+      const siblings = documentos.filter(
+        (d) => d.id !== doc.id && d.estado === "cargado" && d.urlDrive === doc.urlDrive,
+      );
+      if (siblings.length > 0) {
+        setConfirmCascade({ doc, siblings });
+        return;
+      }
+    }
+    setConfirmDeleteDoc(doc);
+  };
+
+  const confirmDeleteOnlyThis = () => {
+    if (!confirmCascade) return;
+    onDelete?.(confirmCascade.doc.id);
+    setConfirmCascade(null);
+  };
+
+  const confirmDeleteAllShared = () => {
+    if (!confirmCascade) return;
+    const { doc, siblings } = confirmCascade;
+    const ids = [doc.id, ...siblings.map((s) => s.id)];
+    if (onDeleteConsolidado && doc.urlDrive) {
+      onDeleteConsolidado(doc.urlDrive, ids);
+    } else {
+      // Fallback: borrado uno por uno
+      ids.forEach((id) => onDelete?.(id));
+    }
+    setConfirmCascade(null);
+  };
+
   const closePreview = (docId: string) => {
     if (activePreview === docId) setActivePreview(null);
   };
 
   const closeConsolidadoPreview = () => {
-    setConsolidadoPreview(null);
+    setActiveConsolidadoPreview(false);
   };
 
   const toggleTipo = (tipo: string) => {
@@ -223,6 +331,9 @@ export function DocumentosCarga({
     </div>
   );
 
+  // Grupo activo seleccionado para preview/eliminación global en modo consolidado
+  const primaryGroup = consolidadoGroups[0];
+
   return (
     <div className="space-y-3 min-w-0 overflow-hidden">
       {/* Progress */}
@@ -286,12 +397,6 @@ export function DocumentosCarga({
                       {ESTADO_LABELS[doc.estado]}
                     </Badge>
                     {renderFileInfo(doc, doc.id)}
-                    {doc.urlDrive && (
-                      <a href={doc.urlDrive} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-primary flex items-center gap-1 hover:underline mt-0.5">
-                        <ExternalLink className="h-3 w-3" /> Ver en Drive
-                      </a>
-                    )}
                     {renderFechaFields(doc)}
                   </div>
                   <div className="shrink-0 mt-0.5">
@@ -326,7 +431,7 @@ export function DocumentosCarga({
                                 onChange={(e) => handleFileChange(doc.id, e)} disabled={isUploading || isUploading_} />
                             </label>
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => onDelete?.(doc.id)}>
+                          <DropdownMenuItem className="text-destructive" onClick={() => requestDeleteDoc(doc)}>
                             <Trash2 className="h-3.5 w-3.5 mr-2" /> Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -344,28 +449,96 @@ export function DocumentosCarga({
       {/* ── Consolidated mode ── */}
       {expanded && consolidado && (
         <div className="border rounded-lg overflow-hidden">
+          {/* Resumen del consolidado activo */}
+          {primaryGroup && (
+            <div className="p-3 bg-emerald-500/5 border-b flex items-start gap-3">
+              <div className="h-8 w-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <Files className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Consolidado activo</p>
+                <p className="text-sm font-medium truncate">{primaryGroup.nombre}</p>
+                <p className="text-xs text-muted-foreground">
+                  {primaryGroup.docs.length} requisitos cubiertos
+                  {primaryGroup.tamano ? ` · ${formatFileSize(primaryGroup.tamano)}` : ""}
+                </p>
+              </div>
+              <div className="shrink-0 flex items-center gap-1">
+                {consolidadoPreview && (
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs"
+                    onClick={() => setActiveConsolidadoPreview(!activeConsolidadoPreview)}>
+                    <Eye className="h-3.5 w-3.5 mr-1" /> Vista previa
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={() => setConfirmDeleteConsolidado({
+                    storagePath: primaryGroup.storagePath,
+                    ids: primaryGroup.docs.map((d) => d.id),
+                    nombre: primaryGroup.nombre,
+                  })}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Eliminar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {primaryGroup && activeConsolidadoPreview && consolidadoPreview && (
+            <div className="px-3 pt-2">
+              {renderPreviewPanel(consolidadoPreview, closeConsolidadoPreview)}
+            </div>
+          )}
+
           {/* Block 1: Checklist */}
           <div className="p-3 space-y-2">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Requisitos incluidos en el PDF</p>
             <div className="space-y-1.5">
               {documentos.map((doc) => {
                 const isPendiente = doc.estado === "pendiente";
+                const cubiertoPorConsolidado = !isPendiente && primaryGroup?.docs.some((d) => d.id === doc.id);
                 return (
-                  <div key={doc.id}>
-                    <label className={cn("flex items-center gap-2", isPendiente ? "cursor-pointer" : "cursor-default")}>
+                  <div key={doc.id} className="flex items-start gap-2">
+                    <label className={cn("flex items-center gap-2 flex-1 min-w-0", isPendiente ? "cursor-pointer" : "cursor-default")}>
                       <Checkbox
                         checked={tiposSeleccionados.includes(doc.tipo)}
                         onCheckedChange={() => toggleTipo(doc.tipo)}
                         disabled={!isPendiente}
                       />
-                      <span className={cn("text-sm", !isPendiente && "text-muted-foreground")}>{doc.nombre}</span>
-                      {!isPendiente && (
-                        <Badge variant="outline" className={cn("text-[10px] ml-auto", ESTADO_COLORS[doc.estado])}>
-                          {ESTADO_LABELS[doc.estado]}
-                        </Badge>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn("text-sm", !isPendiente && "text-muted-foreground")}>{doc.nombre}</span>
+                          {!isPendiente && (
+                            <Badge variant="outline" className={cn("text-[10px]", ESTADO_COLORS[doc.estado])}>
+                              {ESTADO_LABELS[doc.estado]}
+                            </Badge>
+                          )}
+                        </div>
+                        {!isPendiente && renderFileInfo(doc, doc.id)}
+                        {renderFechaFields(doc)}
+                      </div>
                     </label>
-                    {renderFechaFields(doc)}
+                    {cubiertoPorConsolidado && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setActiveConsolidadoPreview(true)}
+                            disabled={!consolidadoPreview}
+                          >
+                            <Eye className="h-3.5 w-3.5 mr-2" /> Vista previa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => requestDeleteDoc(doc)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Quitar de este requisito
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 );
               })}
@@ -376,35 +549,77 @@ export function DocumentosCarga({
 
           {/* Block 2: Upload zone */}
           <div className="p-3 bg-muted/30 space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Carga del PDF consolidado</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              {primaryGroup ? "Reemplazar consolidado" : "Carga del PDF consolidado"}
+            </p>
             <FileDropZone
               accept=".pdf"
-              onFile={(file) => {
-                if (!validateFileSize(file)) return;
-                const { documentosIds, tiposIncluidos } = resolveConsolidadoTargets();
-                if (documentosIds.length === 0) {
-                  toast.error("Selecciona al menos un requisito para incluir en el consolidado");
-                  return;
-                }
-                if (onUploadConsolidado) {
-                  onUploadConsolidado(file, documentosIds, tiposIncluidos);
-                  setTiposSeleccionados([]);
-                }
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const dataUrl = reader.result as string;
-                  setConsolidadoPreview({ url: dataUrl, name: file.name, type: file.type, size: file.size });
-                };
-                reader.readAsDataURL(file);
-              }}
+              onFile={handleConsolidadoUpload}
               disabled={isUploading}
               label={`Arrastra el PDF aquí o haz clic${tiposSeleccionados.length > 0 ? ` (${tiposSeleccionados.length} docs)` : ""}`}
               hint="Archivo PDF consolidado"
             />
-            {consolidadoPreview && renderPreviewPanel(consolidadoPreview, closeConsolidadoPreview)}
+            {consolidadoPreview && !primaryGroup && renderPreviewPanel(consolidadoPreview, () => setConsolidadoPreview(null))}
           </div>
         </div>
       )}
+
+      {/* ── Confirmaciones ── */}
+      <ConfirmDialog
+        open={!!confirmDeleteDoc}
+        onOpenChange={(open) => !open && setConfirmDeleteDoc(null)}
+        title="¿Eliminar documento?"
+        description={`Se quitará el archivo cargado para "${confirmDeleteDoc?.nombre ?? ""}" y el requisito volverá a estar pendiente.`}
+        confirmText="Eliminar"
+        variant="destructive"
+        onConfirm={() => {
+          if (confirmDeleteDoc) onDelete?.(confirmDeleteDoc.id);
+          setConfirmDeleteDoc(null);
+        }}
+      />
+
+      {/* Cascada: archivo compartido por varios requisitos */}
+      <AlertDialog open={!!confirmCascade} onOpenChange={(open) => !open && setConfirmCascade(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Este archivo cubre varios requisitos</AlertDialogTitle>
+            <AlertDialogDescription>
+              El archivo cubre <strong>{(confirmCascade?.siblings.length ?? 0) + 1} requisitos</strong>.
+              ¿Quieres quitarlo solo de este requisito o de todos los que cubre?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button variant="outline" onClick={confirmDeleteOnlyThis}>
+              Solo este
+            </Button>
+            <AlertDialogAction
+              onClick={confirmDeleteAllShared}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar de todos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Eliminar consolidado completo */}
+      <ConfirmDialog
+        open={!!confirmDeleteConsolidado}
+        onOpenChange={(open) => !open && setConfirmDeleteConsolidado(null)}
+        title="¿Eliminar el consolidado?"
+        description={`Se quitará "${confirmDeleteConsolidado?.nombre ?? "el archivo"}" de los ${confirmDeleteConsolidado?.ids.length ?? 0} requisitos cubiertos. Esta acción no se puede deshacer.`}
+        confirmText="Eliminar consolidado"
+        variant="destructive"
+        onConfirm={() => {
+          if (confirmDeleteConsolidado && onDeleteConsolidado) {
+            onDeleteConsolidado(confirmDeleteConsolidado.storagePath, confirmDeleteConsolidado.ids);
+          } else if (confirmDeleteConsolidado) {
+            confirmDeleteConsolidado.ids.forEach((id) => onDelete?.(id));
+          }
+          setConfirmDeleteConsolidado(null);
+        }}
+      />
     </div>
   );
 }

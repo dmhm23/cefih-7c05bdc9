@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
-import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash } from "lucide-react";
+import { ExternalLink, Plus, Trash2, Users, Award, Download, Filter, Hash, FileDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
@@ -35,6 +35,9 @@ import { descargarCertificadoPdf } from "@/utils/certificadoPdf";
 import { plantillaService } from "@/services/plantillaService";
 import type { CertificadoGenerado } from "@/types/certificado";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
+import { useResolveNivel } from "@/hooks/useResolveNivel";
+import { COLUMN_CATALOG, buildCursoListadoCsv } from "@/utils/exportCursoListado";
+import { downloadCsv } from "@/utils/csvMinTrabajo";
 import { useQuery } from "@tanstack/react-query";
 
 interface EnrollmentsTableProps {
@@ -54,6 +57,39 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
   const { data: certificados } = useCertificadosByCurso(curso.id);
 
   const { codigos: codigosMapa } = useCodigosCurso(curso);
+  const resolveNivel = useResolveNivel();
+
+  const personaMap = useMemo(() => new Map(personas.map((p) => [p.id, p])), [personas]);
+
+  const handleDescargarCsvEstudiante = useCallback((m: Matricula) => {
+    const persona = personaMap.get(m.personaId);
+    if (!persona) {
+      toast({ title: "Persona no encontrada", variant: "destructive" });
+      return;
+    }
+    // Exporta TODAS las columnas del catálogo para entregar la información completa.
+    const { content } = buildCursoListadoCsv({
+      matriculas: [m],
+      personaMap,
+      curso,
+      resolveNivel,
+      codigosEstudiante: codigosMapa,
+      columnasSeleccionadas: COLUMN_CATALOG,
+    });
+    const cedula = (persona.numeroDocumento || "sin-doc").replace(/[^a-zA-Z0-9]/g, "");
+    const nombre = `${persona.apellidos || ""}${persona.nombres || ""}`.replace(/[^a-zA-Z0-9]/g, "");
+    const filename = `Curso_${curso.numeroCurso || curso.id}_${cedula}_${nombre}.csv`;
+    downloadCsv(content, filename);
+    toast({ title: "CSV del estudiante descargado", description: `${persona.nombres} ${persona.apellidos}` });
+    logActivity({
+      action: "exportar",
+      module: "cursos",
+      description: `Exportó CSV individual de ${persona.nombres} ${persona.apellidos} (curso ${curso.numeroCurso || curso.nombre})`,
+      entityType: "matricula",
+      entityId: m.id,
+      metadata: { curso_id: curso.id, persona_id: persona.id },
+    });
+  }, [personaMap, curso, resolveNivel, codigosMapa, toast, logActivity]);
 
   // --- Fetch formatos requeridos para el nivel del curso ---
   const { data: formatosRequeridos = [] } = useQuery({
@@ -588,6 +624,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                         </td>
                         <td className="py-2 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            <IconButton
+                              tooltip="Descargar CSV del estudiante"
+                              className="h-7 w-7"
+                              onClick={() => handleDescargarCsvEstudiante(m)}
+                            >
+                              <FileDown className="h-3.5 w-3.5" />
+                            </IconButton>
                             <IconButton
                               tooltip="Ver matrícula"
                               className="h-7 w-7"

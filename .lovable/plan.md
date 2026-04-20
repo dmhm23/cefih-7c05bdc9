@@ -1,100 +1,63 @@
 
-## Plan: Habilitar la vista previa de archivos ya cargados (sin Google Drive)
+## Plan: Sincronizar fechas de ARL y Examen Médico en la tabla de matrículas
 
 ### Causa raíz
 
-El sistema arrastra una convención obsoleta: el campo `urlDrive` en la interfaz `DocumentoRequerido` y en todo el front se llama así por una etapa previa donde se planeaba usar Google Drive. Hoy los archivos viven 100% en **Supabase Storage** (bucket `documentos-matricula`), pero la columna física en BD es `storage_path` y el front sigue esperando `urlDrive`.
+La tabla `/matriculas` carga datos vía `useMatriculasPaginated` → `matriculaService.getPage()`, que solo hace `select('*, personas!inner(...)')` sobre `matriculas`. **Nunca trae `documentos_matricula`.** En `rowToMatricula` (línea ~16 de `matriculaService.ts`), `documentos` se inicializa como `[]`.
 
-En `matriculaService.getById` (línea 184) los documentos se mapean con `snakeToCamel`, que convierte mecánicamente `storage_path` → **`storagePath`**. Resultado: tras refrescar la página, `doc.urlDrive` siempre es `undefined`, y el botón "Ver" en `DocumentosCarga.tsx` queda permanentemente deshabilitado por la guarda `disabled={!doc.urlDrive && !hasBlob}`.
+Resultado: en `MatriculasPage.tsx` líneas 137-142, `getDocumentoFecha` busca `m.documentos.find(d => d.tipo === 'arl')` → siempre `undefined` → siempre devuelve `"-"`. Aunque el usuario haya guardado las fechas correctamente en `documentos_matricula` (verificado en BD: hay filas `arl` con `fecha_inicio_cobertura` y `examen_medico` con `fecha_documento`), el listado nunca las ve.
 
-Verificado en BD para el estudiante 1110552380:
+El mismo problema afecta a `getEstadoDocumental` (línea 144) — la columna "Estado Documental" siempre dice "Pendiente" por la misma razón. Y aplica a `EnrollmentsTable.tsx` (cursos) que usa `useMatriculas` → `getAll`, donde tampoco se traen documentos.
 
-```
-id            : cdba3bb8-7b2e-4e43-8f01-ed09534c353b
-tipo          : cedula
-estado        : cargado
-storage_path  : 2026/e88d124e-…/1110552380/cdba3bb8-…_1776717330659.pdf  ✅ existe
-archivo_nombre: 20260420092931245.pdf
-```
+### Solución
 
-El archivo está en Storage; solo el front no lo lee bajo el nombre correcto.
+Traer las fechas relevantes desde BD junto con cada matrícula y exponerlas al front como campos derivados, sin cargar el array completo de documentos (que sería costoso en listas grandes).
 
-### Decisión arquitectónica
+**1. `src/services/matriculaService.ts` — `getPage`**
 
-Eliminar la convención `urlDrive` del front y unificar todo bajo `storagePath`, alineado con la BD y con el resto del sistema (`personalService`, `cursos_mintrabajo_adjuntos`, `firmas_matricula`). Así desaparece la deuda semántica del nombre "Drive" y queda una única fuente de verdad: **Supabase Storage**.
-
-### Cambios técnicos
-
-**1. `src/types/matricula.ts` — renombrar campo en `DocumentoRequerido`**
+Agregar un join lateral a `documentos_matricula` filtrando solo los tipos que la tabla necesita:
 
 ```ts
-// antes
-urlDrive?: string;
-// después
-storagePath?: string | null;
+.select(`
+  *,
+  personas!inner(id, nombres, apellidos, numero_documento, telefono),
+  documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)
+`, { count: 'exact' })
 ```
 
-**2. `src/services/matriculaService.ts` — limpiar mapeos legacy**
+En `rowToMatricula`, mapear los documentos embebidos al campo `documentos` (parcial: solo los campos necesarios para la tabla — tipo, estado, fechas, opcional). El resto del shape (`storagePath`, `archivoNombre`, etc.) sigue llegando solo en `getById`.
 
-- `getById`: eliminar cualquier transformación inversa; el `snakeToCamel` ya entrega `storagePath` natural — basta con tiparlo.
-- `updateDocumento` (líneas 292-296): quitar el mapeo `urlDrive` → `storage_path` (ya no aplica) y dejar `storagePath` directo.
-- Cualquier referencia a `urlDrive` en este archivo se renombra a `storagePath`.
+**2. `src/services/matriculaService.ts` — `getAll` y `getByCursoId` (mismo fix simétrico)**
 
-**3. `src/hooks/useMatriculas.ts` — renombrar usos**
+Aplicar el mismo cambio para que `EnrollmentsTable` y otros consumidores de listas también vean las fechas. Es un join económico (Supabase ya lo soporta con la sintaxis embebida) y elimina deuda silenciosa.
 
-- `useUploadDocumento`: el `update` final pasa `storagePath: storageKey` en vez de `urlDrive: storageKey`.
-- Idem en cualquier otro `mutationFn` que toque documentos individuales.
+**3. Cómputo de "Estado Documental"**
 
-**4. `src/components/matriculas/DocumentosCarga.tsx` — usar `storagePath` y habilitar el botón Ver**
+Con `documentos` ya poblado parcialmente, `getEstadoDocumental` empieza a funcionar correctamente como bonus — sin tocar nada en la página.
 
-- Reemplazar todas las lecturas de `doc.urlDrive` por `doc.storagePath`.
-- Guarda del botón Ver:
-  ```ts
-  disabled={!doc.storagePath && !hasBlob}
-  ```
-- Función `openPreview(doc)`:
-  ```ts
-  if (previews[doc.id]) return openWith(previews[doc.id]);
-  if (doc.storagePath) {
-    const url = await driveService.getSignedUrl(doc.storagePath);
-    return openWith(url);
-  }
-  ```
-  (`driveService` mantiene su nombre de archivo por compatibilidad, pero internamente solo usa Supabase Storage — opcional renombrarlo a `storageService` en una iteración aparte para no inflar este cambio.)
+**4. Compatibilidad con consolidado**
 
-**5. `src/pages/matriculas/MatriculaDetallePage.tsx` y `MatriculaDetailSheet.tsx`**
-
-- En `handleDeleteDoc`: cambiar el campo `urlDrive: null` por `storagePath: null` dentro del payload de reset.
-- Cualquier lectura `doc.urlDrive` → `doc.storagePath`.
-
-**6. Compatibilidad con el flujo de carga ya migrado**
-
-- `useUploadConsolidado` ya inserta directo en BD con `storage_path` — no se toca.
-- `useDeleteConsolidado` igual — no se toca.
-- El bucket y RLS no cambian.
+La fila `tipo='consolidado'` también vendrá en el join. `getDocumentoFecha` busca por `d.tipo === 'arl'` o `'examen_medico'` específicamente, así que no genera ruido. Para `getEstadoDocumental`, el conteo seguirá funcionando porque la fila consolidado tiene `estado='cargado'` y los individuales que cubre permanecen `pendiente` — es coherente con el modelo actual donde, sin lógica adicional, una matrícula cubierta solo por consolidado seguirá apareciendo como "Pendiente" en esta columna. Eso es consistente con lo decidido en la iteración previa (ver "Sin impacto colateral" del plan anterior: "se asume que basta con la consistencia visual en la página de matrícula"). **No se cambia el cómputo aquí**; queda para una iteración futura si se quiere unificar.
 
 ### Archivos tocados
 
 | Archivo | Cambio |
 |---|---|
-| `src/types/matricula.ts` | Renombrar `urlDrive` → `storagePath` en `DocumentoRequerido` |
-| `src/services/matriculaService.ts` | Eliminar mapeos legacy `urlDrive ↔ storage_path`; usar `storagePath` directo |
-| `src/hooks/useMatriculas.ts` | `useUploadDocumento` persiste `storagePath` |
-| `src/components/matriculas/DocumentosCarga.tsx` | Lecturas a `doc.storagePath`; habilitar botón "Ver" cuando exista; `openPreview` usa `getSignedUrl(doc.storagePath)` |
-| `src/pages/matriculas/MatriculaDetallePage.tsx` | `handleDeleteDoc` resetea `storagePath: null`; lecturas migradas |
-| `src/components/matriculas/MatriculaDetailSheet.tsx` | Idem |
+| `src/services/matriculaService.ts` | `getPage`, `getAll`, `getByCursoId`: añadir embed `documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)`. En `rowToMatricula` (o en el mapeo local de cada método) poblar `documentos` con los campos parciales. |
 
 ### Validación post-cambio
 
-- `/matriculas/<id>` del estudiante 1110552380 → modo Individual → el documento `cedula` (`20260420092931245.pdf`) muestra el botón **Ver habilitado**. Click abre `ArchivoPreviewDialog` con la signed URL del PDF desde Supabase Storage.
-- Cargar un nuevo documento individual → recargar la página → el botón "Ver" sigue habilitado (no depende del blob local en memoria).
-- Cargar un consolidado → recargar → el banner "Consolidado activo" muestra "Ver" funcionando.
-- Eliminar un documento → su botón "Ver" desaparece (vuelve a `pendiente` y se renderiza el `FileDropZone`).
-- En BD: las columnas siguen siendo `storage_path` — no hay migración SQL.
+- En `/matriculas`, las matrículas cargadas previamente con ARL o examen médico muestran las fechas correctas en las columnas "Fecha Cobertura ARL" y "Fecha Examen".
+- Caso real verificado en BD:
+  - matrícula `b1c01c77…` (ARL, `fecha_inicio_cobertura=2026-04-21`) → debe mostrar `21/04/2026` en columna ARL.
+  - matrícula `028d3c57…` (examen, `fecha_documento=2025-10-02`) → debe mostrar `02/10/2025` en columna Examen.
+- En `/cursos/<id>` la tabla de matriculados también empieza a mostrar fechas (`getArlDate` / `getExamDate` en `EnrollmentsTable.tsx` ya estaban listas).
+- Editar una fecha en el detalle de matrícula → recargar `/matriculas` → la nueva fecha aparece.
+- "Estado Documental" muestra "Completo" cuando todos los obligatorios individuales están cargados.
 
 ### Sin impacto colateral
 
-- No cambia esquema de BD ni enums.
-- No afecta certificación, cartera, cursos ni portal estudiante (esos flujos no leen `urlDrive`).
-- `personalService` ya usaba `storagePath` — queda alineado con esta convención.
-- Cero referencias a Google Drive en el código tras el cambio.
+- No se modifica BD, RLS, tipos generados ni la interfaz `DocumentoRequerido`.
+- `getById` sigue intacto — el detalle completo de documentos (storage, archivo) no se duplica.
+- El join embebido aumenta levemente el payload por matrícula (≈4 campos × N documentos), pero PostgREST lo resuelve en una sola query.
+- No se rompe ningún consumidor: `documentos` pasa de array vacío a array parcial — los campos no incluidos siguen siendo `undefined` igual que antes.

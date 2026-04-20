@@ -46,7 +46,7 @@ export const COLUMN_CATALOG: ColumnDef[] = [
   { key: "p_nombre_completo", header: "Nombre Completo", group: "Persona", defaultSelected: false,
     resolver: (p) => capitalize(`${p.nombres} ${p.apellidos}`) },
   { key: "p_tipo_doc", header: "Tipo Documento", group: "Persona", defaultSelected: false,
-    resolver: (p) => findLabel([...TIPOS_DOCUMENTO], p.tipoDocumento) },
+    resolver: (p) => p.tipoDocumento || "" },
   { key: "p_numero_doc", header: "Número Documento", group: "Persona", defaultSelected: false,
     resolver: (p) => cleanDocumento(p.numeroDocumento) },
   { key: "p_nombres", header: "Nombres", group: "Persona", defaultSelected: false,

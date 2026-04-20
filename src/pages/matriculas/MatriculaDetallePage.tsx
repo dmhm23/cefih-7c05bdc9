@@ -482,7 +482,24 @@ export default function MatriculaDetallePage() {
     }
   };
 
-  const handleDeleteDoc = async (documentoId: string) => {
+  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+    try {
+      await uploadConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        file,
+        documentosIds,
+        tiposIncluidos,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
+    }
+  };
     try {
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,
@@ -843,8 +860,9 @@ export default function MatriculaDetallePage() {
               documentos={matricula.documentos}
               onUpload={handleUploadDoc}
               onDelete={handleDeleteDoc}
+              onUploadConsolidado={handleUploadConsolidado}
               onFechaChange={handleDocFechaChange}
-              isUploading={uploadDocumento.isPending}
+              isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
             />
           </div>
 

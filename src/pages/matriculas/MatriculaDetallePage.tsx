@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
-import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento, useUploadConsolidado } from "@/hooks/useMatriculas";
+import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento, useUploadConsolidado, useDeleteConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
@@ -99,6 +99,7 @@ export default function MatriculaDetallePage() {
   const cambiarEstado = useCambiarEstadoMatricula();
   const uploadDocumento = useUploadDocumento();
   const uploadConsolidado = useUploadConsolidado();
+  const deleteConsolidado = useDeleteConsolidado();
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const resolveNivel = useResolveNivel();
@@ -508,15 +509,28 @@ export default function MatriculaDetallePage() {
         documentoId,
         data: {
           estado: 'pendiente',
-          fechaCarga: undefined,
-          urlDrive: undefined,
-          archivoNombre: undefined,
-          archivoTamano: undefined,
+          fechaCarga: null,
+          urlDrive: null,
+          archivoNombre: null,
+          archivoTamano: null,
         } as any,
       });
       toast({ title: "Documento eliminado" });
     } catch {
       toast({ title: "Error al eliminar documento", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteConsolidado = async (storagePath: string, documentosIds: string[]) => {
+    try {
+      await deleteConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        storagePath,
+        documentosIds,
+      });
+      toast({ title: `Consolidado eliminado (${documentosIds.length} requisitos)` });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al eliminar consolidado", variant: "destructive" });
     }
   };
 
@@ -863,8 +877,9 @@ export default function MatriculaDetallePage() {
               onUpload={handleUploadDoc}
               onDelete={handleDeleteDoc}
               onUploadConsolidado={handleUploadConsolidado}
+              onDeleteConsolidado={handleDeleteConsolidado}
               onFechaChange={handleDocFechaChange}
-              isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
+              isUploading={uploadDocumento.isPending || uploadConsolidado.isPending || deleteConsolidado.isPending}
             />
           </div>
 

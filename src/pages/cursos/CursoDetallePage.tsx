@@ -15,6 +15,7 @@ import { GenerarPdfsDialog } from "@/components/cursos/GenerarPdfsDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonas } from "@/hooks/usePersonas";
+import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
 import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv } from "@/utils/csvMinTrabajo";
@@ -32,6 +33,7 @@ export default function CursoDetallePage() {
   const { data: personas = [] } = usePersonas();
   const updateCurso = useUpdateCurso();
   const cambiarEstado = useCambiarEstadoCurso();
+  const { codigos: codigosEstudiante } = useCodigosCurso(curso);
 
   const [formData, setFormData] = useState<Partial<CursoFormData>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -227,6 +229,7 @@ export default function CursoDetallePage() {
         curso={curso}
         matriculas={matriculas}
         personas={personas}
+        codigosEstudiante={codigosEstudiante}
       />
 
       {/* Generate PDFs Dialog */}

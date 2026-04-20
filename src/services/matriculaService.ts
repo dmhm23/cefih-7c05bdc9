@@ -289,11 +289,6 @@ export const matriculaService = {
     data: Partial<DocumentoRequerido>
   ): Promise<Matricula> {
     const row = camelToSnake(data);
-    // Map url_drive → storage_path
-    if ('url_drive' in row) {
-      row.storage_path = row.url_drive;
-      delete row.url_drive;
-    }
     delete row.id;
 
     const { error } = await supabase

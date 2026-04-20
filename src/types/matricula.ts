@@ -40,7 +40,7 @@ export interface DocumentoRequerido {
   id: string;
   tipo: TipoDocumento;
   nombre: string;
-  urlDrive?: string;
+  storagePath?: string | null;
   estado: EstadoDocumento;
   fechaCarga?: string;
   fechaDocumento?: string;

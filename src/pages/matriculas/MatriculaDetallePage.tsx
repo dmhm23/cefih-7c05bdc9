@@ -509,7 +509,7 @@ export default function MatriculaDetallePage() {
         data: {
           estado: 'pendiente',
           fechaCarga: null,
-          urlDrive: null,
+          storagePath: null,
           archivoNombre: null,
           archivoTamano: null,
         } as any,

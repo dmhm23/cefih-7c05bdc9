@@ -246,7 +246,7 @@ export const useUploadDocumento = () => {
       return matriculaService.updateDocumento(matriculaId, documentoId, {
         estado: 'cargado',
         fechaCarga: new Date().toISOString().split('T')[0],
-        urlDrive: url,
+        storagePath: url,
         archivoNombre: file.name,
         archivoTamano: file.size,
       });

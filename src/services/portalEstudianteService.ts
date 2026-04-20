@@ -38,8 +38,8 @@ function mapMinimalPersona(row: any): Persona {
 
 function mapMinimalCurso(row: any): Curso {
   return {
-    id: row.curso_id,
-    nombre: row.curso_nombre,
+    id: row.curso_id ?? null,
+    nombre: row.curso_nombre ?? 'Portal del Estudiante',
     tipoFormacion: row.curso_tipo_formacion,
   } as unknown as Curso;
 }

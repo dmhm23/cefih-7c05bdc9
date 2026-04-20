@@ -113,7 +113,7 @@ export const matriculaService = {
       let query = supabase
         .from('matriculas')
         .select(
-          `*, personas!inner(id, nombres, apellidos, numero_documento, telefono)`,
+          `*, personas!inner(id, nombres, apellidos, numero_documento, telefono), documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)`,
           { count: 'exact' },
         )
         .is('deleted_at', null);

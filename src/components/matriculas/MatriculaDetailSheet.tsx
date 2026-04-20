@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula } from "@/hooks/useMatriculas";
+import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula, useUploadConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
@@ -103,6 +103,7 @@ export function MatriculaDetailSheet({
   const reopenMutation = useReopenFormatoRespuesta();
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
+  const uploadConsolidado = useUploadConsolidado();
   const updateDocumento = useUpdateDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
@@ -235,6 +236,26 @@ export function MatriculaDetailSheet({
       logActivity({ action: "subir", module: "matriculas", description: `Subió documento "${file.name}" a matrícula de ${persona?.nombres || ""} ${persona?.apellidos || ""}`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, documento_id: documentoId } });
     } catch (error) {
       toast({ title: "Error al cargar documento", variant: "destructive" });
+    }
+  };
+
+  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+    try {
+      await uploadConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        file,
+        documentosIds,
+        tiposIncluidos,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
+      logActivity({ action: "subir", module: "matriculas", description: `Subió PDF consolidado "${file.name}" cubriendo ${documentosIds.length} requisitos`, entityType: "matricula", entityId: matricula.id, metadata: { archivo: file.name, tamano: file.size, tipos: tiposIncluidos } });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
     }
   };
 
@@ -548,8 +569,9 @@ export function MatriculaDetailSheet({
             documentos={fullMatricula?.documentos || matricula.documentos}
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
+            onUploadConsolidado={handleUploadConsolidado}
             onFechaChange={handleDocFechaChange}
-            isUploading={uploadDocumento.isPending}
+            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
             compact
           />
         </DetailSection>

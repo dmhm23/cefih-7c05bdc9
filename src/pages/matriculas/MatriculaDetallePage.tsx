@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
-import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento } from "@/hooks/useMatriculas";
+import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento, useUploadConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { useEmpresas } from "@/hooks/useEmpresas";
 import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
@@ -98,6 +98,7 @@ export default function MatriculaDetallePage() {
   const registrarPago = useRegistrarPago();
   const cambiarEstado = useCambiarEstadoMatricula();
   const uploadDocumento = useUploadDocumento();
+  const uploadConsolidado = useUploadConsolidado();
   const updatePersona = useUpdatePersona();
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
   const resolveNivel = useResolveNivel();
@@ -481,6 +482,25 @@ export default function MatriculaDetallePage() {
     }
   };
 
+  const handleUploadConsolidado = async (file: File, documentosIds: string[], tiposIncluidos: string[]) => {
+    try {
+      await uploadConsolidado.mutateAsync({
+        matriculaId: matricula.id,
+        file,
+        documentosIds,
+        tiposIncluidos,
+        metadata: {
+          cursoId: matricula.cursoId,
+          personaNombre: persona ? `${persona.nombres} ${persona.apellidos}` : undefined,
+          personaCedula: persona?.numeroDocumento,
+        },
+      });
+      toast({ title: `PDF consolidado cargado (${documentosIds.length} requisitos)` });
+    } catch (error: any) {
+      toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
+    }
+  };
+
   const handleDeleteDoc = async (documentoId: string) => {
     try {
       await updateDocumento.mutateAsync({
@@ -842,8 +862,9 @@ export default function MatriculaDetallePage() {
               documentos={matricula.documentos}
               onUpload={handleUploadDoc}
               onDelete={handleDeleteDoc}
+              onUploadConsolidado={handleUploadConsolidado}
               onFechaChange={handleDocFechaChange}
-              isUploading={uploadDocumento.isPending}
+              isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
             />
           </div>
 

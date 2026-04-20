@@ -1,90 +1,66 @@
-## Plan: Plantilla fija de exportación, columna "Código del estudiante" y descarga individual
-
-### 1. Plantilla fija con orden exacto de columnas
-
-Hoy `ExportarListadoDialog` permite seleccionar libremente columnas, lo que rompe la consistencia. Se introducirá una **plantilla oficial fija** (preset) con tus 10 columnas en orden estricto, marcada por defecto al abrir el modal:
 
 
-| #   | Columna                        | Origen                                         |
-| --- | ------------------------------ | ---------------------------------------------- |
-| 1   | Nombre Empresa                 | `matricula.empresaNombre` (o "Independiente")  |
-| 2   | Representante Legal            | `matricula.empresaRepresentanteLegal`          |
-| 3   | NIT                            | `matricula.empresaNit`                         |
-| 4   | Tipo de Documento              | `persona.tipoDocumento` (label)                |
-| 5   | Número de Cédula               | `persona.numeroDocumento`                      |
-| 6   | Nombre Completo del Estudiante | `persona.nombres + apellidos`                  |
-| 7   | ARL                            | `matricula.arl` (label)                        |
-| 8   | Nivel de Formación             | `resolveNivel(curso.nivelFormacionId)`         |
-| 9   | Duración                       | `curso.horasTotales` + " h"                    |
-| 10  | Código del Estudiante          | `useCodigosCurso(curso).codigos[m.id]` (nuevo) |
+## Plan: Carga real del PDF Consolidado en Requisitos Documentales
 
+### Causa raíz
 
-**Cómo se aplica el orden:** la exportación dejará de iterar sobre `COLUMN_CATALOG` y pasará a iterar sobre un arreglo `PLANTILLA_OFICIAL` con el orden anterior. Las columnas seleccionadas en checkboxes se reordenarán según ese arreglo antes de armar el CSV — así nunca se exporta en un orden distinto al oficial. Y cuando el usuario añada más columnas, entonces se añaden despues de las columnas de la plantilla_oficial dentro del mismo archivo.
+El modo **Consolidado** del componente `DocumentosCarga` está cableado a una prop opcional `onUploadConsolidado` que **ningún consumidor pasa hoy** (`MatriculaDetallePage` ni `MatriculaDetailSheet`). Resultado: al soltar el PDF, el `if (onUploadConsolidado)` falla silenciosamente, no se sube nada a Storage, no se actualiza ningún registro en `documentos_matricula`, y la "previsualización" sólo vive en memoria del componente. Adicionalmente, `driveService.uploadConsolidado` existe pero **no tiene hook** que lo invoque, y nunca se marcan los documentos individuales como cubiertos por el consolidado.
 
-### 2. Nueva columna "Código del Estudiante" en el catálogo del modal
+### Diseño de la solución (sin parches)
 
-Actualmente `COLUMN_CATALOG` no tiene esta columna porque el código se calcula vía `useCodigosCurso` (hook), no leyendo un campo plano. La solución estructural:
+Convertir el flujo consolidado en un caso de primera clase con la misma garantía transaccional que el flujo individual:
 
-- **Recibir el mapa de códigos como prop**: `CursoDetallePage` ya invoca `useCodigosCurso` indirectamente en `EnrollmentsTable`. Levantamos su uso al padre y lo pasamos al `ExportarListadoDialog` como `codigosEstudiante: Record<string, string>`.
-- **Agregar al catálogo** un nuevo `ColumnDef` `m_codigo_estudiante` con resolver `(p, m) => codigosEstudiante[m.id] ?? ""`. Para no romper la firma actual del resolver, se añade un parámetro opcional `extras` al `ColumnDef.resolver` que transporta el mapa.
-- En el agrupamiento del modal aparece bajo grupo **"Curso"** (o nuevo grupo **"Estudiante"** si quieres separarlo).
-- Marcado por defecto = `true` cuando carga la plantilla oficial.
+**1. Nuevo hook `useUploadConsolidado` en `useMatriculas.ts`**
+- Recibe `{ matriculaId, file, tiposIncluidos, metadata }`.
+- Llama a `driveService.uploadConsolidado(...)` → obtiene `storagePath`.
+- Por cada `tipo` en `tiposIncluidos`:
+  - Busca el `documento_matricula` correspondiente.
+  - Lo actualiza con: `estado='cargado'`, `storage_path=<path consolidado>`, `archivo_nombre=<file.name>`, `archivo_tamano=<file.size>`, `fecha_carga=hoy`.
+- Invalida `['matricula', matriculaId]` y `['matriculas']`.
+- Todos los documentos cubiertos comparten el mismo `storage_path` → la preview funciona en cualquiera de ellos abriendo el mismo PDF.
 
-**Sin tocar lo construido:** el catálogo libre sigue funcionando igual; solo se agregan (a) la nueva columna y (b) un botón "Restaurar plantilla oficial" arriba del modal que setea selección y orden a los 10 campos.
+**2. Cableado en `MatriculaDetallePage` y `MatriculaDetailSheet`**
+- Añadir `useUploadConsolidado()` en ambos.
+- Implementar `handleUploadConsolidado(file, tipos)` análogo a `handleUploadDoc`, con su `metadata` (cursoId, persona, cédula).
+- Pasar la prop `onUploadConsolidado={handleUploadConsolidado}` al `<DocumentosCarga>` en los dos lugares.
+- Pasar `isUploading` que considere también `uploadConsolidado.isPending`.
 
-### 3. Descarga individual por estudiante (CSV personal)
+**3. Validaciones en `DocumentosCarga` (sin tocar comportamiento individual)**
+- Antes de invocar `onUploadConsolidado`: si `tiposSeleccionados.length === 0` y no hay pendientes a auto-incluir → mostrar toast "Selecciona al menos un requisito" y no subir.
+- Tras éxito (vía `isUploading` cambia a `false` y los docs incluidos pasan a `cargado`): limpiar `tiposSeleccionados` y mantener la preview con el nombre del archivo subido.
+- La `consolidadoPreview` local sigue funcionando para feedback inmediato durante el upload.
 
-Se agrega una nueva acción en cada fila de `EnrollmentsTable.tsx`, junto a "Ver matrícula" y "Remover": **"Descargar CSV del estudiante"** (icono `Download`).
+**4. Soporte de descarga/preview por documento individual**
+- Como cada documento individual cubierto comparte el mismo `storage_path`, el botón "Ver" actual ya funcionará sin cambios: `getSignedUrl(storage_path)` devuelve el PDF consolidado.
+- Verificar que `ArchivoPreviewDialog` abre correctamente el PDF (ya lo hace para individuales).
 
-**Comportamiento:**
-
-- Reutiliza exactamente el mismo `COLUMN_CATALOG` y resolvers existentes (cero duplicación).
-- Genera un CSV con **una sola fila** correspondiente a esa matrícula y persona.
-- Por defecto exporta **todas** las columnas disponibles del catálogo (Persona + Matrícula + Curso + Código del Estudiante) — así obtienes "toda la información que tenemos" del estudiante en un solo archivo.
-- Nombre de archivo: `Curso_{numeroCurso}_{cedula}_{ApellidoNombre}.csv`.
-- Misma codificación, separador y formato que el listado masivo.
-
-**Disponibilidad:** acción visible tanto en el listado del curso (`EnrollmentsTable`) como — opcionalmente — desde el listado general de matrículas. Para mantener el alcance acotado y rápido, se entrega primero en `EnrollmentsTable`. Si lo quieres en `MatriculasPage` también, se replica con el mismo helper.
-
-### 4. Refactor mínimo de soporte
-
-Para evitar duplicar lógica, se extrae una función pura:
-
-```ts
-// src/utils/exportCursoListado.ts (nuevo)
-export function buildCursoListadoCsv(
-  matriculas: Matricula[],
-  personaMap: Map<string, Persona>,
-  curso: Curso,
-  resolveNivel,
-  codigosEstudiante: Record<string, string>,
-  columnasSeleccionadas: ColumnDef[]
-): { content: string; filename: string }
-```
-
-Tanto el modal masivo como la descarga individual la consumen. Sin cambios de contrato en hooks/services.
+**5. Sin tocar BD ni enums**
+- El enum `tipo_documento_matricula` ya incluye `consolidado` (verificado), no necesita migración.
+- No se crea fila adicional de tipo `consolidado`: el PDF consolidado **cubre los tipos existentes** del nivel. Esto preserva la semántica de "requisitos del nivel" intacta.
 
 ### Archivos tocados
 
-
-| Archivo                                           | Cambio                                                                                                                                                                            |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/utils/exportCursoListado.ts`                 | **Nuevo.** Función pura `buildCursoListadoCsv` + constante `PLANTILLA_OFICIAL_KEYS` con los 10 keys en orden                                                                      |
-| `src/components/cursos/ExportarListadoDialog.tsx` | Añadir columna `m_codigo_estudiante`, recibir prop `codigosEstudiante`, botón "Restaurar plantilla oficial", reordenar selección según `PLANTILLA_OFICIAL_KEYS` antes de exportar |
-| `src/components/cursos/EnrollmentsTable.tsx`      | Nueva acción de fila "Descargar CSV del estudiante" usando `buildCursoListadoCsv` + el mapa `codigosMapa` ya disponible                                                           |
-| `src/pages/cursos/CursoDetallePage.tsx`           | Pasar `codigosEstudiante` al `ExportarListadoDialog` (obtenido vía `useCodigosCurso(curso)`)                                                                                      |
-
+| Archivo | Cambio |
+|---|---|
+| `src/hooks/useMatriculas.ts` | **Nuevo hook** `useUploadConsolidado` que sube el PDF y actualiza N documentos en lote |
+| `src/pages/matriculas/MatriculaDetallePage.tsx` | Añadir `handleUploadConsolidado`; pasar `onUploadConsolidado` y combinar `isUploading` |
+| `src/components/matriculas/MatriculaDetailSheet.tsx` | Idem que arriba para la versión sheet |
+| `src/components/matriculas/DocumentosCarga.tsx` | Validación previa al upload (tipos seleccionados); limpiar selección tras éxito |
 
 ### Validación post-cambio
 
-- Abrir "Exportar listado" → ver el botón "Restaurar plantilla oficial" → al pulsarlo quedan marcadas exactamente las 10 columnas pedidas y el CSV sale en ese orden.
-- La columna "Código del Estudiante" aparece como opción en el catálogo (grupo "Curso") y se exporta con el código real (`FIH-R-26-04-01`, etc.).
-- Desde la fila de un estudiante, click en "Descargar CSV del estudiante" → archivo con una fila y todas las columnas del catálogo, incluyendo el código.
-- El listado masivo previo sigue funcionando igual cuando se selecciona manualmente cualquier subconjunto distinto de la plantilla oficial.
+- Ir a `/matriculas/<id>` → Requisitos documentales → Consolidado → marcar 3 requisitos → soltar PDF.
+- El PDF se sube a `documentos-matricula/{año}/{cursoId}/{cedula}/CONSOLIDADO_{ts}.pdf`.
+- Los 3 documentos pasan a `cargado` con el mismo `storage_path`, `archivo_nombre` y `fecha_carga`.
+- La preview muestra el archivo justo después de subir.
+- Al cambiar a modo Individual, los 3 docs aparecen en verde con botón "Ver" que abre el mismo PDF consolidado.
+- Recargar la página → los cambios persisten.
+- Subir un consolidado distinto sobreescribe (`upsert: true` ya activo en `driveService.uploadConsolidado`).
 
 ### Sin impacto colateral
 
-- No toca BD, RPCs ni triggers.
-- No afecta el CSV MinTrabajo (ese flujo es independiente).
-- No cambia la lógica de `useCodigosCurso` ni `EnrollmentsTable` fuera de la nueva acción.
-- No rompe selecciones libres existentes; la plantilla oficial es **opt-in** con el botón.
+- El flujo individual queda exactamente como está.
+- No se modifica `documentoService` ni `sincronizarDocumentos`.
+- No hay migración de BD; el enum ya soporta `consolidado` aunque no lo usemos como fila.
+- `driveService.uploadConsolidado` deja de ser código muerto.
+

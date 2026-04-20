@@ -104,6 +104,7 @@ export function MatriculaDetailSheet({
   const registrarPago = useRegistrarPago();
   const uploadDocumento = useUploadDocumento();
   const uploadConsolidado = useUploadConsolidado();
+  const deleteConsolidado = useDeleteConsolidado();
   const updateDocumento = useUpdateDocumento();
   const { data: personas = [] } = usePersonas();
   const { data: cursos = [] } = useCursos();
@@ -584,8 +585,9 @@ export function MatriculaDetailSheet({
             onUpload={handleUploadDoc}
             onDelete={handleDeleteDoc}
             onUploadConsolidado={handleUploadConsolidado}
+            onDeleteConsolidado={handleDeleteConsolidado}
             onFechaChange={handleDocFechaChange}
-            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending}
+            isUploading={uploadDocumento.isPending || uploadConsolidado.isPending || deleteConsolidado.isPending}
             compact
           />
         </DetailSection>

@@ -500,6 +500,8 @@ export default function MatriculaDetallePage() {
       toast({ title: error?.message || "Error al cargar consolidado", variant: "destructive" });
     }
   };
+
+  const handleDeleteDoc = async (documentoId: string) => {
     try {
       await updateDocumento.mutateAsync({
         matriculaId: matricula.id,

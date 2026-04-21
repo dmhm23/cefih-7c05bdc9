@@ -223,7 +223,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>No. Documento *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="1234567890" />
+                      <Input {...field} placeholder="Ingresar número de documento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -238,7 +238,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Nombres *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Juan Carlos" />
+                      <Input {...field} placeholder="Ingresar nombre o nombres del estudiante" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -253,7 +253,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Apellidos *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Rodríguez Pérez" />
+                      <Input {...field} placeholder="Ingresar apellidos del estudiante" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

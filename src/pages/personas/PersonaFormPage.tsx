@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/IconButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { BirthDateField } from "@/components/shared/BirthDateField";
+import { BirthDateInput } from "@/components/shared/BirthDateInput";
 import {
   Form,
   FormControl,
@@ -46,7 +46,10 @@ const personaSchema = z.object({
   apellidos: z.string().min(2, "Ingrese los apellidos"),
   genero: z.enum(['M', 'F', 'O'], { required_error: "Seleccione el género" }),
   paisNacimiento: z.string().min(1, "Seleccione el país"),
-  fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
+  fechaNacimiento: z
+    .string()
+    .min(1, "Ingrese la fecha")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (dd/mm/aaaa)"),
   rh: z.string().min(1, "Seleccione el RH"),
   
   // Datos laborales/educativos
@@ -313,7 +316,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Fecha de Nacimiento *</FormLabel>
                     <FormControl>
-                      <BirthDateField value={field.value} onChange={field.onChange} />
+                      <BirthDateInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

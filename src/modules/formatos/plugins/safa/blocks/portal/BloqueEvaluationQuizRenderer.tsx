@@ -2,7 +2,20 @@ import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, RotateCcw, Lock } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { BloqueEvaluationQuiz } from '../../types';
+
+export type QuizMode = 'interactive' | 'graded-readonly';
+
+export interface IntentoVigente {
+  puntaje: number;
+  correctas: number;
+  total: number;
+  aprobado: boolean;
+  timestamp?: string;
+  reconstruido?: boolean;
+}
 
 interface Props {
   bloque: BloqueEvaluationQuiz;
@@ -11,13 +24,79 @@ interface Props {
   readOnly?: boolean;
   submitted?: boolean;
   onRetry?: (keysToReset: string[]) => void;
+  /**
+   * 'interactive' (default) — flujo del portal (responder, retry).
+   * 'graded-readonly' — vista calificada solo lectura (Matrículas → Detalle/PDF).
+   *   En este modo se ignoran retry/submit y se muestra un ResumenCalificacionQuiz
+   *   arriba de la primera pregunta.
+   */
+  mode?: QuizMode;
+  /** Resumen del último intento (vigente). Solo aplica en modo graded-readonly. */
+  intentoVigente?: IntentoVigente | null;
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange, readOnly, submitted, onRetry }: Props) {
+function ResumenCalificacionQuiz({ intento }: { intento: IntentoVigente }) {
+  const { puntaje, correctas, total, aprobado, timestamp, reconstruido } = intento;
+  const fecha = timestamp
+    ? (() => {
+        try {
+          return format(new Date(timestamp), "d 'de' MMMM 'de' yyyy", { locale: es });
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  return (
+    <div
+      className={`quiz-graded-summary border-2 rounded-lg p-4 text-center space-y-2 ${
+        aprobado
+          ? 'border-emerald-500 bg-emerald-50'
+          : 'border-red-500 bg-red-50'
+      }`}
+      style={{ gridColumn: 'span 2' }}
+    >
+      <div className="flex items-center justify-center gap-3">
+        <Badge
+          className={`text-sm font-bold px-3 py-1 ${
+            aprobado
+              ? 'bg-emerald-600 text-white border-emerald-700'
+              : 'bg-red-600 text-white border-red-700'
+          }`}
+        >
+          {aprobado ? 'APROBADO' : 'NO APROBADO'}
+        </Badge>
+        <span className="text-2xl font-bold leading-none">{puntaje}%</span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {correctas} de {total} respuestas correctas
+        {fecha && <> · Intento del {fecha}</>}
+      </p>
+      {reconstruido && (
+        <p className="text-[10px] italic text-muted-foreground">
+          Calificación recalculada con la versión vigente del cuestionario
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function BloqueEvaluationQuizRenderer({
+  bloque,
+  answers,
+  onChange,
+  readOnly,
+  submitted,
+  onRetry,
+  mode = 'interactive',
+  intentoVigente,
+}: Props) {
   const preguntas = bloque.props?.preguntas || [];
   const umbral = bloque.props?.umbralAprobacion ?? 70;
+
+  const isGradedReadonly = mode === 'graded-readonly';
 
   const quizKey = (pregId: number) => `${bloque.id}_q${pregId}`;
   const lockedKey = (pregId: number) => `${bloque.id}_q${pregId}_locked`;
@@ -34,12 +113,13 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
   }, [answers, preguntas, umbral]);
 
   React.useEffect(() => {
+    if (isGradedReadonly) return;
     if (result && onChange) {
       onChange(`${bloque.id}_result`, result);
     }
-  }, [result?.puntaje]);
+  }, [result?.puntaje, isGradedReadonly]);
 
-  const showResult = submitted && result;
+  const showResult = !isGradedReadonly && submitted && result;
 
   const handleRetry = () => {
     if (!onRetry) return;
@@ -68,21 +148,45 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
         </Badge>
       </div>
 
+      {/* Resumen calificación arriba de la primera pregunta (solo modo graded-readonly) */}
+      {isGradedReadonly && intentoVigente && (
+        <ResumenCalificacionQuiz intento={intentoVigente} />
+      )}
+
+      {isGradedReadonly && !intentoVigente && (
+        <div
+          className="border-2 border-dashed border-border rounded-lg p-4 text-center"
+          style={{ gridColumn: 'span 2' }}
+        >
+          <p className="text-sm text-muted-foreground italic">Evaluación pendiente</p>
+        </div>
+      )}
+
       {preguntas.map((preg, idx) => {
         const selected = getSelected(preg.id);
         const locked = isLocked(preg.id);
-        const showAnswerResult = (submitted || locked) && selected !== undefined;
+        // En graded-readonly mostramos siempre el feedback (correcta/incorrecta)
+        const showAnswerResult =
+          isGradedReadonly || ((submitted || locked) && selected !== undefined);
         const isCorrect = selected === preg.correcta;
-        const questionDisabled = readOnly || submitted || locked;
+        const questionDisabled = isGradedReadonly || readOnly || submitted || locked;
 
         return (
-          <div key={preg.id} className={`border rounded-lg p-3 space-y-2 ${locked ? 'bg-emerald-50/30 border-emerald-200' : ''}`}>
+          <div
+            key={preg.id}
+            className={`border rounded-lg p-3 space-y-2 ${
+              !isGradedReadonly && locked ? 'bg-emerald-50/30 border-emerald-200' : ''
+            }`}
+          >
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium">
                 {idx + 1}. {preg.texto}
               </p>
-              {locked && (
-                <Badge variant="outline" className="shrink-0 text-[9px] border-emerald-500 text-emerald-700 bg-emerald-50">
+              {!isGradedReadonly && locked && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-[9px] border-emerald-500 text-emerald-700 bg-emerald-50"
+                >
                   <Lock className="h-2.5 w-2.5 mr-1" />
                   Correcta
                 </Badge>
@@ -91,11 +195,14 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
             <div className="space-y-1.5">
               {preg.opciones.map((opt, optIdx) => {
                 const isSelected = selected === optIdx;
-                let optClass = 'border-border bg-background';
+                let optClass = 'quiz-option-disabled border-border bg-background';
                 if (isSelected && !showAnswerResult) optClass = 'border-primary bg-primary/5';
-                if (showAnswerResult && isSelected && isCorrect) optClass = 'border-emerald-500 bg-emerald-50';
-                if (showAnswerResult && isSelected && !isCorrect) optClass = 'border-red-500 bg-red-50';
-                if (showAnswerResult && !isSelected && optIdx === preg.correcta) optClass = 'border-emerald-300 bg-emerald-50/50';
+                if (showAnswerResult && isSelected && isCorrect)
+                  optClass = 'quiz-option-correct border-emerald-500 bg-emerald-50';
+                if (showAnswerResult && isSelected && !isCorrect)
+                  optClass = 'quiz-option-incorrect border-red-500 bg-red-50';
+                if (showAnswerResult && !isSelected && optIdx === preg.correcta)
+                  optClass = 'quiz-option-correct border-emerald-300 bg-emerald-50/50';
 
                 return (
                   <button

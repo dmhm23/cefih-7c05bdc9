@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/select";
 import { dateToLocalString, parseLocalDate } from "@/utils/dateUtils";
 
+/**
+ * @deprecated Para fechas de nacimiento usar `BirthDateInput` (input manual dd/mm/aaaa).
+ * Este componente sigue disponible para otros casos donde se prefiera un calendario.
+ */
 interface BirthDateFieldProps {
   value: string;
   onChange: (value: string) => void;

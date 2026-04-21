@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DetailSheet, DetailSection } from "@/components/shared/DetailSheet";
 import { EditableField } from "@/components/shared/EditableField";
+import { BirthDateInput } from "@/components/shared/BirthDateInput";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdatePersona } from "@/hooks/usePersonas";
@@ -216,13 +217,17 @@ export function PersonaDetailSheet({
               options={[...PAISES]}
               icon={Globe}
             />
-            <EditableField
-              label="Fecha de Nacimiento"
-              value={getValue("fechaNacimiento")}
-              onChange={(v) => handleFieldChange("fechaNacimiento", v)}
-              type="date"
-              icon={Calendar}
-            />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Fecha de Nacimiento</span>
+              </div>
+              <BirthDateInput
+                value={getValue("fechaNacimiento") || ""}
+                onChange={(v) => handleFieldChange("fechaNacimiento", v)}
+                className="h-8 text-sm"
+              />
+            </div>
             <EditableField
               label="Grupo Sanguíneo"
               value={getValue("rh")}

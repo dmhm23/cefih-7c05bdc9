@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import DOMPurify from "dompurify";
 import DocumentHeader from "@/components/shared/DocumentHeader";
 import { getAutoFieldLabel } from "@/modules/formatos/plugins/safa";

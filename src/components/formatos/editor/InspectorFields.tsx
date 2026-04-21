@@ -1170,3 +1170,49 @@ function AttendanceByDayInspector({ bloque, onChange }: InspectorFieldsProps) {
     </div>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Evaluation Summary Inspector
+   ═══════════════════════════════════════════════════════════ */
+
+function EvaluationSummaryInspector({ bloque, onChange }: InspectorFieldsProps) {
+  const b = bloque as any;
+  const props = b.props || {};
+
+  // Cargar formatos del catálogo y filtrar los que tienen evaluation_quiz
+  // Importación dinámica para evitar ciclos
+  const FormatosSelect = require('./EvaluationSummaryFormatosSelect').default;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
+        <p className="text-xs text-blue-700">
+          Muestra el resultado del último intento de la evaluación enlazada, con detalle de
+          preguntas y un historial colapsable de intentos previos.
+        </p>
+      </div>
+
+      <FormatosSelect
+        value={props.formatoEvaluacionId || ''}
+        onChange={(v: string) => onChange({ props: { ...props, formatoEvaluacionId: v } } as any)}
+      />
+
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Mostrar detalle de preguntas</Label>
+        <Switch
+          checked={props.mostrarDetallePreguntas !== false}
+          onCheckedChange={(v) => onChange({ props: { ...props, mostrarDetallePreguntas: v } } as any)}
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Mostrar historial de intentos</Label>
+        <Switch
+          checked={props.mostrarHistorial !== false}
+          onCheckedChange={(v) => onChange({ props: { ...props, mostrarHistorial: v } } as any)}
+        />
+      </div>
+    </div>
+  );
+}
+

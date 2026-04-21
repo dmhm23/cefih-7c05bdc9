@@ -720,7 +720,7 @@ export default function PortalFormatoRenderer({
         <div className="divide-y divide-border/50">
           {section.bloques.map((bloque) => (
             <React.Fragment key={bloque.id}>
-              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry)}
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}
             </React.Fragment>
           ))}
         </div>
@@ -731,7 +731,7 @@ export default function PortalFormatoRenderer({
       <div className="space-y-4">
         {section.bloques.map((bloque) => (
           <React.Fragment key={bloque.id}>
-            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry)}
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}
           </React.Fragment>
         ))}
       </div>

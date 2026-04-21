@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { CheckCircle2, XCircle, RotateCcw, Lock } from 'lucide-react';
 import type { BloqueEvaluationQuiz } from '../../types';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   onChange?: (key: string, value: unknown) => void;
   readOnly?: boolean;
   submitted?: boolean;
-  onRetry?: () => void;
+  onRetry?: (keysToReset: string[]) => void;
 }
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -20,7 +20,9 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
   const umbral = bloque.props?.umbralAprobacion ?? 70;
 
   const quizKey = (pregId: number) => `${bloque.id}_q${pregId}`;
+  const lockedKey = (pregId: number) => `${bloque.id}_q${pregId}_locked`;
   const getSelected = (pregId: number) => answers[quizKey(pregId)] as number | undefined;
+  const isLocked = (pregId: number) => answers[lockedKey(pregId)] === true;
 
   const result = useMemo(() => {
     if (preguntas.length === 0) return null;
@@ -39,6 +41,22 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
 
   const showResult = submitted && result;
 
+  const handleRetry = () => {
+    if (!onRetry) return;
+    // Lock correct answers and identify keys (incorrect answers) to reset
+    const keysToReset: string[] = [];
+    preguntas.forEach((preg) => {
+      const sel = getSelected(preg.id);
+      if (sel === preg.correcta) {
+        // Mark correct answer as locked so it persists across retries
+        onChange?.(lockedKey(preg.id), true);
+      } else {
+        keysToReset.push(quizKey(preg.id));
+      }
+    });
+    onRetry(keysToReset);
+  };
+
   return (
     <div style={{ gridColumn: 'span 2' }} className="mt-2 space-y-4">
       <div className="flex items-center justify-between">
@@ -52,14 +70,24 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
 
       {preguntas.map((preg, idx) => {
         const selected = getSelected(preg.id);
-        const showAnswerResult = submitted && selected !== undefined;
+        const locked = isLocked(preg.id);
+        const showAnswerResult = (submitted || locked) && selected !== undefined;
         const isCorrect = selected === preg.correcta;
+        const questionDisabled = readOnly || submitted || locked;
 
         return (
-          <div key={preg.id} className="border rounded-lg p-3 space-y-2">
-            <p className="text-sm font-medium">
-              {idx + 1}. {preg.texto}
-            </p>
+          <div key={preg.id} className={`border rounded-lg p-3 space-y-2 ${locked ? 'bg-emerald-50/30 border-emerald-200' : ''}`}>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-medium">
+                {idx + 1}. {preg.texto}
+              </p>
+              {locked && (
+                <Badge variant="outline" className="shrink-0 text-[9px] border-emerald-500 text-emerald-700 bg-emerald-50">
+                  <Lock className="h-2.5 w-2.5 mr-1" />
+                  Correcta
+                </Badge>
+              )}
+            </div>
             <div className="space-y-1.5">
               {preg.opciones.map((opt, optIdx) => {
                 const isSelected = selected === optIdx;
@@ -73,10 +101,10 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
                   <button
                     key={optIdx}
                     type="button"
-                    disabled={readOnly || submitted}
-                    onClick={() => !readOnly && !submitted && onChange?.(quizKey(preg.id), optIdx)}
+                    disabled={questionDisabled}
+                    onClick={() => !questionDisabled && onChange?.(quizKey(preg.id), optIdx)}
                     className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 text-left transition-colors ${optClass} ${
-                      readOnly || submitted ? 'cursor-default' : 'cursor-pointer hover:bg-muted/50'
+                      questionDisabled ? 'cursor-default' : 'cursor-pointer hover:bg-muted/50'
                     }`}
                   >
                     <span className="shrink-0 w-6 h-6 rounded border flex items-center justify-center text-xs font-bold">
@@ -110,15 +138,15 @@ export default function BloqueEvaluationQuizRenderer({ bloque, answers, onChange
           <p className="text-sm text-muted-foreground">
             {result.correctas} de {result.total} correctas
           </p>
-          {!result.aprobado && onRetry && (
+          {onRetry && (
             <Button
               variant="outline"
               size="sm"
-              onClick={onRetry}
+              onClick={handleRetry}
               className="mt-2"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reintentar evaluación
+              {result.aprobado ? 'Realizar nuevo intento' : 'Reintentar para aprobar'}
             </Button>
           )}
         </div>

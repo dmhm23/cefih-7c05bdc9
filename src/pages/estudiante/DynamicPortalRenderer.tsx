@@ -34,11 +34,12 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     if (existingResp) {
       const saved = existingResp.answers || {};
       if (Object.keys(saved).length > 0) {
-        setAnswers(saved);
+        // Strip legacy "_intentos_evaluacion" key if present (now stored in dedicated column)
+        const { _intentos_evaluacion, ...clean } = saved as Record<string, unknown>;
+        setAnswers(clean);
       }
-      if (existingResp.estado === 'completado') {
-        setSubmitted(true);
-      }
+      // Note: for quizzes we DON'T set submitted=true on hydration so the student
+      // can always run a new attempt. For non-quiz formats, completed → readOnly via isCompleted.
     }
     setHydrated(true);
   }, [existingResp, loadingResp, hydrated]);
@@ -63,34 +64,21 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     ) as BloqueSignatureCapture | undefined;
   }, [formato]);
 
-  // Quiz retry handler
-  const handleQuizRetry = useCallback(() => {
-    if (!formato) return;
-    // Save current attempt to intentos_evaluacion before retrying
-    const quizBlocks = formato.bloques.filter(b => b.type === 'evaluation_quiz') as BloqueEvaluationQuiz[];
-    const currentAttempt: Record<string, unknown> = { timestamp: new Date().toISOString() };
-    quizBlocks.forEach(qb => {
-      const resultKey = `${qb.id}_result`;
-      if (answers[resultKey]) {
-        currentAttempt[qb.id] = answers[resultKey];
-      }
+  // Quiz retry handler — clears only incorrect answers (passed by the quiz block)
+  const handleQuizRetry = useCallback((keysToReset: string[]) => {
+    setAnswers(prev => {
+      const next = { ...prev };
+      keysToReset.forEach(k => {
+        delete next[k];
+      });
+      // Also clear all *_result keys so the next attempt recalculates fresh
+      Object.keys(next).forEach(k => {
+        if (k.endsWith('_result')) delete next[k];
+      });
+      return next;
     });
-
-    // Save attempt via formato_respuestas (intentos_evaluacion is handled server-side via the answers)
-    const intentosPrevios = (existingResp?.intentosEvaluacion || []) as unknown[];
-    const updatedIntentos = [...intentosPrevios, currentAttempt];
-
-    // Persist the attempt record
-    saveRespuestaMutation.mutate({
-      matriculaId,
-      formatoId,
-      answers: { ...answers, _intentos_evaluacion: updatedIntentos },
-      estado: 'pendiente',
-    });
-
-    // Reset submitted state but keep answers pre-filled for correction
     setSubmitted(false);
-  }, [formato, answers, existingResp, matriculaId, formatoId, saveRespuestaMutation]);
+  }, []);
 
   if (isLoading || !hydrated) {
     return (
@@ -129,12 +117,40 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
         } : undefined,
       });
 
+      // For quizzes: append this attempt to the canonical intentos_evaluacion column
+      let intentosEvaluacion: Record<string, unknown>[] | undefined;
+      if (hasQuiz) {
+        const quizBlocks = formato.bloques.filter(b => b.type === 'evaluation_quiz') as BloqueEvaluationQuiz[];
+        const intentoEntries: Record<string, unknown> = {};
+        quizBlocks.forEach(qb => {
+          const resultKey = `${qb.id}_result`;
+          const r = answers[resultKey] as { puntaje?: number; correctas?: number; total?: number; aprobado?: boolean } | undefined;
+          if (r) {
+            intentoEntries[qb.id] = {
+              puntaje: r.puntaje,
+              correctas: r.correctas,
+              total: r.total,
+              aprobado: r.aprobado,
+            };
+          }
+        });
+        const previos = (existingResp?.intentosEvaluacion || []) as Record<string, unknown>[];
+        intentosEvaluacion = [
+          ...previos,
+          {
+            timestamp: new Date().toISOString(),
+            resultados: intentoEntries,
+          },
+        ];
+      }
+
       // Also persist to formato_respuestas as completed
       saveRespuestaMutation.mutate({
         matriculaId,
         formatoId,
         answers,
         estado: 'completado',
+        intentosEvaluacion,
       });
 
       if (hasQuiz) {
@@ -150,7 +166,9 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     }
   };
 
-  const isCompleted = submitted || existingResp?.estado === 'completado';
+  // For formats with quiz: completion is local-only so the student can always retry.
+  // For non-quiz formats: respect the persisted "completado" state to lock the form.
+  const isCompleted = hasQuiz ? submitted : (submitted || existingResp?.estado === 'completado');
 
   return (
     <div className="min-h-screen bg-background">

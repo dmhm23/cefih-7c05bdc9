@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BirthDateField } from "@/components/shared/BirthDateField";
+import { BirthDateInput } from "@/components/shared/BirthDateInput";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -46,7 +46,10 @@ const personaSchema = z.object({
   apellidos: z.string().min(2, "Ingrese los apellidos"),
   genero: z.enum(['M', 'F']),
   paisNacimiento: z.string().min(1, "Seleccione el país"),
-  fechaNacimiento: z.string().min(1, "Seleccione la fecha"),
+  fechaNacimiento: z
+    .string()
+    .min(1, "Ingrese la fecha")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (dd/mm/aaaa)"),
   rh: z.string().min(1, "Seleccione el RH"),
   nivelEducativo: z.string().min(1, "Seleccione el nivel"),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -245,7 +248,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Fecha de Nacimiento *</FormLabel>
                     <FormControl>
-                      <BirthDateField value={field.value} onChange={field.onChange} />
+                      <BirthDateInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

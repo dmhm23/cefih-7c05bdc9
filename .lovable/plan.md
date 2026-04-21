@@ -1,63 +1,69 @@
 
-## Plan: Sincronizar fechas de ARL y Examen Médico en la tabla de matrículas
 
-### Causa raíz
+## Plan: Captura manual dd/mm/aaaa para Fecha de Nacimiento
 
-La tabla `/matriculas` carga datos vía `useMatriculasPaginated` → `matriculaService.getPage()`, que solo hace `select('*, personas!inner(...)')` sobre `matriculas`. **Nunca trae `documentos_matricula`.** En `rowToMatricula` (línea ~16 de `matriculaService.ts`), `documentos` se inicializa como `[]`.
+### Causa raíz del cambio
 
-Resultado: en `MatriculasPage.tsx` líneas 137-142, `getDocumentoFecha` busca `m.documentos.find(d => d.tipo === 'arl')` → siempre `undefined` → siempre devuelve `"-"`. Aunque el usuario haya guardado las fechas correctamente en `documentos_matricula` (verificado en BD: hay filas `arl` con `fecha_inicio_cobertura` y `examen_medico` con `fecha_documento`), el listado nunca las ve.
+Hoy la fecha de nacimiento se captura con `BirthDateField`, un popover con calendario + selector de mes/año. El usuario quiere reemplazar eso por un input numérico tipo máscara **`dd/mm/aaaa`**, escrito a mano, igual al patrón habitual de cédulas/documentos físicos. Más rápido, más natural para un dato que casi nadie elige "haciendo clic en un calendario".
 
-El mismo problema afecta a `getEstadoDocumental` (línea 144) — la columna "Estado Documental" siempre dice "Pendiente" por la misma razón. Y aplica a `EnrollmentsTable.tsx` (cursos) que usa `useMatriculas` → `getAll`, donde tampoco se traen documentos.
+**Lo importante**: el formato de almacenamiento en BD **no cambia**. La columna `personas.fecha_nacimiento` es `date` (PostgreSQL), y todo el front la maneja como string `YYYY-MM-DD`. Solo cambia la capa de captura/visualización en formularios.
 
-### Solución
+### Decisión arquitectónica
 
-Traer las fechas relevantes desde BD junto con cada matrícula y exponerlas al front como campos derivados, sin cargar el array completo de documentos (que sería costoso en listas grandes).
+Crear un único componente reutilizable **`BirthDateInput`** (input enmascarado dd/mm/aaaa), y reemplazar todas las apariciones de `BirthDateField` por él. Esto centraliza el comportamiento y deja la puerta abierta para reutilizarlo en futuros campos de fecha manual (vencimientos, fechas de certificación, etc.) sin tocar nada del modelo de datos.
 
-**1. `src/services/matriculaService.ts` — `getPage`**
+### Comportamiento del nuevo `BirthDateInput`
 
-Agregar un join lateral a `documentos_matricula` filtrando solo los tipos que la tabla necesita:
-
-```ts
-.select(`
-  *,
-  personas!inner(id, nombres, apellidos, numero_documento, telefono),
-  documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)
-`, { count: 'exact' })
-```
-
-En `rowToMatricula`, mapear los documentos embebidos al campo `documentos` (parcial: solo los campos necesarios para la tabla — tipo, estado, fechas, opcional). El resto del shape (`storagePath`, `archivoNombre`, etc.) sigue llegando solo en `getById`.
-
-**2. `src/services/matriculaService.ts` — `getAll` y `getByCursoId` (mismo fix simétrico)**
-
-Aplicar el mismo cambio para que `EnrollmentsTable` y otros consumidores de listas también vean las fechas. Es un join económico (Supabase ya lo soporta con la sintaxis embebida) y elimina deuda silenciosa.
-
-**3. Cómputo de "Estado Documental"**
-
-Con `documentos` ya poblado parcialmente, `getEstadoDocumental` empieza a funcionar correctamente como bonus — sin tocar nada en la página.
-
-**4. Compatibilidad con consolidado**
-
-La fila `tipo='consolidado'` también vendrá en el join. `getDocumentoFecha` busca por `d.tipo === 'arl'` o `'examen_medico'` específicamente, así que no genera ruido. Para `getEstadoDocumental`, el conteo seguirá funcionando porque la fila consolidado tiene `estado='cargado'` y los individuales que cubre permanecen `pendiente` — es coherente con el modelo actual donde, sin lógica adicional, una matrícula cubierta solo por consolidado seguirá apareciendo como "Pendiente" en esta columna. Eso es consistente con lo decidido en la iteración previa (ver "Sin impacto colateral" del plan anterior: "se asume que basta con la consistencia visual en la página de matrícula"). **No se cambia el cómputo aquí**; queda para una iteración futura si se quiere unificar.
+- **Visual**: input de texto con máscara `dd/mm/aaaa` (placeholder `01/01/1990`).
+- **Auto-formato al escribir**: solo dígitos; inserta automáticamente las `/` después del día y del mes. Permite borrar normalmente.
+- **Acepta pegado**: si el usuario pega `1990-06-15`, `15/06/1990`, `15-06-1990`, etc., se normaliza al formato visual.
+- **Validación**: al perder foco (`onBlur`) valida:
+  - 10 caracteres con formato `dd/mm/aaaa`.
+  - Día válido para el mes (incluye años bisiestos).
+  - Año entre 1900 y el año actual − 10 (rango razonable; el límite inferior amplio para no rechazar adultos mayores ya cargados).
+  - Fecha no futura.
+- **Errores**: muestra mensaje inline (`<FormMessage>`) usando el sistema de validación existente (zod ya valida `min(1)`; añadiremos un `refine` que verifique formato `YYYY-MM-DD` resultante).
+- **Output**: el `onChange` siempre emite **`YYYY-MM-DD`** (vacío si la fecha aún es inválida o incompleta), de modo que el resto del sistema (servicios, tablas, exportaciones, certificados) sigue intacto.
+- **Edición**: al recibir un `value` `YYYY-MM-DD` existente, lo muestra como `dd/mm/aaaa` automáticamente, así que toda persona ya guardada se ve y se edita igual.
 
 ### Archivos tocados
 
 | Archivo | Cambio |
 |---|---|
-| `src/services/matriculaService.ts` | `getPage`, `getAll`, `getByCursoId`: añadir embed `documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)`. En `rowToMatricula` (o en el mapeo local de cada método) poblar `documentos` con los campos parciales. |
+| `src/components/shared/BirthDateInput.tsx` | **Nuevo**. Input enmascarado dd/mm/aaaa con auto-formato, paste-friendly, validación onBlur, output `YYYY-MM-DD`. |
+| `src/pages/personas/PersonaFormPage.tsx` | Reemplaza `BirthDateField` por `BirthDateInput`. Refuerza schema zod: `fechaNacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (dd/mm/aaaa)")`. |
+| `src/components/matriculas/CrearPersonaModal.tsx` | Reemplaza `BirthDateField` por `BirthDateInput`. Mismo refuerzo de schema. |
+| `src/components/personas/PersonaDetailSheet.tsx` | El campo "Fecha de Nacimiento" deja de usar `EditableField type="date"` (popover) y pasa a usar `BirthDateInput` envuelto en una variante inline editable (mismo patrón visual: chevron lápiz + guardar/cancelar). |
+| `src/components/shared/BirthDateField.tsx` | **Se conserva** por ahora: aún es útil en otros contextos donde el calendario es preferible. Pero queda **no usado** para fecha de nacimiento. (Marcamos en su JSDoc "deprecated para fechas de nacimiento; usar BirthDateInput".) Puede limpiarse en un PR posterior si se confirma que no se usa en otros lados. |
+
+### Compatibilidad con datos existentes
+
+- **Cero migración SQL**. Las personas ya creadas tienen `fecha_nacimiento` en formato `YYYY-MM-DD`. El nuevo input las recibe y las muestra como `dd/mm/aaaa` automáticamente.
+- **Cero impacto** en exportación CSV MinTrabajo, certificados, plantillas de PDF, autocompletado de tokens, listados, filtros — todos siguen leyendo el string `YYYY-MM-DD` que el componente sigue emitiendo.
+- **Importación masiva** (`personaPlantilla.ts`): no se toca; ya parsea fechas desde Excel y normaliza a `YYYY-MM-DD`. Sigue compatible.
+- **Portal estudiante** (`portalEstudianteService.ts`): solo lee, no escribe — sin cambio.
+
+### Configuraciones futuras
+
+Una vez probado en personas, este `BirthDateInput` queda disponible para:
+
+- Fechas de cobertura/vencimiento de documentos donde hoy se usa `DateField`.
+- Fecha de certificación previa, fecha de expedición de cédula, etc.
+
+No se reemplazan ahora — solo se documenta el componente y queda listo para adopción gradual.
 
 ### Validación post-cambio
 
-- En `/matriculas`, las matrículas cargadas previamente con ARL o examen médico muestran las fechas correctas en las columnas "Fecha Cobertura ARL" y "Fecha Examen".
-- Caso real verificado en BD:
-  - matrícula `b1c01c77…` (ARL, `fecha_inicio_cobertura=2026-04-21`) → debe mostrar `21/04/2026` en columna ARL.
-  - matrícula `028d3c57…` (examen, `fecha_documento=2025-10-02`) → debe mostrar `02/10/2025` en columna Examen.
-- En `/cursos/<id>` la tabla de matriculados también empieza a mostrar fechas (`getArlDate` / `getExamDate` en `EnrollmentsTable.tsx` ya estaban listas).
-- Editar una fecha en el detalle de matrícula → recargar `/matriculas` → la nueva fecha aparece.
-- "Estado Documental" muestra "Completo" cuando todos los obligatorios individuales están cargados.
+- **Crear persona** (`/personas/nueva` y modal en matrícula): escribir `15071990` autocompleta a `15/07/1990`; al guardar persiste `1990-07-15` en BD.
+- **Editar persona existente** (`/personas/<id>` y panel de detalle): la fecha actual se ve como `dd/mm/aaaa`; cambiarla a otro valor válido se guarda correctamente.
+- **Pegar** `1985-06-15` o `15-06-1985` se normaliza al visual `15/06/1985`.
+- **Errores**: `32/13/2050` → mensaje "Fecha inválida"; `15/02/2030` (futuro) → "La fecha no puede ser futura"; `15/02/1899` → "Año fuera de rango".
+- **Listado de personas** y filtros de cumpleaños/fecha siguen mostrando exactamente lo mismo que antes (solo cambió la captura).
+- **Certificados y exportación CSV** no se afectan: la cadena `YYYY-MM-DD` continúa fluyendo igual.
 
 ### Sin impacto colateral
 
-- No se modifica BD, RLS, tipos generados ni la interfaz `DocumentoRequerido`.
-- `getById` sigue intacto — el detalle completo de documentos (storage, archivo) no se duplica.
-- El join embebido aumenta levemente el payload por matrícula (≈4 campos × N documentos), pero PostgREST lo resuelve en una sola query.
-- No se rompe ningún consumidor: `documentos` pasa de array vacío a array parcial — los campos no incluidos siguen siendo `undefined` igual que antes.
+- Cero cambios en BD, RLS, tipos generados (`Persona.fechaNacimiento: string`), servicios o hooks.
+- Cero cambios en `BirthDateField` (queda disponible si en algún módulo se prefiere calendario).
+- Cero impacto en módulos que solo leen la fecha (cursos, matrículas, certificación, portal).
+

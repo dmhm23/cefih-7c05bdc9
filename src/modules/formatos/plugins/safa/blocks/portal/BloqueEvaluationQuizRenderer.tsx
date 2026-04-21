@@ -38,16 +38,7 @@ interface Props {
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 function ResumenCalificacionQuiz({ intento }: { intento: IntentoVigente }) {
-  const { puntaje, correctas, total, aprobado, timestamp, reconstruido } = intento;
-  const fecha = timestamp
-    ? (() => {
-        try {
-          return format(new Date(timestamp), "d 'de' MMMM 'de' yyyy", { locale: es });
-        } catch {
-          return null;
-        }
-      })()
-    : null;
+  const { puntaje, correctas, total, aprobado } = intento;
 
   return (
     <div
@@ -72,13 +63,7 @@ function ResumenCalificacionQuiz({ intento }: { intento: IntentoVigente }) {
       </div>
       <p className="text-xs text-muted-foreground">
         {correctas} de {total} respuestas correctas
-        {fecha && <> · Intento del {fecha}</>}
       </p>
-      {reconstruido && (
-        <p className="text-[10px] italic text-muted-foreground">
-          Calificación recalculada con la versión vigente del cuestionario
-        </p>
-      )}
     </div>
   );
 }

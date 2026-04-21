@@ -26,6 +26,7 @@ import {
   BloqueEvaluationQuizRenderer,
   BloqueSatisfactionSurveyRenderer,
 } from "@/modules/formatos/plugins/safa/blocks/portal";
+import type { QuizMode, IntentoVigente } from "@/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +57,8 @@ interface PortalFormatoRendererProps {
   signatureProps?: SignatureProps;
   submitted?: boolean;
   onQuizRetry?: (keysToReset: string[]) => void;
+  quizMode?: QuizMode;
+  intentosVigentesByBloqueId?: Record<string, IntentoVigente | null>;
 }
 
 // ---------------------------------------------------------------------------
@@ -409,7 +412,9 @@ function renderPortalBlock(
   onChange?: (key: string, value: unknown) => void,
   readOnly?: boolean,
   submitted?: boolean,
-  onQuizRetry?: (keysToReset: string[]) => void
+  onQuizRetry?: (keysToReset: string[]) => void,
+  quizMode?: QuizMode,
+  intentosVigentesByBloqueId?: Record<string, IntentoVigente | null>
 ): React.ReactNode {
   if (!evaluateVisibility(bloque, answers)) return null;
 
@@ -423,7 +428,7 @@ function renderPortalBlock(
     return (
       <div key={bloque.id} className="space-y-3">
         {children.map((child) => (
-          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>
+          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}</React.Fragment>
         ))}
       </div>
     );
@@ -434,8 +439,8 @@ function renderPortalBlock(
     const row = bloque as unknown as Row2Block;
     return (
       <div className="grid grid-cols-2 gap-3" key={bloque.id}>
-        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
-        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
+        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}</React.Fragment>)}</div>
+        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}</React.Fragment>)}</div>
       </div>
     );
   }
@@ -617,6 +622,8 @@ function renderPortalBlock(
           readOnly={readOnly}
           submitted={submitted}
           onRetry={onQuizRetry}
+          mode={quizMode ?? 'interactive'}
+          intentoVigente={intentosVigentesByBloqueId?.[bloque.id] ?? null}
         />
       );
 
@@ -656,6 +663,8 @@ export default function PortalFormatoRenderer({
   signatureProps,
   submitted,
   onQuizRetry,
+  quizMode,
+  intentosVigentesByBloqueId,
 }: PortalFormatoRendererProps) {
   const bloques = formato.bloques || [];
 
@@ -711,7 +720,7 @@ export default function PortalFormatoRenderer({
         <div className="divide-y divide-border/50">
           {section.bloques.map((bloque) => (
             <React.Fragment key={bloque.id}>
-              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry)}
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}
             </React.Fragment>
           ))}
         </div>
@@ -722,7 +731,7 @@ export default function PortalFormatoRenderer({
       <div className="space-y-4">
         {section.bloques.map((bloque) => (
           <React.Fragment key={bloque.id}>
-            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry)}
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry, quizMode, intentosVigentesByBloqueId)}
           </React.Fragment>
         ))}
       </div>

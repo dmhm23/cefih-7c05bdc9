@@ -1,155 +1,143 @@
-## Plan: Reflejar la calificación del quiz dentro del formato de evaluación (vista admin / PDF)
 
-### Objetivo
 
-Cuando un aprendiz responde una evaluación tipo `evaluation_quiz` en el portal y la envía, esa **misma vista calificada** (con badges ✓/✗ por opción, opciones correctas resaltadas y opciones incorrectas marcadas) debe verse igual al abrir el formato desde **Matrículas → Detalle → Formato** y al abrirlo como vista previa, **imprimirlo o descargarlo como PDF**. La única diferencia es que arriba de la primera pregunta aparece un **resumen de calificación** (puntaje, badge APROBADO/NO APROBADO).
+## Plan: Limpiar resumen de calificación + persistir vista calificada al refrescar el portal
 
-### Comportamiento sobre reintentos
+### Problema 1 — Resumen con metadatos innecesarios
 
-- El formato **siempre** muestra **el último intento aprobado**.
-- Si nunca hay un intento aprobado, muestra el último intento (reprobado).
-- Los intentos anteriores se descartan visualmente — el formato no muestra historial. El array `intentos_evaluacion` puede mantenerse en BD como log auditable, pero el renderer solo lee el “vigente”.
+`ResumenCalificacionQuiz` (dentro de `BloqueEvaluationQuizRenderer.tsx`) muestra:
+- "· Intento del 21 de abril de 2026"
+- "Calificación recalculada con la versión vigente del cuestionario"
 
-### Por qué un solo cambio en el renderer y no un bloque nuevo
+Ambos elementos deben eliminarse. El resumen quedará minimalista: badge APROBADO/NO APROBADO + puntaje + "8 de 10 respuestas correctas".
 
-El bloque `evaluation_quiz` ya existe, ya tiene la lógica visual de pintar correcta/incorrecta (la usa el portal cuando `submitted=true`), y ya guarda los datos necesarios en `formato_respuestas.answers` (selecciones del estudiante) y en `intentos_evaluacion` (puntaje, correctas, total, aprobado).
+### Problema 2 — Vista calificada se pierde al refrescar el portal
 
-La forma óptima es **enseñarle al renderer documental (`DynamicFormatoDocument`) y al renderer del bloque a entrar en “modo calificado de solo lectura”** cuando detecten que existe un intento registrado, reutilizando el mismo componente que pinta el portal post-submit. Sin tablas nuevas, sin migraciones, sin bloques adicionales, sin acoplamiento entre módulos.
+#### Causa raíz
 
-### Arquitectura propuesta
+En `DynamicPortalRenderer.tsx` (líneas 41–42), al hidratar respuestas existentes hay un comentario explícito:
 
-```
-formato_respuestas
-├─ answers              ← selecciones del estudiante (ya existe)
-└─ intentos_evaluacion  ← [{timestamp, resultados, aprobado, ...}] (ya existe)
-                          el renderer toma el último con aprobado=true,
-                          o el último a secas si ninguno aprobó
+> "for quizzes we DON'T set submitted=true on hydration so the student can always run a new attempt"
 
-         ↓ leído por
+Esto provoca que tras refrescar:
+- `submitted = false` → el quiz se renderiza **interactivo** (modo por defecto).
+- `answers` sí se hidrata con las selecciones previas → las opciones aparecen marcadas como si el estudiante estuviera a punto de enviar.
+- Aparece el botón "Enviar evaluación".
+- No se pintan los badges ✓/✗ ni el resumen APROBADO/NO APROBADO.
 
-DynamicFormatoDocument (vista admin/PDF)
-         ↓
-    BloqueEvaluationQuizRenderer
-         · modo: "graded-readonly"
-         · pinta selecciones, ✓/✗, opciones bloqueadas
-         · muestra ResumenCalificacion ARRIBA de la 1ª pregunta
-```
+El resultado es confuso: parece un formulario a medio diligenciar, no una evaluación ya completada.
+
+#### Solución óptima
+
+Hidratar el portal en **modo graded-readonly** (la misma vista que ya funciona en Matrículas/PDF) cuando el estudiante regresa después de haber completado al menos un intento. Para reintentar, se ofrece un botón explícito que limpia el estado y reinicia el flujo interactivo.
+
+Comportamiento por escenario en `/estudiante`:
+
+| Estado en BD | Vista que se muestra al cargar |
+|---|---|
+| Sin `formato_respuestas` o sin `intentos_evaluacion` | Modo interactivo (igual que hoy) |
+| `intentos_evaluacion` con al menos un intento | **Modo graded-readonly** con resumen + ✓/✗ + botón "Realizar nuevo intento" |
+| Acaba de hacer submit en esta sesión (`submitted=true`) | Modo graded-readonly (ya funciona) |
 
 ### Cambios técnicos
 
-#### 1. Nuevo modo `graded-readonly` en `BloqueEvaluationQuizRenderer.tsx`
+#### 1. `BloqueEvaluationQuizRenderer.tsx` — limpiar resumen
 
-Hoy el componente tiene dos modos implícitos:
+En el subcomponente `ResumenCalificacionQuiz`:
+- Eliminar el bloque que arma `fecha` desde `timestamp` y el segmento `· Intento del {fecha}` del párrafo de correctas/total.
+- Eliminar completamente el `<p>` con la nota "Calificación recalculada con la versión vigente del cuestionario" (y el flag `reconstruido` deja de usarse en UI).
+- Mantener intacto el resto: badge APROBADO/NO APROBADO, puntaje grande, línea "X de Y respuestas correctas".
 
-- **Edición** (`!submitted`): el aprendiz puede seleccionar opciones.
-- **Calificado post-submit** (`submitted=true`): muestra ✓/✗ y bloquea opciones.
+#### 2. `DynamicPortalRenderer.tsx` — hidratar como graded-readonly cuando hay intentos
 
-Se agrega una prop `mode?: 'interactive' | 'graded-readonly'` (default `interactive`). En `graded-readonly`:
+a) Reemplazar el flag `submitted` simple por una distinción entre:
+- `justSubmitted` (booleano local) — true solo cuando el usuario acaba de enviar en esta sesión.
+- `viewingGraded` (derivado) — true si `justSubmitted` o si `existingResp?.intentosEvaluacion?.length > 0`.
 
-- Todas las opciones se renderizan deshabilitadas.
-- Se muestra el feedback visual ya implementado (verde = correcta, rojo = incorrecta seleccionada, badge ✓/✗).
-- No se renderiza el botón “Reintentar”.
-- En lugar del banner de resultado al final, se muestra el **ResumenCalificacion arriba de la primera pregunta**.
+b) Calcular el `intentoVigente` al hidratar (último aprobado, fallback al último):
+```ts
+const intentos = existingResp?.intentosEvaluacion ?? [];
+const intento = intentos.findLast((i: any) => i?.aprobado) ?? intentos.at(-1);
+```
 
-Esto reutiliza ~90% del código existente. Cero duplicación.
+c) Pasar `viewingGraded` como `submitted` al `PortalFormatoRenderer` (compat con la prop existente) y adicionalmente propagar el modo graded-readonly + intentoVigente hacia el quiz.
 
-#### 2. Nuevo subcomponente `ResumenCalificacionQuiz` (interno al renderer)
+d) Ocultar el botón "Enviar evaluación" cuando `viewingGraded` es true.
 
-Vive dentro del mismo archivo `BloqueEvaluationQuizRenderer.tsx` para no fragmentar. Renderiza una tarjeta con:
+e) Reemplazar el botón "Volver al inicio" por dos acciones cuando `viewingGraded` es true:
+- **"Realizar nuevo intento"** (variant outline): limpia `answers` (quita las claves del quiz y los `_result`), pone `justSubmitted=false`, y deja al usuario en modo interactivo listo para responder otra vez.
+- **"Volver al inicio"** (variant ghost): navega a `/estudiante/inicio`.
 
-- Badge grande “APROBADO” (verde) / “NO APROBADO” (rojo).
-- Puntaje grande (ej. `80%`).
-- Línea secundaria: `8 de 10 respuestas correctas · Intento del 21 de abril de 2026`.
+#### 3. `PortalFormatoRenderer.tsx` — propagar el modo y el intento al quiz
 
-Se posiciona **antes del primer `<div>` de pregunta** dentro del `map` del componente. Estilos con tokens semánticos (`bg-accent`, `text-foreground`, `border-border`) para que se vea consistente light/dark y se imprima bien en PDF.
+a) Aceptar dos props nuevas opcionales: `quizMode?: 'interactive' | 'graded-readonly'` y `intentosVigentesByBloqueId?: Record<string, IntentoVigente | null>`.
 
-#### 3. `DynamicFormatoDocument.tsx` — detectar y aplicar el modo
+b) En el `case 'evaluation_quiz'`:
+```tsx
+<BloqueEvaluationQuizRenderer
+  ...
+  mode={quizMode ?? 'interactive'}
+  intentoVigente={intentosVigentesByBloqueId?.[bloque.id] ?? null}
+/>
+```
 
-En el `case 'evaluation_quiz'` del switch de bloques:
+c) `DynamicPortalRenderer` arma el mapa `intentosVigentesByBloqueId` recorriendo `existingResp.intentosEvaluacion` y extrayendo, por cada `bloqueId` presente en `resultados`, el último intento aprobado (o último a secas) con su `{ puntaje, correctas, total, aprobado, timestamp }`.
 
-1. Lee `respuesta?.intentosEvaluacion` (ya disponible en el contexto del documento porque el componente recibe la `formatoRespuesta`).
-2. Calcula el **intento vigente**: `intentos.findLast(i => i.aprobado) ?? intentos.at(-1)`.
-3. Si existe intento vigente: renderiza `<BloqueEvaluationQuizRenderer mode="graded-readonly" intentoVigente={...} answers={respuesta.answers} bloque={bloque} />`.
-4. Si no existe intento (formato sin presentar): renderiza el bloque en estado vacío con leyenda “Evaluación pendiente”.
+#### 4. Reset al "Realizar nuevo intento"
 
-#### 4. Reutilización en el portal (sin cambio funcional)
+Handler dentro de `DynamicPortalRenderer`:
+```ts
+const handleNewAttempt = () => {
+  setAnswers(prev => {
+    const next: Record<string, unknown> = {};
+    // Conservar claves no-quiz (firmas, otros campos) intactas
+    Object.entries(prev).forEach(([k, v]) => {
+      const isQuizKey = formato.bloques.some(b =>
+        b.type === 'evaluation_quiz' &&
+        (k.startsWith(`${b.id}_q`) || k === `${b.id}_result`)
+      );
+      if (!isQuizKey) next[k] = v;
+    });
+    return next;
+  });
+  setJustSubmitted(false);
+  setViewingGradedOverride(false); // fuerza modo interactivo aunque haya intentos previos
+};
+```
 
-El portal seguirá mostrando lo que ya muestra. Solo se asegura que cuando el portal entra en modo post-submit, también pueda usar `mode="graded-readonly"` opcionalmente, pero **no es obligatorio para esta historia**: el portal mantiene su flujo interactivo + retry. Cero regresión.
-
-#### 5. PDF / impresión
-
-`DynamicFormatoDocument` ya está conectado al sistema de impresión (`PRINT_STYLES`). Se añaden las reglas CSS necesarias para que el `ResumenCalificacionQuiz` y los badges ✓/✗ del modo calificado se rendericen con colores planos imprimibles (sin gradientes, fondos sólidos sutiles, bordes definidos). Mantiene fidelidad visual entre pantalla y PDF.
-
-### Compatibilidad con datos preexistentes
-
-#### Tres escenarios:
-
-**A. Evaluaciones nuevas (post-cambio)**: cada submit guarda `intentos_evaluacion` enriquecido. El renderer las pinta perfecto.
-
-**B. Evaluaciones legacy con `intentos_evaluacion` poblado pero sin marca de aprobación clara**: el renderer aplica el fallback `intentos.at(-1)` y deriva `aprobado` comparando puntaje vs `umbralAprobacion` del bloque. Cero pérdida de datos.
-
-**C. Evaluaciones legacy con `intentos_evaluacion = []` pero `formato_respuestas.estado = 'completado'**`: el renderer reconstruye un intento sintético al vuelo desde `answers`:
-
-1. Recorre las claves `<bloqueId>_q<id>` en `answers`.
-2. Compara contra `preg.correcta` del bloque actual.
-3. Calcula `correctas`, `total`, `puntaje`, `aprobado`.
-4. Usa `completado_at` como timestamp.
-5. Lo trata como intento vigente para renderizar.
-
-Esta reconstrucción es **solo de lectura** — no se persiste, no toca BD, no modifica `answers`. Si el formato fuente fue editado (preguntas diferentes), igual reconstruye con la definición actual y muestra una nota discreta: *“Calificación recalculada con la versión vigente del cuestionario”*. Honestidad sobre el cómputo.
-
-#### Garantías de seguridad sobre datos viejos
-
-- Cero `UPDATE` sobre `formato_respuestas` durante el render.
-- Cero migración SQL.
-- Cero borrado de información.
-- Si la reconstrucción falla por cualquier motivo, el bloque se renderiza vacío con leyenda “Evaluación registrada — detalle no disponible” en lugar de romper la página.
+Se introduce `viewingGradedOverride` (booleano de sesión) para que un click en "Nuevo intento" no rebote inmediatamente al modo graded-readonly por la presencia de intentos en BD.
 
 ### Archivos modificados
 
-
-| Archivo                                                                            | Cambio                                                                                                                                                                                                                  |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer.tsx` | Nueva prop `mode`. En `graded-readonly`: bloquea inputs, oculta botón retry, monta `ResumenCalificacionQuiz` arriba de la primera pregunta. Subcomponente interno `ResumenCalificacionQuiz`.                            |
-| `src/components/matriculas/formatos/DynamicFormatoDocument.tsx`                    | En `case 'evaluation_quiz'`: calcular intento vigente (`findLast aprobado` con fallback al último), reconstruir desde `answers` si `intentos_evaluacion` está vacío, renderizar el bloque con `mode="graded-readonly"`. |
-| `src/components/matriculas/formatos/DynamicFormatoPreviewDialog.tsx`               | Asegurar que se pasa la `formatoRespuesta` completa al `DynamicFormatoDocument` (probablemente ya lo hace; verificar).                                                                                                  |
-| Archivo de estilos de impresión (donde vivan `PRINT_STYLES`)                       | Agregar reglas para `.quiz-graded-summary`, `.quiz-option-correct`, `.quiz-option-incorrect`, `.quiz-option-disabled` con colores planos imprimibles.                                                                   |
-
+| Archivo | Cambio |
+|---|---|
+| `src/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer.tsx` | Eliminar `fecha`/timestamp y la nota "Calificación recalculada…" del `ResumenCalificacionQuiz`. |
+| `src/pages/estudiante/DynamicPortalRenderer.tsx` | Calcular `viewingGraded` (con override por "nuevo intento"); construir `intentosVigentesByBloqueId`; pasar `quizMode` e `intentos…` al renderer; reemplazar botón final por "Realizar nuevo intento" + "Volver al inicio"; ocultar "Enviar evaluación" en modo graded. |
+| `src/components/portal/PortalFormatoRenderer.tsx` | Aceptar props `quizMode` e `intentosVigentesByBloqueId`; reenviarlas al `BloqueEvaluationQuizRenderer`. |
 
 ### Validación post-cambio
 
-#### Flujos nuevos
+#### Problema 1
+- Abrir formato calificado desde Matrículas → resumen muestra solo `APROBADO 80%` + `8 de 10 respuestas correctas`. Sin fecha, sin nota de recalculado.
+- PDF idem.
 
-- Aprendiz responde y aprueba con 80% → admin abre el formato desde Matrícula → ve resumen verde “APROBADO 80% · 8 de 10 · 21 abr 2026” arriba de la pregunta 1, y cada pregunta muestra la opción que marcó con badge ✓/✗.
-- Imprime el PDF → idéntica vista, colores planos, todo legible.
-- Aprendiz reintenta y aprueba con 90% → al refrescar el formato, el resumen ahora dice 90% y las opciones reflejan las del último intento aprobado. El intento de 80% queda solo en el log.
-- Aprendiz nunca aprueba (mejor intento 60%) → se muestra el último intento con resumen rojo “NO APROBADO 60%”.
+#### Problema 2
+- Estudiante completa y aprueba evaluación → ve modo graded. **Refresca el navegador** → sigue viendo modo graded (resumen + ✓/✗ + opciones bloqueadas). Sin botón "Enviar".
+- Click en "Realizar nuevo intento" → opciones se limpian, vuelve modo interactivo, botón "Enviar evaluación" aparece, puede responder y enviar de nuevo.
+- Después del nuevo envío, ve resumen actualizado del último intento.
+- Refresca otra vez → modo graded con el último intento.
+- Estudiante que nunca ha respondido → sigue viendo modo interactivo desde el primer load (sin regresión).
+- Formatos sin `evaluation_quiz` → comportamiento idéntico al actual (sin cambio).
 
-#### Flujos retroactivos
-
-- Evaluación legacy con `intentos_evaluacion` poblado: se renderiza tomando el último vigente; se muestra correctamente con todo el detalle visual.
-- Evaluación legacy con `intentos_evaluacion = []` pero `estado = 'completado'`: se reconstruye al vuelo, se muestra resumen + detalle, con leyenda discreta sobre el recálculo si el formato fuente fue editado.
-- Evaluación pendiente (sin enviar): bloque vacío con leyenda “Evaluación pendiente”.
-
-#### Verificaciones de no-regresión
-
-- El portal del estudiante sigue funcionando exactamente igual: interactivo, con retry sobre incorrectas, con persistencia de intentos. Cero cambio funcional ahí.
-- Los formatos sin bloque `evaluation_quiz` no se ven afectados.
-- El editor de formatos no requiere cambios — se sigue insertando el `evaluation_quiz` igual que siempre.
-- El sistema de certificación sigue rigiéndose por `formato_respuestas.estado = 'completado'` — el cambio es solo de presentación.
-
-### Decisiones explícitas y trade-offs
-
-1. **“Último aprobado” vs “mejor”**: se eligió último aprobado porque es coherente con el modelo donde el último envío manda (lo mismo hace `documentos_portal`). Si más adelante se quiere “mejor histórico”, basta con cambiar la función de selección del intento vigente — un solo punto.
-2. **Sin bloque nuevo `evaluation_summary**`: se descartó porque agrega superficie al editor sin valor para este caso. El propio `evaluation_quiz` ya sabe pintarse calificado.
-3. **Sin tabla nueva**: toda la información viaja en `formato_respuestas` que ya está modelada.
-4. **Sin migración**: cero riesgo operativo, despliegue inmediato, rollback trivial (revertir código).
-5. **Resumen arriba de la 1ª pregunta**: el componente que monta el resumen vive dentro del mismo `evaluation_quiz`, así que su posición es estable y no depende de que el admin lo agregue manualmente al diseñar el formato.
+#### Verificación de no-regresión
+- Modo graded en Matrículas/PDF sigue funcionando idéntico (solo se limpia su contenido visual).
+- Hidratación de respuestas no-quiz (firmas, inputs) intacta.
+- `intentos_evaluacion` en BD no se modifica por hidratación; solo se lee.
+- El handler de "Nuevo intento" solo limpia claves del quiz; conserva firmas y otros campos.
 
 ### Sin impacto colateral
 
+- Cero cambios en BD, triggers, RLS o servicios.
+- Cero cambios en `DynamicFormatoDocument` ni en estilos de impresión.
 - Cero cambios en el editor de formatos.
-- Cero cambios en triggers ni RLS.
-- Cero cambios en flujo de certificación, cartera, matrícula, portal.
-- Cero acoplamiento nuevo entre módulos.
-- Cambio aditivo: si la prop `mode` no se pasa, el renderer se comporta exactamente como hoy.
+- Cambio aditivo en `PortalFormatoRenderer` (props nuevas opcionales con defaults seguros).
+

@@ -5,9 +5,10 @@ import { useFormatoRespuesta, useSaveFormatoRespuesta } from '@/hooks/useFormato
 import PortalFormatoRenderer from '@/components/portal/PortalFormatoRenderer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, ArrowLeft, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Send, RotateCcw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { BloqueSignatureCapture, BloqueEvaluationQuiz } from '@/modules/formatos/plugins/safa';
+import type { IntentoVigente } from '@/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer';
 
 interface Props {
   formatoId: string;
@@ -25,7 +26,8 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
   const saveRespuestaMutation = useSaveFormatoRespuesta();
 
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [viewingGradedOverride, setViewingGradedOverride] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate answers from existing response
@@ -38,8 +40,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
         const { _intentos_evaluacion, ...clean } = saved as Record<string, unknown>;
         setAnswers(clean);
       }
-      // Note: for quizzes we DON'T set submitted=true on hydration so the student
-      // can always run a new attempt. For non-quiz formats, completed → readOnly via isCompleted.
     }
     setHydrated(true);
   }, [existingResp, loadingResp, hydrated]);
@@ -64,6 +64,57 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     ) as BloqueSignatureCapture | undefined;
   }, [formato]);
 
+  // Build a map of intentoVigente per quiz block (last approved, fallback to last)
+  const intentosVigentesByBloqueId = useMemo<Record<string, IntentoVigente | null>>(() => {
+    const map: Record<string, IntentoVigente | null> = {};
+    if (!formato) return map;
+    const intentos = (existingResp?.intentosEvaluacion || []) as Array<{
+      timestamp?: string;
+      resultados?: Record<string, { puntaje?: number; correctas?: number; total?: number; aprobado?: boolean }>;
+    }>;
+    if (intentos.length === 0) return map;
+
+    formato.bloques.forEach(b => {
+      if (b.type !== 'evaluation_quiz') return;
+      // Find last approved entry that has a result for this block, or fallback to last entry with result
+      let chosen: { timestamp?: string; r: { puntaje?: number; correctas?: number; total?: number; aprobado?: boolean } } | null = null;
+      for (let i = intentos.length - 1; i >= 0; i--) {
+        const entry = intentos[i];
+        const r = entry?.resultados?.[b.id];
+        if (r && r.aprobado) {
+          chosen = { timestamp: entry.timestamp, r };
+          break;
+        }
+      }
+      if (!chosen) {
+        for (let i = intentos.length - 1; i >= 0; i--) {
+          const entry = intentos[i];
+          const r = entry?.resultados?.[b.id];
+          if (r) {
+            chosen = { timestamp: entry.timestamp, r };
+            break;
+          }
+        }
+      }
+      if (chosen) {
+        map[b.id] = {
+          puntaje: chosen.r.puntaje ?? 0,
+          correctas: chosen.r.correctas ?? 0,
+          total: chosen.r.total ?? 0,
+          aprobado: !!chosen.r.aprobado,
+          timestamp: chosen.timestamp,
+        };
+      } else {
+        map[b.id] = null;
+      }
+    });
+    return map;
+  }, [formato, existingResp]);
+
+  // Determine if we should view in graded-readonly mode (persists across refresh)
+  const hasPreviousAttempts = (existingResp?.intentosEvaluacion?.length || 0) > 0;
+  const viewingGraded = hasQuiz && !viewingGradedOverride && (justSubmitted || hasPreviousAttempts);
+
   // Quiz retry handler — clears only incorrect answers (passed by the quiz block)
   const handleQuizRetry = useCallback((keysToReset: string[]) => {
     setAnswers(prev => {
@@ -77,8 +128,26 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
       });
       return next;
     });
-    setSubmitted(false);
+    setJustSubmitted(false);
   }, []);
+
+  // "Realizar nuevo intento" handler — clears quiz keys, preserves others (signatures, inputs)
+  const handleNewAttempt = useCallback(() => {
+    if (!formato) return;
+    setAnswers(prev => {
+      const next: Record<string, unknown> = {};
+      Object.entries(prev).forEach(([k, v]) => {
+        const isQuizKey = formato.bloques.some(b =>
+          b.type === 'evaluation_quiz' &&
+          (k.startsWith(`${b.id}_q`) || k === `${b.id}_result`)
+        );
+        if (!isQuizKey) next[k] = v;
+      });
+      return next;
+    });
+    setJustSubmitted(false);
+    setViewingGradedOverride(true);
+  }, [formato]);
 
   if (isLoading || !hydrated) {
     return (
@@ -154,8 +223,9 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
       });
 
       if (hasQuiz) {
-        // Stay on page and show results
-        setSubmitted(true);
+        // Stay on page and show graded view
+        setJustSubmitted(true);
+        setViewingGradedOverride(false);
         toast({ title: 'Evaluación enviada correctamente' });
       } else {
         toast({ title: 'Documento enviado correctamente' });
@@ -166,9 +236,8 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
     }
   };
 
-  // For formats with quiz: completion is local-only so the student can always retry.
   // For non-quiz formats: respect the persisted "completado" state to lock the form.
-  const isCompleted = hasQuiz ? submitted : (submitted || existingResp?.estado === 'completado');
+  const isCompleted = hasQuiz ? viewingGraded : (justSubmitted || existingResp?.estado === 'completado');
 
   return (
     <div className="min-h-screen bg-background">
@@ -196,11 +265,13 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           onAnswerChange={handleAnswerChange}
           readOnly={isCompleted && !hasQuiz}
           firmasMatricula={firmas}
-          submitted={submitted}
+          submitted={viewingGraded}
           onQuizRetry={handleQuizRetry}
+          quizMode={viewingGraded ? 'graded-readonly' : 'interactive'}
+          intentosVigentesByBloqueId={viewingGraded ? intentosVigentesByBloqueId : undefined}
         />
 
-        {/* Submit — hide if already completed (unless quiz allows retry) */}
+        {/* Submit — hidden when viewing graded results */}
         {!isCompleted && (
           <Button
             className="w-full"
@@ -218,16 +289,26 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           </Button>
         )}
 
-        {/* After quiz submission, show back button */}
-        {submitted && hasQuiz && (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => navigate('/estudiante/inicio')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Volver al inicio
-          </Button>
+        {/* When viewing graded quiz: allow new attempt or return */}
+        {viewingGraded && (
+          <div className="space-y-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleNewAttempt}
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Realizar nuevo intento
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => navigate('/estudiante/inicio')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver al inicio
+            </Button>
+          </div>
         )}
       </div>
     </div>

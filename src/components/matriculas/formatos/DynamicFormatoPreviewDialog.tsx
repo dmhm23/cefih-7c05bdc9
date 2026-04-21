@@ -195,6 +195,13 @@ const PRINT_STYLES = `
   details { font-size: 12px; color: #6b7280; }
   summary { cursor: pointer; text-decoration: underline; }
 
+  /* ── Quiz graded summary (modo graded-readonly) ── */
+  .quiz-graded-summary { border: 2px solid #10b981; background: #ecfdf5; border-radius: 8px; padding: 16px; text-align: center; break-inside: avoid; margin: 8px 0; }
+  .quiz-graded-summary.border-red-500 { border-color: #ef4444; background: #fef2f2; }
+  .quiz-option-correct { border-color: #10b981 !important; background: #ecfdf5 !important; }
+  .quiz-option-incorrect { border-color: #ef4444 !important; background: #fef2f2 !important; }
+  .quiz-option-disabled { border-color: #e5e7eb; background: white; }
+
   /* ── Print-specific ── */
   @media print { body { padding: 5mm; } }
   input, button { print-color-adjust: exact; -webkit-print-color-adjust: exact; }

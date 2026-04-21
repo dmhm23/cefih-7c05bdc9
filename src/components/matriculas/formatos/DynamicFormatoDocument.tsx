@@ -789,9 +789,17 @@ export default function DynamicFormatoDocument({
     respuestasPrevias,
     camposAdicionalesNivel,
   };
+
+  // Locate the current formato's respuesta for graded-readonly rendering of quiz blocks.
+  const respuestaActual = useMemo(() => {
+    if (!respuestasPrevias) return null;
+    return respuestasPrevias.find((r) => r.formatoId === formato.id) || null;
+  }, [respuestasPrevias, formato.id]);
+
   const rc: RenderContext = {
     ctx, answers, onChange: onAnswerChange, readOnly,
     formatoRef: { nombre: formato.nombre, codigo: formato.codigo, version: formato.version, documentMeta: meta },
+    respuestaActual,
   };
 
   const hasHeaderBlock = bloques.some((b: any) => b.type === 'document_header');

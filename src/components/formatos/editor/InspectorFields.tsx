@@ -368,6 +368,9 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
     case 'evaluation_quiz':
       return <EvaluationQuizInspector bloque={bloque} onChange={onChange} />;
 
+    case 'evaluation_summary':
+      return <EvaluationSummaryInspector bloque={bloque} onChange={onChange} />;
+
     case 'satisfaction_survey':
       return <SatisfactionSurveyInspector bloque={bloque} onChange={onChange} />;
 

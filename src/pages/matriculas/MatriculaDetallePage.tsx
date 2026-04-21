@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EditableField } from "@/components/shared/EditableField";
+import { BirthDateInput } from "@/components/shared/BirthDateInput";
+import { Calendar } from "lucide-react";
 import { useMatricula, useUpdateMatricula, useUpdateDocumento, useRegistrarPago, useCambiarEstadoMatricula, useUploadDocumento, useUploadConsolidado, useDeleteConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
 import { useEmpresas } from "@/hooks/useEmpresas";
@@ -623,12 +625,17 @@ export default function MatriculaDetallePage() {
                     type="select"
                     options={[...GENEROS]}
                   />
-                  <EditableField
-                    label="Fecha Nacimiento"
-                    value={getPersonaValue("fechaNacimiento")}
-                    onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
-                    type="date"
-                  />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Fecha Nacimiento</span>
+                    </div>
+                    <BirthDateInput
+                      value={getPersonaValue("fechaNacimiento") || ""}
+                      onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
+                      className="h-8 text-sm"
+                    />
+                  </div>
                   <EditableField
                     label="RH"
                     value={getPersonaValue("rh")}

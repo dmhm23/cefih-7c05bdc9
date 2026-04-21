@@ -186,7 +186,84 @@ interface RenderContext {
   onChange?: (key: string, value: unknown) => void;
   readOnly: boolean;
   formatoRef?: { nombre: string; codigo: string; version: string; documentMeta?: any };
+  respuestaActual?: FormatoRespuesta | null;
 }
+
+/**
+ * Calcula el "intento vigente" para un bloque de evaluación.
+ *
+ * Estrategia (en orden):
+ *  1. Si hay intentos en `formato_respuestas.intentos_evaluacion`, toma el último
+ *     APROBADO; si ninguno aprobó, el último a secas.
+ *  2. Si no hay intentos pero la respuesta está marcada como `completado`,
+ *     reconstruye un intento sintético al vuelo desde `answers` comparando
+ *     selecciones contra `preg.correcta` actual. Solo lectura — no persiste.
+ *  3. Si nada de lo anterior aplica, devuelve null (estado "Evaluación pendiente").
+ */
+function computeIntentoVigente(
+  bloque: import("@/modules/formatos/plugins/safa").BloqueEvaluationQuiz,
+  rc: RenderContext
+): import("@/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer").IntentoVigente | null {
+  const respuesta = rc.respuestaActual;
+  const umbral = bloque.props?.umbralAprobacion ?? 70;
+  const preguntas = bloque.props?.preguntas || [];
+
+  // 1. Intentos persistidos
+  const intentos = (respuesta?.intentosEvaluacion || []) as Array<{
+    timestamp?: string;
+    resultados?: Record<string, { puntaje?: number; correctas?: number; total?: number; aprobado?: boolean }>;
+  }>;
+
+  if (intentos.length > 0) {
+    const conResultadoBloque = intentos.filter((i) => i?.resultados && i.resultados[bloque.id]);
+    const candidato =
+      [...conResultadoBloque].reverse().find((i) => i.resultados![bloque.id].aprobado === true) ??
+      conResultadoBloque[conResultadoBloque.length - 1] ??
+      null;
+
+    if (candidato) {
+      const r = candidato.resultados![bloque.id];
+      const puntaje = r.puntaje ?? 0;
+      const total = r.total ?? preguntas.length;
+      const correctas = r.correctas ?? 0;
+      const aprobado = r.aprobado ?? puntaje >= umbral;
+      return { puntaje, correctas, total, aprobado, timestamp: candidato.timestamp };
+    }
+  }
+
+  // 2. Reconstrucción al vuelo desde answers (legacy / sin intentos persistidos)
+  if (respuesta?.estado === 'completado' && preguntas.length > 0) {
+    try {
+      const answers = (respuesta.answers || {}) as Record<string, unknown>;
+      let answered = 0;
+      let correctas = 0;
+      preguntas.forEach((preg) => {
+        const sel = answers[`${bloque.id}_q${preg.id}`];
+        if (typeof sel === 'number') {
+          answered += 1;
+          if (sel === preg.correcta) correctas += 1;
+        }
+      });
+      if (answered > 0) {
+        const total = preguntas.length;
+        const puntaje = Math.round((correctas / total) * 100);
+        return {
+          puntaje,
+          correctas,
+          total,
+          aprobado: puntaje >= umbral,
+          timestamp: respuesta.completadoAt,
+          reconstruido: true,
+        };
+      }
+    } catch {
+      // fallthrough → null
+    }
+  }
+
+  return null;
+}
+
 
 function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
   const { ctx, answers, onChange, readOnly } = rc;

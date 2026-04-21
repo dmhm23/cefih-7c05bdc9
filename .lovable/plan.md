@@ -1,69 +1,74 @@
 
 
-## Plan: Captura manual dd/mm/aaaa para Fecha de Nacimiento
+## Plan: Reintento ilimitado de evaluaciones en el portal del estudiante
 
-### Causa raíz del cambio
+### Causa raíz
 
-Hoy la fecha de nacimiento se captura con `BirthDateField`, un popover con calendario + selector de mes/año. El usuario quiere reemplazar eso por un input numérico tipo máscara **`dd/mm/aaaa`**, escrito a mano, igual al patrón habitual de cédulas/documentos físicos. Más rápido, más natural para un dato que casi nadie elige "haciendo clic en un calendario".
+Hoy, cuando un aprendiz envía una evaluación desde `/estudiante`, el sistema marca la respuesta como `completado` en `formato_respuestas` y en `documentos_portal`. A partir de ahí:
 
-**Lo importante**: el formato de almacenamiento en BD **no cambia**. La columna `personas.fecha_nacimiento` es `date` (PostgreSQL), y todo el front la maneja como string `YYYY-MM-DD`. Solo cambia la capa de captura/visualización en formularios.
+1. **No puede volver a intentar si reprueba**: aunque existe el botón "Reintentar evaluación" en `BloqueEvaluationQuizRenderer`, el flujo en `DynamicPortalRenderer.handleQuizRetry` solo hace `setSubmitted(false)` sin limpiar respuestas incorrectas, y al re-enviar sobrescribe pero **no se vuelve a poder intentar** porque al recargar la página `existingResp.estado === 'completado'` reactiva el modo bloqueado.
+2. **Solo muestra retry si reprobó**: si aprobó (≥ umbral) no tiene cómo repetir la evaluación aunque quiera mejorar el puntaje — el usuario pidió "cuantas veces lo necesite".
+3. **No diferencia preguntas correctas de incorrectas en el reintento**: el usuario quiere repetir **solo las que quedaron mal**, no todas otra vez.
+4. **El historial de intentos se está guardando mal**: se persiste un campo `_intentos_evaluacion` dentro del JSON `answers` en lugar de usar la columna real `intentos_evaluacion` de `formato_respuestas` (que ya existe en BD, tipo `jsonb`, default `[]`).
 
-### Decisión arquitectónica
+### Solución
 
-Crear un único componente reutilizable **`BirthDateInput`** (input enmascarado dd/mm/aaaa), y reemplazar todas las apariciones de `BirthDateField` por él. Esto centraliza el comportamiento y deja la puerta abierta para reutilizarlo en futuros campos de fecha manual (vencimientos, fechas de certificación, etc.) sin tocar nada del modelo de datos.
+#### 1. Permitir reintentos ilimitados (apruebe o repruebe)
 
-### Comportamiento del nuevo `BirthDateInput`
+En `BloqueEvaluationQuizRenderer.tsx`:
+- Mostrar el botón **"Realizar nuevo intento"** siempre que `submitted && onRetry` exista (no solo cuando reprobó).
+- Etiqueta dinámica: "Reintentar para aprobar" si reprobó, "Realizar nuevo intento" si aprobó.
 
-- **Visual**: input de texto con máscara `dd/mm/aaaa` (placeholder `01/01/1990`).
-- **Auto-formato al escribir**: solo dígitos; inserta automáticamente las `/` después del día y del mes. Permite borrar normalmente.
-- **Acepta pegado**: si el usuario pega `1990-06-15`, `15/06/1990`, `15-06-1990`, etc., se normaliza al formato visual.
-- **Validación**: al perder foco (`onBlur`) valida:
-  - 10 caracteres con formato `dd/mm/aaaa`.
-  - Día válido para el mes (incluye años bisiestos).
-  - Año entre 1900 y el año actual − 10 (rango razonable; el límite inferior amplio para no rechazar adultos mayores ya cargados).
-  - Fecha no futura.
-- **Errores**: muestra mensaje inline (`<FormMessage>`) usando el sistema de validación existente (zod ya valida `min(1)`; añadiremos un `refine` que verifique formato `YYYY-MM-DD` resultante).
-- **Output**: el `onChange` siempre emite **`YYYY-MM-DD`** (vacío si la fecha aún es inválida o incompleta), de modo que el resto del sistema (servicios, tablas, exportaciones, certificados) sigue intacto.
-- **Edición**: al recibir un `value` `YYYY-MM-DD` existente, lo muestra como `dd/mm/aaaa` automáticamente, así que toda persona ya guardada se ve y se edita igual.
+En `DynamicPortalRenderer.tsx`:
+- Después de submit con quiz, NO bloquear el formulario aunque `existingResp.estado === 'completado'`. Cambiar la condición `readOnly={isCompleted && !hasQuiz}` ya está correcta, pero falta que el botón principal "Enviar evaluación" se vuelva a mostrar tras reintentar. Hoy se oculta por `!isCompleted` y al recargar la página `submitted=true` → no aparece. Solución: para formatos con quiz, derivar `isCompleted` solo de `submitted` (estado local), no de `existingResp.estado`. Así, al hacer retry, `setSubmitted(false)` reactiva el botón.
+
+#### 2. Reintento "solo las preguntas mal contestadas"
+
+En `BloqueEvaluationQuizRenderer.tsx`:
+- Al disparar `onRetry`, identificar las preguntas con `selected !== preg.correcta` y limpiar **solo esas respuestas** (las correctas se conservan visualmente y siguen contando).
+- Las preguntas correctas se renderizan deshabilitadas con check verde fijo (`disabled` + estilo "bloqueado correcto"); las incorrectas vuelven a ser seleccionables.
+- El cálculo de `result` en el siguiente intento sumará: correctas previas + nuevas correctas. Si el usuario marca diferente en una correcta previa (no podrá, está deshabilitada), se mantiene la respuesta original.
+
+En `DynamicPortalRenderer.tsx`:
+- `handleQuizRetry` debe recibir desde el bloque la lista de claves a limpiar. Cambiar la firma a `onQuizRetry?: (keysToReset: string[]) => void` y propagarla a través de `PortalFormatoRenderer` → `renderPortalBlock` → `BloqueEvaluationQuizRenderer`.
+- Al ejecutarse, hace `setAnswers(prev => { const next = {...prev}; keysToReset.forEach(k => delete next[k]); return next; })` y `setSubmitted(false)`.
+
+#### 3. Historial de intentos correcto
+
+En `DynamicPortalRenderer.tsx`:
+- Al hacer submit con quiz, antes de persistir la nueva respuesta, registrar el intento previo en `intentos_evaluacion` (columna real). Cada intento guarda: `{ timestamp, puntaje, correctas, total, aprobado, answers_snapshot }`.
+- Eliminar el campo `_intentos_evaluacion` que se inyectaba dentro de `answers`.
+
+Esto requiere extender `useSaveFormatoRespuesta` y `formatoRespuestaService.upsert` para aceptar opcionalmente `intentosEvaluacion: Record<string, unknown>[]` y mapearlo a `intentos_evaluacion` en el upsert. Sin migración SQL — la columna ya existe.
+
+#### 4. Sin tocar el bloqueo de documentos dependientes
+
+`enviarFormatoDinamico` seguirá marcando `documentos_portal.estado='completado'` en cada envío, lo cual desbloquea documentos dependientes (comportamiento esperado: aprobó al menos una vez). Si el último intento reprueba, igual queda como completado en el portal — esto es coherente con el modelo actual: el "envío" cuenta, y el puntaje histórico queda en `intentos_evaluacion`. Los administradores pueden ver el mejor / último puntaje desde el detalle de matrícula.
 
 ### Archivos tocados
 
 | Archivo | Cambio |
 |---|---|
-| `src/components/shared/BirthDateInput.tsx` | **Nuevo**. Input enmascarado dd/mm/aaaa con auto-formato, paste-friendly, validación onBlur, output `YYYY-MM-DD`. |
-| `src/pages/personas/PersonaFormPage.tsx` | Reemplaza `BirthDateField` por `BirthDateInput`. Refuerza schema zod: `fechaNacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida (dd/mm/aaaa)")`. |
-| `src/components/matriculas/CrearPersonaModal.tsx` | Reemplaza `BirthDateField` por `BirthDateInput`. Mismo refuerzo de schema. |
-| `src/components/personas/PersonaDetailSheet.tsx` | El campo "Fecha de Nacimiento" deja de usar `EditableField type="date"` (popover) y pasa a usar `BirthDateInput` envuelto en una variante inline editable (mismo patrón visual: chevron lápiz + guardar/cancelar). |
-| `src/components/shared/BirthDateField.tsx` | **Se conserva** por ahora: aún es útil en otros contextos donde el calendario es preferible. Pero queda **no usado** para fecha de nacimiento. (Marcamos en su JSDoc "deprecated para fechas de nacimiento; usar BirthDateInput".) Puede limpiarse en un PR posterior si se confirma que no se usa en otros lados. |
-
-### Compatibilidad con datos existentes
-
-- **Cero migración SQL**. Las personas ya creadas tienen `fecha_nacimiento` en formato `YYYY-MM-DD`. El nuevo input las recibe y las muestra como `dd/mm/aaaa` automáticamente.
-- **Cero impacto** en exportación CSV MinTrabajo, certificados, plantillas de PDF, autocompletado de tokens, listados, filtros — todos siguen leyendo el string `YYYY-MM-DD` que el componente sigue emitiendo.
-- **Importación masiva** (`personaPlantilla.ts`): no se toca; ya parsea fechas desde Excel y normaliza a `YYYY-MM-DD`. Sigue compatible.
-- **Portal estudiante** (`portalEstudianteService.ts`): solo lee, no escribe — sin cambio.
-
-### Configuraciones futuras
-
-Una vez probado en personas, este `BirthDateInput` queda disponible para:
-
-- Fechas de cobertura/vencimiento de documentos donde hoy se usa `DateField`.
-- Fecha de certificación previa, fecha de expedición de cédula, etc.
-
-No se reemplazan ahora — solo se documenta el componente y queda listo para adopción gradual.
+| `src/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer.tsx` | Botón retry siempre visible tras submit. Etiqueta dinámica según aprobación. Al hacer click identifica claves de preguntas incorrectas y las pasa al `onRetry(keysToReset)`. Preguntas correctas se renderizan deshabilitadas con check verde permanente en el siguiente intento. |
+| `src/components/portal/PortalFormatoRenderer.tsx` | Cambia firma `onQuizRetry?: (keysToReset: string[]) => void` y la propaga. |
+| `src/pages/estudiante/DynamicPortalRenderer.tsx` | `handleQuizRetry(keysToReset)` borra solo esas claves de `answers` y vuelve a `submitted=false`. Para quizzes, `isCompleted` deriva solo de `submitted` local (no de `existingResp.estado`) → botón "Enviar evaluación" reaparece. En `handleSubmit` con quiz, calcula nuevo intento y lo agrega a `intentosEvaluacion` antes de persistir. Elimina inyección de `_intentos_evaluacion` en `answers`. |
+| `src/hooks/useFormatoRespuestas.ts` | `useSaveFormatoRespuesta` acepta opcionalmente `intentosEvaluacion`. |
+| `src/modules/formatos/plugins/safa/respuestas/respuestaService.ts` | `upsert` recibe `intentosEvaluacion` opcional y lo mapea a la columna `intentos_evaluacion`. |
 
 ### Validación post-cambio
 
-- **Crear persona** (`/personas/nueva` y modal en matrícula): escribir `15071990` autocompleta a `15/07/1990`; al guardar persiste `1990-07-15` en BD.
-- **Editar persona existente** (`/personas/<id>` y panel de detalle): la fecha actual se ve como `dd/mm/aaaa`; cambiarla a otro valor válido se guarda correctamente.
-- **Pegar** `1985-06-15` o `15-06-1985` se normaliza al visual `15/06/1985`.
-- **Errores**: `32/13/2050` → mensaje "Fecha inválida"; `15/02/2030` (futuro) → "La fecha no puede ser futura"; `15/02/1899` → "Año fuera de rango".
-- **Listado de personas** y filtros de cumpleaños/fecha siguen mostrando exactamente lo mismo que antes (solo cambió la captura).
-- **Certificados y exportación CSV** no se afectan: la cadena `YYYY-MM-DD` continúa fluyendo igual.
+- Aprendiz reprueba con 60% (umbral 70%) → ve botón "Reintentar para aprobar". Hace clic → solo las preguntas que falló se limpian; las correctas quedan bloqueadas con check verde. Selecciona nuevas opciones, envía → puntaje recalculado (correctas previas + nuevas).
+- Aprendiz aprueba con 80% → ahora también ve botón "Realizar nuevo intento". Puede repetir cuantas veces quiera.
+- Al recargar la página después de enviar: si el formato tiene quiz, el formulario sigue editable y permite un nuevo intento (no queda en modo solo-lectura permanente).
+- Cada envío añade una entrada en `formato_respuestas.intentos_evaluacion` con `{ timestamp, puntaje, correctas, total, aprobado }`. Verificable en BD con un `SELECT intentos_evaluacion FROM formato_respuestas WHERE matricula_id=... AND formato_id=...`.
+- Los formatos sin quiz mantienen comportamiento actual: una vez enviados quedan en solo-lectura.
+- El portal sigue marcando el documento como "completado" tras el primer envío, desbloqueando dependientes — sin regresiones en la lógica de bloqueo/dependencia.
 
 ### Sin impacto colateral
 
-- Cero cambios en BD, RLS, tipos generados (`Persona.fechaNacimiento: string`), servicios o hooks.
-- Cero cambios en `BirthDateField` (queda disponible si en algún módulo se prefiere calendario).
-- Cero impacto en módulos que solo leen la fecha (cursos, matrículas, certificación, portal).
+- Cero cambios en BD ni RLS (la columna `intentos_evaluacion` ya existe en `formato_respuestas`).
+- Cero impacto en formatos sin bloque `evaluation_quiz`.
+- Cero impacto en el renderer documental (`DynamicFormatoDocument` para PDF) ni en el editor de formatos.
+- Los triggers `sync_portal_to_formato_respuestas` y `sync_formato_respuestas_to_portal` siguen funcionando igual: el último envío manda y queda como `completado`.
+- El historial de intentos pasa de un campo "sucio" dentro de `answers` a la columna canónica, lo que limpia datos para futuros tableros administrativos.
 

@@ -14,7 +14,9 @@ import type {
   BloqueHealthConsent,
   BloqueDataAuthorization,
   BloqueEvaluationQuiz,
+  BloqueEvaluationSummary,
   BloqueSatisfactionSurvey,
+  FormatoRespuesta,
 } from "@/modules/formatos/plugins/safa";
 import type { Row2Block, Row1Block } from "@/modules/formatos/core/editor/useEditorStore";
 import type { Persona } from "@/types/persona";
@@ -25,6 +27,7 @@ import {
   BloqueDataAuthorizationRenderer,
   BloqueEvaluationQuizRenderer,
   BloqueSatisfactionSurveyRenderer,
+  BloqueEvaluationSummaryRenderer,
 } from "@/modules/formatos/plugins/safa/blocks/portal";
 
 // ---------------------------------------------------------------------------
@@ -56,6 +59,7 @@ interface PortalFormatoRendererProps {
   signatureProps?: SignatureProps;
   submitted?: boolean;
   onQuizRetry?: (keysToReset: string[]) => void;
+  respuestasPrevias?: FormatoRespuesta[];
 }
 
 // ---------------------------------------------------------------------------
@@ -75,6 +79,7 @@ function classifyBlock(bloque: Bloque): SectionKind | "hidden" | "section_title"
   if (type === "health_consent") return "health";
   if (type === "data_authorization") return "authorization";
   if (type === "evaluation_quiz") return "evaluation";
+  if (type === "evaluation_summary") return "info";
   if (type === "satisfaction_survey") return "survey";
   if (type === "signature_capture" || type === "signature_aprendiz") return "signature";
   if (type === "attendance_by_day") return "attendance";
@@ -409,7 +414,9 @@ function renderPortalBlock(
   onChange?: (key: string, value: unknown) => void,
   readOnly?: boolean,
   submitted?: boolean,
-  onQuizRetry?: (keysToReset: string[]) => void
+  onQuizRetry?: (keysToReset: string[]) => void,
+  respuestasPrevias?: FormatoRespuesta[],
+  matriculaId?: string,
 ): React.ReactNode {
   if (!evaluateVisibility(bloque, answers)) return null;
 

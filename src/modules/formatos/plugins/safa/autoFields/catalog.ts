@@ -83,6 +83,19 @@ export function buildFormatoPrevioOptions(
   for (const resp of respuestas) {
     const formato = formatos.find(f => f.id === resp.formatoId);
     if (!formato) continue;
+
+    // Tokens derivados de evaluación si el formato tiene al menos un evaluation_quiz
+    const tieneQuiz = (formato.bloques || []).some((b: any) => b?.type === 'evaluation_quiz');
+    if (tieneQuiz) {
+      const evalCategory = `Evaluación: ${formato.nombre}`;
+      options.push(
+        { key: `formato_prev:${formato.id}:_puntaje`, label: 'Puntaje (%)', category: evalCategory, source: 'Evaluación', description: 'Puntaje agregado del último intento' },
+        { key: `formato_prev:${formato.id}:_correctas`, label: 'Correctas / Total', category: evalCategory, source: 'Evaluación', description: 'Preguntas correctas del último intento' },
+        { key: `formato_prev:${formato.id}:_aprobado`, label: '¿Aprobado?', category: evalCategory, source: 'Evaluación', description: 'Sí / No del último intento' },
+        { key: `formato_prev:${formato.id}:_fecha_intento`, label: 'Fecha del intento', category: evalCategory, source: 'Evaluación', description: 'Fecha del último intento' },
+      );
+    }
+
     for (const [fieldKey, value] of Object.entries(resp.answers || {})) {
       if (value == null) continue;
       const bloque = formato.bloques?.find((b: any) => b.id === fieldKey);

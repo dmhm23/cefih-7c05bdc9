@@ -126,29 +126,11 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           const resultKey = `${qb.id}_result`;
           const r = answers[resultKey] as { puntaje?: number; correctas?: number; total?: number; aprobado?: boolean } | undefined;
           if (r) {
-            // schema v2: incluir snapshot de preguntas con respuesta y correcta
-            const preguntasSnapshot = (qb.props?.preguntas || []).map(preg => {
-              const ansKey = `${qb.id}_q${preg.id}`;
-              const respondidaRaw = answers[ansKey];
-              const respondida = typeof respondidaRaw === 'number'
-                ? respondidaRaw
-                : (respondidaRaw == null ? null : Number(respondidaRaw));
-              const respondidaFinal = respondida === null || Number.isNaN(respondida) ? null : respondida;
-              return {
-                id: preg.id,
-                texto: preg.texto,
-                opciones: [...preg.opciones],
-                correcta: preg.correcta,
-                respondida: respondidaFinal,
-                esCorrecta: respondidaFinal !== null && respondidaFinal === preg.correcta,
-              };
-            });
             intentoEntries[qb.id] = {
               puntaje: r.puntaje,
               correctas: r.correctas,
               total: r.total,
               aprobado: r.aprobado,
-              preguntas: preguntasSnapshot,
             };
           }
         });
@@ -157,7 +139,6 @@ export default function DynamicPortalRenderer({ formatoId, documentoKey, matricu
           ...previos,
           {
             timestamp: new Date().toISOString(),
-            schema_version: 2,
             resultados: intentoEntries,
           },
         ];

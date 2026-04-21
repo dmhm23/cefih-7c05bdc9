@@ -44,7 +44,6 @@ const PALETTE: PaletteItem[] = [
   { type: 'file', label: 'Archivo', icon: Paperclip, category: 'special' },
   { type: 'health_consent', label: 'Consentimiento salud', icon: Heart, category: 'special' },
   { type: 'evaluation_quiz', label: 'Evaluación', icon: ClipboardCheck, category: 'special' },
-  { type: 'evaluation_summary', label: 'Resumen evaluación', icon: ClipboardCheck, category: 'special' },
   { type: 'satisfaction_survey', label: 'Encuesta', icon: SmilePlus, category: 'special' },
   { type: 'attendance_by_day', label: 'Asistencia diaria', icon: CalendarCheck, category: 'special' },
 ];

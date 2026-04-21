@@ -14,9 +14,7 @@ import type {
   BloqueHealthConsent,
   BloqueDataAuthorization,
   BloqueEvaluationQuiz,
-  BloqueEvaluationSummary,
   BloqueSatisfactionSurvey,
-  FormatoRespuesta,
 } from "@/modules/formatos/plugins/safa";
 import type { Row2Block, Row1Block } from "@/modules/formatos/core/editor/useEditorStore";
 import type { Persona } from "@/types/persona";
@@ -27,7 +25,6 @@ import {
   BloqueDataAuthorizationRenderer,
   BloqueEvaluationQuizRenderer,
   BloqueSatisfactionSurveyRenderer,
-  BloqueEvaluationSummaryRenderer,
 } from "@/modules/formatos/plugins/safa/blocks/portal";
 
 // ---------------------------------------------------------------------------
@@ -59,7 +56,6 @@ interface PortalFormatoRendererProps {
   signatureProps?: SignatureProps;
   submitted?: boolean;
   onQuizRetry?: (keysToReset: string[]) => void;
-  respuestasPrevias?: FormatoRespuesta[];
 }
 
 // ---------------------------------------------------------------------------
@@ -79,7 +75,6 @@ function classifyBlock(bloque: Bloque): SectionKind | "hidden" | "section_title"
   if (type === "health_consent") return "health";
   if (type === "data_authorization") return "authorization";
   if (type === "evaluation_quiz") return "evaluation";
-  if (type === "evaluation_summary") return "info";
   if (type === "satisfaction_survey") return "survey";
   if (type === "signature_capture" || type === "signature_aprendiz") return "signature";
   if (type === "attendance_by_day") return "attendance";
@@ -414,9 +409,7 @@ function renderPortalBlock(
   onChange?: (key: string, value: unknown) => void,
   readOnly?: boolean,
   submitted?: boolean,
-  onQuizRetry?: (keysToReset: string[]) => void,
-  respuestasPrevias?: FormatoRespuesta[],
-  matriculaId?: string,
+  onQuizRetry?: (keysToReset: string[]) => void
 ): React.ReactNode {
   if (!evaluateVisibility(bloque, answers)) return null;
 
@@ -430,7 +423,7 @@ function renderPortalBlock(
     return (
       <div key={bloque.id} className="space-y-3">
         {children.map((child) => (
-          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, respuestasPrevias, matriculaId)}</React.Fragment>
+          <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>
         ))}
       </div>
     );
@@ -441,8 +434,8 @@ function renderPortalBlock(
     const row = bloque as unknown as Row2Block;
     return (
       <div className="grid grid-cols-2 gap-3" key={bloque.id}>
-        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, respuestasPrevias, matriculaId)}</React.Fragment>)}</div>
-        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry, respuestasPrevias, matriculaId)}</React.Fragment>)}</div>
+        <div>{row.cols[0].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
+        <div>{row.cols[1].map((child) => <React.Fragment key={child.id}>{renderPortalBlock(child, ctx, answers, onChange, readOnly, submitted, onQuizRetry)}</React.Fragment>)}</div>
       </div>
     );
   }
@@ -638,16 +631,6 @@ function renderPortalBlock(
         />
       );
 
-    case "evaluation_summary":
-      return (
-        <BloqueEvaluationSummaryRenderer
-          key={bloque.id}
-          bloque={bloque as BloqueEvaluationSummary}
-          respuestasPrevias={respuestasPrevias}
-          matriculaId={matriculaId}
-        />
-      );
-
     case "signature_capture":
     case "signature_aprendiz":
       return null;
@@ -673,10 +656,8 @@ export default function PortalFormatoRenderer({
   signatureProps,
   submitted,
   onQuizRetry,
-  respuestasPrevias,
 }: PortalFormatoRendererProps) {
   const bloques = formato.bloques || [];
-  const matriculaId = matricula?.id;
 
   // Seed defaults on mount
   useEffect(() => {
@@ -730,7 +711,7 @@ export default function PortalFormatoRenderer({
         <div className="divide-y divide-border/50">
           {section.bloques.map((bloque) => (
             <React.Fragment key={bloque.id}>
-              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry, respuestasPrevias, matriculaId)}
+              {renderPortalBlock(bloque, ctx, answers, onAnswerChange, true, submitted, onQuizRetry)}
             </React.Fragment>
           ))}
         </div>
@@ -741,7 +722,7 @@ export default function PortalFormatoRenderer({
       <div className="space-y-4">
         {section.bloques.map((bloque) => (
           <React.Fragment key={bloque.id}>
-            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry, respuestasPrevias, matriculaId)}
+            {renderPortalBlock(bloque, ctx, answers, onAnswerChange, readOnly, submitted, onQuizRetry)}
           </React.Fragment>
         ))}
       </div>

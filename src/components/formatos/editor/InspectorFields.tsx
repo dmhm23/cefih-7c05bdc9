@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/collapsible';
 import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2, Upload, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import FormatosSelect from './EvaluationSummaryFormatosSelect';
 
 interface InspectorFieldsProps {
   bloque: Bloque;
@@ -368,9 +367,6 @@ function TypeSpecific({ bloque, onChange }: InspectorFieldsProps) {
 
     case 'evaluation_quiz':
       return <EvaluationQuizInspector bloque={bloque} onChange={onChange} />;
-
-    case 'evaluation_summary':
-      return <EvaluationSummaryInspector bloque={bloque} onChange={onChange} />;
 
     case 'satisfaction_survey':
       return <SatisfactionSurveyInspector bloque={bloque} onChange={onChange} />;
@@ -1171,45 +1167,3 @@ function AttendanceByDayInspector({ bloque, onChange }: InspectorFieldsProps) {
     </div>
   );
 }
-
-/* ═══════════════════════════════════════════════════════════
-   Evaluation Summary Inspector
-   ═══════════════════════════════════════════════════════════ */
-
-function EvaluationSummaryInspector({ bloque, onChange }: InspectorFieldsProps) {
-  const b = bloque as any;
-  const props = b.props || {};
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2">
-        <p className="text-xs text-blue-700">
-          Muestra el resultado del último intento de la evaluación enlazada, con detalle de
-          preguntas y un historial colapsable de intentos previos.
-        </p>
-      </div>
-
-      <FormatosSelect
-        value={props.formatoEvaluacionId || ''}
-        onChange={(v: string) => onChange({ props: { ...props, formatoEvaluacionId: v } } as any)}
-      />
-
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Mostrar detalle de preguntas</Label>
-        <Switch
-          checked={props.mostrarDetallePreguntas !== false}
-          onCheckedChange={(v) => onChange({ props: { ...props, mostrarDetallePreguntas: v } } as any)}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <Label className="text-xs">Mostrar historial de intentos</Label>
-        <Switch
-          checked={props.mostrarHistorial !== false}
-          onCheckedChange={(v) => onChange({ props: { ...props, mostrarHistorial: v } } as any)}
-        />
-      </div>
-    </div>
-  );
-}
-

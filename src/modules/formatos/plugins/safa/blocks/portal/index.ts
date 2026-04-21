@@ -10,4 +10,3 @@ export { default as BloqueHealthConsentRenderer } from './BloqueHealthConsentRen
 export { default as BloqueDataAuthorizationRenderer } from './BloqueDataAuthorizationRenderer';
 export { default as BloqueEvaluationQuizRenderer } from './BloqueEvaluationQuizRenderer';
 export { default as BloqueSatisfactionSurveyRenderer } from './BloqueSatisfactionSurveyRenderer';
-export { default as BloqueEvaluationSummaryRenderer } from './BloqueEvaluationSummaryRenderer';

@@ -18,9 +18,7 @@ import {
   BloqueDataAuthorizationRenderer,
   BloqueEvaluationQuizRenderer,
   BloqueSatisfactionSurveyRenderer,
-  BloqueEvaluationSummaryRenderer,
 } from "@/modules/formatos/plugins/safa/blocks/portal";
-import type { BloqueEvaluationSummary } from "@/modules/formatos/plugins/safa";
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -551,15 +549,6 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
           answers={answers}
           onChange={onChange}
           readOnly={readOnly}
-        />
-      );
-
-    case "evaluation_summary":
-      return (
-        <BloqueEvaluationSummaryRenderer
-          bloque={bloque as BloqueEvaluationSummary}
-          respuestasPrevias={ctx.respuestasPrevias}
-          matriculaId={ctx.matricula?.id}
         />
       );
 

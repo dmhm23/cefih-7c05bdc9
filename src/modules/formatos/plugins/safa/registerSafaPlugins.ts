@@ -39,7 +39,6 @@ const SAFA_DOMAIN_BLOCKS: BlockDefinition[] = [
   { type: 'health_consent', label: 'Consentimiento de salud', category: 'SAFA', isInput: true },
   { type: 'data_authorization', label: 'Autorización de datos', category: 'SAFA', isInput: true },
   { type: 'evaluation_quiz', label: 'Cuestionario de evaluación', category: 'SAFA', isInput: true },
-  { type: 'evaluation_summary', label: 'Resumen de evaluación', category: 'SAFA', isInput: false },
   { type: 'satisfaction_survey', label: 'Encuesta de satisfacción', category: 'SAFA', isInput: true },
   { type: 'document_header', label: 'Encabezado institucional', category: 'SAFA · Documento', isInput: false },
 ];

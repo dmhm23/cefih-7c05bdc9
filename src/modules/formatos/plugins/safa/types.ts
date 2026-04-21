@@ -34,7 +34,6 @@ export type TipoBloque =
   | 'health_consent'
   | 'data_authorization'
   | 'evaluation_quiz'
-  | 'evaluation_summary'
   | 'satisfaction_survey'
   | 'section_title'
   | 'divider'
@@ -114,15 +113,6 @@ export interface BloqueEvaluationQuiz extends BloqueBase {
   };
 }
 
-export interface BloqueEvaluationSummary extends BloqueBase {
-  type: 'evaluation_summary';
-  props: {
-    formatoEvaluacionId?: string;
-    mostrarHistorial?: boolean;
-    mostrarDetallePreguntas?: boolean;
-  };
-}
-
 export interface BloqueSatisfactionSurvey extends BloqueBase {
   type: 'satisfaction_survey';
   props: {
@@ -181,7 +171,6 @@ export type Bloque =
   | BloqueHealthConsent
   | BloqueDataAuthorization
   | BloqueEvaluationQuiz
-  | BloqueEvaluationSummary
   | BloqueSatisfactionSurvey
   | BloqueDivider
   | BloqueFile

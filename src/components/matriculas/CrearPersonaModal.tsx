@@ -305,7 +305,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} placeholder="correo@email.com" />
+                      <Input type="email" {...field} placeholder="Ingresar correo electrónico" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -318,7 +318,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Teléfono *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="3001234567" />
+                      <Input {...field} placeholder="Ingresar teléfono del estudiante" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

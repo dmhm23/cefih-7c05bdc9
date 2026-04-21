@@ -63,7 +63,50 @@ export function resolveAutoFieldValue(key: AutoFieldKey, ctx: AutoFieldContext):
     if (parts.length >= 3 && ctx.respuestasPrevias) {
       const [, formatoId, fieldKey] = parts;
       const resp = ctx.respuestasPrevias.find((r) => r.formatoId === formatoId);
-      if (resp?.answers) {
+      if (!resp) return null;
+
+      // Special derived keys for evaluation summary inline tokens
+      if (fieldKey.startsWith('_')) {
+        const intentos = (resp.intentosEvaluacion || []) as any[];
+        if (intentos.length === 0) return null;
+        const ultimo = intentos[intentos.length - 1];
+        const resultados = ultimo?.resultados || {};
+        // Agregar todos los bloques de quiz dentro del intento
+        let correctas = 0;
+        let total = 0;
+        let aprobadoTodos = true;
+        let algunBloque = false;
+        for (const val of Object.values(resultados as Record<string, any>)) {
+          if (!val) continue;
+          algunBloque = true;
+          correctas += Number(val.correctas ?? 0);
+          total += Number(val.total ?? 0);
+          if (!val.aprobado) aprobadoTodos = false;
+        }
+        if (!algunBloque || total === 0) return null;
+        const puntaje = Math.round((correctas / total) * 100);
+        switch (fieldKey) {
+          case '_puntaje':
+            return `${puntaje}%`;
+          case '_correctas':
+            return `${correctas}/${total}`;
+          case '_aprobado':
+            return aprobadoTodos ? 'Sí' : 'No';
+          case '_fecha_intento': {
+            const ts = ultimo?.timestamp;
+            if (!ts) return null;
+            try {
+              return format(new Date(ts), 'd/MM/yyyy', { locale: es });
+            } catch {
+              return null;
+            }
+          }
+          default:
+            return null;
+        }
+      }
+
+      if (resp.answers) {
         const val = (resp.answers as Record<string, unknown>)[fieldKey];
         return val != null ? String(val) : null;
       }

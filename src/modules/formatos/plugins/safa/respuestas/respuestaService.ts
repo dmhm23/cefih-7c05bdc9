@@ -54,19 +54,21 @@ export const formatoRespuestaService = {
     formatoId: string,
     answers: Record<string, unknown>,
     estado: 'pendiente' | 'completado' = 'pendiente',
+    intentosEvaluacion?: Record<string, unknown>[],
   ): Promise<FormatoRespuesta> => {
+    const payload: Record<string, unknown> = {
+      matricula_id: matriculaId,
+      formato_id: formatoId,
+      answers: answers as any,
+      estado,
+      completado_at: estado === 'completado' ? new Date().toISOString() : null,
+    };
+    if (intentosEvaluacion !== undefined) {
+      payload.intentos_evaluacion = intentosEvaluacion as any;
+    }
     const { data, error } = await supabase
       .from('formato_respuestas')
-      .upsert(
-        {
-          matricula_id: matriculaId,
-          formato_id: formatoId,
-          answers: answers as any,
-          estado,
-          completado_at: estado === 'completado' ? new Date().toISOString() : null,
-        },
-        { onConflict: 'matricula_id,formato_id' },
-      )
+      .upsert(payload as any, { onConflict: 'matricula_id,formato_id' })
       .select()
       .single();
     if (error) handleSupabaseError(error);

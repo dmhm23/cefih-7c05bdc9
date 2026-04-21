@@ -165,7 +165,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>No. Documento *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="1234567890" />
+                      <Input {...field} placeholder="Ingresar número de documento" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

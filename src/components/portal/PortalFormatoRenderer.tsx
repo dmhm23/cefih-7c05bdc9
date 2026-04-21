@@ -409,7 +409,7 @@ function renderPortalBlock(
   onChange?: (key: string, value: unknown) => void,
   readOnly?: boolean,
   submitted?: boolean,
-  onQuizRetry?: () => void
+  onQuizRetry?: (keysToReset: string[]) => void
 ): React.ReactNode {
   if (!evaluateVisibility(bloque, answers)) return null;
 

@@ -335,7 +335,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Emergencia - Nombre *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nombre completo" />
+                      <Input {...field} placeholder="Ingresar nombre del contacto de emergencia" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -348,7 +348,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Emergencia - Teléfono *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="3001234567" />
+                      <Input {...field} placeholder="Ingresar teléfono de emergencia" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -361,7 +361,7 @@ export function CrearPersonaModal({ open, onOpenChange, onPersonaCreated }: Crea
                   <FormItem>
                     <FormLabel>Parentesco *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Esposa, Hermano..." />
+                      <Input {...field} placeholder="Ingresar parentesco" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

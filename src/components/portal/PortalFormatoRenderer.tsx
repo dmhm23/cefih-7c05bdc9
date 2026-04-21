@@ -55,7 +55,7 @@ interface PortalFormatoRendererProps {
   firmasMatricula?: FirmaMatricula[];
   signatureProps?: SignatureProps;
   submitted?: boolean;
-  onQuizRetry?: () => void;
+  onQuizRetry?: (keysToReset: string[]) => void;
 }
 
 // ---------------------------------------------------------------------------

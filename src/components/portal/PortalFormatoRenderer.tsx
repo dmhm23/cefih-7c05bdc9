@@ -26,6 +26,7 @@ import {
   BloqueEvaluationQuizRenderer,
   BloqueSatisfactionSurveyRenderer,
 } from "@/modules/formatos/plugins/safa/blocks/portal";
+import type { QuizMode, IntentoVigente } from "@/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,6 +57,8 @@ interface PortalFormatoRendererProps {
   signatureProps?: SignatureProps;
   submitted?: boolean;
   onQuizRetry?: (keysToReset: string[]) => void;
+  quizMode?: QuizMode;
+  intentosVigentesByBloqueId?: Record<string, IntentoVigente | null>;
 }
 
 // ---------------------------------------------------------------------------

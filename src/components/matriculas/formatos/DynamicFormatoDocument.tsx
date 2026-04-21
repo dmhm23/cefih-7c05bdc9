@@ -532,15 +532,20 @@ function renderBloque(bloque: Bloque, rc: RenderContext): React.ReactNode {
         />
       );
 
-    case "evaluation_quiz":
+    case "evaluation_quiz": {
+      const quizBloque = bloque as import("@/modules/formatos/plugins/safa").BloqueEvaluationQuiz;
+      const intentoVigente = computeIntentoVigente(quizBloque, rc);
       return (
         <BloqueEvaluationQuizRenderer
-          bloque={bloque}
+          bloque={quizBloque}
           answers={answers}
           onChange={onChange}
           readOnly={readOnly}
+          mode="graded-readonly"
+          intentoVigente={intentoVigente}
         />
       );
+    }
 
     case "satisfaction_survey":
       return (

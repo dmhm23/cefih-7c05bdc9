@@ -422,7 +422,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Nombre *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Nombre completo" />
+                      <Input {...field} placeholder="Ingresar nombre del contacto de emergencia" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -435,7 +435,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Teléfono *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="3001234567" />
+                      <Input {...field} placeholder="Ingresar teléfono de emergencia" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -448,7 +448,7 @@ export default function PersonaFormPage() {
                   <FormItem>
                     <FormLabel>Parentesco *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Esposo/a, Hermano/a, etc." />
+                      <Input {...field} placeholder="Ingresar parentesco" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

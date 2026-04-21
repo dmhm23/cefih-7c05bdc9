@@ -41,6 +41,7 @@ import { CrearEmpresaModal } from "@/components/matriculas/CrearEmpresaModal";
 import { ConsentimientoSalud } from "@/components/matriculas/ConsentimientoSalud";
 import { Persona, PersonaFormData } from "@/types/persona";
 import { EditableField } from "@/components/shared/EditableField";
+import { BirthDateInput } from "@/components/shared/BirthDateInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -652,13 +653,17 @@ export default function MatriculaFormPage() {
                           options={[...PAISES]}
                           icon={Globe}
                         />
-                        <EditableField
-                          label="Fecha de Nacimiento"
-                          value={getPersonaValue("fechaNacimiento")}
-                          onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
-                          type="date"
-                          icon={Calendar}
-                        />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Fecha de Nacimiento</span>
+                          </div>
+                          <BirthDateInput
+                            value={getPersonaValue("fechaNacimiento") || ""}
+                            onChange={(v) => handlePersonaFieldChange("fechaNacimiento", v)}
+                            className="h-8 text-sm"
+                          />
+                        </div>
                         <EditableField
                           label="Grupo Sanguíneo"
                           value={getPersonaValue("rh")}

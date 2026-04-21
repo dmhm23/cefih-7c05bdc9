@@ -27,12 +27,14 @@ export function useSaveFormatoRespuesta() {
       formatoId,
       answers,
       estado,
+      intentosEvaluacion,
     }: {
       matriculaId: string;
       formatoId: string;
       answers: Record<string, unknown>;
       estado?: 'pendiente' | 'completado';
-    }) => formatoRespuestaService.upsert(matriculaId, formatoId, answers, estado),
+      intentosEvaluacion?: Record<string, unknown>[];
+    }) => formatoRespuestaService.upsert(matriculaId, formatoId, answers, estado, intentosEvaluacion),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 }

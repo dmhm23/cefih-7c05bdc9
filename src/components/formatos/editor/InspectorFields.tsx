@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/collapsible';
 import { Plus, X, ChevronDown, CheckCircle2, GripVertical, Trash2, Loader2, Upload, ImageIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import FormatosSelect from './EvaluationSummaryFormatosSelect';
 
 interface InspectorFieldsProps {
   bloque: Bloque;
@@ -1178,10 +1179,6 @@ function AttendanceByDayInspector({ bloque, onChange }: InspectorFieldsProps) {
 function EvaluationSummaryInspector({ bloque, onChange }: InspectorFieldsProps) {
   const b = bloque as any;
   const props = b.props || {};
-
-  // Cargar formatos del catálogo y filtrar los que tienen evaluation_quiz
-  // Importación dinámica para evitar ciclos
-  const FormatosSelect = require('./EvaluationSummaryFormatosSelect').default;
 
   return (
     <div className="space-y-4">

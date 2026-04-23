@@ -1,106 +1,76 @@
 
 
-## Plan: Persistir el código del estudiante en BD + sincronización automática con cambios del nombre del curso
+## Plan: Fix `login_portal_estudiante` + prueba automatizada
 
-### Diagnóstico
+### Problema confirmado
+El RPC usa `IF _found IS NOT NULL THEN` para validar el resultado del `SELECT ... INTO _found`. En PL/pgSQL, un `RECORD` cuyos campos son todos `NULL` (o cualquier campo `NULL` proveniente de `LEFT JOIN`) puede evaluarse como `NULL` en esa comparación, haciendo que estudiantes con `nivel_formacion_id` pero sin `curso_id` (caso cédula `1110482552`) caigan al branch de `'sin_matricula'` aunque la consulta sí encontró fila.
 
-Hoy `codigo_estudiante` **no existe en BD**. Se calcula en runtime con `useCodigosCurso` → `calcularCodigosCurso` → `generarCodigoEstudiante`, ordenando matrículas por `created_at ASC`. Además, la función actual tiene un bug: usa `parseInt(curso.numeroCurso)` sobre nombres como `FIH-R-26-04-18`, que devuelve `NaN`, así que el segmento "consecutivo del curso" siempre cae al fallback `01` y nunca refleja el último segmento real del nombre del curso.
+### Cambios a implementar
 
-### Objetivo
+#### 1. Migración: corregir el RPC
 
-1. Persistir el código del estudiante en la tabla `matriculas` como columna `codigo_estudiante`.
-2. Calcular y guardar el código automáticamente cuando un estudiante es asignado a un curso.
-3. Recalcular el código de **todos los estudiantes del curso** cuando el `nombre` del curso (número del curso) cambia manualmente.
-4. Que Matrículas, Cursos, Certificados, Exportaciones y Portal lean el código persistido como fuente única de verdad — sin romper certificados ya emitidos.
+Una sola línea cambia. Reemplazar:
 
----
+```sql
+IF _found IS NOT NULL THEN
+```
 
-### Arquitectura propuesta
+por:
 
-#### 1. Esquema de BD
+```sql
+IF FOUND THEN
+```
 
-Agregar a `matriculas`:
+`FOUND` es la variable booleana especial de PL/pgSQL que se setea a `TRUE` cuando el `SELECT ... INTO` devolvió al menos una fila, **independientemente de si los campos son `NULL`**. Es la forma correcta y idiomática de comprobar resultado en este patrón.
 
-| Columna | Tipo | Comentario |
-|---|---|---|
-| `codigo_estudiante` | `TEXT` (nullable) | Código persistido. Único por curso (índice parcial). |
+El resto del RPC se mantiene idéntico:
+- La prioridad (curso activo → sin curso → curso cerrado) sigue funcionando.
+- El fallback `COALESCE(c.nombre, nf.nombre, 'Portal del Estudiante')` ya cubre el `curso_nombre` cuando no hay curso.
+- El `COALESCE(nf.tipo_formacion, c.tipo_formacion)` ya cubre el tipo.
+- El branch final `'sin_matricula'` queda solo para los casos donde realmente no se encontró ninguna matrícula con nivel asignado.
 
-Índice parcial único: `UNIQUE (curso_id, codigo_estudiante) WHERE codigo_estudiante IS NOT NULL AND deleted_at IS NULL`.
+#### 2. Prueba automatizada
 
-#### 2. Función SQL pura `calcular_codigo_estudiante`
+Crear una edge function de pruebas Deno en `supabase/functions/login-portal-estudiante/login-portal-estudiante_test.ts` (siguiendo la convención de `supabase--test_edge_functions`) que:
 
-`calcular_codigo_estudiante(_config JSONB, _nombre_curso TEXT, _fecha_inicio DATE, _index INT) RETURNS TEXT`
+a. **Setup**: usando el `SERVICE_ROLE_KEY`, inserta:
+   - Una `persona` de prueba con cédula `TEST-PORTAL-NO-CURSO-{timestamp}` (cédula sintética para no chocar con datos reales).
+   - Un `nivel_formacion` ya existente o crea uno temporal.
+   - Una `matricula` con `nivel_formacion_id = <id>`, `curso_id = NULL`, `activo = TRUE`, `deleted_at = NULL`.
 
-Replica la lógica de `generarCodigoEstudiante` en plpgsql:
-- Construye prefijo + tipo + año + mes según flags del config.
-- Para el "consecutivo del curso", **extrae el último segmento numérico del nombre del curso** (`FIH-R-26-04-18` → `18`) usando el separador del config y, como fallback, el guion. Si no hay número, cae a `01`.
-- Concatena con el correlativo del estudiante con `lpad` según `longitudConsecutivoEstudiante`.
+b. **Caso 1 — fix principal**: invoca `supabase.rpc('login_portal_estudiante', { p_cedula: '<cédula sintética>' })` y verifica:
+   - `data[0].resultado === 'ok'`
+   - `data[0].matricula_id` no nulo
+   - `data[0].curso_id` es `NULL`
+   - `data[0].curso_nombre` no vacío (debe caer al nombre del nivel o al literal `'Portal del Estudiante'`)
+   - `data[0].portal_habilitado === true`
 
-Esta función es la única fuente de verdad para el formato.
+c. **Caso 2 — regresión**: invoca con una cédula inexistente y verifica `resultado === 'persona_no_encontrada'`.
 
-#### 3. Trigger de recálculo `recalcular_codigos_curso(_curso_id UUID)`
+d. **Caso 3 — regresión**: crea una persona con matrícula activa pero **sin** `nivel_formacion_id`, invoca y verifica `resultado === 'sin_matricula'`.
 
-Función `SECURITY DEFINER` que:
-1. Lee el curso, su `nivel_formacion_id` y la `config_codigo_estudiante` del nivel.
-2. Si el nivel no tiene config activo → no hace nada (mantiene `NULL`).
-3. Selecciona todas las matrículas del curso (`activo=TRUE AND deleted_at IS NULL`) ordenadas por `created_at ASC, id ASC` (mismo orden que el frontend).
-4. Para cada matrícula, calcula el código con `calcular_codigo_estudiante` y hace `UPDATE` solo si cambió.
+e. **Teardown**: hard-delete de las filas de prueba creadas (matrícula, persona y, si aplica, nivel temporal) usando `service_role` para evitar contaminar la BD.
 
-#### 4. Triggers que la disparan
+Usa `Deno.test()` con steps (`t.step(...)`) y aserciones de `jsr:@std/assert`.
 
-- **`trg_matricula_codigo_assign`** en `matriculas` AFTER INSERT/UPDATE OF `curso_id, nivel_formacion_id, deleted_at, activo`: recalcula los códigos del curso afectado (y del curso anterior si cambió de curso).
-- **`trg_curso_codigo_resync`** en `cursos` AFTER UPDATE OF `nombre, fecha_inicio, nivel_formacion_id`: recalcula los códigos de todas las matrículas de ese curso. **Esto resuelve el caso de edición manual del número del curso.**
-- **`trg_nivel_codigo_resync`** en `niveles_formacion` AFTER UPDATE OF `config_codigo_estudiante`: recalcula los códigos de todos los cursos vinculados a ese nivel.
+### Archivos a crear/modificar
 
-Todos usan `pg_trigger_depth() < 2` para evitar recursión.
+1. **`supabase/migrations/<timestamp>_fix_login_portal_found.sql`** — migración con el `CREATE OR REPLACE FUNCTION public.login_portal_estudiante(...)` completo, idéntico al actual salvo el cambio `IF FOUND THEN`.
+2. **`supabase/functions/login-portal-estudiante/login-portal-estudiante_test.ts`** — archivo Deno de pruebas con los 3 casos descritos. (Es el primer test del proyecto bajo esta convención; no se necesita una edge function "real" — el archivo `_test.ts` corre por sí solo con `supabase--test_edge_functions`).
 
-#### 5. Backfill por demanda (sin alterar datos históricos)
+### Cómo ejecuto la prueba
 
-Migración corre **una sola vez** la función `recalcular_codigos_curso` para cada `curso_id` distinto presente en `matriculas` activas, llenando `codigo_estudiante` para todas las matrículas existentes. Esto **no toca certificados ya emitidos** (siguen leyendo su `snapshot_datos.codigo`).
+Tras desplegar la migración, corro `supabase--test_edge_functions` con `{"functions": ["login-portal-estudiante"]}` y reporto el resultado (esperado: 3 sub-tests verdes). Si falla, ajusto y repito.
 
-#### 6. Frontend: leer la columna persistida
+### Riesgos y mitigación
 
-- `Matricula` (tipo TS) y `rowToMatricula` ya mapean snake→camel automáticamente: `codigo_estudiante` → `codigoEstudiante`. Solo agregar el campo opcional al tipo.
-- `useCodigosCurso` se mantiene como compat y simplemente devuelve el `codigoEstudiante` de cada matrícula leída de BD (ya no recalcula). Cero cambios en consumidores (`EnrollmentsTable`, `MatriculaDetallePage`, `CertificacionSection`, `exportCursoListado`, formatos dinámicos).
-- Mostrar el `codigoEstudiante` también como columna nativa en:
-  - **Cursos → EnrollmentsTable**: ya lo muestra vía `codigosMapa[m.id]`. Ahora viene de BD directamente.
-  - **Matrículas (lista y detalle)**: ya lo lee `MatriculaDetallePage`. Agregar la columna en la tabla principal de Matrículas.
-- **Eliminar la dependencia de react-query/recalculo en cliente** para el código (queda solo como fallback de presentación si el campo está vacío en cursos sin config activa).
+- **Riesgo**: que la prueba deje datos huérfanos si revienta a mitad. **Mitigación**: usar un `try/finally` por step y cédulas con prefijo `TEST-PORTAL-` fácilmente identificables si hay que limpiar manualmente.
+- **Riesgo**: que `nivel_formacion` requerido no exista en el entorno de test. **Mitigación**: el test consulta primero `niveles_formacion` y reusa el primer `id` activo; si no hay ninguno, hace skip explícito con mensaje claro.
+- **Riesgo**: efectos colaterales en otros consumidores del RPC. **Mitigación**: ninguno — el cambio sólo elimina un falso negativo; los casos que antes retornaban `'ok'` lo siguen haciendo, y los que retornaban `'sin_matricula'` correctamente lo siguen haciendo.
 
-#### 7. Comportamiento esperado tras el cambio
+### Sin cambios colaterales
 
-| Acción del usuario | Efecto en BD |
-|---|---|
-| Crear matrícula y asignarle un curso | Trigger `INSERT/UPDATE` calcula y guarda `codigo_estudiante`. |
-| Editar el campo "Número del Curso" (`cursos.nombre`) de `FIH-R-26-04-18` a `FIH-R-26-04-25` | Trigger en `cursos` recalcula y actualiza `codigo_estudiante` de las N matrículas → de `…-18-001` a `…-25-001`. |
-| Eliminar (soft-delete) una matrícula | Trigger recalcula los correlativos del curso (los demás se compactan). |
-| Cambiar `config_codigo_estudiante` en el nivel | Trigger recalcula todos los códigos de cursos de ese nivel. |
-| Certificado ya emitido | **No se altera** — usa snapshot histórico en `certificados.snapshot_datos`. |
-
-### Detalles técnicos
-
-- **Migración SQL**: una sola migración con `ALTER TABLE matriculas ADD COLUMN codigo_estudiante TEXT`, índice parcial único, las dos funciones (`calcular_codigo_estudiante` pura + `recalcular_codigos_curso`), los tres triggers, y al final un `DO $$ ... $$` que recorre `SELECT DISTINCT curso_id FROM matriculas WHERE deleted_at IS NULL` y llama a `recalcular_codigos_curso(curso_id)` para hacer backfill.
-- **Type guards**: `formToRow` en `matriculaService` debe **excluir** `codigo_estudiante` de las escrituras del frontend (campo derivado, lo gestiona el trigger).
-- **TS types**: agregar `codigoEstudiante?: string` a `Matricula` en `src/types/matricula.ts`. `src/integrations/supabase/types.ts` se regenera automáticamente.
-- **`useCodigosCurso`**: refactor a hook delgado que retorna `Object.fromEntries(matriculas.map(m => [m.id, m.codigoEstudiante ?? '']))`. Mantiene firma pública (cero cambios en consumidores).
-- **`generarPreviewCodigo`** se mantiene tal cual para el editor de configuración del nivel.
-- **Función `extraerConsecutivoDeNombre`** vive solo en SQL (no se necesita en TS al persistir todo en BD).
-
-### Validación
-
-1. Crear curso `FIH-R-26-04-18`, asignar 3 estudiantes → BD muestra `…-18-001`, `…-18-002`, `…-18-003`.
-2. Editar nombre del curso → `FIH-R-26-04-25`. Verificar que las 3 matrículas pasan a `…-25-001..003` automáticamente, sin recargar nada manual.
-3. Soft-delete de la 2ª matrícula → las restantes quedan con códigos `…-25-001` y `…-25-002` (recompactado).
-4. Editar `config_codigo_estudiante` del nivel (cambiar separador o longitud) → todos los códigos de los cursos del nivel se recalculan.
-5. Generar certificado: usa el código persistido. Tras emitir, editar el nombre del curso → el certificado emitido conserva el código histórico (snapshot), pero la matrícula muestra el nuevo (es lo correcto: el certificado es inmutable).
-6. Exportar CSV de inscripciones (Cursos): la columna "Código del Estudiante" usa el valor de BD.
-7. Curso sin config activa de código → `codigo_estudiante` queda `NULL` y la UI muestra vacío (sin romper).
-
-### Sin impacto colateral
-
-- Cero cambios en estructura de certificados, plantillas, formatos o portal.
-- Cero cambios en RLS (la columna nueva hereda las policies de `matriculas`).
-- Cero cambios visibles en el editor de cursos (el campo "Número del Curso" sigue siendo editable manualmente).
-- Cero cambios en los consumidores de `useCodigosCurso` (firma idéntica).
-- Único impacto: una migración + ajustes mínimos en `matriculaService.formToRow`, `Matricula` type y `useCodigosCurso`.
+- Cero cambios en frontend, hooks, servicios o tipos.
+- Cero cambios en otras funciones, triggers o RLS.
+- Cero cambios en datos productivos (la prueba se autolimpia).
 

@@ -1,41 +1,28 @@
 import { useMemo } from 'react';
 import { useMatriculasByCurso } from '@/hooks/useMatriculas';
-import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
-import { calcularCodigosCurso } from '@/utils/codigoEstudiante';
 import type { Curso } from '@/types/curso';
 
-const TIPO_TO_NIVEL: Record<string, string> = {
-  reentrenamiento: 'Reentrenamiento',
-  jefe_area: 'Jefe de Área',
-  trabajador_autorizado: 'Trabajador Autorizado',
-  coordinador_ta: 'Coordinador T.A.',
-};
-
 /**
- * Hook liviano que obtiene datos y delega el cálculo a funciones puras.
- * Retorna un mapa matriculaId → código de estudiante.
+ * Hook que devuelve un mapa matriculaId → código de estudiante.
+ *
+ * El código se persiste en `matriculas.codigo_estudiante` y es mantenido por
+ * triggers de BD (asignación de curso, cambio de nombre del curso, cambio de
+ * config del nivel). Este hook simplemente lee el valor persistido — la
+ * sincronización es automática.
+ *
+ * Se conserva la firma original para no romper consumidores existentes.
  */
 export function useCodigosCurso(curso: Curso | undefined | null) {
   const cursoId = curso?.id ?? '';
-  const { data: matriculas, isLoading: loadingMatriculas } = useMatriculasByCurso(cursoId);
-  const { data: niveles, isLoading: loadingNiveles } = useNivelesFormacion();
-
-  const config = useMemo(() => {
-    if (!niveles || !curso) return null;
-    // Resolve by UUID first, fallback by tipoFormacion name
-    const nivel = curso.nivelFormacionId
-      ? niveles.find(n => n.id === curso.nivelFormacionId)
-      : niveles.find(n => n.nombreNivel === TIPO_TO_NIVEL[curso.tipoFormacion]);
-    return nivel?.configuracionCodigoEstudiante ?? null;
-  }, [niveles, curso]);
+  const { data: matriculas, isLoading } = useMatriculasByCurso(cursoId);
 
   const codigos = useMemo(() => {
-    if (!matriculas || !curso) return {};
-    return calcularCodigosCurso(matriculas, config, curso);
-  }, [matriculas, config, curso]);
+    const out: Record<string, string> = {};
+    (matriculas ?? []).forEach((m) => {
+      if (m.codigoEstudiante) out[m.id] = m.codigoEstudiante;
+    });
+    return out;
+  }, [matriculas]);
 
-  return {
-    codigos,
-    isLoading: loadingMatriculas || loadingNiveles,
-  };
+  return { codigos, isLoading };
 }

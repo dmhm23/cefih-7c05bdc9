@@ -1149,6 +1149,7 @@ export type Database = {
           centro_formacion_previo: string | null
           cobro_contacto_celular: string | null
           cobro_contacto_nombre: string | null
+          codigo_estudiante: string | null
           consentimiento_salud: boolean
           consumo_medicamentos: boolean
           consumo_medicamentos_detalle: string | null
@@ -1217,6 +1218,7 @@ export type Database = {
           centro_formacion_previo?: string | null
           cobro_contacto_celular?: string | null
           cobro_contacto_nombre?: string | null
+          codigo_estudiante?: string | null
           consentimiento_salud?: boolean
           consumo_medicamentos?: boolean
           consumo_medicamentos_detalle?: string | null
@@ -1285,6 +1287,7 @@ export type Database = {
           centro_formacion_previo?: string | null
           cobro_contacto_celular?: string | null
           cobro_contacto_nombre?: string | null
+          codigo_estudiante?: string | null
           consentimiento_salud?: boolean
           consumo_medicamentos?: boolean
           consumo_medicamentos_detalle?: string | null
@@ -2173,8 +2176,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_codigo_estudiante: {
+        Args: {
+          _config: Json
+          _fecha_inicio: string
+          _index: number
+          _nombre_curso: string
+        }
+        Returns: string
+      }
       duplicar_formato: { Args: { _formato_id: string }; Returns: string }
       exec_sql: { Args: { sql: string }; Returns: undefined }
+      extraer_consecutivo_nombre_curso: {
+        Args: { _nombre: string; _sep: string }
+        Returns: number
+      }
       get_dashboard_charts_data: { Args: { p_periodo?: string }; Returns: Json }
       get_dashboard_stats: { Args: never; Returns: Json }
       get_documentos_portal: {
@@ -2267,6 +2283,10 @@ export type Database = {
           portal_habilitado: boolean
           resultado: string
         }[]
+      }
+      recalcular_codigos_curso: {
+        Args: { _curso_id: string }
+        Returns: undefined
       }
       recalcular_grupo_cartera: {
         Args: { p_grupo_id: string }

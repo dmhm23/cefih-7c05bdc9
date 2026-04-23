@@ -1,143 +1,106 @@
 
 
-## Plan: Limpiar resumen de calificación + persistir vista calificada al refrescar el portal
+## Plan: Persistir el código del estudiante en BD + sincronización automática con cambios del nombre del curso
 
-### Problema 1 — Resumen con metadatos innecesarios
+### Diagnóstico
 
-`ResumenCalificacionQuiz` (dentro de `BloqueEvaluationQuizRenderer.tsx`) muestra:
-- "· Intento del 21 de abril de 2026"
-- "Calificación recalculada con la versión vigente del cuestionario"
+Hoy `codigo_estudiante` **no existe en BD**. Se calcula en runtime con `useCodigosCurso` → `calcularCodigosCurso` → `generarCodigoEstudiante`, ordenando matrículas por `created_at ASC`. Además, la función actual tiene un bug: usa `parseInt(curso.numeroCurso)` sobre nombres como `FIH-R-26-04-18`, que devuelve `NaN`, así que el segmento "consecutivo del curso" siempre cae al fallback `01` y nunca refleja el último segmento real del nombre del curso.
 
-Ambos elementos deben eliminarse. El resumen quedará minimalista: badge APROBADO/NO APROBADO + puntaje + "8 de 10 respuestas correctas".
+### Objetivo
 
-### Problema 2 — Vista calificada se pierde al refrescar el portal
+1. Persistir el código del estudiante en la tabla `matriculas` como columna `codigo_estudiante`.
+2. Calcular y guardar el código automáticamente cuando un estudiante es asignado a un curso.
+3. Recalcular el código de **todos los estudiantes del curso** cuando el `nombre` del curso (número del curso) cambia manualmente.
+4. Que Matrículas, Cursos, Certificados, Exportaciones y Portal lean el código persistido como fuente única de verdad — sin romper certificados ya emitidos.
 
-#### Causa raíz
+---
 
-En `DynamicPortalRenderer.tsx` (líneas 41–42), al hidratar respuestas existentes hay un comentario explícito:
+### Arquitectura propuesta
 
-> "for quizzes we DON'T set submitted=true on hydration so the student can always run a new attempt"
+#### 1. Esquema de BD
 
-Esto provoca que tras refrescar:
-- `submitted = false` → el quiz se renderiza **interactivo** (modo por defecto).
-- `answers` sí se hidrata con las selecciones previas → las opciones aparecen marcadas como si el estudiante estuviera a punto de enviar.
-- Aparece el botón "Enviar evaluación".
-- No se pintan los badges ✓/✗ ni el resumen APROBADO/NO APROBADO.
+Agregar a `matriculas`:
 
-El resultado es confuso: parece un formulario a medio diligenciar, no una evaluación ya completada.
+| Columna | Tipo | Comentario |
+|---|---|---|
+| `codigo_estudiante` | `TEXT` (nullable) | Código persistido. Único por curso (índice parcial). |
 
-#### Solución óptima
+Índice parcial único: `UNIQUE (curso_id, codigo_estudiante) WHERE codigo_estudiante IS NOT NULL AND deleted_at IS NULL`.
 
-Hidratar el portal en **modo graded-readonly** (la misma vista que ya funciona en Matrículas/PDF) cuando el estudiante regresa después de haber completado al menos un intento. Para reintentar, se ofrece un botón explícito que limpia el estado y reinicia el flujo interactivo.
+#### 2. Función SQL pura `calcular_codigo_estudiante`
 
-Comportamiento por escenario en `/estudiante`:
+`calcular_codigo_estudiante(_config JSONB, _nombre_curso TEXT, _fecha_inicio DATE, _index INT) RETURNS TEXT`
 
-| Estado en BD | Vista que se muestra al cargar |
+Replica la lógica de `generarCodigoEstudiante` en plpgsql:
+- Construye prefijo + tipo + año + mes según flags del config.
+- Para el "consecutivo del curso", **extrae el último segmento numérico del nombre del curso** (`FIH-R-26-04-18` → `18`) usando el separador del config y, como fallback, el guion. Si no hay número, cae a `01`.
+- Concatena con el correlativo del estudiante con `lpad` según `longitudConsecutivoEstudiante`.
+
+Esta función es la única fuente de verdad para el formato.
+
+#### 3. Trigger de recálculo `recalcular_codigos_curso(_curso_id UUID)`
+
+Función `SECURITY DEFINER` que:
+1. Lee el curso, su `nivel_formacion_id` y la `config_codigo_estudiante` del nivel.
+2. Si el nivel no tiene config activo → no hace nada (mantiene `NULL`).
+3. Selecciona todas las matrículas del curso (`activo=TRUE AND deleted_at IS NULL`) ordenadas por `created_at ASC, id ASC` (mismo orden que el frontend).
+4. Para cada matrícula, calcula el código con `calcular_codigo_estudiante` y hace `UPDATE` solo si cambió.
+
+#### 4. Triggers que la disparan
+
+- **`trg_matricula_codigo_assign`** en `matriculas` AFTER INSERT/UPDATE OF `curso_id, nivel_formacion_id, deleted_at, activo`: recalcula los códigos del curso afectado (y del curso anterior si cambió de curso).
+- **`trg_curso_codigo_resync`** en `cursos` AFTER UPDATE OF `nombre, fecha_inicio, nivel_formacion_id`: recalcula los códigos de todas las matrículas de ese curso. **Esto resuelve el caso de edición manual del número del curso.**
+- **`trg_nivel_codigo_resync`** en `niveles_formacion` AFTER UPDATE OF `config_codigo_estudiante`: recalcula los códigos de todos los cursos vinculados a ese nivel.
+
+Todos usan `pg_trigger_depth() < 2` para evitar recursión.
+
+#### 5. Backfill por demanda (sin alterar datos históricos)
+
+Migración corre **una sola vez** la función `recalcular_codigos_curso` para cada `curso_id` distinto presente en `matriculas` activas, llenando `codigo_estudiante` para todas las matrículas existentes. Esto **no toca certificados ya emitidos** (siguen leyendo su `snapshot_datos.codigo`).
+
+#### 6. Frontend: leer la columna persistida
+
+- `Matricula` (tipo TS) y `rowToMatricula` ya mapean snake→camel automáticamente: `codigo_estudiante` → `codigoEstudiante`. Solo agregar el campo opcional al tipo.
+- `useCodigosCurso` se mantiene como compat y simplemente devuelve el `codigoEstudiante` de cada matrícula leída de BD (ya no recalcula). Cero cambios en consumidores (`EnrollmentsTable`, `MatriculaDetallePage`, `CertificacionSection`, `exportCursoListado`, formatos dinámicos).
+- Mostrar el `codigoEstudiante` también como columna nativa en:
+  - **Cursos → EnrollmentsTable**: ya lo muestra vía `codigosMapa[m.id]`. Ahora viene de BD directamente.
+  - **Matrículas (lista y detalle)**: ya lo lee `MatriculaDetallePage`. Agregar la columna en la tabla principal de Matrículas.
+- **Eliminar la dependencia de react-query/recalculo en cliente** para el código (queda solo como fallback de presentación si el campo está vacío en cursos sin config activa).
+
+#### 7. Comportamiento esperado tras el cambio
+
+| Acción del usuario | Efecto en BD |
 |---|---|
-| Sin `formato_respuestas` o sin `intentos_evaluacion` | Modo interactivo (igual que hoy) |
-| `intentos_evaluacion` con al menos un intento | **Modo graded-readonly** con resumen + ✓/✗ + botón "Realizar nuevo intento" |
-| Acaba de hacer submit en esta sesión (`submitted=true`) | Modo graded-readonly (ya funciona) |
+| Crear matrícula y asignarle un curso | Trigger `INSERT/UPDATE` calcula y guarda `codigo_estudiante`. |
+| Editar el campo "Número del Curso" (`cursos.nombre`) de `FIH-R-26-04-18` a `FIH-R-26-04-25` | Trigger en `cursos` recalcula y actualiza `codigo_estudiante` de las N matrículas → de `…-18-001` a `…-25-001`. |
+| Eliminar (soft-delete) una matrícula | Trigger recalcula los correlativos del curso (los demás se compactan). |
+| Cambiar `config_codigo_estudiante` en el nivel | Trigger recalcula todos los códigos de cursos de ese nivel. |
+| Certificado ya emitido | **No se altera** — usa snapshot histórico en `certificados.snapshot_datos`. |
 
-### Cambios técnicos
+### Detalles técnicos
 
-#### 1. `BloqueEvaluationQuizRenderer.tsx` — limpiar resumen
+- **Migración SQL**: una sola migración con `ALTER TABLE matriculas ADD COLUMN codigo_estudiante TEXT`, índice parcial único, las dos funciones (`calcular_codigo_estudiante` pura + `recalcular_codigos_curso`), los tres triggers, y al final un `DO $$ ... $$` que recorre `SELECT DISTINCT curso_id FROM matriculas WHERE deleted_at IS NULL` y llama a `recalcular_codigos_curso(curso_id)` para hacer backfill.
+- **Type guards**: `formToRow` en `matriculaService` debe **excluir** `codigo_estudiante` de las escrituras del frontend (campo derivado, lo gestiona el trigger).
+- **TS types**: agregar `codigoEstudiante?: string` a `Matricula` en `src/types/matricula.ts`. `src/integrations/supabase/types.ts` se regenera automáticamente.
+- **`useCodigosCurso`**: refactor a hook delgado que retorna `Object.fromEntries(matriculas.map(m => [m.id, m.codigoEstudiante ?? '']))`. Mantiene firma pública (cero cambios en consumidores).
+- **`generarPreviewCodigo`** se mantiene tal cual para el editor de configuración del nivel.
+- **Función `extraerConsecutivoDeNombre`** vive solo en SQL (no se necesita en TS al persistir todo en BD).
 
-En el subcomponente `ResumenCalificacionQuiz`:
-- Eliminar el bloque que arma `fecha` desde `timestamp` y el segmento `· Intento del {fecha}` del párrafo de correctas/total.
-- Eliminar completamente el `<p>` con la nota "Calificación recalculada con la versión vigente del cuestionario" (y el flag `reconstruido` deja de usarse en UI).
-- Mantener intacto el resto: badge APROBADO/NO APROBADO, puntaje grande, línea "X de Y respuestas correctas".
+### Validación
 
-#### 2. `DynamicPortalRenderer.tsx` — hidratar como graded-readonly cuando hay intentos
-
-a) Reemplazar el flag `submitted` simple por una distinción entre:
-- `justSubmitted` (booleano local) — true solo cuando el usuario acaba de enviar en esta sesión.
-- `viewingGraded` (derivado) — true si `justSubmitted` o si `existingResp?.intentosEvaluacion?.length > 0`.
-
-b) Calcular el `intentoVigente` al hidratar (último aprobado, fallback al último):
-```ts
-const intentos = existingResp?.intentosEvaluacion ?? [];
-const intento = intentos.findLast((i: any) => i?.aprobado) ?? intentos.at(-1);
-```
-
-c) Pasar `viewingGraded` como `submitted` al `PortalFormatoRenderer` (compat con la prop existente) y adicionalmente propagar el modo graded-readonly + intentoVigente hacia el quiz.
-
-d) Ocultar el botón "Enviar evaluación" cuando `viewingGraded` es true.
-
-e) Reemplazar el botón "Volver al inicio" por dos acciones cuando `viewingGraded` es true:
-- **"Realizar nuevo intento"** (variant outline): limpia `answers` (quita las claves del quiz y los `_result`), pone `justSubmitted=false`, y deja al usuario en modo interactivo listo para responder otra vez.
-- **"Volver al inicio"** (variant ghost): navega a `/estudiante/inicio`.
-
-#### 3. `PortalFormatoRenderer.tsx` — propagar el modo y el intento al quiz
-
-a) Aceptar dos props nuevas opcionales: `quizMode?: 'interactive' | 'graded-readonly'` y `intentosVigentesByBloqueId?: Record<string, IntentoVigente | null>`.
-
-b) En el `case 'evaluation_quiz'`:
-```tsx
-<BloqueEvaluationQuizRenderer
-  ...
-  mode={quizMode ?? 'interactive'}
-  intentoVigente={intentosVigentesByBloqueId?.[bloque.id] ?? null}
-/>
-```
-
-c) `DynamicPortalRenderer` arma el mapa `intentosVigentesByBloqueId` recorriendo `existingResp.intentosEvaluacion` y extrayendo, por cada `bloqueId` presente en `resultados`, el último intento aprobado (o último a secas) con su `{ puntaje, correctas, total, aprobado, timestamp }`.
-
-#### 4. Reset al "Realizar nuevo intento"
-
-Handler dentro de `DynamicPortalRenderer`:
-```ts
-const handleNewAttempt = () => {
-  setAnswers(prev => {
-    const next: Record<string, unknown> = {};
-    // Conservar claves no-quiz (firmas, otros campos) intactas
-    Object.entries(prev).forEach(([k, v]) => {
-      const isQuizKey = formato.bloques.some(b =>
-        b.type === 'evaluation_quiz' &&
-        (k.startsWith(`${b.id}_q`) || k === `${b.id}_result`)
-      );
-      if (!isQuizKey) next[k] = v;
-    });
-    return next;
-  });
-  setJustSubmitted(false);
-  setViewingGradedOverride(false); // fuerza modo interactivo aunque haya intentos previos
-};
-```
-
-Se introduce `viewingGradedOverride` (booleano de sesión) para que un click en "Nuevo intento" no rebote inmediatamente al modo graded-readonly por la presencia de intentos en BD.
-
-### Archivos modificados
-
-| Archivo | Cambio |
-|---|---|
-| `src/modules/formatos/plugins/safa/blocks/portal/BloqueEvaluationQuizRenderer.tsx` | Eliminar `fecha`/timestamp y la nota "Calificación recalculada…" del `ResumenCalificacionQuiz`. |
-| `src/pages/estudiante/DynamicPortalRenderer.tsx` | Calcular `viewingGraded` (con override por "nuevo intento"); construir `intentosVigentesByBloqueId`; pasar `quizMode` e `intentos…` al renderer; reemplazar botón final por "Realizar nuevo intento" + "Volver al inicio"; ocultar "Enviar evaluación" en modo graded. |
-| `src/components/portal/PortalFormatoRenderer.tsx` | Aceptar props `quizMode` e `intentosVigentesByBloqueId`; reenviarlas al `BloqueEvaluationQuizRenderer`. |
-
-### Validación post-cambio
-
-#### Problema 1
-- Abrir formato calificado desde Matrículas → resumen muestra solo `APROBADO 80%` + `8 de 10 respuestas correctas`. Sin fecha, sin nota de recalculado.
-- PDF idem.
-
-#### Problema 2
-- Estudiante completa y aprueba evaluación → ve modo graded. **Refresca el navegador** → sigue viendo modo graded (resumen + ✓/✗ + opciones bloqueadas). Sin botón "Enviar".
-- Click en "Realizar nuevo intento" → opciones se limpian, vuelve modo interactivo, botón "Enviar evaluación" aparece, puede responder y enviar de nuevo.
-- Después del nuevo envío, ve resumen actualizado del último intento.
-- Refresca otra vez → modo graded con el último intento.
-- Estudiante que nunca ha respondido → sigue viendo modo interactivo desde el primer load (sin regresión).
-- Formatos sin `evaluation_quiz` → comportamiento idéntico al actual (sin cambio).
-
-#### Verificación de no-regresión
-- Modo graded en Matrículas/PDF sigue funcionando idéntico (solo se limpia su contenido visual).
-- Hidratación de respuestas no-quiz (firmas, inputs) intacta.
-- `intentos_evaluacion` en BD no se modifica por hidratación; solo se lee.
-- El handler de "Nuevo intento" solo limpia claves del quiz; conserva firmas y otros campos.
+1. Crear curso `FIH-R-26-04-18`, asignar 3 estudiantes → BD muestra `…-18-001`, `…-18-002`, `…-18-003`.
+2. Editar nombre del curso → `FIH-R-26-04-25`. Verificar que las 3 matrículas pasan a `…-25-001..003` automáticamente, sin recargar nada manual.
+3. Soft-delete de la 2ª matrícula → las restantes quedan con códigos `…-25-001` y `…-25-002` (recompactado).
+4. Editar `config_codigo_estudiante` del nivel (cambiar separador o longitud) → todos los códigos de los cursos del nivel se recalculan.
+5. Generar certificado: usa el código persistido. Tras emitir, editar el nombre del curso → el certificado emitido conserva el código histórico (snapshot), pero la matrícula muestra el nuevo (es lo correcto: el certificado es inmutable).
+6. Exportar CSV de inscripciones (Cursos): la columna "Código del Estudiante" usa el valor de BD.
+7. Curso sin config activa de código → `codigo_estudiante` queda `NULL` y la UI muestra vacío (sin romper).
 
 ### Sin impacto colateral
 
-- Cero cambios en BD, triggers, RLS o servicios.
-- Cero cambios en `DynamicFormatoDocument` ni en estilos de impresión.
-- Cero cambios en el editor de formatos.
-- Cambio aditivo en `PortalFormatoRenderer` (props nuevas opcionales con defaults seguros).
+- Cero cambios en estructura de certificados, plantillas, formatos o portal.
+- Cero cambios en RLS (la columna nueva hereda las policies de `matriculas`).
+- Cero cambios visibles en el editor de cursos (el campo "Número del Curso" sigue siendo editable manualmente).
+- Cero cambios en los consumidores de `useCodigosCurso` (firma idéntica).
+- Único impacto: una migración + ajustes mínimos en `matriculaService.formToRow`, `Matricula` type y `useCodigosCurso`.
 

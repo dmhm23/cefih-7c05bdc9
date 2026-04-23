@@ -1,76 +1,61 @@
 
 
-## Plan: Fix `login_portal_estudiante` + prueba automatizada
+## Plan: Desactivar temporalmente la sincronización de `codigo_estudiante`
 
-### Problema confirmado
-El RPC usa `IF _found IS NOT NULL THEN` para validar el resultado del `SELECT ... INTO _found`. En PL/pgSQL, un `RECORD` cuyos campos son todos `NULL` (o cualquier campo `NULL` proveniente de `LEFT JOIN`) puede evaluarse como `NULL` en esa comparación, haciendo que estudiantes con `nivel_formacion_id` pero sin `curso_id` (caso cédula `1110482552`) caigan al branch de `'sin_matricula'` aunque la consulta sí encontró fila.
+### Confirmación del entendimiento
 
-### Cambios a implementar
+Sí, es claro. La sincronización que pediste hace ~2 días — la que recalcula `matriculas.codigo_estudiante` cada vez que cambia el curso, su nombre, fecha o el nivel — es la que está disparando el bug `duplicate key value violates unique constraint "uniq_matriculas_codigo_por_curso"` al agregar a Jeisson (y a cualquier estudiante cuya `created_at` sea anterior a alguna matrícula ya inscrita).
 
-#### 1. Migración: corregir el RPC
+En lugar de seguir parchando `recalcular_codigos_curso`, vamos a **dejar la sincronización dormida** y volver al modelo previo: el código se calcula en memoria al renderizar, a partir del orden cronológico de las matrículas del curso. Los datos persistidos en `codigo_estudiante` se quedan donde están (no se borran), pero ya nadie los va a tocar.
 
-Una sola línea cambia. Reemplazar:
+### Cambios
 
-```sql
-IF _found IS NOT NULL THEN
-```
+**1. Migración SQL — neutralizar triggers y función de recálculo**
 
-por:
+Una sola migración que:
 
-```sql
-IF FOUND THEN
-```
+- `DROP TRIGGER IF EXISTS trg_matriculas_resync_codigo_aiu ON public.matriculas;`
+- `DROP TRIGGER IF EXISTS trg_matriculas_resync_codigo_au ON public.matriculas;`
+- `DROP TRIGGER IF EXISTS trg_cursos_resync_codigos_au ON public.cursos;`
+- `DROP TRIGGER IF EXISTS trg_niveles_resync_codigos_au ON public.niveles_formacion;`
+- Reemplaza el cuerpo de `public.recalcular_codigos_curso(uuid)` por un **no-op** (`BEGIN RETURN; END;`) con un comentario `-- TEMPORALMENTE DESACTIVADO`. Así, si alguien lo invoca desde otra ruta, no falla ni renumera.
+- Mantiene la columna `matriculas.codigo_estudiante`, su índice único parcial y las funciones puras `calcular_codigo_estudiante` / `extraer_consecutivo_nombre_curso` intactas (sólo dormimos los triggers; nada se elimina del esquema).
 
-`FOUND` es la variable booleana especial de PL/pgSQL que se setea a `TRUE` cuando el `SELECT ... INTO` devolvió al menos una fila, **independientemente de si los campos son `NULL`**. Es la forma correcta y idiomática de comprobar resultado en este patrón.
+Esto elimina por completo el path que produce la colisión `uniq_matriculas_codigo_por_curso` al insertar/actualizar matrículas.
 
-El resto del RPC se mantiene idéntico:
-- La prioridad (curso activo → sin curso → curso cerrado) sigue funcionando.
-- El fallback `COALESCE(c.nombre, nf.nombre, 'Portal del Estudiante')` ya cubre el `curso_nombre` cuando no hay curso.
-- El `COALESCE(nf.tipo_formacion, c.tipo_formacion)` ya cubre el tipo.
-- El branch final `'sin_matricula'` queda solo para los casos donde realmente no se encontró ninguna matrícula con nivel asignado.
+**2. Frontend — `useCodigosCurso` recalcula en memoria**
 
-#### 2. Prueba automatizada
+Reescribir `src/hooks/useCodigosCurso.ts` para que **calcule** los códigos en runtime usando la utilidad ya existente `calcularCodigosCurso` (de `src/utils/codigoEstudiante.ts`), tal como funcionaba antes de la sincronización:
 
-Crear una edge function de pruebas Deno en `supabase/functions/login-portal-estudiante/login-portal-estudiante_test.ts` (siguiendo la convención de `supabase--test_edge_functions`) que:
+- Toma las matrículas del curso (`useMatriculasByCurso`).
+- Toma el nivel del curso (`useNivelesFormacion`) para leer `configuracionCodigoEstudiante`.
+- Devuelve `{ matriculaId → código }` calculado por `calcularCodigosCurso(matriculas, config, curso)`.
+- Fallback: si una matrícula ya tiene `codigoEstudiante` persistido y no hay config activa, lo devuelve tal cual.
 
-a. **Setup**: usando el `SERVICE_ROLE_KEY`, inserta:
-   - Una `persona` de prueba con cédula `TEST-PORTAL-NO-CURSO-{timestamp}` (cédula sintética para no chocar con datos reales).
-   - Un `nivel_formacion` ya existente o crea uno temporal.
-   - Una `matricula` con `nivel_formacion_id = <id>`, `curso_id = NULL`, `activo = TRUE`, `deleted_at = NULL`.
+No cambia la firma del hook, así que `CursoDetallePage`, `MatriculaDetallePage`, `EnrollmentsTable`, `CertificacionSection` y `exportCursoListado` siguen funcionando sin tocarse.
 
-b. **Caso 1 — fix principal**: invoca `supabase.rpc('login_portal_estudiante', { p_cedula: '<cédula sintética>' })` y verifica:
-   - `data[0].resultado === 'ok'`
-   - `data[0].matricula_id` no nulo
-   - `data[0].curso_id` es `NULL`
-   - `data[0].curso_nombre` no vacío (debe caer al nombre del nivel o al literal `'Portal del Estudiante'`)
-   - `data[0].portal_habilitado === true`
+**3. Mejora colateral mínima en el modal (opcional pero recomendada)**
 
-c. **Caso 2 — regresión**: invoca con una cédula inexistente y verifica `resultado === 'persona_no_encontrada'`.
+En `AgregarEstudiantesModal.tsx`, cambiar `} catch {` por `} catch (err: any) {` y mostrar `err?.message` en el toast. Sin esto, cualquier futuro error volverá a ser un “Error al guardar” opaco. Es 3 líneas y nos ahorra otro round de debugging a ciegas.
 
-d. **Caso 3 — regresión**: crea una persona con matrícula activa pero **sin** `nivel_formacion_id`, invoca y verifica `resultado === 'sin_matricula'`.
+### Lo que **no** se hace
 
-e. **Teardown**: hard-delete de las filas de prueba creadas (matrícula, persona y, si aplica, nivel temporal) usando `service_role` para evitar contaminar la BD.
-
-Usa `Deno.test()` con steps (`t.step(...)`) y aserciones de `jsr:@std/assert`.
-
-### Archivos a crear/modificar
-
-1. **`supabase/migrations/<timestamp>_fix_login_portal_found.sql`** — migración con el `CREATE OR REPLACE FUNCTION public.login_portal_estudiante(...)` completo, idéntico al actual salvo el cambio `IF FOUND THEN`.
-2. **`supabase/functions/login-portal-estudiante/login-portal-estudiante_test.ts`** — archivo Deno de pruebas con los 3 casos descritos. (Es el primer test del proyecto bajo esta convención; no se necesita una edge function "real" — el archivo `_test.ts` corre por sí solo con `supabase--test_edge_functions`).
-
-### Cómo ejecuto la prueba
-
-Tras desplegar la migración, corro `supabase--test_edge_functions` con `{"functions": ["login-portal-estudiante"]}` y reporto el resultado (esperado: 3 sub-tests verdes). Si falla, ajusto y repito.
+- No se borra la columna `codigo_estudiante` ni los datos ya persistidos (siguen ahí por si en el refactor futuro los queremos reutilizar).
+- No se tocan las funciones puras (`calcular_codigo_estudiante`, `extraer_consecutivo_nombre_curso`).
+- No se modifica el archivo de prueba creado para `login_portal_estudiante`.
+- No se cambia el cálculo del **nombre** del curso (`autogenerar_nombre_curso` y `curso_consecutivos` siguen activos — eso es independiente).
 
 ### Riesgos y mitigación
 
-- **Riesgo**: que la prueba deje datos huérfanos si revienta a mitad. **Mitigación**: usar un `try/finally` por step y cédulas con prefijo `TEST-PORTAL-` fácilmente identificables si hay que limpiar manualmente.
-- **Riesgo**: que `nivel_formacion` requerido no exista en el entorno de test. **Mitigación**: el test consulta primero `niveles_formacion` y reusa el primer `id` activo; si no hay ninguno, hace skip explícito con mensaje claro.
-- **Riesgo**: efectos colaterales en otros consumidores del RPC. **Mitigación**: ninguno — el cambio sólo elimina un falso negativo; los casos que antes retornaban `'ok'` lo siguen haciendo, y los que retornaban `'sin_matricula'` correctamente lo siguen haciendo.
+- **Riesgo**: códigos persistidos en `matriculas.codigo_estudiante` quedan “congelados” con el último valor que les asignó el trigger antes del fix. **Mitigación**: el frontend ya no los lee directamente; los recalcula. Y el índice único parcial se mantiene, así que cualquier inserción manual incompatible seguiría siendo rechazada (improbable porque ya nadie los escribe).
+- **Riesgo**: divergencia entre código calculado (frontend) y código persistido (BD). **Mitigación**: aceptable y temporal — el plan completo de refactor abordará esto. Mientras tanto, el frontend manda.
+- **Riesgo**: que el certificado generado use un código distinto al que se mostraba antes. **Mitigación**: `certificadoGenerator` ya recibe `codigoEstudiante` desde `codigosCurso[matricula.id]`, que ahora será el calculado en memoria — mismo algoritmo que el SQL, mismo resultado.
+- **Riesgo cero** sobre login del portal, formatos, cartera y matrícula — esos flujos no dependen de `codigo_estudiante`.
 
-### Sin cambios colaterales
+### Verificación post-fix
 
-- Cero cambios en frontend, hooks, servicios o tipos.
-- Cero cambios en otras funciones, triggers o RLS.
-- Cero cambios en datos productivos (la prueba se autolimpia).
+- Agregar a Jeisson (CC 1110488794) al curso `A-26-04-07` → debe completarse sin error.
+- Listado del curso debe mostrar 6 estudiantes con códigos `…-0001` a `…-0006`, ordenados por `created_at`.
+- Repetir en otro curso para confirmar que “agregar al final” también sigue funcionando.
+- Confirmar que el certificado descargado usa el código mostrado en pantalla.
 

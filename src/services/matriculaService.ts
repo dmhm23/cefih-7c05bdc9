@@ -37,6 +37,9 @@ function formToRow(data: Record<string, any>): Record<string, any> {
   delete row.id;
   delete row.empresa_contacto_id; // not a DB column
 
+  // codigo_estudiante es derivado: lo calcula y mantiene el trigger en BD
+  delete row.codigo_estudiante;
+
   // Sanitize empty strings to null for UUID columns
   const uuidFields = ['curso_id', 'empresa_id', 'persona_id', 'nivel_formacion_id'];
   for (const f of uuidFields) {

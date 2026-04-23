@@ -61,7 +61,10 @@ export interface Matricula {
   // Fechas autocompletadas desde curso
   fechaInicio?: string;
   fechaFin?: string;
-  
+
+  // Código de estudiante (persistido en BD; calculado por trigger)
+  codigoEstudiante?: string | null;
+
   // Historial de formación previa
   nivelPrevio?: NivelPrevio;
   centroFormacionPrevio?: string;

@@ -1,28 +1,50 @@
 import { useMemo } from 'react';
 import { useMatriculasByCurso } from '@/hooks/useMatriculas';
+import { useNivelesFormacion } from '@/hooks/useNivelesFormacion';
+import { calcularCodigosCurso } from '@/utils/codigoEstudiante';
 import type { Curso } from '@/types/curso';
 
 /**
  * Hook que devuelve un mapa matriculaId → código de estudiante.
  *
- * El código se persiste en `matriculas.codigo_estudiante` y es mantenido por
- * triggers de BD (asignación de curso, cambio de nombre del curso, cambio de
- * config del nivel). Este hook simplemente lee el valor persistido — la
- * sincronización es automática.
+ * NOTA TEMPORAL: La sincronización automática del código vía triggers de BD
+ * está desactivada (ver migración 2026-04-23). Mientras se refactoriza la
+ * lógica desde la raíz, calculamos el código en memoria a partir del orden
+ * cronológico de las matrículas del curso, replicando el comportamiento
+ * previo a la sincronización.
  *
- * Se conserva la firma original para no romper consumidores existentes.
+ * Fallback: si una matrícula tiene `codigoEstudiante` persistido y el nivel
+ * no expone configuración activa, se devuelve el valor persistido tal cual.
  */
 export function useCodigosCurso(curso: Curso | undefined | null) {
   const cursoId = curso?.id ?? '';
   const { data: matriculas, isLoading } = useMatriculasByCurso(cursoId);
+  const { data: niveles = [] } = useNivelesFormacion();
 
   const codigos = useMemo(() => {
-    const out: Record<string, string> = {};
-    (matriculas ?? []).forEach((m) => {
-      if (m.codigoEstudiante) out[m.id] = m.codigoEstudiante;
+    if (!curso || !matriculas || matriculas.length === 0) return {};
+
+    const nivel = curso.nivelFormacionId
+      ? niveles.find((n) => n.id === curso.nivelFormacionId)
+      : undefined;
+    const config = nivel?.configuracionCodigoEstudiante;
+
+    // Cálculo en memoria (fuente de verdad mientras la sincronización está dormida)
+    const calculados = calcularCodigosCurso(
+      matriculas.map((m) => ({ id: m.id, createdAt: m.createdAt })),
+      config,
+      curso,
+    );
+
+    // Fallback: completar con valores persistidos cuando el cálculo no aplique
+    const out: Record<string, string> = { ...calculados };
+    matriculas.forEach((m) => {
+      if (!out[m.id] && m.codigoEstudiante) {
+        out[m.id] = m.codigoEstudiante;
+      }
     });
     return out;
-  }, [matriculas]);
+  }, [curso, matriculas, niveles]);
 
   return { codigos, isLoading };
 }

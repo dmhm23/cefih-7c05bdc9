@@ -117,9 +117,10 @@ export function AgregarEstudiantesModal({
       setSeleccionados([]);
       setBusqueda("");
       onOpenChange(false);
-    } catch {
+    } catch (err: any) {
       toast({
         title: "Error al agregar estudiantes",
+        description: err?.message || "Error desconocido",
         variant: "destructive",
       });
     }

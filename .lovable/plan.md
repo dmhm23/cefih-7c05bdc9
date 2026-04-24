@@ -1,61 +1,61 @@
+# Fase 1.1 — Corrección de la cascada de firmas server-side
 
+## Problema detectado
 
-## Plan: Desactivar temporalmente la sincronización de `codigo_estudiante`
+La migración de Fase 1 creó la **función** `cascade_firma_to_targets()` correctamente, pero el **trigger** `trg_cascade_firma` no quedó registrado en `formato_respuestas` (el sistema reporta "There are no triggers in the database"). Por eso, cédulas como **1020405073** y **1010163760** siguen viendo los formatos hijos en estado pendiente, aun cuando el formato origen "Información del Aprendiz" ya fue diligenciado y firmado.
 
-### Confirmación del entendimiento
+Evidencia complementaria:
 
-Sí, es claro. La sincronización que pediste hace ~2 días — la que recalcula `matriculas.codigo_estudiante` cada vez que cambia el curso, su nombre, fecha o el nivel — es la que está disparando el bug `duplicate key value violates unique constraint "uniq_matriculas_codigo_por_curso"` al agregar a Jeisson (y a cualquier estudiante cuya `created_at` sea anterior a alguna matrícula ya inscrita).
+- Las firmas existentes en `firmas_matricula` para esos estudiantes tienen `user_agent` del navegador del estudiante, no `'cascade_firma_to_targets'` → confirma que el trigger nunca se ejecutó.
+- No existen filas en `formato_respuestas` para "PARTICIPACIÓN PTA - ATS" en esas matrículas, aunque el formato cumple los filtros de nivel.
 
-En lugar de seguir parchando `recalcular_codigos_curso`, vamos a **dejar la sincronización dormida** y volver al modelo previo: el código se calcula en memoria al renderizar, a partir del orden cronológico de las matrículas del curso. Los datos persistidos en `codigo_estudiante` se quedan donde están (no se borran), pero ya nadie los va a tocar.
+## Cambios propuestos (1 sola migración SQL)
 
-### Cambios
+### 1) Re-crear el trigger faltante
 
-**1. Migración SQL — neutralizar triggers y función de recálculo**
+```sql
+DROP TRIGGER IF EXISTS trg_cascade_firma ON public.formato_respuestas;
 
-Una sola migración que:
+CREATE TRIGGER trg_cascade_firma
+AFTER INSERT OR UPDATE OF estado, answers
+ON public.formato_respuestas
+FOR EACH ROW
+EXECUTE FUNCTION public.cascade_firma_to_targets();
+```
 
-- `DROP TRIGGER IF EXISTS trg_matriculas_resync_codigo_aiu ON public.matriculas;`
-- `DROP TRIGGER IF EXISTS trg_matriculas_resync_codigo_au ON public.matriculas;`
-- `DROP TRIGGER IF EXISTS trg_cursos_resync_codigos_au ON public.cursos;`
-- `DROP TRIGGER IF EXISTS trg_niveles_resync_codigos_au ON public.niveles_formacion;`
-- Reemplaza el cuerpo de `public.recalcular_codigos_curso(uuid)` por un **no-op** (`BEGIN RETURN; END;`) con un comentario `-- TEMPORALMENTE DESACTIVADO`. Así, si alguien lo invoca desde otra ruta, no falla ni renumera.
-- Mantiene la columna `matriculas.codigo_estudiante`, su índice único parcial y las funciones puras `calcular_codigo_estudiante` / `extraer_consecutivo_nombre_curso` intactas (sólo dormimos los triggers; nada se elimina del esquema).
+### 2) Backfill forzado retroactivo
 
-Esto elimina por completo el path que produce la colisión `uniq_matriculas_codigo_por_curso` al insertar/actualizar matrículas.
+Tocar todas las respuestas ya completadas de formatos origen para que el trigger se dispare y propague firmas + cree los registros hijos faltantes:
 
-**2. Frontend — `useCodigosCurso` recalcula en memoria**
+```sql
+UPDATE public.formato_respuestas fr
+SET updated_at = now()
+FROM public.formatos_formacion ff
+WHERE fr.formato_id = ff.id
+  AND fr.estado = 'completado'
+  AND ff.es_origen_firma = TRUE
+  AND ff.deleted_at IS NULL;
+```
 
-Reescribir `src/hooks/useCodigosCurso.ts` para que **calcule** los códigos en runtime usando la utilidad ya existente `calcularCodigosCurso` (de `src/utils/codigoEstudiante.ts`), tal como funcionaba antes de la sincronización:
+La función `cascade_firma_to_targets()` ya hace `ON CONFLICT DO UPDATE` con merge JSONB (`answers || EXCLUDED.answers`), por lo que **no sobrescribe respuestas existentes** — solo inyecta la firma donde falta y marca como completado los hijos.
 
-- Toma las matrículas del curso (`useMatriculasByCurso`).
-- Toma el nivel del curso (`useNivelesFormacion`) para leer `configuracionCodigoEstudiante`.
-- Devuelve `{ matriculaId → código }` calculado por `calcularCodigosCurso(matriculas, config, curso)`.
-- Fallback: si una matrícula ya tiene `codigoEstudiante` persistido y no hay config activa, lo devuelve tal cual.
+### 3) Validación post-ejecución
 
-No cambia la firma del hook, así que `CursoDetallePage`, `MatriculaDetallePage`, `EnrollmentsTable`, `CertificacionSection` y `exportCursoListado` siguen funcionando sin tocarse.
+Después de aplicar la migración, verificaré con SQL de solo lectura:
 
-**3. Mejora colateral mínima en el modal (opcional pero recomendada)**
+- Que `trg_cascade_firma` aparezca listado en `pg_trigger` para `formato_respuestas`.
+- Que existan registros nuevos en `firmas_matricula` con `user_agent = 'cascade_firma_to_targets'` para las matrículas de 1020405073 y 1010163760.
+- Que los formatos hijos (ej. "PARTICIPACIÓN PTA - ATS" y "**REGISTRO DE ASISTECIA DE FORMACION Y ENTRENAMIENTO EN ALTURAS" y para nuevos formatos que hereden firma origen**) tengan `estado = 'completado'` para esas matrículas.
 
-En `AgregarEstudiantesModal.tsx`, cambiar `} catch {` por `} catch (err: any) {` y mostrar `err?.message` en el toast. Sin esto, cualquier futuro error volverá a ser un “Error al guardar” opaco. Es 3 líneas y nos ahorra otro round de debugging a ciegas.
+## Riesgos y mitigaciones
 
-### Lo que **no** se hace
+- **Riesgo**: el `UPDATE` masivo dispara el trigger sobre cientos/miles de filas → la función tiene guarda `pg_trigger_depth() > 1` para evitar recursión y usa `ON CONFLICT DO UPDATE` idempotente.
+- **Riesgo**: sobrescribir respuestas manuales en formatos hijos → mitigado por el merge `answers || EXCLUDED.answers` (las nuevas claves de firma se agregan sin tocar el resto) y por `COALESCE(completado_at, now())` (no pisa la fecha original si ya estaba completado).
+- **No se borra ni se altera ningún dato existente** — solo se agregan firmas faltantes y se marcan como completados los hijos que aún estaban pendientes.
 
-- No se borra la columna `codigo_estudiante` ni los datos ya persistidos (siguen ahí por si en el refactor futuro los queremos reutilizar).
-- No se tocan las funciones puras (`calcular_codigo_estudiante`, `extraer_consecutivo_nombre_curso`).
-- No se modifica el archivo de prueba creado para `login_portal_estudiante`.
-- No se cambia el cálculo del **nombre** del curso (`autogenerar_nombre_curso` y `curso_consecutivos` siguen activos — eso es independiente).
+## Archivos que se tocarán
 
-### Riesgos y mitigación
+- **Nueva migración SQL** (1 archivo): re-creación del trigger + backfill.
+- No hay cambios en código frontend (Fase 1 ya dejó el listener cliente como no-op).
 
-- **Riesgo**: códigos persistidos en `matriculas.codigo_estudiante` quedan “congelados” con el último valor que les asignó el trigger antes del fix. **Mitigación**: el frontend ya no los lee directamente; los recalcula. Y el índice único parcial se mantiene, así que cualquier inserción manual incompatible seguiría siendo rechazada (improbable porque ya nadie los escribe).
-- **Riesgo**: divergencia entre código calculado (frontend) y código persistido (BD). **Mitigación**: aceptable y temporal — el plan completo de refactor abordará esto. Mientras tanto, el frontend manda.
-- **Riesgo**: que el certificado generado use un código distinto al que se mostraba antes. **Mitigación**: `certificadoGenerator` ya recibe `codigoEstudiante` desde `codigosCurso[matricula.id]`, que ahora será el calculado en memoria — mismo algoritmo que el SQL, mismo resultado.
-- **Riesgo cero** sobre login del portal, formatos, cartera y matrícula — esos flujos no dependen de `codigo_estudiante`.
-
-### Verificación post-fix
-
-- Agregar a Jeisson (CC 1110488794) al curso `A-26-04-07` → debe completarse sin error.
-- Listado del curso debe mostrar 6 estudiantes con códigos `…-0001` a `…-0006`, ordenados por `created_at`.
-- Repetir en otro curso para confirmar que “agregar al final” también sigue funcionando.
-- Confirmar que el certificado descargado usa el código mostrado en pantalla.
-
+¿Apruebas que ejecute esta Fase 1.1?

@@ -1,61 +1,152 @@
-# Fase 1.1 — Corrección de la cascada de firmas server-side
+# Plan de corrección — Código de estudiante
 
-## Problema detectado
+## Parte A · Diagnóstico ampliado del índice único
 
-La migración de Fase 1 creó la **función** `cascade_firma_to_targets()` correctamente, pero el **trigger** `trg_cascade_firma` no quedó registrado en `formato_respuestas` (el sistema reporta "There are no triggers in the database"). Por eso, cédulas como **1020405073** y **1010163760** siguen viendo los formatos hijos en estado pendiente, aun cuando el formato origen "Información del Aprendiz" ya fue diligenciado y firmado.
+### El índice que generó las colisiones
 
-Evidencia complementaria:
-
-- Las firmas existentes en `firmas_matricula` para esos estudiantes tienen `user_agent` del navegador del estudiante, no `'cascade_firma_to_targets'` → confirma que el trigger nunca se ejecutó.
-- No existen filas en `formato_respuestas` para "PARTICIPACIÓN PTA - ATS" en esas matrículas, aunque el formato cumple los filtros de nivel.
-
-## Cambios propuestos (1 sola migración SQL)
-
-### 1) Re-crear el trigger faltante
-
-```sql
-DROP TRIGGER IF EXISTS trg_cascade_firma ON public.formato_respuestas;
-
-CREATE TRIGGER trg_cascade_firma
-AFTER INSERT OR UPDATE OF estado, answers
-ON public.formato_respuestas
-FOR EACH ROW
-EXECUTE FUNCTION public.cascade_firma_to_targets();
+```text
+Nombre  : uniq_matriculas_codigo_por_curso
+Tabla   : public.matriculas
+Tipo    : UNIQUE INDEX (parcial)
+Columnas: (curso_id, codigo_estudiante)
+WHERE   : codigo_estudiante IS NOT NULL AND deleted_at IS NULL
 ```
 
-### 2) Backfill forzado retroactivo
+Creado en la migración `20260423111907` y desactivada la sincronización en `20260423153551` por colisiones durante el recálculo.
 
-Tocar todas las respuestas ya completadas de formatos origen para que el trigger se dispare y propague firmas + cree los registros hijos faltantes:
+### Por qué se producían duplicados
 
-```sql
-UPDATE public.formato_respuestas fr
-SET updated_at = now()
-FROM public.formatos_formacion ff
-WHERE fr.formato_id = ff.id
-  AND fr.estado = 'completado'
-  AND ff.es_origen_firma = TRUE
-  AND ff.deleted_at IS NULL;
+La función original `recalcular_codigos_curso` hacía `UPDATE` fila a fila dentro de un mismo `curso_id`, **reusando el mismo espacio de claves del índice único**. Escenarios reproducibles:
+
+1. **Eliminación intermedia.** Curso con códigos `0001..0005`. Se borra (soft) el `0003`. El recálculo recorre las 4 filas restantes en orden: cuando intenta poner `0003` al que era `0004`, la fila `0004` aún existe → colisión `(curso_id, '0003')` ya está… espera, no. El choque real ocurre con el otro caso:
+2. **Reasignación entre cursos.** Matrícula con `0005` se mueve al curso B. El trigger dispara recálculo del curso B; si ya hay un `0005` allá, falla. Y si dispara recálculo del curso A para "compactar", la fila reasignada todavía no se ha persistido y el orden de eventos del trigger genera un estado intermedio inconsistente.
+3. **Renumeración cíclica.** El recálculo no usa una etapa intermedia (NULL temporal) ni un sufijo provisional; intenta `UPDATE` directo a valores que pueden coincidir con códigos vigentes de otras filas del mismo curso aún no procesadas.
+4. **Concurrencia.** Dos inserts casi simultáneos al mismo curso disparan dos recálculos en paralelo; sin `LOCK` o `advisory lock`, ambos calculan el mismo `idx` para distinto registro.
+
+### Cómo evitar la colisión definitivamente
+
+Tres mecanismos combinados:
+
+- **Recálculo en dos fases:** primero `UPDATE … SET codigo_estudiante = NULL` para todas las filas del curso (las saca del índice parcial gracias al `WHERE codigo_estudiante IS NOT NULL`), luego asignar los nuevos valores. Sin solapamiento posible.
+- **Serialización por curso:** `pg_advisory_xact_lock(hashtext('codigo_curso:' || curso_id))` al inicio de la función. Garantiza que dos recálculos del mismo curso no corran en paralelo.
+- **Trigger `DEFERRABLE INITIALLY DEFERRED**` o ejecución `AFTER` con `STATEMENT`-level cuando aplique, para que el recálculo vea el estado final del statement y no estados intermedios.
+
+---
+
+## Parte B · Plan técnico atómico (10 pasos)
+
+### Paso 1 — Corregir `parseInt` en frontend (parche temporal)
+
+- Archivo: `src/utils/codigoEstudiante.ts`.
+- Reemplazar `parseInt(curso.numeroCurso)` por una extracción real del último segmento numérico del `nombre`/`numeroCurso` con regex (`/(\d+)$/`), igual que la función SQL `extraer_consecutivo_nombre_curso`.
+- Mantener este cálculo en memoria solo como **fallback de UI** mientras la BD aún no tenga `codigo_estudiante` persistido. Una vez completos los pasos 3–8, este cálculo deja de ser fuente de verdad.
+
+### Paso 2 — Definir fuente de verdad
+
+- **Fuente de verdad:** columna `matriculas.codigo_estudiante` poblada por la BD.
+- Frontend solo lee. Hook `useCodigosCurso` se simplifica: devuelve `m.codigoEstudiante` directo desde la consulta de matrículas; si está `NULL`, muestra `—` o "Pendiente de asignación".
+- Se elimina `calcularCodigosCurso` del flujo de visualización (queda únicamente `generarPreviewCodigo` para el editor de configuración del nivel).
+
+### Paso 3 — Reescribir `recalcular_codigos_curso` (no reactivar la versión vieja)
+
+Nueva implementación con tres garantías:
+
+```text
+1. pg_advisory_xact_lock(hashtext('codigo_curso:' || _curso_id))
+2. UPDATE matriculas SET codigo_estudiante = NULL
+   WHERE curso_id = _curso_id AND deleted_at IS NULL AND activo;
+3. Loop ORDER BY created_at ASC, id ASC → asigna códigos nuevos
+   con calcular_codigo_estudiante(...).
 ```
 
-La función `cascade_firma_to_targets()` ya hace `ON CONFLICT DO UPDATE` con merge JSONB (`answers || EXCLUDED.answers`), por lo que **no sobrescribe respuestas existentes** — solo inyecta la firma donde falta y marca como completado los hijos.
+Ya no hay solapamiento porque entre el paso 2 y el 3 ninguna fila del curso participa del índice único parcial.
 
-### 3) Validación post-ejecución
+### Paso 4 — Matrículas nuevas asignadas a curso
 
-Después de aplicar la migración, verificaré con SQL de solo lectura:
+- Trigger `trg_matriculas_resync_codigo_aiu` (AFTER INSERT) reactivado: dispara `recalcular_codigos_curso(NEW.curso_id)`.
+- Cubre tanto creación con `curso_id` directo como asignación posterior vía formulario.
 
-- Que `trg_cascade_firma` aparezca listado en `pg_trigger` para `formato_respuestas`.
-- Que existan registros nuevos en `firmas_matricula` con `user_agent = 'cascade_firma_to_targets'` para las matrículas de 1020405073 y 1010163760.
-- Que los formatos hijos (ej. "PARTICIPACIÓN PTA - ATS" y "**REGISTRO DE ASISTECIA DE FORMACION Y ENTRENAMIENTO EN ALTURAS" y para nuevos formatos que hereden firma origen**) tengan `estado = 'completado'` para esas matrículas.
+### Paso 5 — Matrículas reasignadas entre cursos
 
-## Riesgos y mitigaciones
+- Trigger `trg_matriculas_resync_codigo_au` (AFTER UPDATE OF curso_id, activo, deleted_at):
+  - Si `OLD.curso_id IS DISTINCT FROM NEW.curso_id` → recalcular **curso anterior** (compactar) y **curso nuevo** (insertar al final).
+  - Si `activo` o `deleted_at` cambian → recalcular el curso afectado.
+- Gracias al lock por curso, no hay condición de carrera incluso si la reasignación es masiva.
 
-- **Riesgo**: el `UPDATE` masivo dispara el trigger sobre cientos/miles de filas → la función tiene guarda `pg_trigger_depth() > 1` para evitar recursión y usa `ON CONFLICT DO UPDATE` idempotente.
-- **Riesgo**: sobrescribir respuestas manuales en formatos hijos → mitigado por el merge `answers || EXCLUDED.answers` (las nuevas claves de firma se agregan sin tocar el resto) y por `COALESCE(completado_at, now())` (no pisa la fecha original si ya estaba completado).
-- **No se borra ni se altera ningún dato existente** — solo se agregan firmas faltantes y se marcan como completados los hijos que aún estaban pendientes.
+### Paso 6 — Prevención de colisiones del índice único
 
-## Archivos que se tocarán
+- Mantener el índice `uniq_matriculas_codigo_por_curso` tal cual (sigue siendo la garantía de unicidad correcta).
+- La fase intermedia `SET codigo_estudiante = NULL` los saca temporalmente del índice (es parcial sobre `IS NOT NULL`).
+- Advisory lock por `curso_id` evita doble recálculo concurrente.
+- `pg_trigger_depth() > 1` se mantiene para evitar recursión.
 
-- **Nueva migración SQL** (1 archivo): re-creación del trigger + backfill.
-- No hay cambios en código frontend (Fase 1 ya dejó el listener cliente como no-op).
+Paso 6.5 — Prueba controlada antes del backfill masivo
 
-¿Apruebas que ejecute esta Fase 1.1?
+Antes de ejecutar el backfill sobre todos los cursos afectados, se debe probar la nueva función de recálculo en un curso controlado.
+
+Curso sugerido: `FIH-R-26-04-25`.
+
+Validar:
+
+1. que los códigos dejan de usar `01`;  
+2. que pasan a usar `25`;  
+3. que no quedan códigos NULL;  
+4. que no hay duplicados;  
+5. que la UI muestra el valor persistido;  
+6. que al refrescar la página el código permanece correcto;  
+7. que no aparecen errores en consola ni red.
+
+Solo después de esta validación se puede ejecutar el backfill normalizador.
+
+### Paso 7 — Backfill normalizador de las 65 matrículas con `codigo_estudiante = NULL`
+
+- Migración con bloque `DO $$` que recorre `SELECT DISTINCT curso_id FROM matriculas WHERE codigo_estudiante IS NULL AND curso_id IS NOT NULL AND deleted_at IS NULL` y llama `recalcular_codigos_curso(curso_id)`.
+- Como la nueva función nulifica todo el curso primero, también re-numera los que ya tenían código → garantiza coherencia total por curso.
+
+### Paso 8 — Corrección de matrículas con código de otro curso
+
+- Caso detectado: matrícula `062511cb…` con código `FIH-R-26-04-20-0005` pero curso `FIH-R-26-04-24`.
+- El backfill del paso 7 ya lo cubre: al recalcular `FIH-R-26-04-24` con la fase NULL→reasignar, esa fila recibe el código correcto del curso destino.
+- Adicionalmente recalcular el curso **origen huérfano** (`FIH-R-26-04-20`) para compactar consecutivos vacíos.
+
+### Paso 9 — Validación visual post-fix
+
+Verificar en navegador que el código persistido coincide con la UI en:
+
+- Tabla `EnrollmentsTable` (vista de curso): columna "Código".
+- `MatriculaDetallePage`: header con código del estudiante.
+- `EnrollmentsTable` de `MatriculasPage` (listado global).
+- Generación de un certificado nuevo: token `{{matricula.codigo}}` en el SVG.
+
+### Paso 10 — Plan de rollback
+
+Si la nueva función o los triggers causan errores en producción:
+
+1. **Rollback inmediato (sin perder datos):**
+  ```sql
+   DROP TRIGGER trg_matriculas_resync_codigo_aiu ON matriculas;
+   DROP TRIGGER trg_matriculas_resync_codigo_au  ON matriculas;
+   DROP TRIGGER trg_cursos_resync_codigos_au     ON cursos;
+   DROP TRIGGER trg_niveles_resync_codigos_au    ON niveles_formacion;
+  ```
+   Los `codigo_estudiante` ya backfilleados quedan persistidos. La UI sigue mostrándolos correctamente (lectura directa).
+2. **Reactivar fallback frontend** del Paso 1 (cálculo en memoria con regex corregido) si es necesario para nuevas matrículas mientras se diagnostica.
+3. **Rollback completo:** restaurar la función no-op anterior (`RETURN;`). El índice único permanece, no rompe nada.
+4. Backup de la columna `codigo_estudiante` antes del backfill: tabla auxiliar `_backup_codigos_estudiante` con `(matricula_id, codigo_estudiante_old, snapshot_at)` para restauración fila a fila.
+
+---
+
+## Resumen ejecutivo
+
+
+| Capa                                  | Acción                                                |
+| ------------------------------------- | ----------------------------------------------------- |
+| Frontend `codigoEstudiante.ts`        | Fix de `parseInt`; pasa a fallback solamente          |
+| Frontend `useCodigosCurso`            | Lee `m.codigoEstudiante` de BD como fuente única      |
+| BD función `recalcular_codigos_curso` | Reescritura: lock + nulify + reasignar                |
+| BD triggers (4)                       | Reactivar los 4 triggers existentes                   |
+| BD datos                              | Backfill de 65 NULL + re-sync del registro huérfano   |
+| Seguridad                             | Tabla `_backup_codigos_estudiante` antes del backfill |
+
+
+¿Apruebas este plan para que proceda a implementarlo paso por paso?

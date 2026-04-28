@@ -26,7 +26,15 @@ export function generarCodigoEstudiante({ config, curso, indexEstudiante, consec
   }
 
   if (config.usarConsecutivoCursoMes) {
-    const consec = consecutivoCursoMes ?? (parseInt(curso.numeroCurso) || 1);
+    // Extrae el último segmento numérico del nombre del curso (ej: "FIH-R-26-04-25" → 25).
+    // parseInt sobre el string completo retorna NaN porque empieza con letras.
+    let consec = consecutivoCursoMes;
+    if (consec === undefined || consec === null) {
+      const fuente = curso.nombre || curso.numeroCurso || '';
+      const match = fuente.match(/(\d+)(?!.*\d)/); // último grupo numérico
+      consec = match ? parseInt(match[1], 10) : 1;
+      if (!Number.isFinite(consec) || consec <= 0) consec = 1;
+    }
     parts.push(String(consec).padStart(2, '0'));
   }
 

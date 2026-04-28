@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      _backup_codigos_estudiante: {
+        Row: {
+          codigo_estudiante_old: string | null
+          curso_id_old: string | null
+          matricula_id: string
+          snapshot_at: string
+        }
+        Insert: {
+          codigo_estudiante_old?: string | null
+          curso_id_old?: string | null
+          matricula_id: string
+          snapshot_at?: string
+        }
+        Update: {
+          codigo_estudiante_old?: string | null
+          curso_id_old?: string | null
+          matricula_id?: string
+          snapshot_at?: string
+        }
+        Relationships: []
+      }
       actividades_cartera: {
         Row: {
           created_at: string

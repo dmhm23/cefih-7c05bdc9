@@ -493,6 +493,30 @@ export default function MatriculaFormPage() {
 
       toast({ title: "Matrícula creada correctamente" });
       logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para ${selectedPersona?.nombres} ${selectedPersona?.apellidos} (${selectedPersona?.numeroDocumento || ''})${selectedCurso ? ` en curso ${selectedCurso.numeroCurso || selectedCurso.nombre}` : ''}`, entityType: "matricula", metadata: { persona_id: data.personaId, curso_id: data.cursoId, tipo_vinculacion: data.tipoVinculacion, valor_cupo: data.valorCupo } });
+
+      // Sincronización matrícula → empresa: si el usuario aportó ARL/sector y la empresa no los tenía, ofrecer guardarlos.
+      // Solo aplica para vinculación 'empresa' (no para independiente ni ARL/aseguradora).
+      // Se excluyen valores 'otra_arl' y 'otro_sector' porque no son enums de empresa.
+      const empresaSel = data.tipoVinculacion === 'empresa' && data.empresaId
+        ? empresas.find(e => e.id === data.empresaId)
+        : null;
+      const arlMatricula = data.arl && data.arl !== 'otra_arl' ? data.arl : undefined;
+      const sectorMatricula = data.sectorEconomico && data.sectorEconomico !== 'otro_sector' ? data.sectorEconomico : undefined;
+      const arlPropagable = empresaSel && arlMatricula && !empresaSel.arl ? arlMatricula : undefined;
+      const sectorPropagable = empresaSel && sectorMatricula && !empresaSel.sectorEconomico ? sectorMatricula : undefined;
+
+      if (empresaSel && (arlPropagable || sectorPropagable)) {
+        setSyncSuggestion({
+          empresaId: empresaSel.id,
+          empresaNombre: empresaSel.nombreEmpresa,
+          arl: arlPropagable,
+          sectorEconomico: sectorPropagable,
+        });
+        setSyncDialogOpen(true);
+        // No navegamos aún: lo hace el handler del diálogo (aceptar o cerrar).
+        return;
+      }
+
       skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {

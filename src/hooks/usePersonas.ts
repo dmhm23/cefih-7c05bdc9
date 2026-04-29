@@ -70,6 +70,25 @@ export const usePersona = (id: string) => {
   });
 };
 
+/**
+ * Trae solo las personas necesarias por lista de IDs (batch).
+ * Sustituye el patrón `usePersonas() + .find()` cuando se conoce el set acotado
+ * (por ejemplo, estudiantes inscritos en un curso).
+ */
+export const usePersonasByIds = (ids: string[]) => {
+  // Stable, ordered, deduplicated key for cache reuse
+  const sortedKey = useMemo(
+    () => Array.from(new Set(ids.filter(Boolean))).sort(),
+    [ids],
+  );
+  return useQuery({
+    queryKey: ['personas', 'byIds', sortedKey],
+    queryFn: () => personaService.getByIds(sortedKey),
+    enabled: sortedKey.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const usePersonaByDocumento = (numeroDocumento: string) => {
   return useQuery({
     queryKey: ['persona', 'documento', numeroDocumento],

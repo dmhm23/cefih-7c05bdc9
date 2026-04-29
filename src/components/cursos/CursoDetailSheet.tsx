@@ -42,9 +42,6 @@ export function CursoDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
-  const { data: personas = [], isLoading: personasLoading } = usePersonasByIds(
-    (curso?.matriculasIds as string[] | undefined) ? [] : []
-  );
   const { data: niveles = [] } = useNivelesFormacion();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');
@@ -68,7 +65,13 @@ export function CursoDetailSheet({
     [supervisores]
   );
 
-  const { data: matriculas = [] } = useMatriculasByCurso(curso?.id || "");
+  const { data: matriculas = [], isLoading: matriculasLoading } = useMatriculasByCurso(curso?.id || "");
+
+  // Cargar SOLO las personas inscritas en este curso (batch por IDs)
+  const personaIds = useMemo(() => matriculas.map((m) => m.personaId), [matriculas]);
+  const { data: personas = [], isLoading: personasLoading } = usePersonasByIds(personaIds);
+  const personaMap = useMemo(() => new Map(personas.map((p) => [p.id, p])), [personas]);
+  const personasReady = !matriculasLoading && !personasLoading;
 
   const nivelLabel = resolveNivel(curso?.nivelFormacionId || curso?.tipoFormacion);
 

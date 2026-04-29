@@ -528,7 +528,42 @@ export default function MatriculaFormPage() {
     }
   };
 
-  return (
+  // Handlers del diálogo de sincronización empresa
+  const handleSyncConfirm = async (selected: { arl?: string; sectorEconomico?: string }) => {
+    if (!syncSuggestion) return;
+    try {
+      await updateEmpresa.mutateAsync({
+        id: syncSuggestion.empresaId,
+        data: {
+          ...(selected.arl ? { arl: selected.arl } : {}),
+          ...(selected.sectorEconomico ? { sectorEconomico: selected.sectorEconomico } : {}),
+        } as any,
+      });
+      toast({ title: "Datos de la empresa actualizados" });
+      logActivity({
+        action: "editar",
+        module: "empresas",
+        description: `Actualizó ${[selected.arl && 'ARL', selected.sectorEconomico && 'sector económico'].filter(Boolean).join(' y ')} de empresa "${syncSuggestion.empresaNombre}" desde matrícula`,
+        entityType: "empresa",
+        entityId: syncSuggestion.empresaId,
+      });
+    } catch (e: any) {
+      toast({ title: "No se pudo actualizar la empresa", description: e?.message, variant: "destructive" });
+    } finally {
+      setSyncDialogOpen(false);
+      setSyncSuggestion(null);
+      skipNavGuardRef.current = true;
+      navigate("/matriculas");
+    }
+  };
+
+  const handleSyncDismiss = (open: boolean) => {
+    if (open) return;
+    setSyncDialogOpen(false);
+    setSyncSuggestion(null);
+    skipNavGuardRef.current = true;
+    navigate("/matriculas");
+  };
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <IconButton tooltip="Volver" onClick={handleBackClick}>

@@ -229,6 +229,28 @@ export const personaService = {
     return { created: result.created, errors: result.errors };
   },
 
+  /**
+   * Trae personas por una lista de IDs en chunks de 500. Evita cargar la tabla
+   * completa cuando solo se necesita resolver nombres/documentos para un set
+   * acotado (ej. estudiantes inscritos en un curso).
+   */
+  async getByIds(ids: string[]): Promise<Persona[]> {
+    if (ids.length === 0) return [];
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    const result: Persona[] = [];
+    for (let i = 0; i < unique.length; i += 500) {
+      const chunk = unique.slice(i, i + 500);
+      const { data, error } = await supabase
+        .from('personas')
+        .select('*')
+        .in('id', chunk)
+        .is('deleted_at', null);
+      if (error) handleSupabaseError(error);
+      (data || []).forEach((row) => result.push(mapPersonaRow(row)));
+    }
+    return result;
+  },
+
   async checkExisting(documentos: string[]): Promise<Set<string>> {
     if (documentos.length === 0) return new Set();
     // Supabase .in() has a limit, chunk in batches of 500

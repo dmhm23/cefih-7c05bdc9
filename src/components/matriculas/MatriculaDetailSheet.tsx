@@ -426,6 +426,11 @@ export function MatriculaDetailSheet({
                 Ver curso
               </Button>
             </div>
+          ) : cursoLoading && matricula.cursoId ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">Sin curso asignado</p>
           )}

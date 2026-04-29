@@ -31,7 +31,8 @@ import { Combobox } from "@/components/ui/combobox";
 import { useSearchPersonas, useUpdatePersona } from "@/hooks/usePersonas";
 import { useCursos } from "@/hooks/useCursos";
 import { useCreateMatricula, useHistorialByPersona } from "@/hooks/useMatriculas";
-import { useEmpresas, useCreateEmpresa } from "@/hooks/useEmpresas";
+import { useEmpresas, useCreateEmpresa, useUpdateEmpresa } from "@/hooks/useEmpresas";
+import { SincronizarEmpresaDialog, SincronizarEmpresaSuggestion } from "@/components/matriculas/SincronizarEmpresaDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -121,7 +122,12 @@ export default function MatriculaFormPage() {
   const { data: empresas = [] } = useEmpresas();
   const createMatricula = useCreateMatricula();
   const createEmpresa = useCreateEmpresa();
+  const updateEmpresa = useUpdateEmpresa();
   const updatePersona = useUpdatePersona();
+
+  // Sincronización matrícula → empresa (post-save)
+  const [syncSuggestion, setSyncSuggestion] = useState<SincronizarEmpresaSuggestion | null>(null);
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
 
   const nivelesOptions = nivelesFormacion.map((n) => ({
     value: n.id,
@@ -302,16 +308,29 @@ export default function MatriculaFormPage() {
   const selectedCurso = cursos.find((c) => c.id === cursoId);
   const cursosAbiertos = cursos.filter((c) => c.estado !== "cerrado");
 
-  // Auto-completar datos de empresa para independientes
+  // Auto-completar datos de empresa al cambiar tipoVinculacion.
+  // FIX: solo limpiar campos cuando hay TRANSICIÓN REAL de tipo (no en cada re-render).
+  // Antes, al editar persona inline o al re-renderizar, este efecto borraba ARL/sector.
+  // Ahora ARL/sector NUNCA se borran aquí: solo se limpian al cambiar de empresa
+  // explícitamente desde el Combobox de empresa (lógica intacta más abajo).
+  const prevTipoVinculacionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (tipoVinculacion === "independiente" && selectedPersona) {
+    const prev = prevTipoVinculacionRef.current;
+    const curr = tipoVinculacion ?? null;
+    prevTipoVinculacionRef.current = curr;
+
+    // No-op si no hay cambio real de tipo
+    if (prev === curr) return;
+
+    if (curr === "independiente" && selectedPersona) {
       const nombreCompleto = `${selectedPersona.nombres} ${selectedPersona.apellidos}`;
       form.setValue("empresaId", "");
       form.setValue("empresaNombre", nombreCompleto);
       form.setValue("empresaNit", selectedPersona.numeroDocumento);
       form.setValue("empresaRepresentanteLegal", nombreCompleto);
-    } else if (tipoVinculacion === "empresa" || tipoVinculacion === "arl") {
-      // Clear empresa fields when switching to empresa/arl so user selects from directory
+    } else if (curr === "empresa" || curr === "arl") {
+      // Limpiar SOLO datos de identidad de empresa para que el usuario seleccione del directorio.
+      // NO tocar arl/sectorEconomico: son datos del trabajador que pueden venir del usuario o autocompletarse al seleccionar empresa.
       form.setValue("empresaId", "");
       form.setValue("empresaNombre", "");
       form.setValue("empresaNit", "");
@@ -319,8 +338,6 @@ export default function MatriculaFormPage() {
       form.setValue("empresaContactoId", "");
       form.setValue("empresaContactoNombre", "");
       form.setValue("empresaContactoTelefono", "");
-      form.setValue("sectorEconomico", "");
-      form.setValue("arl", "");
     }
   }, [tipoVinculacion, selectedPersona, form]);
 
@@ -476,6 +493,30 @@ export default function MatriculaFormPage() {
 
       toast({ title: "Matrícula creada correctamente" });
       logActivity({ action: "crear", module: "matriculas", description: `Creó matrícula para ${selectedPersona?.nombres} ${selectedPersona?.apellidos} (${selectedPersona?.numeroDocumento || ''})${selectedCurso ? ` en curso ${selectedCurso.numeroCurso || selectedCurso.nombre}` : ''}`, entityType: "matricula", metadata: { persona_id: data.personaId, curso_id: data.cursoId, tipo_vinculacion: data.tipoVinculacion, valor_cupo: data.valorCupo } });
+
+      // Sincronización matrícula → empresa: si el usuario aportó ARL/sector y la empresa no los tenía, ofrecer guardarlos.
+      // Solo aplica para vinculación 'empresa' (no para independiente ni ARL/aseguradora).
+      // Se excluyen valores 'otra_arl' y 'otro_sector' porque no son enums de empresa.
+      const empresaSel = data.tipoVinculacion === 'empresa' && data.empresaId
+        ? empresas.find(e => e.id === data.empresaId)
+        : null;
+      const arlMatricula = data.arl && data.arl !== 'otra_arl' ? data.arl : undefined;
+      const sectorMatricula = data.sectorEconomico && data.sectorEconomico !== 'otro_sector' ? data.sectorEconomico : undefined;
+      const arlPropagable = empresaSel && arlMatricula && !empresaSel.arl ? arlMatricula : undefined;
+      const sectorPropagable = empresaSel && sectorMatricula && !empresaSel.sectorEconomico ? sectorMatricula : undefined;
+
+      if (empresaSel && (arlPropagable || sectorPropagable)) {
+        setSyncSuggestion({
+          empresaId: empresaSel.id,
+          empresaNombre: empresaSel.nombreEmpresa,
+          arl: arlPropagable,
+          sectorEconomico: sectorPropagable,
+        });
+        setSyncDialogOpen(true);
+        // No navegamos aún: lo hace el handler del diálogo (aceptar o cerrar).
+        return;
+      }
+
       skipNavGuardRef.current = true;
       navigate("/matriculas");
     } catch (error: any) {
@@ -485,6 +526,43 @@ export default function MatriculaFormPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handlers del diálogo de sincronización empresa
+  const handleSyncConfirm = async (selected: { arl?: string; sectorEconomico?: string }) => {
+    if (!syncSuggestion) return;
+    try {
+      await updateEmpresa.mutateAsync({
+        id: syncSuggestion.empresaId,
+        data: {
+          ...(selected.arl ? { arl: selected.arl } : {}),
+          ...(selected.sectorEconomico ? { sectorEconomico: selected.sectorEconomico } : {}),
+        } as any,
+      });
+      toast({ title: "Datos de la empresa actualizados" });
+      logActivity({
+        action: "editar",
+        module: "empresas",
+        description: `Actualizó ${[selected.arl && 'ARL', selected.sectorEconomico && 'sector económico'].filter(Boolean).join(' y ')} de empresa "${syncSuggestion.empresaNombre}" desde matrícula`,
+        entityType: "empresa",
+        entityId: syncSuggestion.empresaId,
+      });
+    } catch (e: any) {
+      toast({ title: "No se pudo actualizar la empresa", description: e?.message, variant: "destructive" });
+    } finally {
+      setSyncDialogOpen(false);
+      setSyncSuggestion(null);
+      skipNavGuardRef.current = true;
+      navigate("/matriculas");
+    }
+  };
+
+  const handleSyncDismiss = (open: boolean) => {
+    if (open) return;
+    setSyncDialogOpen(false);
+    setSyncSuggestion(null);
+    skipNavGuardRef.current = true;
+    navigate("/matriculas");
   };
 
   return (
@@ -1436,6 +1514,14 @@ export default function MatriculaFormPage() {
         variant="destructive"
         secondaryText="Guardar"
         onSecondary={handleNavConfirmSave}
+      />
+
+      <SincronizarEmpresaDialog
+        open={syncDialogOpen}
+        onOpenChange={handleSyncDismiss}
+        suggestion={syncSuggestion}
+        onConfirm={handleSyncConfirm}
+        isPending={updateEmpresa.isPending}
       />
     </div>
   );

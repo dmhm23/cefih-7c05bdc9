@@ -46,6 +46,21 @@ function formToRow(data: Record<string, any>): Record<string, any> {
     if (row[f] === '') row[f] = null;
   }
 
+  // Sanitize empty/whitespace-only strings to null for optional text columns.
+  // Evita guardar '' en columnas que deben quedar NULL cuando el usuario no ingresó nada.
+  const nullableTextFields = [
+    'arl', 'arl_otra',
+    'sector_economico', 'sector_economico_otro',
+    'eps', 'eps_otra',
+    'area_trabajo', 'empresa_cargo',
+    'empresa_nivel_formacion', 'empresa_contacto_nombre', 'empresa_contacto_telefono',
+    'empresa_representante_legal', 'empresa_nombre', 'empresa_nit',
+    'centro_formacion_previo',
+  ];
+  for (const f of nullableTextFields) {
+    if (typeof row[f] === 'string' && row[f].trim() === '') row[f] = null;
+  }
+
   // Strip undefined values
   for (const key of Object.keys(row)) {
     if (row[key] === undefined) delete row[key];

@@ -35,6 +35,54 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_empresas_arl_sector_20260429: {
+        Row: {
+          arl: Database["public"]["Enums"]["arl_enum"] | null
+          id: string | null
+          sector_economico:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          snapshot_at: string | null
+        }
+        Insert: {
+          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          id?: string | null
+          sector_economico?:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          snapshot_at?: string | null
+        }
+        Update: {
+          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          id?: string | null
+          sector_economico?:
+            | Database["public"]["Enums"]["sector_economico"]
+            | null
+          snapshot_at?: string | null
+        }
+        Relationships: []
+      }
+      _backup_matriculas_arl_sector_20260429: {
+        Row: {
+          arl: string | null
+          id: string | null
+          sector_economico: string | null
+          snapshot_at: string | null
+        }
+        Insert: {
+          arl?: string | null
+          id?: string | null
+          sector_economico?: string | null
+          snapshot_at?: string | null
+        }
+        Update: {
+          arl?: string | null
+          id?: string | null
+          sector_economico?: string | null
+          snapshot_at?: string | null
+        }
+        Relationships: []
+      }
       actividades_cartera: {
         Row: {
           created_at: string

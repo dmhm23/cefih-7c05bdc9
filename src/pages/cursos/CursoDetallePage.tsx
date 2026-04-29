@@ -29,8 +29,11 @@ export default function CursoDetallePage() {
 
   const { data: curso, isLoading } = useCurso(id || "");
   const { data: estadisticas } = useCursoEstadisticas(id || "");
-  const { data: matriculas = [] } = useMatriculasByCurso(id || "");
-  const { data: personas = [] } = usePersonas();
+  const { data: matriculas = [], isLoading: matriculasLoading } = useMatriculasByCurso(id || "");
+  // Carga acotada: solo las personas inscritas en este curso (batch por IDs).
+  const personaIds = matriculas.map((m) => m.personaId);
+  const { data: personas = [], isLoading: personasLoading } = usePersonasByIds(personaIds);
+  const personasReady = !matriculasLoading && !personasLoading;
   const updateCurso = useUpdateCurso();
   const cambiarEstado = useCambiarEstadoCurso();
   const { codigos: codigosEstudiante } = useCodigosCurso(curso);

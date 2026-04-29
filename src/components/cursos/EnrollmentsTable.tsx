@@ -44,10 +44,12 @@ interface EnrollmentsTableProps {
   curso: Curso;
   matriculas: Matricula[];
   personas: Persona[];
+  /** True mientras se cargan las personas inscritas (batch por IDs). */
+  personasLoading?: boolean;
   readOnly?: boolean;
 }
 
-export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: EnrollmentsTableProps) {
+export function EnrollmentsTable({ curso, matriculas, personas, personasLoading = false, readOnly }: EnrollmentsTableProps) {
   const navigate = useNavigate();
   const { data: grupos = [] } = useGruposCartera();
   const { toast } = useToast();

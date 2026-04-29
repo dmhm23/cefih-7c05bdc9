@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
-import { usePersonas } from "@/hooks/usePersonas";
+import { usePersonasByIds } from "@/hooks/usePersonas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { usePersonalByTipoCargo } from "@/hooks/usePersonal";
 import { Curso, CursoFormData } from "@/types/curso";
@@ -42,7 +42,9 @@ export function CursoDetailSheet({
   const navigate = useNavigate();
   const { toast } = useToast();
   const updateCurso = useUpdateCurso();
-  const { data: personas = [] } = usePersonas();
+  const { data: personas = [], isLoading: personasLoading } = usePersonasByIds(
+    (curso?.matriculasIds as string[] | undefined) ? [] : []
+  );
   const { data: niveles = [] } = useNivelesFormacion();
   const { data: entrenadores = [] } = usePersonalByTipoCargo('entrenador');
   const { data: supervisores = [] } = usePersonalByTipoCargo('supervisor');

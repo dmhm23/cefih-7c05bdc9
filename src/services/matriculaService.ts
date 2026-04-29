@@ -213,6 +213,54 @@ export const matriculaService = {
     }
   },
 
+  /**
+   * Matrículas disponibles para asignar a un curso:
+   * - activas (deleted_at IS NULL)
+   * - sin curso asignado (curso_id IS NULL)
+   * - con nivel_formacion_id en la lista de niveles compatibles
+   *
+   * Devuelve también un mapa persona resumido (id → {nombres, apellidos, numeroDocumento})
+   * vía join inner para evitar fetch global de personas.
+   */
+  async getDisponiblesParaCurso(nivelesValidos: string[]): Promise<{
+    rows: Matricula[];
+    personasResumen: Record<string, { nombres: string; apellidos: string; numeroDocumento: string }>;
+  }> {
+    if (!nivelesValidos || nivelesValidos.length === 0) {
+      return { rows: [], personasResumen: {} };
+    }
+    try {
+      const data = await fetchAllPaginated<any>((from, to) =>
+        supabase
+          .from('matriculas')
+          .select(
+            `*, personas!inner(id, nombres, apellidos, numero_documento), documentos_matricula(tipo, estado, fecha_documento, fecha_inicio_cobertura, opcional)`,
+          )
+          .is('deleted_at', null)
+          .is('curso_id', null)
+          .in('nivel_formacion_id', nivelesValidos)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
+      const rows = data.map(rowToMatricula);
+      const personasResumen: Record<string, { nombres: string; apellidos: string; numeroDocumento: string }> = {};
+      for (const row of data as any[]) {
+        const p = row.personas;
+        if (p?.id) {
+          personasResumen[p.id] = {
+            nombres: p.nombres || '',
+            apellidos: p.apellidos || '',
+            numeroDocumento: p.numero_documento || '',
+          };
+        }
+      }
+      return { rows, personasResumen };
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return { rows: [], personasResumen: {} };
+    }
+  },
+
   async getByCursoId(cursoId: string): Promise<Matricula[]> {
     try {
       const data = await fetchAllPaginated<any>((from, to) =>

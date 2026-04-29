@@ -15,12 +15,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMatriculas } from "@/hooks/useMatriculas";
-import { usePersonas } from "@/hooks/usePersonas";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useMatriculasDisponiblesParaCurso } from "@/hooks/useMatriculas";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { useAgregarEstudiantesCurso } from "@/hooks/useCursos";
 import { useToast } from "@/hooks/use-toast";
-import { Persona } from "@/types/persona";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -32,56 +31,52 @@ interface AgregarEstudiantesModalProps {
   nivelFormacion: string;
 }
 
+// Map frontend labels to DB enum values for fallback matching
+const TIPO_FE_TO_DB: Record<string, string> = {
+  trabajador_autorizado: 'formacion_inicial',
+  reentrenamiento: 'reentrenamiento',
+  jefe_area: 'jefe_area',
+  coordinador_ta: 'coordinador_alturas',
+};
+
 export function AgregarEstudiantesModal({
   open,
   onOpenChange,
   cursoId,
-  matriculasActuales,
+  matriculasActuales: _matriculasActuales,
   nivelFormacion,
 }: AgregarEstudiantesModalProps) {
   const [busqueda, setBusqueda] = useState("");
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
 
-  const { data: matriculas = [] } = useMatriculas();
-  const { data: personas = [] } = usePersonas();
-  const { data: niveles = [] } = useNivelesFormacion();
+  const { data: niveles = [], isLoading: nivelesLoading } = useNivelesFormacion();
   const agregarEstudiantes = useAgregarEstudiantesCurso();
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
-
-  const getPersona = (personaId: string): Persona | undefined =>
-    personas.find((p) => p.id === personaId);
-
-  // Map frontend labels to DB enum values for fallback matching
-  const TIPO_FE_TO_DB: Record<string, string> = {
-    trabajador_autorizado: 'formacion_inicial',
-    reentrenamiento: 'reentrenamiento',
-    jefe_area: 'jefe_area',
-    coordinador_ta: 'coordinador_alturas',
-  };
 
   // Resolver IDs válidos de nivel de formación
   const nivelesValidos = useMemo(() => {
     if (UUID_REGEX.test(nivelFormacion)) {
       return [nivelFormacion];
     }
-    // nivelFormacion es un tipo (ej. "trabajador_autorizado" o "formacion_inicial")
-    // Try both the raw value and the mapped DB value
     const dbValue = TIPO_FE_TO_DB[nivelFormacion] || nivelFormacion;
     return niveles
       .filter((n) => n.tipoFormacion === nivelFormacion || n.tipoFormacion === dbValue)
       .map((n) => n.id);
   }, [nivelFormacion, niveles]);
 
-  // Matrículas disponibles: sin curso asignado Y mismo nivel de formación
-  const disponibles = useMemo(() => {
-    return matriculas.filter(
-      (m) =>
-        (!m.cursoId || m.cursoId === "") &&
-        m.nivelFormacionId &&
-        nivelesValidos.includes(m.nivelFormacionId)
-    );
-  }, [matriculas, nivelesValidos]);
+  // Solo consultar cuando el modal está abierto y ya conocemos los niveles
+  const {
+    data: disponiblesData,
+    isLoading: disponiblesLoading,
+  } = useMatriculasDisponiblesParaCurso(nivelesValidos, open && !nivelesLoading);
+
+  const disponibles = disponiblesData?.rows ?? [];
+  const personasResumen = disponiblesData?.personasResumen ?? {};
+
+  const isLoading = open && (nivelesLoading || disponiblesLoading);
+
+  const getPersona = (personaId: string) => personasResumen[personaId];
 
   // Filtrado por cédula o nombre
   const filtradas = useMemo(() => {
@@ -95,7 +90,8 @@ export function AgregarEstudiantesModal({
         `${persona.nombres} ${persona.apellidos}`.toLowerCase().includes(q)
       );
     });
-  }, [disponibles, busqueda, personas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disponibles, busqueda, personasResumen]);
 
   const toggleSeleccion = (id: string) => {
     setSeleccionados((prev) =>
@@ -162,6 +158,7 @@ export function AgregarEstudiantesModal({
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="pl-9"
+            disabled={isLoading}
           />
         </div>
 
@@ -176,7 +173,20 @@ export function AgregarEstudiantesModal({
 
         {/* Lista de matrículas disponibles */}
         <ScrollArea className="flex-1 min-h-0 max-h-[300px] border rounded-md">
-          {filtradas.length === 0 ? (
+          {isLoading ? (
+            <div className="divide-y">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3">
+                  <Skeleton className="h-4 w-4" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-1/2" />
+                    <Skeleton className="h-3 w-1/3" />
+                  </div>
+                  <Skeleton className="h-5 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : filtradas.length === 0 ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
               No hay matrículas disponibles para este nivel de formación
             </div>
@@ -197,10 +207,10 @@ export function AgregarEstudiantesModal({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
-                        {persona?.nombres} {persona?.apellidos}
+                        {persona ? `${persona.nombres} ${persona.apellidos}` : "—"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {persona?.tipoDocumento}: {persona?.numeroDocumento}
+                        {persona?.numeroDocumento}
                       </p>
                       {docsPendientes > 0 && (
                         <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
@@ -233,7 +243,7 @@ export function AgregarEstudiantesModal({
                     className="flex items-center gap-1 pr-1"
                   >
                     <span className="text-xs">
-                      {persona?.nombres} {persona?.apellidos}
+                      {persona ? `${persona.nombres} ${persona.apellidos}` : "—"}
                     </span>
                     <button
                       onClick={() => toggleSeleccion(m.id)}

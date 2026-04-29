@@ -98,6 +98,24 @@ export const useMatriculasByPersona = (personaId: string) => {
   });
 };
 
+/**
+ * Matrículas disponibles para asignar a un curso (sin curso, nivel compatible).
+ * `nivelesValidos` debe ser una lista estable de UUIDs de nivel_formacion.
+ * Se desactiva mientras `enabled=false` o la lista esté vacía.
+ */
+export const useMatriculasDisponiblesParaCurso = (
+  nivelesValidos: string[],
+  enabled: boolean = true,
+) => {
+  const sortedKey = useMemo(() => [...nivelesValidos].sort(), [nivelesValidos]);
+  return useQuery({
+    queryKey: ['matriculas', 'disponibles-curso', sortedKey],
+    queryFn: () => matriculaService.getDisponiblesParaCurso(sortedKey),
+    enabled: enabled && sortedKey.length > 0,
+    staleTime: 30 * 1000,
+  });
+};
+
 export const useMatriculasByCurso = (cursoId: string) => {
   return useQuery({
     queryKey: ['matriculas', 'curso', cursoId],

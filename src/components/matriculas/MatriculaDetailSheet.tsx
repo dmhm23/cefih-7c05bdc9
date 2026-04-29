@@ -313,9 +313,13 @@ export function MatriculaDetailSheet({
   };
 
 
-  const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
+  const personaName = persona
+    ? `${persona.nombres} ${persona.apellidos}`
+    : personaLoading
+      ? "Cargando…"
+      : "Persona no encontrada";
   const personaDoc = persona?.numeroDocumento || "";
-  const cursoName = curso?.nombre || "Sin curso asignado";
+  const cursoName = curso?.nombre || (cursoLoading ? "Cargando…" : "Sin curso asignado");
   const nivelFormacionLabel = matricula.nivelFormacionId 
     ? resolveNivel(matricula.nivelFormacionId) 
     : undefined;
@@ -375,6 +379,12 @@ export function MatriculaDetailSheet({
                   <EditableField label="Parentesco" value={(getPersonaValue("contactoEmergencia") as any)?.parentesco ?? ""} onChange={(v) => handlePersonaNestedFieldChange("contactoEmergencia", "parentesco", v)} />
                 </div>
               </div>
+            </div>
+          ) : personaLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Persona no encontrada</p>

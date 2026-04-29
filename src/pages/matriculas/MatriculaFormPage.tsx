@@ -122,7 +122,12 @@ export default function MatriculaFormPage() {
   const { data: empresas = [] } = useEmpresas();
   const createMatricula = useCreateMatricula();
   const createEmpresa = useCreateEmpresa();
+  const updateEmpresa = useUpdateEmpresa();
   const updatePersona = useUpdatePersona();
+
+  // Sincronización matrícula → empresa (post-save)
+  const [syncSuggestion, setSyncSuggestion] = useState<SincronizarEmpresaSuggestion | null>(null);
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
 
   const nivelesOptions = nivelesFormacion.map((n) => ({
     value: n.id,

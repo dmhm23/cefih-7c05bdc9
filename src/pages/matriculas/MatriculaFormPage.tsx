@@ -1515,6 +1515,14 @@ export default function MatriculaFormPage() {
         secondaryText="Guardar"
         onSecondary={handleNavConfirmSave}
       />
+
+      <SincronizarEmpresaDialog
+        open={syncDialogOpen}
+        onOpenChange={handleSyncDismiss}
+        suggestion={syncSuggestion}
+        onConfirm={handleSyncConfirm}
+        isPending={updateEmpresa.isPending}
+      />
     </div>
   );
 }

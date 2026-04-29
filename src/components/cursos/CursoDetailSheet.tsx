@@ -257,12 +257,23 @@ export function CursoDetailSheet({
             <Users className="h-4 w-4" />
             <span>{curso.matriculasIds.length} inscritos · {curso.capacidadMaxima - curso.matriculasIds.length} cupos disponibles</span>
           </div>
-          {matriculas.length === 0 ? (
+          {matriculasLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-12 bg-muted/30 rounded animate-pulse" />
+              ))}
+            </div>
+          ) : matriculas.length === 0 ? (
             <p className="text-sm text-muted-foreground">No hay estudiantes inscritos</p>
           ) : (
             <div className="space-y-2">
               {matriculas.slice(0, 5).map((m) => {
-                const persona = personas.find((p) => p.id === m.personaId);
+                const persona = personaMap.get(m.personaId);
+                const nombreMostrado = persona
+                  ? `${persona.nombres} ${persona.apellidos}`
+                  : personasReady
+                  ? "Persona no encontrada"
+                  : "Cargando…";
                 return (
                   <div key={m.id} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                     <div className="flex items-center gap-2">
@@ -270,10 +281,10 @@ export function CursoDetailSheet({
                         <User className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">
-                          {persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}
+                        <p className="text-sm font-medium">{nombreMostrado}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {persona?.numeroDocumento ?? (personasReady ? "—" : "")}
                         </p>
-                        <p className="text-xs text-muted-foreground">{persona?.numeroDocumento}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-xs">{m.estado}</Badge>

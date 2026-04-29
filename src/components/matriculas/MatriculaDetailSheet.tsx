@@ -34,8 +34,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateMatricula, useRegistrarPago, useUploadDocumento, useUpdateDocumento, useMatricula, useUploadConsolidado, useDeleteConsolidado } from "@/hooks/useMatriculas";
 import { sincronizarDocumentos } from "@/services/documentoService";
-import { usePersonas, useUpdatePersona } from "@/hooks/usePersonas";
-import { useCursos } from "@/hooks/useCursos";
+import { usePersona, useUpdatePersona } from "@/hooks/usePersonas";
+import { useCurso } from "@/hooks/useCursos";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFormatosMatricula } from "@/hooks/useFormatosFormacion";
 import { resolveFormatoEstado } from "@/utils/resolveFormatoEstado";
 import { useFormatoRespuestas, useReopenFormatoRespuesta } from "@/hooks/useFormatoRespuestas";
@@ -106,8 +107,8 @@ export function MatriculaDetailSheet({
   const uploadConsolidado = useUploadConsolidado();
   const deleteConsolidado = useDeleteConsolidado();
   const updateDocumento = useUpdateDocumento();
-  const { data: personas = [] } = usePersonas();
-  const { data: cursos = [] } = useCursos();
+  const { data: persona, isLoading: personaLoading } = usePersona(matricula?.personaId || "");
+  const { data: curso, isLoading: cursoLoading } = useCurso(matricula?.cursoId || "");
   const updatePersona = useUpdatePersona();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [personaFormData, setPersonaFormData] = useState<Partial<PersonaFormData>>({});
@@ -119,8 +120,6 @@ export function MatriculaDetailSheet({
   // Fetch individual matricula to get documents
   const { data: fullMatricula, refetch: refetchMatricula } = useMatricula(matricula?.id || "");
 
-  const persona = matricula ? personas.find((p) => p.id === matricula.personaId) : undefined;
-  const curso = matricula ? cursos.find((c) => c.id === matricula.cursoId) : undefined;
   const { data: formatosDinamicos } = useFormatosMatricula(matricula?.id);
   const { data: respuestas = [] } = useFormatoRespuestas(matricula?.id);
   const { data: nivelesFormacion = [] } = useNivelesFormacion();
@@ -314,9 +313,13 @@ export function MatriculaDetailSheet({
   };
 
 
-  const personaName = persona ? `${persona.nombres} ${persona.apellidos}` : "N/A";
+  const personaName = persona
+    ? `${persona.nombres} ${persona.apellidos}`
+    : personaLoading
+      ? "Cargando…"
+      : "Persona no encontrada";
   const personaDoc = persona?.numeroDocumento || "";
-  const cursoName = curso?.nombre || "Sin curso asignado";
+  const cursoName = curso?.nombre || (cursoLoading ? "Cargando…" : "Sin curso asignado");
   const nivelFormacionLabel = matricula.nivelFormacionId 
     ? resolveNivel(matricula.nivelFormacionId) 
     : undefined;
@@ -377,6 +380,12 @@ export function MatriculaDetailSheet({
                 </div>
               </div>
             </div>
+          ) : personaLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">Persona no encontrada</p>
           )}
@@ -416,6 +425,11 @@ export function MatriculaDetailSheet({
                 <ExternalLink className="h-3 w-3" />
                 Ver curso
               </Button>
+            </div>
+          ) : cursoLoading && matricula.cursoId ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">Sin curso asignado</p>

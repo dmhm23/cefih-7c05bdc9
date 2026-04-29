@@ -564,6 +564,8 @@ export default function MatriculaFormPage() {
     skipNavGuardRef.current = true;
     navigate("/matriculas");
   };
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <IconButton tooltip="Volver" onClick={handleBackClick}>

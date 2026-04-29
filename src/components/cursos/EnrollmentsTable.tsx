@@ -44,10 +44,12 @@ interface EnrollmentsTableProps {
   curso: Curso;
   matriculas: Matricula[];
   personas: Persona[];
+  /** True mientras se cargan las personas inscritas (batch por IDs). */
+  personasLoading?: boolean;
   readOnly?: boolean;
 }
 
-export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: EnrollmentsTableProps) {
+export function EnrollmentsTable({ curso, matriculas, personas, personasLoading = false, readOnly }: EnrollmentsTableProps) {
   const navigate = useNavigate();
   const { data: grupos = [] } = useGruposCartera();
   const { toast } = useToast();
@@ -568,7 +570,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, readOnly }: Enro
                           </td>
                         )}
                         <td className="py-2 pr-3">
-                          <p className="font-medium">{persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}</p>
+                          <p className="font-medium">
+                            {persona
+                              ? `${persona.nombres} ${persona.apellidos}`
+                              : personasLoading
+                              ? <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded align-middle" />
+                              : "Persona no encontrada"}
+                          </p>
                         </td>
                         <td className="py-2 pr-3">
                           {codigoEstudiante ? (

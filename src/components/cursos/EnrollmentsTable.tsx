@@ -570,7 +570,13 @@ export function EnrollmentsTable({ curso, matriculas, personas, personasLoading 
                           </td>
                         )}
                         <td className="py-2 pr-3">
-                          <p className="font-medium">{persona ? `${persona.nombres} ${persona.apellidos}` : "N/A"}</p>
+                          <p className="font-medium">
+                            {persona
+                              ? `${persona.nombres} ${persona.apellidos}`
+                              : personasLoading
+                              ? <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded align-middle" />
+                              : "Persona no encontrada"}
+                          </p>
                         </td>
                         <td className="py-2 pr-3">
                           {codigoEstudiante ? (

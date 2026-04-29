@@ -302,16 +302,29 @@ export default function MatriculaFormPage() {
   const selectedCurso = cursos.find((c) => c.id === cursoId);
   const cursosAbiertos = cursos.filter((c) => c.estado !== "cerrado");
 
-  // Auto-completar datos de empresa para independientes
+  // Auto-completar datos de empresa al cambiar tipoVinculacion.
+  // FIX: solo limpiar campos cuando hay TRANSICIÓN REAL de tipo (no en cada re-render).
+  // Antes, al editar persona inline o al re-renderizar, este efecto borraba ARL/sector.
+  // Ahora ARL/sector NUNCA se borran aquí: solo se limpian al cambiar de empresa
+  // explícitamente desde el Combobox de empresa (lógica intacta más abajo).
+  const prevTipoVinculacionRef = useRef<string | null>(null);
   useEffect(() => {
-    if (tipoVinculacion === "independiente" && selectedPersona) {
+    const prev = prevTipoVinculacionRef.current;
+    const curr = tipoVinculacion ?? null;
+    prevTipoVinculacionRef.current = curr;
+
+    // No-op si no hay cambio real de tipo
+    if (prev === curr) return;
+
+    if (curr === "independiente" && selectedPersona) {
       const nombreCompleto = `${selectedPersona.nombres} ${selectedPersona.apellidos}`;
       form.setValue("empresaId", "");
       form.setValue("empresaNombre", nombreCompleto);
       form.setValue("empresaNit", selectedPersona.numeroDocumento);
       form.setValue("empresaRepresentanteLegal", nombreCompleto);
-    } else if (tipoVinculacion === "empresa" || tipoVinculacion === "arl") {
-      // Clear empresa fields when switching to empresa/arl so user selects from directory
+    } else if (curr === "empresa" || curr === "arl") {
+      // Limpiar SOLO datos de identidad de empresa para que el usuario seleccione del directorio.
+      // NO tocar arl/sectorEconomico: son datos del trabajador que pueden venir del usuario o autocompletarse al seleccionar empresa.
       form.setValue("empresaId", "");
       form.setValue("empresaNombre", "");
       form.setValue("empresaNit", "");
@@ -319,8 +332,6 @@ export default function MatriculaFormPage() {
       form.setValue("empresaContactoId", "");
       form.setValue("empresaContactoNombre", "");
       form.setValue("empresaContactoTelefono", "");
-      form.setValue("sectorEconomico", "");
-      form.setValue("arl", "");
     }
   }, [tipoVinculacion, selectedPersona, form]);
 

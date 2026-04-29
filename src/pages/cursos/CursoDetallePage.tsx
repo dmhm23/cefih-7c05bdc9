@@ -14,7 +14,7 @@ import { JustificacionEdicionDialog } from "@/components/cursos/JustificacionEdi
 import { GenerarPdfsDialog } from "@/components/cursos/GenerarPdfsDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
-import { usePersonas } from "@/hooks/usePersonas";
+import { usePersonasByIds } from "@/hooks/usePersonas";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";

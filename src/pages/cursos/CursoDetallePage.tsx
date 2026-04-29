@@ -166,6 +166,7 @@ export default function CursoDetallePage() {
         curso={curso}
         matriculas={matriculas}
         personas={personas}
+        personasLoading={!personasReady}
         readOnly={isReadOnly}
       />
 

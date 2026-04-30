@@ -432,7 +432,7 @@ export const useUploadConsolidado = () => {
         .select('id, tipo')
         .eq('matricula_id', matriculaId)
         .neq('tipo', 'consolidado')
-        .in('tipo', tiposIncluidos)
+        .in('tipo', tiposIncluidos as any)
         .eq('estado', 'pendiente');
 
       if (indErr) {

@@ -424,6 +424,35 @@ export const useUploadConsolidado = () => {
         }
       }
 
+      // ── Fase 1: marcar requisitos individuales cubiertos como 'cargado' ──
+      // Buscar filas individuales (tipo != 'consolidado') cuyo tipo coincida
+      // con alguno de los tiposIncluidos y que aún estén pendiente.
+      const { data: individuales, error: indErr } = await supabase
+        .from('documentos_matricula')
+        .select('id, tipo')
+        .eq('matricula_id', matriculaId)
+        .neq('tipo', 'consolidado')
+        .in('tipo', tiposIncluidos)
+        .eq('estado', 'pendiente');
+
+      if (indErr) {
+        console.warn('No se pudieron actualizar requisitos individuales:', indErr.message);
+      } else if (individuales && individuales.length > 0) {
+        const ids = individuales.map((d) => d.id);
+        const { error: updErr } = await supabase
+          .from('documentos_matricula')
+          .update({
+            estado: 'cargado',
+            storage_path: storagePath,
+            archivo_nombre: file.name,
+            fecha_carga: fechaCarga,
+          })
+          .in('id', ids);
+        if (updErr) {
+          console.warn('Error actualizando requisitos individuales:', updErr.message);
+        }
+      }
+
       return { storagePath, count: tiposIncluidos.length };
     },
     onSuccess: (_, { matriculaId }) => {

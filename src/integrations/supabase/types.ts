@@ -35,6 +35,48 @@ export type Database = {
         }
         Relationships: []
       }
+      _backup_documentos_consolidado_20260430: {
+        Row: {
+          archivo_nombre: string | null
+          backup_at: string | null
+          estado:
+            | Database["public"]["Enums"]["estado_documento_matricula"]
+            | null
+          fecha_carga: string | null
+          id: string | null
+          matricula_id: string | null
+          nombre: string | null
+          storage_path: string | null
+          tipo: Database["public"]["Enums"]["tipo_documento_matricula"] | null
+        }
+        Insert: {
+          archivo_nombre?: string | null
+          backup_at?: string | null
+          estado?:
+            | Database["public"]["Enums"]["estado_documento_matricula"]
+            | null
+          fecha_carga?: string | null
+          id?: string | null
+          matricula_id?: string | null
+          nombre?: string | null
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"] | null
+        }
+        Update: {
+          archivo_nombre?: string | null
+          backup_at?: string | null
+          estado?:
+            | Database["public"]["Enums"]["estado_documento_matricula"]
+            | null
+          fecha_carga?: string | null
+          id?: string | null
+          matricula_id?: string | null
+          nombre?: string | null
+          storage_path?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_documento_matricula"] | null
+        }
+        Relationships: []
+      }
       _backup_empresas_arl_sector_20260429: {
         Row: {
           arl: Database["public"]["Enums"]["arl_enum"] | null

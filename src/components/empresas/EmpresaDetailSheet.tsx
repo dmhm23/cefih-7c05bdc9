@@ -180,21 +180,35 @@ export function EmpresaDetailSheet({
             <EditableField
               label="Sector Económico"
               value={getValue("sectorEconomico")}
-              displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
+              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined, SECTORES_ECONOMICOS)}
               onChange={v => handleFieldChange("sectorEconomico", v)}
               type="select"
               options={[...SECTORES_ECONOMICOS]}
               icon={Building2}
             />
+            {getValue("sectorEconomico") === "otro_sector" && (
+              <EditableField
+                label="Sector (especifique)"
+                value={(getValue("sectorEconomicoOtro") as string) || ""}
+                onChange={v => handleFieldChange("sectorEconomicoOtro" as any, v)}
+              />
+            )}
             <EditableField
               label="ARL"
               value={getValue("arl")}
-              displayValue={getDisplayLabel(getValue("arl"), ARL_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined, ARL_OPTIONS)}
               onChange={v => handleFieldChange("arl", v)}
               type="select"
               options={[...ARL_OPTIONS]}
               icon={Shield}
             />
+            {getValue("arl") === "otra_arl" && (
+              <EditableField
+                label="Nombre ARL"
+                value={(getValue("arlOtra") as string) || ""}
+                onChange={v => handleFieldChange("arlOtra" as any, v)}
+              />
+            )}
             <EditableField
               label="Dirección"
               value={getValue("direccion")}

@@ -31,9 +31,26 @@ const empresaSchema = z.object({
   nit: z.string().min(5, "Ingrese un NIT válido"),
   representanteLegal: z.string().optional().or(z.literal("")),
   sectorEconomico: z.string().optional().or(z.literal("")),
+  sectorEconomicoOtro: z.string().optional().or(z.literal("")),
   arl: z.string().optional().or(z.literal("")),
+  arlOtra: z.string().optional().or(z.literal("")),
   direccion: z.string().optional().or(z.literal("")),
   telefonoEmpresa: z.string().optional().or(z.literal("")),
+}).superRefine((data, ctx) => {
+  if (data.sectorEconomico === "otro_sector" && !(data.sectorEconomicoOtro || "").trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["sectorEconomicoOtro"],
+      message: "Especifique el sector económico",
+    });
+  }
+  if (data.arl === "otra_arl" && !(data.arlOtra || "").trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["arlOtra"],
+      message: "Especifique el nombre de la ARL",
+    });
+  }
 });
 
 type EmpresaFormSchema = z.infer<typeof empresaSchema>;

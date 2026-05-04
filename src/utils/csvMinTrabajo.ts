@@ -248,8 +248,8 @@ export function generateListadoEstudiantesCsv(
         capitalize(m.empresaNombre || "Independiente"),
         capitalize(m.empresaCargo ?? ""),
         m.estado,
-        m.arl || "",
-        m.eps || "",
+        resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "",
+        resolveCatalogLabel(m.eps, m.epsOtra, [] as any) || "",
       ];
       return cols.join(";");
     })

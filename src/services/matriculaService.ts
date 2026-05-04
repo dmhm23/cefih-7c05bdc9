@@ -318,13 +318,14 @@ export const matriculaService = {
   } = {}): Promise<{
     rows: Matricula[];
     personasMap: Record<string, { id: string; tipoDocumento: string; numeroDocumento: string; nombres: string; apellidos: string; genero?: string | null; email?: string | null; telefono?: string | null; fechaNacimiento?: string | null; paisNacimiento?: string | null; nivelEducativo?: string | null; rh?: string | null; }>;
+    cursosMap: Record<string, { id: string; numeroCurso: string; tipoFormacion: string; fechaInicio: string | null; fechaFin: string | null; duracionDias: number; duracionHoras: number; entrenadorNombre: string; }>;
   }> {
     try {
       const data = await fetchAllPaginated<any>((from, to) => {
         let q = supabase
           .from('matriculas')
           .select(
-            `*, personas!inner(id, tipo_documento, numero_documento, nombres, apellidos, genero, email, telefono, fecha_nacimiento, pais_nacimiento, nivel_educativo, rh)`,
+            `*, personas!inner(id, tipo_documento, numero_documento, nombres, apellidos, genero, email, telefono, fecha_nacimiento, pais_nacimiento, nivel_educativo, rh), cursos(id, nombre, tipo_formacion, fecha_inicio, fecha_fin, duracion_dias, duracion_horas, entrenador_id, personal:entrenador_id(id, nombres, apellidos))`,
           )
           .is('deleted_at', null);
 

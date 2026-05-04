@@ -87,18 +87,33 @@ function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): st
       : aplicaFallback && empresa?.arl
       ? empresa.arl
       : "";
+  const arlOtraEfectiva =
+    matricula.arl && matricula.arl.trim()
+      ? matricula.arlOtra
+      : aplicaFallback
+      ? empresa?.arlOtra
+      : undefined;
   const sectorEfectivo =
     matricula.sectorEconomico && matricula.sectorEconomico.trim()
       ? matricula.sectorEconomico
       : aplicaFallback && empresa?.sectorEconomico
       ? empresa.sectorEconomico
       : "";
+  const sectorOtroEfectivo =
+    matricula.sectorEconomico && matricula.sectorEconomico.trim()
+      ? matricula.sectorEconomicoOtro
+      : aplicaFallback
+      ? empresa?.sectorEconomicoOtro
+      : undefined;
   const empresaNombreEfectivo =
     matricula.empresaNombre && matricula.empresaNombre.trim()
       ? matricula.empresaNombre
       : aplicaFallback && empresa?.nombreEmpresa
       ? empresa.nombreEmpresa
       : "Independiente";
+
+  const sectorLabel = capitalize(resolveCatalogLabel(sectorEfectivo, sectorOtroEfectivo, SECTORES_ECONOMICOS));
+  const arlLabel = capitalize(resolveCatalogLabel(arlEfectiva, arlOtraEfectiva, ARL_OPTIONS));
 
   const columns = [
     mapTipoDocumento(persona.tipoDocumento),
@@ -113,9 +128,9 @@ function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): st
     findLabel(NIVELES_EDUCATIVOS, persona.nivelEducativo),
     findLabel(AREAS_TRABAJO, matricula.areaTrabajo),
     capitalize(matricula.empresaCargo ?? ""),
-    findLabel(SECTORES_ECONOMICOS, sectorEfectivo),
+    sectorLabel,
     capitalize(empresaNombreEfectivo),
-    findLabel(ARL_OPTIONS, arlEfectiva),
+    arlLabel,
   ];
   return columns.join(";");
 }

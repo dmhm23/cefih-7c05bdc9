@@ -56,6 +56,7 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { asignarMatriculaACartera } from "@/services/carteraService";

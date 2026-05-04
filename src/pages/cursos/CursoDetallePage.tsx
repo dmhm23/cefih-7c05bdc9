@@ -34,6 +34,7 @@ export default function CursoDetallePage() {
   // Carga acotada: solo las personas inscritas en este curso (batch por IDs).
   const personaIds = matriculas.map((m) => m.personaId);
   const { data: personas = [], isLoading: personasLoading } = usePersonasByIds(personaIds);
+  const { data: empresas = [] } = useEmpresas();
   const personasReady = !matriculasLoading && !personasLoading;
   const updateCurso = useUpdateCurso();
   const cambiarEstado = useCambiarEstadoCurso();

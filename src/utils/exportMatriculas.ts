@@ -185,6 +185,7 @@ export interface BuildMatriculasCsvParams {
   matriculas: Matricula[];
   personasMap: Record<string, PersonaResumenExport>;
   empresasMap: Record<string, Empresa>;
+  cursosMap?: Record<string, CursoResumenExport>;
   resolveNivel: (id?: string | null) => string;
   columnasSeleccionadas: MatriculaColumnDef[];
 }
@@ -199,6 +200,7 @@ export function buildMatriculasCsv({
   matriculas,
   personasMap,
   empresasMap,
+  cursosMap,
   resolveNivel,
   columnasSeleccionadas,
 }: BuildMatriculasCsvParams): BuildMatriculasCsvResult {
@@ -214,8 +216,9 @@ export function buildMatriculasCsv({
       const persona = personasMap[m.personaId];
       if (!persona) return null;
       const empresa = m.empresaId ? empresasMap[m.empresaId] : undefined;
+      const curso = m.cursoId && cursosMap ? cursosMap[m.cursoId] : undefined;
       return cols
-        .map((c) => escapeCsv(c.resolver({ persona, matricula: m, empresa, resolveNivel })))
+        .map((c) => escapeCsv(c.resolver({ persona, matricula: m, empresa, curso, resolveNivel })))
         .join(";");
     })
     .filter((r): r is string => r !== null);

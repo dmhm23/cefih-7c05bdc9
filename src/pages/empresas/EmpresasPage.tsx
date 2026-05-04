@@ -26,6 +26,7 @@ import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 
 const STORAGE_KEY = "empresas_visible_columns";

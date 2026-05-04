@@ -117,11 +117,17 @@ export const MATRICULA_COLUMN_CATALOG: MatriculaColumnDef[] = [
   { key: "m_area", header: "Área de Trabajo", group: "Matrícula",
     resolver: ({ matricula }) => findLabel([...AREAS_TRABAJO], matricula.areaTrabajo || "") },
   { key: "m_sector", header: "Sector Económico", group: "Matrícula", defaultSelected: true,
-    resolver: ({ matricula, empresa }) => findLabel([...SECTORES_ECONOMICOS], sectorEfectivo(matricula, empresa)) },
+    resolver: ({ matricula, empresa }) => {
+      const s = sectorEfectivo(matricula, empresa);
+      return resolveCatalogLabel(s.val, s.otra, SECTORES_ECONOMICOS);
+    } },
   { key: "m_arl", header: "ARL", group: "Matrícula", defaultSelected: true,
-    resolver: ({ matricula, empresa }) => findLabel([...ARL_OPTIONS], arlEfectiva(matricula, empresa)) },
+    resolver: ({ matricula, empresa }) => {
+      const a = arlEfectiva(matricula, empresa);
+      return resolveCatalogLabel(a.val, a.otra, ARL_OPTIONS);
+    } },
   { key: "m_eps", header: "EPS", group: "Matrícula", defaultSelected: true,
-    resolver: ({ matricula }) => findLabel([...EPS_OPTIONS], matricula.eps || "") },
+    resolver: ({ matricula }) => resolveCatalogLabel(matricula.eps, matricula.epsOtra, EPS_OPTIONS) },
   { key: "m_nivel_formacion", header: "Nivel Formación", group: "Matrícula", defaultSelected: true,
     resolver: ({ matricula, resolveNivel }) => matricula.nivelFormacionId ? resolveNivel(matricula.nivelFormacionId) : "" },
   { key: "m_codigo_estudiante", header: "Código Estudiante", group: "Matrícula",

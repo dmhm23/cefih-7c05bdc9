@@ -325,7 +325,7 @@ export const matriculaService = {
         let q = supabase
           .from('matriculas')
           .select(
-            `*, personas!inner(id, tipo_documento, numero_documento, nombres, apellidos, genero, email, telefono, fecha_nacimiento, pais_nacimiento, nivel_educativo, rh), cursos(id, nombre, tipo_formacion, fecha_inicio, fecha_fin, duracion_dias, duracion_horas, entrenador_id, personal:entrenador_id(id, nombres, apellidos))`,
+            `*, personas!inner(id, tipo_documento, numero_documento, nombres, apellidos, genero, email, telefono, fecha_nacimiento, pais_nacimiento, nivel_educativo, rh), cursos(id, nombre, tipo_formacion, fecha_inicio, fecha_fin, duracion_dias, duracion_horas, entrenador_id)`,
           )
           .is('deleted_at', null);
 
@@ -342,6 +342,8 @@ export const matriculaService = {
       });
 
       const personasMap: Record<string, any> = {};
+      const cursosMap: Record<string, any> = {};
+      const entrenadorIds = new Set<string>();
       for (const row of data as any[]) {
         const p = row.personas;
         if (p?.id && !personasMap[p.id]) {
@@ -360,13 +362,45 @@ export const matriculaService = {
             rh: p.rh,
           };
         }
+        const c = row.cursos;
+        if (c?.id && !cursosMap[c.id]) {
+          cursosMap[c.id] = {
+            id: c.id,
+            numeroCurso: c.nombre || '',
+            tipoFormacion: c.tipo_formacion || '',
+            fechaInicio: c.fecha_inicio || null,
+            fechaFin: c.fecha_fin || null,
+            duracionDias: c.duracion_dias ?? 0,
+            duracionHoras: c.duracion_horas ?? 0,
+            entrenadorNombre: '',
+          };
+          if (c.entrenador_id) entrenadorIds.add(c.entrenador_id);
+        }
+      }
+
+      // Fetch entrenadores en lote
+      if (entrenadorIds.size > 0) {
+        const { data: personalRows } = await supabase
+          .from('personal')
+          .select('id, nombres, apellidos')
+          .in('id', Array.from(entrenadorIds));
+        const personalMap = new Map<string, string>();
+        for (const p of personalRows || []) {
+          personalMap.set(p.id, `${p.nombres || ''} ${p.apellidos || ''}`.trim());
+        }
+        for (const row of data as any[]) {
+          const c = row.cursos;
+          if (c?.id && c.entrenador_id) {
+            cursosMap[c.id].entrenadorNombre = personalMap.get(c.entrenador_id) || '';
+          }
+        }
       }
 
       const rows = data.map(rowToMatricula);
-      return { rows, personasMap };
+      return { rows, personasMap, cursosMap };
     } catch (error: any) {
       handleSupabaseError(error);
-      return { rows: [], personasMap: {} };
+      return { rows: [], personasMap: {}, cursosMap: {} };
     }
   },
 

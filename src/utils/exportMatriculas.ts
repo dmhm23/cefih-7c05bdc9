@@ -43,6 +43,7 @@ export interface ResolverCtx {
   persona: PersonaResumenExport;
   matricula: Matricula;
   empresa?: Empresa;
+  curso?: CursoResumenExport;
   resolveNivel: (id?: string | null) => string;
 }
 

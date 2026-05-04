@@ -250,7 +250,7 @@ export function generateListadoEstudiantesCsv(
         capitalize(m.empresaCargo ?? ""),
         m.estado,
         resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "",
-        resolveCatalogLabel(m.eps, m.epsOtra, [] as any) || "",
+        resolveCatalogLabel(m.eps, m.epsOtra, EPS_OPTIONS) || "",
       ];
       return cols.join(";");
     })

@@ -9,6 +9,7 @@ import {
   SECTORES_ECONOMICOS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 
 // Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
 const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {

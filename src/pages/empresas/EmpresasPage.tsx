@@ -110,11 +110,11 @@ export default function EmpresasPage() {
     return value && value !== "todos";
   }).length;
 
-  const getSectorLabel = (value: string) =>
-    SECTORES_ECONOMICOS.find(s => s.value === value)?.label || value;
+  const getSectorLabel = (empresa: Empresa) =>
+    resolveCatalogLabel(empresa.sectorEconomico, empresa.sectorEconomicoOtro, SECTORES_ECONOMICOS);
 
-  const getArlLabel = (value: string) =>
-    ARL_OPTIONS.find(a => a.value === value)?.label || value;
+  const getArlLabel = (empresa: Empresa) =>
+    resolveCatalogLabel(empresa.arl, empresa.arlOtra, ARL_OPTIONS);
 
   const getEstudiantesCount = (empresa: Empresa) => {
     return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;

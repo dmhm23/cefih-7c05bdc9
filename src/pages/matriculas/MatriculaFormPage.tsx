@@ -99,6 +99,16 @@ const matriculaSchema = z.object({
   nivelLectoescritura: z.boolean().default(true),
   // Autorización de datos
   autorizacionDatos: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if (data.sectorEconomico === "otro_sector" && !(data.sectorEconomicoOtro || "").trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["sectorEconomicoOtro"], message: "Especifique el sector económico" });
+  }
+  if (data.eps === "otra_eps" && !(data.epsOtra || "").trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["epsOtra"], message: "Especifique el nombre de la EPS" });
+  }
+  if (data.arl === "otra_arl" && !(data.arlOtra || "").trim()) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["arlOtra"], message: "Especifique el nombre de la ARL" });
+  }
 });
 
 type MatriculaFormData = z.infer<typeof matriculaSchema>;

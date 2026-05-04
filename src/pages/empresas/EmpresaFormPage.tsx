@@ -92,7 +92,9 @@ export default function EmpresaFormPage() {
         nit: empresa.nit,
         representanteLegal: empresa.representanteLegal || "",
         sectorEconomico: empresa.sectorEconomico || "",
+        sectorEconomicoOtro: empresa.sectorEconomicoOtro || "",
         arl: empresa.arl || "",
+        arlOtra: empresa.arlOtra || "",
         direccion: empresa.direccion || "",
         telefonoEmpresa: empresa.telefonoEmpresa || "",
       });

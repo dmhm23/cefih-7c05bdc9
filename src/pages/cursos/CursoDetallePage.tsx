@@ -15,10 +15,11 @@ import { GenerarPdfsDialog } from "@/components/cursos/GenerarPdfsDialog";
 import { useCurso, useUpdateCurso, useCursoEstadisticas, useCambiarEstadoCurso } from "@/hooks/useCursos";
 import { useMatriculasByCurso } from "@/hooks/useMatriculas";
 import { usePersonasByIds } from "@/hooks/usePersonas";
+import { useEmpresas } from "@/hooks/useEmpresas";
 import { useCodigosCurso } from "@/hooks/useCodigosCurso";
 import { CursoFormData, ESTADO_CURSO_LABELS } from "@/types/curso";
 import { useToast } from "@/hooks/use-toast";
-import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv } from "@/utils/csvMinTrabajo";
+import { generateMinTrabajoCsv, generateDummyCsv, downloadCsv, validateMinTrabajoData } from "@/utils/csvMinTrabajo";
 import { ExportarListadoDialog } from "@/components/cursos/ExportarListadoDialog";
 
 export default function CursoDetallePage() {

@@ -234,13 +234,13 @@ export default function EmpresasPage() {
       key: "sectorEconomico",
       header: "Sector",
       sortable: true,
-      render: (e) => getSectorLabel(e.sectorEconomico),
+      render: (e) => getSectorLabel(e),
     },
     {
       key: "arl",
       header: "ARL",
       sortable: true,
-      render: (e) => getArlLabel(e.arl),
+      render: (e) => getArlLabel(e),
     },
     {
       key: "personaContacto",

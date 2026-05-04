@@ -12,7 +12,9 @@ export interface Empresa {
   nit: string;
   representanteLegal: string;
   sectorEconomico: string;
+  sectorEconomicoOtro?: string;
   arl: string;
+  arlOtra?: string;
   direccion: string;
   telefonoEmpresa: string;
   contactos: ContactoEmpresa[];

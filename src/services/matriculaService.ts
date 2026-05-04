@@ -294,6 +294,81 @@ export const matriculaService = {
     }
   },
 
+  /**
+   * Trae matrículas que cumplan filtros, sin límite de 1000 (paginación interna).
+   * Devuelve matrícula + persona embebida para resolver datos en cliente.
+   *
+   * Filtros soportados (todos opcionales):
+   * - personaId: una sola persona
+   * - empresaId: una sola empresa
+   * - nivelFormacionId: un nivel
+   * - tipoVinculacion: 'empresa' | 'independiente' | 'arl'
+   * - createdFrom / createdTo: rango por created_at
+   * - fechaInicioFrom / fechaInicioTo: rango por fecha_inicio
+   */
+  async getForCsvExport(filters: {
+    personaId?: string;
+    empresaId?: string;
+    nivelFormacionId?: string;
+    tipoVinculacion?: string;
+    createdFrom?: string;
+    createdTo?: string;
+    fechaInicioFrom?: string;
+    fechaInicioTo?: string;
+  } = {}): Promise<{
+    rows: Matricula[];
+    personasMap: Record<string, { id: string; tipoDocumento: string; numeroDocumento: string; nombres: string; apellidos: string; genero?: string | null; email?: string | null; telefono?: string | null; fechaNacimiento?: string | null; paisNacimiento?: string | null; nivelEducativo?: string | null; rh?: string | null; }>;
+  }> {
+    try {
+      const data = await fetchAllPaginated<any>((from, to) => {
+        let q = supabase
+          .from('matriculas')
+          .select(
+            `*, personas!inner(id, tipo_documento, numero_documento, nombres, apellidos, genero, email, telefono, fecha_nacimiento, pais_nacimiento, nivel_educativo, rh)`,
+          )
+          .is('deleted_at', null);
+
+        if (filters.personaId) q = q.eq('persona_id', filters.personaId);
+        if (filters.empresaId) q = q.eq('empresa_id', filters.empresaId);
+        if (filters.nivelFormacionId) q = q.eq('nivel_formacion_id', filters.nivelFormacionId);
+        if (filters.tipoVinculacion) q = q.eq('tipo_vinculacion', filters.tipoVinculacion as any);
+        if (filters.createdFrom) q = q.gte('created_at', filters.createdFrom);
+        if (filters.createdTo) q = q.lte('created_at', filters.createdTo);
+        if (filters.fechaInicioFrom) q = q.gte('fecha_inicio', filters.fechaInicioFrom);
+        if (filters.fechaInicioTo) q = q.lte('fecha_inicio', filters.fechaInicioTo);
+
+        return q.order('created_at', { ascending: false }).range(from, to);
+      });
+
+      const personasMap: Record<string, any> = {};
+      for (const row of data as any[]) {
+        const p = row.personas;
+        if (p?.id && !personasMap[p.id]) {
+          personasMap[p.id] = {
+            id: p.id,
+            tipoDocumento: p.tipo_documento,
+            numeroDocumento: p.numero_documento,
+            nombres: p.nombres,
+            apellidos: p.apellidos,
+            genero: p.genero,
+            email: p.email,
+            telefono: p.telefono,
+            fechaNacimiento: p.fecha_nacimiento,
+            paisNacimiento: p.pais_nacimiento,
+            nivelEducativo: p.nivel_educativo,
+            rh: p.rh,
+          };
+        }
+      }
+
+      const rows = data.map(rowToMatricula);
+      return { rows, personasMap };
+    } catch (error: any) {
+      handleSupabaseError(error);
+      return { rows: [], personasMap: {} };
+    }
+  },
+
   async getByEstado(estado: EstadoMatricula): Promise<Matricula[]> {
     const { data, error } = await supabase
       .from('matriculas')

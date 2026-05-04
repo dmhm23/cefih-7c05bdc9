@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { BulkAction } from "@/components/shared/BulkActionsBar";
 import { CopyableCell } from "@/components/shared/CopyableCell";
 import { MatriculaDetailSheet } from "@/components/matriculas/MatriculaDetailSheet";
+import { ExportarMatriculasCsvDialog } from "@/components/matriculas/ExportarMatriculasCsvDialog";
 import { useMatriculasPaginated, useDeleteMatricula } from "@/hooks/useMatriculas";
 import { useCursos } from "@/hooks/useCursos";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
@@ -70,6 +71,7 @@ export default function MatriculasPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [idsToDelete, setIdsToDelete] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [filters, setFilters] = useState<Record<string, string | string[]>>({
     estadoDocumental: "todos",
     estadoCartera: "todos",
@@ -505,10 +507,16 @@ export default function MatriculasPage() {
           <h1 className="text-2xl font-semibold">Matrículas</h1>
           <p className="text-sm text-muted-foreground">Gestión de inscripciones y seguimiento</p>
         </div>
-        <Button onClick={() => navigate("/matriculas/nueva")}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nueva Matrícula
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setShowExportDialog(true)}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button onClick={() => navigate("/matriculas/nueva")}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nueva Matrícula
+          </Button>
+        </div>
       </div>
 
 
@@ -581,6 +589,11 @@ export default function MatriculasPage() {
         confirmText="Eliminar"
         onConfirm={handleDeleteConfirm}
         variant="destructive"
+      />
+
+      <ExportarMatriculasCsvDialog
+        open={showExportDialog}
+        onOpenChange={setShowExportDialog}
       />
     </div>
   );

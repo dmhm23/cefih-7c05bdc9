@@ -8,6 +8,7 @@ import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
   ARL_OPTIONS,
+  EPS_OPTIONS,
 } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 

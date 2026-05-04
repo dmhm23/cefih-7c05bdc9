@@ -70,6 +70,7 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 
@@ -502,17 +503,27 @@ export function MatriculaDetailSheet({
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico") || ""}
-                displayValue={getDisplayLabel(getValue("sectorEconomico") || "", SECTORES_ECONOMICOS)}
+                displayValue={resolveCatalogLabel(getValue("sectorEconomico") || "", getValue("sectorEconomicoOtro") || "", SECTORES_ECONOMICOS)}
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
                 icon={Building2}
               />
             </div>
+            {getValue("sectorEconomico") === "otro_sector" && (
+              <div className="col-span-2">
+                <EditableField
+                  label="Sector (especifique)"
+                  value={getValue("sectorEconomicoOtro") || ""}
+                  onChange={(v) => handleFieldChange("sectorEconomicoOtro", v)}
+                  placeholder="Nombre del sector económico"
+                />
+              </div>
+            )}
             <EditableField
               label="EPS"
               value={getValue("eps") || ""}
-              displayValue={getDisplayLabel(getValue("eps") || "", EPS_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("eps") || "", getValue("epsOtra") || "", EPS_OPTIONS)}
               onChange={(v) => handleFieldChange("eps", v)}
               type="select"
               options={[...EPS_OPTIONS]}
@@ -528,7 +539,7 @@ export function MatriculaDetailSheet({
             <EditableField
               label="ARL"
               value={getValue("arl") || ""}
-              displayValue={getDisplayLabel(getValue("arl") || "", ARL_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("arl") || "", getValue("arlOtra") || "", ARL_OPTIONS)}
               onChange={(v) => handleFieldChange("arl", v)}
               type="select"
               options={[...ARL_OPTIONS]}

@@ -12,6 +12,7 @@ import { useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { Separator } from "@/components/ui/separator";
 import { v4 as uuid } from "uuid";
 
@@ -86,11 +87,28 @@ export function EmpresaDetailSheet({
 
   const handleSave = async () => {
     try {
+      // Validar texto libre obligatorio cuando se selecciona "Otra"
+      const sector = (formData.sectorEconomico ?? empresa.sectorEconomico) as string;
+      const sectorOtro = ((formData as any).sectorEconomicoOtro ?? empresa.sectorEconomicoOtro ?? "") as string;
+      const arl = (formData.arl ?? empresa.arl) as string;
+      const arlOtra = ((formData as any).arlOtra ?? empresa.arlOtra ?? "") as string;
+      if (sector === "otro_sector" && !sectorOtro.trim()) {
+        toast({ title: "Especifique el sector económico", variant: "destructive" });
+        return;
+      }
+      if (arl === "otra_arl" && !arlOtra.trim()) {
+        toast({ title: "Especifique el nombre de la ARL", variant: "destructive" });
+        return;
+      }
       const principal = contactos.find(c => c.esPrincipal) || contactos[0];
+      // Limpiar texto libre si ya no aplica "Otra"
+      const cleanedFormData: any = { ...formData };
+      if (sector !== "otro_sector") cleanedFormData.sectorEconomicoOtro = "";
+      if (arl !== "otra_arl") cleanedFormData.arlOtra = "";
       await updateEmpresa.mutateAsync({
         id: empresa.id,
         data: {
-          ...formData,
+          ...cleanedFormData,
           contactos,
           personaContacto: principal?.nombre || "",
           telefonoContacto: principal?.telefono || "",
@@ -179,21 +197,35 @@ export function EmpresaDetailSheet({
             <EditableField
               label="Sector Económico"
               value={getValue("sectorEconomico")}
-              displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
+              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined, SECTORES_ECONOMICOS)}
               onChange={v => handleFieldChange("sectorEconomico", v)}
               type="select"
               options={[...SECTORES_ECONOMICOS]}
               icon={Building2}
             />
+            {getValue("sectorEconomico") === "otro_sector" && (
+              <EditableField
+                label="Sector (especifique)"
+                value={(getValue("sectorEconomicoOtro") as string) || ""}
+                onChange={v => handleFieldChange("sectorEconomicoOtro" as any, v)}
+              />
+            )}
             <EditableField
               label="ARL"
               value={getValue("arl")}
-              displayValue={getDisplayLabel(getValue("arl"), ARL_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined, ARL_OPTIONS)}
               onChange={v => handleFieldChange("arl", v)}
               type="select"
               options={[...ARL_OPTIONS]}
               icon={Shield}
             />
+            {getValue("arl") === "otra_arl" && (
+              <EditableField
+                label="Nombre ARL"
+                value={(getValue("arlOtra") as string) || ""}
+                onChange={v => handleFieldChange("arlOtra" as any, v)}
+              />
+            )}
             <EditableField
               label="Dirección"
               value={getValue("direccion")}

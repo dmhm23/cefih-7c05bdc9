@@ -31,9 +31,26 @@ const empresaSchema = z.object({
   nit: z.string().min(5, "Ingrese un NIT válido"),
   representanteLegal: z.string().optional().or(z.literal("")),
   sectorEconomico: z.string().optional().or(z.literal("")),
+  sectorEconomicoOtro: z.string().optional().or(z.literal("")),
   arl: z.string().optional().or(z.literal("")),
+  arlOtra: z.string().optional().or(z.literal("")),
   direccion: z.string().optional().or(z.literal("")),
   telefonoEmpresa: z.string().optional().or(z.literal("")),
+}).superRefine((data, ctx) => {
+  if (data.sectorEconomico === "otro_sector" && !(data.sectorEconomicoOtro || "").trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["sectorEconomicoOtro"],
+      message: "Especifique el sector económico",
+    });
+  }
+  if (data.arl === "otra_arl" && !(data.arlOtra || "").trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["arlOtra"],
+      message: "Especifique el nombre de la ARL",
+    });
+  }
 });
 
 type EmpresaFormSchema = z.infer<typeof empresaSchema>;
@@ -60,7 +77,9 @@ export default function EmpresaFormPage() {
       nit: "",
       representanteLegal: "",
       sectorEconomico: "",
+      sectorEconomicoOtro: "",
       arl: "",
+      arlOtra: "",
       direccion: "",
       telefonoEmpresa: "",
     },
@@ -73,7 +92,9 @@ export default function EmpresaFormPage() {
         nit: empresa.nit,
         representanteLegal: empresa.representanteLegal || "",
         sectorEconomico: empresa.sectorEconomico || "",
+        sectorEconomicoOtro: empresa.sectorEconomicoOtro || "",
         arl: empresa.arl || "",
+        arlOtra: empresa.arlOtra || "",
         direccion: empresa.direccion || "",
         telefonoEmpresa: empresa.telefonoEmpresa || "",
       });
@@ -113,7 +134,9 @@ export default function EmpresaFormPage() {
         nit: data.nit,
         representanteLegal: data.representanteLegal || "",
         sectorEconomico: data.sectorEconomico || "",
+        sectorEconomicoOtro: data.sectorEconomico === "otro_sector" ? (data.sectorEconomicoOtro || "") : "",
         arl: data.arl || "",
+        arlOtra: data.arl === "otra_arl" ? (data.arlOtra || "") : "",
         direccion: data.direccion || "",
         telefonoEmpresa: data.telefonoEmpresa || "",
         contactos,
@@ -229,6 +252,21 @@ export default function EmpresaFormPage() {
                   </FormItem>
                 )}
               />
+              {form.watch("sectorEconomico") === "otro_sector" && (
+                <FormField
+                  control={form.control}
+                  name="sectorEconomicoOtro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sector (especifique) *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Nombre del sector económico" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="arl"
@@ -249,6 +287,21 @@ export default function EmpresaFormPage() {
                   </FormItem>
                 )}
               />
+              {form.watch("arl") === "otra_arl" && (
+                <FormField
+                  control={form.control}
+                  name="arlOtra"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre ARL *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Escriba el nombre de la ARL" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="direccion"

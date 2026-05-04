@@ -54,7 +54,9 @@ function mapEmpresaRow(row: any): Empresa {
     nit: row.nit,
     representanteLegal: row.representante_legal || '',
     sectorEconomico: row.sector_economico || '',
+    sectorEconomicoOtro: row.sector_economico_otro || '',
     arl: row.arl || '',
+    arlOtra: row.arl_otra || '',
     direccion: row.direccion || '',
     telefonoEmpresa: row.telefono_contacto || '',
     contactos: [],
@@ -72,7 +74,9 @@ function mapEmpresaToDb(data: Partial<EmpresaFormData>): Record<string, any> {
   if (data.nombreEmpresa !== undefined) result.nombre_empresa = data.nombreEmpresa;
   if (data.nit !== undefined) result.nit = data.nit;
   if (data.sectorEconomico !== undefined) result.sector_economico = data.sectorEconomico || null;
+  if ((data as any).sectorEconomicoOtro !== undefined) result.sector_economico_otro = (data as any).sectorEconomicoOtro || null;
   if (data.arl !== undefined) result.arl = data.arl || null;
+  if ((data as any).arlOtra !== undefined) result.arl_otra = (data as any).arlOtra || null;
   if (data.personaContacto !== undefined) result.persona_contacto = data.personaContacto;
   if (data.emailContacto !== undefined) result.email_contacto = data.emailContacto;
   if (data.telefonoEmpresa !== undefined) result.telefono_contacto = data.telefonoEmpresa;

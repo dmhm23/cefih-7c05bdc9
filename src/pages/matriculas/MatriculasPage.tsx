@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { fmtDateLocal } from "@/utils/dateUtils";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
+import { ARL_OPTIONS, EPS_OPTIONS } from "@/data/formOptions";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 
@@ -427,13 +429,13 @@ export default function MatriculasPage() {
       key: "eps",
       header: "EPS",
       className: "min-w-[140px]",
-      render: (m: Matricula) => m.epsOtra || m.eps || "-",
+      render: (m: Matricula) => resolveCatalogLabel(m.eps, m.epsOtra, EPS_OPTIONS) || "-",
     },
     {
       key: "arl",
       header: "ARL",
       className: "min-w-[140px]",
-      render: (m: Matricula) => m.arlOtra || m.arl || "-",
+      render: (m: Matricula) => resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "-",
     },
     {
       key: "valorCupo",

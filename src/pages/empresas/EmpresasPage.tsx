@@ -26,6 +26,7 @@ import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 
 const STORAGE_KEY = "empresas_visible_columns";
@@ -110,11 +111,11 @@ export default function EmpresasPage() {
     return value && value !== "todos";
   }).length;
 
-  const getSectorLabel = (value: string) =>
-    SECTORES_ECONOMICOS.find(s => s.value === value)?.label || value;
+  const getSectorLabel = (empresa: Empresa) =>
+    resolveCatalogLabel(empresa.sectorEconomico, empresa.sectorEconomicoOtro, SECTORES_ECONOMICOS);
 
-  const getArlLabel = (value: string) =>
-    ARL_OPTIONS.find(a => a.value === value)?.label || value;
+  const getArlLabel = (empresa: Empresa) =>
+    resolveCatalogLabel(empresa.arl, empresa.arlOtra, ARL_OPTIONS);
 
   const getEstudiantesCount = (empresa: Empresa) => {
     return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;
@@ -233,13 +234,13 @@ export default function EmpresasPage() {
       key: "sectorEconomico",
       header: "Sector",
       sortable: true,
-      render: (e) => getSectorLabel(e.sectorEconomico),
+      render: (e) => getSectorLabel(e),
     },
     {
       key: "arl",
       header: "ARL",
       sortable: true,
-      render: (e) => getArlLabel(e.arl),
+      render: (e) => getArlLabel(e),
     },
     {
       key: "personaContacto",

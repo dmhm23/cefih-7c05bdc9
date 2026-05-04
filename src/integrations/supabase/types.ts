@@ -711,6 +711,7 @@ export type Database = {
         Row: {
           activo: boolean
           arl: Database["public"]["Enums"]["arl_enum"] | null
+          arl_otra: string | null
           ciudad: string | null
           created_at: string
           deleted_at: string | null
@@ -726,12 +727,14 @@ export type Database = {
           sector_economico:
             | Database["public"]["Enums"]["sector_economico"]
             | null
+          sector_economico_otro: string | null
           telefono_contacto: string
           updated_at: string
         }
         Insert: {
           activo?: boolean
           arl?: Database["public"]["Enums"]["arl_enum"] | null
+          arl_otra?: string | null
           ciudad?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -747,12 +750,14 @@ export type Database = {
           sector_economico?:
             | Database["public"]["Enums"]["sector_economico"]
             | null
+          sector_economico_otro?: string | null
           telefono_contacto?: string
           updated_at?: string
         }
         Update: {
           activo?: boolean
           arl?: Database["public"]["Enums"]["arl_enum"] | null
+          arl_otra?: string | null
           ciudad?: string | null
           created_at?: string
           deleted_at?: string | null
@@ -768,6 +773,7 @@ export type Database = {
           sector_economico?:
             | Database["public"]["Enums"]["sector_economico"]
             | null
+          sector_economico_otro?: string | null
           telefono_contacto?: string
           updated_at?: string
         }

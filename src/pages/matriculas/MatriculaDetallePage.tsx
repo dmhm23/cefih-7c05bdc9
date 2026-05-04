@@ -56,6 +56,7 @@ import {
   GRUPOS_SANGUINEOS,
   PAISES,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 import { asignarMatriculaACartera } from "@/services/carteraService";
@@ -814,7 +815,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico")}
-                displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
+                displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro"), SECTORES_ECONOMICOS)}
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
@@ -830,7 +831,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="EPS"
                 value={getValue("eps")}
-                displayValue={getDisplayLabel(getValue("eps"), EPS_OPTIONS)}
+                displayValue={resolveCatalogLabel(getValue("eps"), getValue("epsOtra"), EPS_OPTIONS)}
                 onChange={(v) => handleFieldChange("eps", v)}
                 type="select"
                 options={[...EPS_OPTIONS]}
@@ -846,7 +847,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="ARL"
                 value={getValue("arl")}
-                displayValue={getDisplayLabel(getValue("arl"), ARL_OPTIONS)}
+                displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra"), ARL_OPTIONS)}
                 onChange={(v) => handleFieldChange("arl", v)}
                 type="select"
                 options={[...ARL_OPTIONS]}

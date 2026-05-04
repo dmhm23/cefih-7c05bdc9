@@ -8,7 +8,9 @@ import {
   AREAS_TRABAJO,
   SECTORES_ECONOMICOS,
   ARL_OPTIONS,
+  EPS_OPTIONS,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 
 // Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
 const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {
@@ -86,18 +88,33 @@ function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): st
       : aplicaFallback && empresa?.arl
       ? empresa.arl
       : "";
+  const arlOtraEfectiva =
+    matricula.arl && matricula.arl.trim()
+      ? matricula.arlOtra
+      : aplicaFallback
+      ? empresa?.arlOtra
+      : undefined;
   const sectorEfectivo =
     matricula.sectorEconomico && matricula.sectorEconomico.trim()
       ? matricula.sectorEconomico
       : aplicaFallback && empresa?.sectorEconomico
       ? empresa.sectorEconomico
       : "";
+  const sectorOtroEfectivo =
+    matricula.sectorEconomico && matricula.sectorEconomico.trim()
+      ? matricula.sectorEconomicoOtro
+      : aplicaFallback
+      ? empresa?.sectorEconomicoOtro
+      : undefined;
   const empresaNombreEfectivo =
     matricula.empresaNombre && matricula.empresaNombre.trim()
       ? matricula.empresaNombre
       : aplicaFallback && empresa?.nombreEmpresa
       ? empresa.nombreEmpresa
       : "Independiente";
+
+  const sectorLabel = capitalize(resolveCatalogLabel(sectorEfectivo, sectorOtroEfectivo, SECTORES_ECONOMICOS));
+  const arlLabel = capitalize(resolveCatalogLabel(arlEfectiva, arlOtraEfectiva, ARL_OPTIONS));
 
   const columns = [
     mapTipoDocumento(persona.tipoDocumento),
@@ -112,9 +129,9 @@ function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): st
     findLabel(NIVELES_EDUCATIVOS, persona.nivelEducativo),
     findLabel(AREAS_TRABAJO, matricula.areaTrabajo),
     capitalize(matricula.empresaCargo ?? ""),
-    findLabel(SECTORES_ECONOMICOS, sectorEfectivo),
+    sectorLabel,
     capitalize(empresaNombreEfectivo),
-    findLabel(ARL_OPTIONS, arlEfectiva),
+    arlLabel,
   ];
   return columns.join(";");
 }
@@ -232,8 +249,8 @@ export function generateListadoEstudiantesCsv(
         capitalize(m.empresaNombre || "Independiente"),
         capitalize(m.empresaCargo ?? ""),
         m.estado,
-        m.arl || "",
-        m.eps || "",
+        resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "",
+        resolveCatalogLabel(m.eps, m.epsOtra, EPS_OPTIONS) || "",
       ];
       return cols.join(";");
     })

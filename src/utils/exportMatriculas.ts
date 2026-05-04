@@ -12,6 +12,7 @@ import {
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 
 export interface CursoResumenExport {
   id: string;

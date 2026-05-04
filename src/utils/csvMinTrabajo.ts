@@ -1,6 +1,7 @@
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import { Curso } from "@/types/curso";
+import { Empresa } from "@/types/empresa";
 import {
   PAISES,
   NIVELES_EDUCATIVOS,
@@ -8,6 +9,30 @@ import {
   SECTORES_ECONOMICOS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+
+// Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
+const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {
+  cedula_ciudadania: "CC",
+  cedula_extranjeria: "CE",
+  pasaporte: "PA",
+  permiso_especial: "PE",
+  permiso_proteccion: "PP",
+};
+const GENERO_DB_TO_MINTRABAJO: Record<string, string> = {
+  masculino: "M",
+  femenino: "F",
+  otro: "O",
+};
+
+function mapTipoDocumento(value: string | undefined): string {
+  if (!value) return "";
+  return TIPO_DOC_DB_TO_MINTRABAJO[value] ?? value.toUpperCase();
+}
+
+function mapGenero(value: string | undefined): string {
+  if (!value) return "";
+  return GENERO_DB_TO_MINTRABAJO[value] ?? value.toUpperCase();
+}
 
 /**
  * Convert to Title Case preserving tildes, ñ and special characters.
@@ -50,25 +75,85 @@ export function cleanDocumento(doc: string): string {
   return doc.replace(/[\.\s]/g, "");
 }
 
-function buildRow(persona: Persona, matricula: Matricula): string {
+function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): string {
+  // Fallback solo si: tipo_vinculacion='empresa', existe empresa_id, matrícula vacía y empresa con valor.
+  const aplicaFallback =
+    matricula.tipoVinculacion === "empresa" && !!matricula.empresaId && !!empresa;
+
+  const arlEfectiva =
+    matricula.arl && matricula.arl.trim()
+      ? matricula.arl
+      : aplicaFallback && empresa?.arl
+      ? empresa.arl
+      : "";
+  const sectorEfectivo =
+    matricula.sectorEconomico && matricula.sectorEconomico.trim()
+      ? matricula.sectorEconomico
+      : aplicaFallback && empresa?.sectorEconomico
+      ? empresa.sectorEconomico
+      : "";
+  const empresaNombreEfectivo =
+    matricula.empresaNombre && matricula.empresaNombre.trim()
+      ? matricula.empresaNombre
+      : aplicaFallback && empresa?.nombreEmpresa
+      ? empresa.nombreEmpresa
+      : "Independiente";
+
   const columns = [
-    persona.tipoDocumento,
+    mapTipoDocumento(persona.tipoDocumento),
     cleanDocumento(persona.numeroDocumento),
     splitName(persona.nombres, 0),
     splitName(persona.nombres, 1),
     splitName(persona.apellidos, 0),
     splitName(persona.apellidos, 1),
-    persona.genero,
+    mapGenero(persona.genero),
     findLabel(PAISES, persona.paisNacimiento),
     formatDate(persona.fechaNacimiento),
     findLabel(NIVELES_EDUCATIVOS, persona.nivelEducativo),
     findLabel(AREAS_TRABAJO, matricula.areaTrabajo),
     capitalize(matricula.empresaCargo ?? ""),
-    findLabel(SECTORES_ECONOMICOS, matricula.sectorEconomico),
-    capitalize(matricula.empresaNombre || "Independiente"),
-    findLabel(ARL_OPTIONS, matricula.arl),
+    findLabel(SECTORES_ECONOMICOS, sectorEfectivo),
+    capitalize(empresaNombreEfectivo),
+    findLabel(ARL_OPTIONS, arlEfectiva),
   ];
   return columns.join(";");
+}
+
+export interface MinTrabajoValidationWarning {
+  personaId: string;
+  nombre: string;
+  faltaArl: boolean;
+  faltaSector: boolean;
+}
+
+/**
+ * Valida estudiantes con ARL/sector vacío después de aplicar el fallback.
+ */
+export function validateMinTrabajoData(
+  matriculas: Matricula[],
+  personas: Persona[],
+  empresas: Empresa[] = []
+): MinTrabajoValidationWarning[] {
+  const personaMap = new Map(personas.map((p) => [p.id, p]));
+  const empresaMap = new Map(empresas.map((e) => [e.id, e]));
+  const warnings: MinTrabajoValidationWarning[] = [];
+  for (const m of matriculas) {
+    const persona = personaMap.get(m.personaId);
+    if (!persona) continue;
+    const empresa = m.empresaId ? empresaMap.get(m.empresaId) : undefined;
+    const aplicaFallback = m.tipoVinculacion === "empresa" && !!empresa;
+    const arl = m.arl?.trim() || (aplicaFallback ? empresa?.arl : "") || "";
+    const sector = m.sectorEconomico?.trim() || (aplicaFallback ? empresa?.sectorEconomico : "") || "";
+    if (!arl || !sector) {
+      warnings.push({
+        personaId: persona.id,
+        nombre: `${persona.nombres} ${persona.apellidos}`.trim(),
+        faltaArl: !arl,
+        faltaSector: !sector,
+      });
+    }
+  }
+  return warnings;
 }
 
 /**
@@ -77,15 +162,18 @@ function buildRow(persona: Persona, matricula: Matricula): string {
 export function generateMinTrabajoCsv(
   matriculas: Matricula[],
   personas: Persona[],
-  _curso: Curso
+  _curso: Curso,
+  empresas: Empresa[] = []
 ): string {
   const personaMap = new Map(personas.map((p) => [p.id, p]));
+  const empresaMap = new Map(empresas.map((e) => [e.id, e]));
 
   const rows = matriculas
     .map((m) => {
       const persona = personaMap.get(m.personaId);
       if (!persona) return null;
-      return buildRow(persona, m);
+      const empresa = m.empresaId ? empresaMap.get(m.empresaId) : undefined;
+      return buildRow(persona, m, empresa);
     })
     .filter(Boolean);
 

@@ -831,7 +831,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="EPS"
                 value={getValue("eps")}
-                displayValue={getDisplayLabel(getValue("eps"), EPS_OPTIONS)}
+                displayValue={resolveCatalogLabel(getValue("eps"), getValue("epsOtra"), EPS_OPTIONS)}
                 onChange={(v) => handleFieldChange("eps", v)}
                 type="select"
                 options={[...EPS_OPTIONS]}

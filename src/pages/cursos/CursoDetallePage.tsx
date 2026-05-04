@@ -120,12 +120,29 @@ export default function CursoDetallePage() {
     const isDummy = matriculas.length === 0;
     const content = isDummy
       ? generateDummyCsv()
-      : generateMinTrabajoCsv(matriculas, personas, curso);
+      : generateMinTrabajoCsv(matriculas, personas, curso, empresas);
     const filename = `Curso_${curso.numeroCurso}_MinTrabajo.csv`;
     downloadCsv(content, filename);
+
+    let warningDescription = "";
+    if (!isDummy) {
+      const warnings = validateMinTrabajoData(matriculas, personas, empresas);
+      if (warnings.length > 0) {
+        const lista = warnings.slice(0, 3).map((w) => {
+          const faltas = [w.faltaArl && "ARL", w.faltaSector && "Sector"].filter(Boolean).join("/");
+          return `${w.nombre} (${faltas})`;
+        }).join(", ");
+        warningDescription = ` Advertencia: ${warnings.length} estudiante(s) sin datos completos: ${lista}${warnings.length > 3 ? "…" : ""}.`;
+        console.warn("[MinTrabajo CSV] Estudiantes con datos faltantes tras fallback:", warnings);
+      }
+    }
+
     toast({
       title: isDummy ? "CSV de prueba generado" : "CSV MinTrabajo descargado",
-      description: isDummy ? "Se generó un archivo con datos de ejemplo (3 filas dummy)." : `${matriculas.length} registro(s) exportados.`,
+      description: isDummy
+        ? "Se generó un archivo con datos de ejemplo (3 filas dummy)."
+        : `${matriculas.length} registro(s) exportados.${warningDescription}`,
+      variant: warningDescription ? "destructive" : "default",
     });
     logActivity({ action: "exportar", module: "cursos", description: `Exportó CSV MinTrabajo del curso ${curso.numeroCurso || ''}—${curso.nombre} (${matriculas.length} registros)`, entityType: "curso", entityId: curso.id, metadata: { registros: matriculas.length, tipo: "mintrabajo" } });
   };

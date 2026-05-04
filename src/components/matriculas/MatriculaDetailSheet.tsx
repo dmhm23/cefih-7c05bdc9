@@ -70,6 +70,7 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";
 

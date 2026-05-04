@@ -427,13 +427,13 @@ export default function MatriculasPage() {
       key: "eps",
       header: "EPS",
       className: "min-w-[140px]",
-      render: (m: Matricula) => m.epsOtra || m.eps || "-",
+      render: (m: Matricula) => resolveCatalogLabel(m.eps, m.epsOtra, EPS_OPTIONS) || "-",
     },
     {
       key: "arl",
       header: "ARL",
       className: "min-w-[140px]",
-      render: (m: Matricula) => m.arlOtra || m.arl || "-",
+      render: (m: Matricula) => resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "-",
     },
     {
       key: "valorCupo",

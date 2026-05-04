@@ -847,7 +847,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="ARL"
                 value={getValue("arl")}
-                displayValue={getDisplayLabel(getValue("arl"), ARL_OPTIONS)}
+                displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra"), ARL_OPTIONS)}
                 onChange={(v) => handleFieldChange("arl", v)}
                 type="select"
                 options={[...ARL_OPTIONS]}

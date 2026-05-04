@@ -1,5 +1,6 @@
 import { Matricula, FORMA_PAGO_LABELS, ESTADO_MATRICULA_LABELS, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS } from "@/types/matricula";
 import { Empresa } from "@/types/empresa";
+import { TIPO_FORMACION_LABELS } from "@/types/curso";
 import {
   TIPOS_DOCUMENTO,
   GENEROS,
@@ -11,6 +12,17 @@ import {
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
+
+export interface CursoResumenExport {
+  id: string;
+  numeroCurso: string;
+  tipoFormacion: string;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  duracionDias: number;
+  duracionHoras: number;
+  entrenadorNombre: string;
+}
 
 export interface PersonaResumenExport {
   id: string;

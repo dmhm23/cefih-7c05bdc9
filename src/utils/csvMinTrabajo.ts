@@ -244,9 +244,15 @@ export function generateListadoEstudiantesCsv(
 
 /**
  * Trigger a browser download of a CSV string.
+ *
+ * Garantiza UTF-8 con BOM (`\uFEFF`) para que Excel y otras hojas de cálculo
+ * interpreten correctamente caracteres con tildes y eñes (Construcción, José,
+ * Peña, etc.). Si el contenido ya trae BOM, no lo duplica.
  */
 export function downloadCsv(content: string, filename: string): void {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+  const BOM = "\uFEFF";
+  const body = content.startsWith(BOM) ? content : BOM + content;
+  const blob = new Blob([body], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -257,3 +263,4 @@ export function downloadCsv(content: string, filename: string): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+

@@ -815,7 +815,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico")}
-                displayValue={getDisplayLabel(getValue("sectorEconomico"), SECTORES_ECONOMICOS)}
+                displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro"), SECTORES_ECONOMICOS)}
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}

@@ -60,15 +60,15 @@ export interface MatriculaColumnDef {
 }
 
 /** Aplica fallback empresa para ARL/sector/nombreEmpresa según las reglas establecidas */
-function arlEfectiva(m: Matricula, e?: Empresa): string {
-  if (m.arl && m.arl.trim()) return m.arl;
-  if (m.tipoVinculacion === "empresa" && m.empresaId && e?.arl) return e.arl;
-  return "";
+function arlEfectiva(m: Matricula, e?: Empresa): { val: string; otra?: string } {
+  if (m.arl && m.arl.trim()) return { val: m.arl, otra: m.arlOtra };
+  if (m.tipoVinculacion === "empresa" && m.empresaId && e?.arl) return { val: e.arl, otra: e.arlOtra };
+  return { val: "" };
 }
-function sectorEfectivo(m: Matricula, e?: Empresa): string {
-  if (m.sectorEconomico && m.sectorEconomico.trim()) return m.sectorEconomico;
-  if (m.tipoVinculacion === "empresa" && m.empresaId && e?.sectorEconomico) return e.sectorEconomico;
-  return "";
+function sectorEfectivo(m: Matricula, e?: Empresa): { val: string; otra?: string } {
+  if (m.sectorEconomico && m.sectorEconomico.trim()) return { val: m.sectorEconomico, otra: m.sectorEconomicoOtro };
+  if (m.tipoVinculacion === "empresa" && m.empresaId && e?.sectorEconomico) return { val: e.sectorEconomico, otra: e.sectorEconomicoOtro };
+  return { val: "" };
 }
 function empresaNombreEfectivo(m: Matricula, e?: Empresa): string {
   if (m.empresaNombre && m.empresaNombre.trim()) return m.empresaNombre;

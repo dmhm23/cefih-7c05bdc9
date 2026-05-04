@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { fmtDateLocal } from "@/utils/dateUtils";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
+import { ARL_OPTIONS, EPS_OPTIONS } from "@/data/formOptions";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 

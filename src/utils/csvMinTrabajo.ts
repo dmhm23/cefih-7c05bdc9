@@ -1,6 +1,7 @@
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import { Curso } from "@/types/curso";
+import { Empresa } from "@/types/empresa";
 import {
   PAISES,
   NIVELES_EDUCATIVOS,
@@ -8,6 +9,30 @@ import {
   SECTORES_ECONOMICOS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+
+// Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
+const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {
+  cedula_ciudadania: "CC",
+  cedula_extranjeria: "CE",
+  pasaporte: "PA",
+  permiso_especial: "PE",
+  permiso_proteccion: "PP",
+};
+const GENERO_DB_TO_MINTRABAJO: Record<string, string> = {
+  masculino: "M",
+  femenino: "F",
+  otro: "O",
+};
+
+function mapTipoDocumento(value: string | undefined): string {
+  if (!value) return "";
+  return TIPO_DOC_DB_TO_MINTRABAJO[value] ?? value.toUpperCase();
+}
+
+function mapGenero(value: string | undefined): string {
+  if (!value) return "";
+  return GENERO_DB_TO_MINTRABAJO[value] ?? value.toUpperCase();
+}
 
 /**
  * Convert to Title Case preserving tildes, ñ and special characters.

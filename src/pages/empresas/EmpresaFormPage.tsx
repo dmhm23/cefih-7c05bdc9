@@ -252,6 +252,21 @@ export default function EmpresaFormPage() {
                   </FormItem>
                 )}
               />
+              {form.watch("sectorEconomico") === "otro_sector" && (
+                <FormField
+                  control={form.control}
+                  name="sectorEconomicoOtro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sector (especifique) *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Nombre del sector económico" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="arl"
@@ -272,6 +287,21 @@ export default function EmpresaFormPage() {
                   </FormItem>
                 )}
               />
+              {form.watch("arl") === "otra_arl" && (
+                <FormField
+                  control={form.control}
+                  name="arlOtra"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre ARL *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Escriba el nombre de la ARL" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="direccion"

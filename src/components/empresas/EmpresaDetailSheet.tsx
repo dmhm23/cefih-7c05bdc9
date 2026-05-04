@@ -87,11 +87,28 @@ export function EmpresaDetailSheet({
 
   const handleSave = async () => {
     try {
+      // Validar texto libre obligatorio cuando se selecciona "Otra"
+      const sector = (formData.sectorEconomico ?? empresa.sectorEconomico) as string;
+      const sectorOtro = ((formData as any).sectorEconomicoOtro ?? empresa.sectorEconomicoOtro ?? "") as string;
+      const arl = (formData.arl ?? empresa.arl) as string;
+      const arlOtra = ((formData as any).arlOtra ?? empresa.arlOtra ?? "") as string;
+      if (sector === "otro_sector" && !sectorOtro.trim()) {
+        toast({ title: "Especifique el sector económico", variant: "destructive" });
+        return;
+      }
+      if (arl === "otra_arl" && !arlOtra.trim()) {
+        toast({ title: "Especifique el nombre de la ARL", variant: "destructive" });
+        return;
+      }
       const principal = contactos.find(c => c.esPrincipal) || contactos[0];
+      // Limpiar texto libre si ya no aplica "Otra"
+      const cleanedFormData: any = { ...formData };
+      if (sector !== "otro_sector") cleanedFormData.sectorEconomicoOtro = "";
+      if (arl !== "otra_arl") cleanedFormData.arlOtra = "";
       await updateEmpresa.mutateAsync({
         id: empresa.id,
         data: {
-          ...formData,
+          ...cleanedFormData,
           contactos,
           personaContacto: principal?.nombre || "",
           telefonoContacto: principal?.telefono || "",

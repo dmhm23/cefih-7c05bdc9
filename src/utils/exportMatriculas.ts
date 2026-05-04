@@ -1,5 +1,6 @@
 import { Matricula, FORMA_PAGO_LABELS, ESTADO_MATRICULA_LABELS, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS } from "@/types/matricula";
 import { Empresa } from "@/types/empresa";
+import { TIPO_FORMACION_LABELS } from "@/types/curso";
 import {
   TIPOS_DOCUMENTO,
   GENEROS,
@@ -11,6 +12,17 @@ import {
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
+
+export interface CursoResumenExport {
+  id: string;
+  numeroCurso: string;
+  tipoFormacion: string;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  duracionDias: number;
+  duracionHoras: number;
+  entrenadorNombre: string;
+}
 
 export interface PersonaResumenExport {
   id: string;
@@ -31,6 +43,7 @@ export interface ResolverCtx {
   persona: PersonaResumenExport;
   matricula: Matricula;
   empresa?: Empresa;
+  curso?: CursoResumenExport;
   resolveNivel: (id?: string | null) => string;
 }
 
@@ -144,9 +157,25 @@ export const MATRICULA_COLUMN_CATALOG: MatriculaColumnDef[] = [
     resolver: ({ matricula }) => capitalize(matricula.cobroContactoNombre || "") },
   { key: "f_cobro_cel", header: "Contacto Cobro - Celular", group: "Financiero",
     resolver: ({ matricula }) => matricula.cobroContactoCelular || "" },
+
+  // ===== Curso =====
+  { key: "c_numero", header: "# Curso", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => curso?.numeroCurso || "" },
+  { key: "c_tipo", header: "Tipo de Curso", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => curso?.tipoFormacion ? (TIPO_FORMACION_LABELS[curso.tipoFormacion] || curso.tipoFormacion) : "" },
+  { key: "c_fecha_inicio", header: "Curso - Fecha Inicio", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => formatDate(curso?.fechaInicio || undefined) },
+  { key: "c_fecha_fin", header: "Curso - Fecha Fin", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => formatDate(curso?.fechaFin || undefined) },
+  { key: "c_duracion_dias", header: "Duración (días)", group: "Curso",
+    resolver: ({ curso }) => curso?.duracionDias != null ? String(curso.duracionDias) : "" },
+  { key: "c_duracion_horas", header: "Duración (horas)", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => curso?.duracionHoras != null ? String(curso.duracionHoras) : "" },
+  { key: "c_entrenador", header: "Entrenador", group: "Curso", defaultSelected: true,
+    resolver: ({ curso }) => capitalize(curso?.entrenadorNombre || "") },
 ];
 
-export const MATRICULA_COLUMN_GROUPS = ["Persona", "Matrícula", "Financiero"];
+export const MATRICULA_COLUMN_GROUPS = ["Persona", "Matrícula", "Curso", "Financiero"];
 
 function escapeCsv(val: string): string {
   return (val ?? "").replace(/[\r\n]+/g, " ").replace(/;/g, ",");
@@ -156,6 +185,7 @@ export interface BuildMatriculasCsvParams {
   matriculas: Matricula[];
   personasMap: Record<string, PersonaResumenExport>;
   empresasMap: Record<string, Empresa>;
+  cursosMap?: Record<string, CursoResumenExport>;
   resolveNivel: (id?: string | null) => string;
   columnasSeleccionadas: MatriculaColumnDef[];
 }
@@ -170,6 +200,7 @@ export function buildMatriculasCsv({
   matriculas,
   personasMap,
   empresasMap,
+  cursosMap,
   resolveNivel,
   columnasSeleccionadas,
 }: BuildMatriculasCsvParams): BuildMatriculasCsvResult {
@@ -185,8 +216,9 @@ export function buildMatriculasCsv({
       const persona = personasMap[m.personaId];
       if (!persona) return null;
       const empresa = m.empresaId ? empresasMap[m.empresaId] : undefined;
+      const curso = m.cursoId && cursosMap ? cursosMap[m.cursoId] : undefined;
       return cols
-        .map((c) => escapeCsv(c.resolver({ persona, matricula: m, empresa, resolveNivel })))
+        .map((c) => escapeCsv(c.resolver({ persona, matricula: m, empresa, curso, resolveNivel })))
         .join(";");
     })
     .filter((r): r is string => r !== null);

@@ -137,7 +137,7 @@ export function ExportarMatriculasCsvDialog({ open, onOpenChange }: Props) {
         }
       }
 
-      const { rows, personasMap } = await matriculaService.getForCsvExport(filters);
+      const { rows, personasMap, cursosMap } = await matriculaService.getForCsvExport(filters);
 
       if (rows.length === 0) {
         toast({ title: "Sin resultados", description: "No hay matrículas que cumplan los filtros." });
@@ -150,6 +150,7 @@ export function ExportarMatriculasCsvDialog({ open, onOpenChange }: Props) {
         matriculas: rows,
         personasMap,
         empresasMap: empresasMap as any,
+        cursosMap,
         resolveNivel,
         columnasSeleccionadas: cols,
       });

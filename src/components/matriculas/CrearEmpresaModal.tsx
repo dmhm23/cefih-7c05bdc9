@@ -25,6 +25,7 @@ import { useCreateEmpresa } from "@/hooks/useEmpresas";
 import { useToast } from "@/hooks/use-toast";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { useCatalogo, toSelectOptions } from "@/hooks/useCatalogo";
 import { Empresa, ContactoEmpresa } from "@/types/empresa";
 import { useState } from "react";
 import { v4 as uuid } from "uuid";

@@ -1,111 +1,145 @@
-# Fase 3: Backfill de consolidados históricos
+# # Catálogos administrables: ARL y Sector económico (MVP)
 
-## Diagnóstico confirmado
+## Objetivo funcional
 
+Crear una única lista administrable para ARL y una única lista administrable para sector económico.
 
-| Métrica                              | Valor |
-| ------------------------------------ | ----- |
-| Consolidados cargados                | 13    |
-| Matrículas afectadas                 | 13    |
-| Documentos individuales a actualizar | 72    |
+El objetivo no es mantener una “lista vieja” y una “lista nueva”, sino convertir las opciones actuales, que hoy están definidas de forma fija en código y parcialmente restringidas por enums en base de datos, en opciones administrables desde la aplicación.
 
+A partir de esta implementación:
 
-Todos los consolidados fueron cargados antes del fix de Fase 1. Los 72 documentos individuales cubiertos permanecen en `estado='pendiente'` con `storage_path=NULL`.
+- `catalogo_opciones` será la fuente principal de opciones para ARL y sector económico.
 
-El caso de Andrés Fabián Camilo Vega Oviedo (`a9e91457-c6a0-4488-8017-a4c821203847`) tiene 5 requisitos pendientes (cedula, examen_medico, certificado_eps, arl, curso_previo) cubiertos por un consolidado cargado el 2026-04-23.
+- Las opciones actuales de `formOptions.ts` se sembrarán una sola vez en `catalogo_opciones` para conservar compatibilidad.
 
-## Plan de implementación
+- Los formularios de empresa y matrícula deberán leer las opciones desde `catalogo_opciones`.
 
-### Paso 1 — Edge function temporal `backfill-consolidados`
+- `formOptions.ts` podrá quedar únicamente como fallback técnico temporal, pero no como fuente funcional paralela.
 
-Crea una edge function que:
+- El usuario final verá y gestionará una sola lista por catálogo.
 
-1. Identifica todos los consolidados con `estado='cargado'`
-2. Parsea los tipos cubiertos del campo `nombre` (formato: `Consolidado: tipo1|tipo2|...`)
-3. Para cada consolidado, busca requisitos individuales de la misma matrícula que cumplan:
-  - `estado = 'pendiente'`
-  - `storage_path IS NULL`
-  - `tipo` incluido en los tipos cubiertos
-4. Actualiza esos requisitos con: `estado='cargado'`, `storage_path`, `archivo_nombre`, `fecha_carga` del consolidado
-5. Soporta dos acciones: `dry-run` (solo cuenta) y `execute` (aplica cambios)
+- No se manejarán dos listas operativas.
 
-### Paso 2 — Deploy y dry-run
+---
 
-Desplegar la función, ejecutar dry-run para confirmar los 72 docs en 13 matrículas.
+## Validación previa de dependencias
 
-### Paso 3 — Paso 3 — Crear backup previo obligatorio
+Resultado de la auditoría sobre los tipos `arl_enum` y `sector_economico`:
 
-Antes de ejecutar el backfill, crear una tabla backup con las filas exactas de `documentos_matricula` que serán modificadas.
+- **Columnas que usan los enums:** solo `public.empresas.arl` y `public.empresas.sector_economico` más sus tablas de backup `_backup_empresas_arl_sector_20260429`, que no se tocan. `matriculas.arl` y `matriculas.sector_economico` ya son `text`.
 
-Tabla sugerida:
+- **Funciones SQL:** ninguna referencia a `arl_enum`; ninguna función referencia `sector_economico` como tipo.
 
-`_backup_documentos_consolidados_20260430`
+- **Vistas:** ninguna en `public` referencia los enums ni las columnas.
 
-Debe incluir como mínimo:
+- **Triggers en `empresas`:** `trg_audit_empresas`, `trg_empresas_audit`, `trg_empresas_updated_at`. Son genéricos de auditoría y `updated_at`; no dependen del tipo enum.
 
-- id
+- **Políticas RLS:** las políticas de `empresas` usan `deleted_at` y `has_permission`; no dependen de los enums.
 
-- matricula_id
+- **Edge functions:** no se encontraron referencias a `arl_enum` ni a la columna como enum.
 
-- tipo
+- **Frontend:** las referencias en `src/services/*`, `src/modules/formatos/plugins/safa/autoFields/*` y `FormatoPreviewDocument.tsx` son al nombre de columna, no al tipo enum.
 
-- estado
+- **Casts explícitos:** no se detectaron `::arl_enum` ni `::sector_economico` en el código de la aplicación.
 
-- storage_path
+**Conclusión:** la migración `enum -> text` en `empresas.arl` y `empresas.sector_economico` es viable. No se requiere refactor previo de funciones, vistas, triggers ni RLS.
 
-- archivo_nombre
+---
 
-- fecha_carga
+## Alcance aprobado
 
-- updated_at
+Implementar un MVP limitado a:
 
-- backup_at
+- ARL.
 
-El backup debe incluir únicamente los documentos individuales que cumplen estas condiciones:
+- Sector económico.
 
-- estado = 'pendiente'
+Incluye:
 
-- storage_path IS NULL
+- Crear tabla `catalogo_opciones`.
 
-- tipo incluido en los tipos cubiertos por un consolidado cargado
+- Sembrar valores actuales de ARL y sector económico desde `formOptions.ts`.
 
-- misma matricula_id del consolidado
+- Migrar `empresas.arl` y `empresas.sector_economico` a `text`.
 
-Este backup debe conservarse después del cleanup de la edge function.
+- Crear service y hook para consumir catálogos.
 
-Paso 4 — Ejecutar backfill
+- Crear página `/admin/catalogos` con dos pestañas:
 
-Después de crear el backup y confirmar el dry-run, llamar la función con `action: "execute"` y verificar el resultado.
+  - ARL.
 
-La función solo debe actualizar documentos individuales que cumplan:
+  - Sector económico.
 
-- estado = 'pendiente'
+- Permitir:
 
-- storage_path IS NULL
+  - crear opción;
 
-- tipo incluido en los tipos cubiertos por el consolidado
+  - editar label;
 
-- misma matricula_id del consolidado
+  - activar/desactivar opción.
 
-No debe modificar documentos individuales que ya tengan archivo propio, storage_path diferente o estado cargado.
+- No permitir borrado físico.
 
-### Paso 5 — Validación del caso Andrés
+- Integrar opciones dinámicas en:
 
-Consultar `documentos_matricula` para `a9e91457-c6a0-4488-8017-a4c821203847` y confirmar que los 5 requisitos quedaron en `estado='cargado'`.
+  - `EmpresaFormPage`;
 
-### Paso 6 — Validación global
+  - `MatriculaFormPage`.
 
-Confirmar que no quedan consolidados con individuales cubiertos pendientes.
+- Mantener compatibilidad hacia atrás vía `resolveCatalogLabel`.
 
-### Paso 7 — Cleanup
+Fuera de este alcance:
 
-Eliminar la edge function temporal.
+- EPS.
 
-### Archivos a crear/modificar
+- Otros catálogos.
 
-- `supabase/functions/backfill-consolidados/index.ts` (temporal, se elimina al final)
+- Acceso rápido desde selectores.
 
-### Riesgos
+- `resolveAutoField`.
 
-- Bajo: la función usa service role key internamente, no expone datos. Solo actualiza filas que cumplen las 3 condiciones (pendiente + NULL path + tipo cubierto).
-- Los datos originales se pueden verificar con la query de dry-run si se necesita rollback manual.
+- Formatos dinámicos.
+
+- Borrado físico.
+
+- DROP de enums antiguos.
+
+---
+
+## Detalle técnico
+
+### 1. Migración SQL
+
+```sql
+
+-- a) Crear tabla de catálogo
+
+CREATE TABLE public.catalogo_opciones (
+
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  catalogo text NOT NULL CHECK (catalogo IN ('arl','sector_economico')),
+
+  value text NOT NULL,
+
+  label text NOT NULL,
+
+  activo boolean NOT NULL DEFAULT true,
+
+  es_base boolean NOT NULL DEFAULT false,
+
+  orden int NOT NULL DEFAULT 100,
+
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  updated_at timestamptz NOT NULL DEFAULT now(),
+
+  UNIQUE (catalogo, value)
+
+);
+
+ALTER TABLE public.catalogo_opciones ENABLE ROW LEVEL SECURITY;
+
+-- SELECT: usuarios autenticados.
+
+-- INSERT/UPDATE: superadmin/admin, siguiendo el patrón de permisos de cargos.

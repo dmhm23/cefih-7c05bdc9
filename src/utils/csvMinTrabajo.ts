@@ -6,11 +6,12 @@ import {
   PAISES,
   NIVELES_EDUCATIVOS,
   AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
-  ARL_OPTIONS,
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
+import { getCatalogoOptions } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = getCatalogoOptions("sector_economico");
+const ARL_OPTIONS = getCatalogoOptions("arl");
 
 // Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
 const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {

@@ -71,6 +71,7 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminLogsPage from "./pages/admin/AdminLogsPage";
 import UserActivityLogPage from "./pages/admin/UserActivityLogPage";
 import BackupsPage from "./pages/admin/BackupsPage";
+import CatalogosPage from "./pages/admin/CatalogosPage";
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/admin/logs" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminLogsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
             <Route path="/admin/logs/:userId" element={<AdminGuard><ActivityLoggerProvider><MainLayout><UserActivityLogPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
             <Route path="/admin/backups" element={<AdminGuard><ActivityLoggerProvider><MainLayout><BackupsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/catalogos" element={<AdminGuard><ActivityLoggerProvider><MainLayout><CatalogosPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
 
             {/* Protected routes with layout */}
             <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />

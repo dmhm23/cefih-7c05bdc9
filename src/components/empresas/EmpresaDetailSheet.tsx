@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
-import { ARL_OPTIONS } from "@/data/formOptions";
+
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { Separator } from "@/components/ui/separator";
 import { v4 as uuid } from "uuid";

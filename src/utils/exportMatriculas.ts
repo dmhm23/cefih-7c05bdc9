@@ -4,14 +4,7 @@ const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
 const ARL_OPTIONS = __getCat("arl") as any;
 import { Empresa } from "@/types/empresa";
 import { TIPO_FORMACION_LABELS } from "@/types/curso";
-import {
-  TIPOS_DOCUMENTO,
-  GENEROS,
-  NIVELES_EDUCATIVOS,
-  PAISES,
-  AREAS_TRABAJO,
-  EPS_OPTIONS,
-} from "@/data/formOptions";
+import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, PAISES, AREAS_TRABAJO, EPS_OPTIONS } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 

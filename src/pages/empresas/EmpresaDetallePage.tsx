@@ -21,7 +21,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
 import { v4 as uuid } from "uuid";
-import { ARL_OPTIONS } from "@/data/formOptions";
+
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { ESTADO_MATRICULA_LABELS } from "@/types/matricula";
 import { Combobox } from "@/components/ui/combobox";

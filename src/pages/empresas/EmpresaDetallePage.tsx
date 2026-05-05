@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, GraduationCap, DollarSign, Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +21,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
 import { v4 as uuid } from "uuid";
-import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { ARL_OPTIONS } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { ESTADO_MATRICULA_LABELS } from "@/types/matricula";
 import { Combobox } from "@/components/ui/combobox";
@@ -288,7 +291,7 @@ export default function EmpresaDetallePage() {
             <EditableField
               label="Sector Económico"
               value={getValue("sectorEconomico")}
-              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined, SECTORES_ECONOMICOS)}
+              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined)}
               onChange={v => handleFieldChange("sectorEconomico", v)}
               type="select"
               options={[...SECTORES_ECONOMICOS]}
@@ -304,7 +307,7 @@ export default function EmpresaDetallePage() {
             <EditableField
               label="ARL"
               value={getValue("arl")}
-              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined, ARL_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined)}
               onChange={v => handleFieldChange("arl", v)}
               type="select"
               options={[...ARL_OPTIONS]}

@@ -1,4 +1,7 @@
 import { Curso } from "@/types/curso";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
 import {
@@ -7,8 +10,6 @@ import {
   NIVELES_EDUCATIVOS,
   PAISES,
   AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
-  ARL_OPTIONS,
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";

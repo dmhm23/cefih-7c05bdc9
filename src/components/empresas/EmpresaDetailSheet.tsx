@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useNavigate } from "react-router-dom";
 import { Building2, FileText, MapPin, Phone, Mail, User, Shield, Users, Plus, Trash2, Star } from "lucide-react";
@@ -11,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUpdateEmpresa } from "@/hooks/useEmpresas";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa, EmpresaFormData, ContactoEmpresa } from "@/types/empresa";
-import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { ARL_OPTIONS } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { Separator } from "@/components/ui/separator";
 import { v4 as uuid } from "uuid";
@@ -197,7 +200,7 @@ export function EmpresaDetailSheet({
             <EditableField
               label="Sector Económico"
               value={getValue("sectorEconomico")}
-              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined, SECTORES_ECONOMICOS)}
+              displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro") as string | undefined)}
               onChange={v => handleFieldChange("sectorEconomico", v)}
               type="select"
               options={[...SECTORES_ECONOMICOS]}
@@ -213,7 +216,7 @@ export function EmpresaDetailSheet({
             <EditableField
               label="ARL"
               value={getValue("arl")}
-              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined, ARL_OPTIONS)}
+              displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra") as string | undefined)}
               onChange={v => handleFieldChange("arl", v)}
               type="select"
               options={[...ARL_OPTIONS]}

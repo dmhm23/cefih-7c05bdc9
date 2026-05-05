@@ -1,4 +1,7 @@
 import { Matricula, FORMA_PAGO_LABELS, ESTADO_MATRICULA_LABELS, TIPO_VINCULACION_LABELS, NIVEL_PREVIO_LABELS } from "@/types/matricula";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { Empresa } from "@/types/empresa";
 import { TIPO_FORMACION_LABELS } from "@/types/curso";
 import {
@@ -7,8 +10,6 @@ import {
   NIVELES_EDUCATIVOS,
   PAISES,
   AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
-  ARL_OPTIONS,
   EPS_OPTIONS,
 } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
@@ -119,12 +120,12 @@ export const MATRICULA_COLUMN_CATALOG: MatriculaColumnDef[] = [
   { key: "m_sector", header: "Sector Económico", group: "Matrícula", defaultSelected: true,
     resolver: ({ matricula, empresa }) => {
       const s = sectorEfectivo(matricula, empresa);
-      return resolveCatalogLabel(s.val, s.otra, SECTORES_ECONOMICOS);
+      return resolveCatalogLabel(s.val, s.otra);
     } },
   { key: "m_arl", header: "ARL", group: "Matrícula", defaultSelected: true,
     resolver: ({ matricula, empresa }) => {
       const a = arlEfectiva(matricula, empresa);
-      return resolveCatalogLabel(a.val, a.otra, ARL_OPTIONS);
+      return resolveCatalogLabel(a.val, a.otra);
     } },
   { key: "m_eps", header: "EPS", group: "Matrícula", defaultSelected: true,
     resolver: ({ matricula }) => resolveCatalogLabel(matricula.eps, matricula.epsOtra, EPS_OPTIONS) },

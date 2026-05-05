@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, MoreVertical, FileDown, FileUp } from "lucide-react";
@@ -25,7 +28,7 @@ import { descargarPlantillaEmpresas } from "@/utils/empresaPlantilla";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
-import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { ARL_OPTIONS } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 
@@ -112,10 +115,10 @@ export default function EmpresasPage() {
   }).length;
 
   const getSectorLabel = (empresa: Empresa) =>
-    resolveCatalogLabel(empresa.sectorEconomico, empresa.sectorEconomicoOtro, SECTORES_ECONOMICOS);
+    resolveCatalogLabel(empresa.sectorEconomico, empresa.sectorEconomicoOtro);
 
   const getArlLabel = (empresa: Empresa) =>
-    resolveCatalogLabel(empresa.arl, empresa.arlOtra, ARL_OPTIONS);
+    resolveCatalogLabel(empresa.arl, empresa.arlOtra);
 
   const getEstudiantesCount = (empresa: Empresa) => {
     return matriculas.filter(m => m.empresaId === empresa.id || m.empresaNit === empresa.nit).length;

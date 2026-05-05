@@ -10,8 +10,8 @@ import {
 } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { getCatalogoOptions } from "@/utils/catalogoCache";
-const SECTORES_ECONOMICOS = getCatalogoOptions("sector_economico");
-const ARL_OPTIONS = getCatalogoOptions("arl");
+const SECTORES_ECONOMICOS = () => getCatalogoOptions("sector_economico");
+const ARL_OPTIONS = () => getCatalogoOptions("arl");
 
 // Salvaguardas defensivas: si llegara un valor en formato enum DB, mapear al código MinTrabajo.
 const TIPO_DOC_DB_TO_MINTRABAJO: Record<string, string> = {
@@ -114,8 +114,8 @@ function buildRow(persona: Persona, matricula: Matricula, empresa?: Empresa): st
       ? empresa.nombreEmpresa
       : "Independiente";
 
-  const sectorLabel = capitalize(resolveCatalogLabel(sectorEfectivo, sectorOtroEfectivo, SECTORES_ECONOMICOS));
-  const arlLabel = capitalize(resolveCatalogLabel(arlEfectiva, arlOtraEfectiva, ARL_OPTIONS));
+  const sectorLabel = capitalize(resolveCatalogLabel(sectorEfectivo, sectorOtroEfectivo, SECTORES_ECONOMICOS()));
+  const arlLabel = capitalize(resolveCatalogLabel(arlEfectiva, arlOtraEfectiva, ARL_OPTIONS()));
 
   const columns = [
     mapTipoDocumento(persona.tipoDocumento),
@@ -250,7 +250,7 @@ export function generateListadoEstudiantesCsv(
         capitalize(m.empresaNombre || "Independiente"),
         capitalize(m.empresaCargo ?? ""),
         m.estado,
-        resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "",
+        resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS()) || "",
         resolveCatalogLabel(m.eps, m.epsOtra, EPS_OPTIONS) || "",
       ];
       return cols.join(";");

@@ -59,18 +59,7 @@ import FormatosList from "@/components/matriculas/formatos/FormatosList";
 import { ComentariosSection } from "@/components/shared/ComentariosSection";
 import DynamicFormatoPreviewDialog from "@/components/matriculas/formatos/DynamicFormatoPreviewDialog";
 import { FormatoFormacion } from "@/modules/formatos/plugins/safa";
-import {
-  AREAS_TRABAJO,
-  TIPOS_DOCUMENTO,
-  GENEROS,
-  NIVELES_EDUCATIVOS,
-  GRUPOS_SANGUINEOS,
-  PAISES,
-  TIPOS_VINCULACION,
-  FORMAS_PAGO,
-  NIVELES_PREVIOS,
-  EPS_OPTIONS,
-} from "@/data/formOptions";
+import { AREAS_TRABAJO, TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, GRUPOS_SANGUINEOS, PAISES, TIPOS_VINCULACION, FORMAS_PAGO, NIVELES_PREVIOS, EPS_OPTIONS } from "@/data/formOptions";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { useResolveNivel } from "@/hooks/useResolveNivel";
 import { useNivelesFormacion } from "@/hooks/useNivelesFormacion";

@@ -4,14 +4,7 @@ const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
 const ARL_OPTIONS = __getCat("arl") as any;
 import { Matricula } from "@/types/matricula";
 import { Persona } from "@/types/persona";
-import {
-  TIPOS_DOCUMENTO,
-  GENEROS,
-  NIVELES_EDUCATIVOS,
-  PAISES,
-  AREAS_TRABAJO,
-  EPS_OPTIONS,
-} from "@/data/formOptions";
+import { TIPOS_DOCUMENTO, GENEROS, NIVELES_EDUCATIVOS, PAISES, AREAS_TRABAJO, EPS_OPTIONS } from "@/data/formOptions";
 import { capitalize, findLabel, cleanDocumento, formatDate } from "@/utils/csvMinTrabajo";
 
 /**

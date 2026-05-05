@@ -28,7 +28,7 @@ import { descargarPlantillaEmpresas } from "@/utils/empresaPlantilla";
 import { useMatriculas } from "@/hooks/useMatriculas";
 import { Empresa } from "@/types/empresa";
 import { useToast } from "@/hooks/use-toast";
-import { ARL_OPTIONS } from "@/data/formOptions";
+
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 

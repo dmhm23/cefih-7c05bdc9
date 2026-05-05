@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useEffect, useState } from "react";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { useCatalogo, toSelectOptions } from "@/hooks/useCatalogo";
 import { v4 as uuid } from "uuid";
 import { ContactoEmpresa } from "@/types/empresa";
 

@@ -5,9 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { preloadNiveles } from "@/utils/resolveNivelLabel";
+import { preloadCatalogos } from "@/utils/catalogoCache";
 
 // Preload niveles cache for sync label resolution
 preloadNiveles();
+// Preload catálogos administrables (ARL, sector económico)
+preloadCatalogos();
 import AuthGuard from "@/components/guards/AuthGuard";
 import AdminGuard from "@/components/guards/AdminGuard";
 import Index from "./pages/Index";

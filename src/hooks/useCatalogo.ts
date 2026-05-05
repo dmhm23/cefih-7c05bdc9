@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { catalogoService, CatalogoNombre, CatalogoOpcion } from "@/services/catalogoService";
+import { refreshCatalogos } from "@/utils/catalogoCache";
 
 const KEY = (c: CatalogoNombre, onlyActive: boolean) => ["catalogo_opciones", c, onlyActive];
 
@@ -16,6 +17,7 @@ export function useCatalogoMutations(catalogo: CatalogoNombre) {
   const qc = useQueryClient();
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["catalogo_opciones", catalogo] });
+    refreshCatalogos();
   };
   const create = useMutation({
     mutationFn: (label: string) => catalogoService.create(catalogo, label),

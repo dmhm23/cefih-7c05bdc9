@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { useNavigate } from "react-router-dom";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { Plus, Trash2, Download, Filter, Eye } from "lucide-react";
@@ -26,7 +29,7 @@ import { fmtDateLocal } from "@/utils/dateUtils";
 import { ESTADO_GRUPO_CARTERA_LABELS, EstadoGrupoCartera } from "@/types/cartera";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveCatalogLabel } from "@/utils/resolveCatalogLabel";
-import { ARL_OPTIONS, EPS_OPTIONS } from "@/data/formOptions";
+import { EPS_OPTIONS } from "@/data/formOptions";
 
 const STORAGE_KEY = "matriculas_visible_columns";
 
@@ -435,7 +438,7 @@ export default function MatriculasPage() {
       key: "arl",
       header: "ARL",
       className: "min-w-[140px]",
-      render: (m: Matricula) => resolveCatalogLabel(m.arl, m.arlOtra, ARL_OPTIONS) || "-",
+      render: (m: Matricula) => resolveCatalogLabel(m.arl, m.arlOtra) || "-",
     },
     {
       key: "valorCupo",

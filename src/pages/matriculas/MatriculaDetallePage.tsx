@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { getCatalogoOptions as __getCat } from "@/utils/catalogoCache";
+const SECTORES_ECONOMICOS = __getCat("sector_economico") as any;
+const ARL_OPTIONS = __getCat("arl") as any;
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
@@ -45,11 +48,9 @@ import { FormatoFormacion } from "@/modules/formatos/plugins/safa";
 import {
   TIPOS_VINCULACION,
   AREAS_TRABAJO,
-  SECTORES_ECONOMICOS,
   NIVELES_PREVIOS,
   FORMAS_PAGO,
   EPS_OPTIONS,
-  ARL_OPTIONS,
   TIPOS_DOCUMENTO,
   GENEROS,
   NIVELES_EDUCATIVOS,
@@ -815,7 +816,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="Sector Económico"
                 value={getValue("sectorEconomico")}
-                displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro"), SECTORES_ECONOMICOS)}
+                displayValue={resolveCatalogLabel(getValue("sectorEconomico"), getValue("sectorEconomicoOtro"))}
                 onChange={(v) => handleFieldChange("sectorEconomico", v)}
                 type="select"
                 options={[...SECTORES_ECONOMICOS]}
@@ -847,7 +848,7 @@ export default function MatriculaDetallePage() {
               <EditableField
                 label="ARL"
                 value={getValue("arl")}
-                displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra"), ARL_OPTIONS)}
+                displayValue={resolveCatalogLabel(getValue("arl"), getValue("arlOtra"))}
                 onChange={(v) => handleFieldChange("arl", v)}
                 type="select"
                 options={[...ARL_OPTIONS]}

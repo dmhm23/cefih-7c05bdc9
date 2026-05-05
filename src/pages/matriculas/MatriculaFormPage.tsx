@@ -59,6 +59,7 @@ import {
   EPS_OPTIONS,
   ARL_OPTIONS,
 } from "@/data/formOptions";
+import { useCatalogo, toSelectOptions } from "@/hooks/useCatalogo";
 
 const matriculaSchema = z.object({
   personaId: z.string().min(1, "Seleccione una persona"),
@@ -134,6 +135,8 @@ export default function MatriculaFormPage() {
   const createEmpresa = useCreateEmpresa();
   const updateEmpresa = useUpdateEmpresa();
   const updatePersona = useUpdatePersona();
+  const { data: arlCatalog } = useCatalogo("arl", { onlyActive: true });
+  const { data: sectorCatalog } = useCatalogo("sector_economico", { onlyActive: true });
 
   // Sincronización matrícula → empresa (post-save)
   const [syncSuggestion, setSyncSuggestion] = useState<SincronizarEmpresaSuggestion | null>(null);
@@ -1024,7 +1027,7 @@ export default function MatriculaFormPage() {
                       <FormLabel>Sector Económico</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={SECTORES_ECONOMICOS}
+                          options={toSelectOptions(sectorCatalog, field.value)}
                           value={field.value || ""}
                           onValueChange={field.onChange}
                           placeholder="Seleccionar sector..."
@@ -1097,7 +1100,7 @@ export default function MatriculaFormPage() {
                       <FormLabel>ARL</FormLabel>
                       <FormControl>
                         <Combobox
-                          options={ARL_OPTIONS}
+                          options={toSelectOptions(arlCatalog, field.value)}
                           value={field.value || ""}
                           onValueChange={field.onChange}
                           placeholder="Seleccionar ARL..."

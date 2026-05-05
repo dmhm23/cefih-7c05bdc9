@@ -5,9 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { preloadNiveles } from "@/utils/resolveNivelLabel";
+import { preloadCatalogos } from "@/utils/catalogoCache";
 
 // Preload niveles cache for sync label resolution
 preloadNiveles();
+// Preload catálogos administrables (ARL, sector económico)
+preloadCatalogos();
 import AuthGuard from "@/components/guards/AuthGuard";
 import AdminGuard from "@/components/guards/AdminGuard";
 import Index from "./pages/Index";
@@ -71,6 +74,7 @@ import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminLogsPage from "./pages/admin/AdminLogsPage";
 import UserActivityLogPage from "./pages/admin/UserActivityLogPage";
 import BackupsPage from "./pages/admin/BackupsPage";
+import CatalogosPage from "./pages/admin/CatalogosPage";
 
 // Portal Estudiante (público)
 import AccesoEstudiantePage from "./pages/estudiante/AccesoEstudiantePage";
@@ -108,6 +112,7 @@ const App = () => (
             <Route path="/admin/logs" element={<AdminGuard><ActivityLoggerProvider><MainLayout><AdminLogsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
             <Route path="/admin/logs/:userId" element={<AdminGuard><ActivityLoggerProvider><MainLayout><UserActivityLogPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
             <Route path="/admin/backups" element={<AdminGuard><ActivityLoggerProvider><MainLayout><BackupsPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
+            <Route path="/admin/catalogos" element={<AdminGuard><ActivityLoggerProvider><MainLayout><CatalogosPage /></MainLayout></ActivityLoggerProvider></AdminGuard>} />
 
             {/* Protected routes with layout */}
             <Route path="/dashboard" element={<WithLayout><Dashboard /></WithLayout>} />

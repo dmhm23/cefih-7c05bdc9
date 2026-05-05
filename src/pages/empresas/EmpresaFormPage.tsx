@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useActivityLogger } from "@/contexts/ActivityLoggerContext";
 import { useEffect, useState } from "react";
 import { SECTORES_ECONOMICOS, ARL_OPTIONS } from "@/data/formOptions";
+import { useCatalogo, toSelectOptions } from "@/hooks/useCatalogo";
 import { v4 as uuid } from "uuid";
 import { ContactoEmpresa } from "@/types/empresa";
 
@@ -65,6 +66,8 @@ export default function EmpresaFormPage() {
   const { data: empresa, isLoading: isLoadingEmpresa } = useEmpresa(id || "");
   const createEmpresa = useCreateEmpresa();
   const updateEmpresa = useUpdateEmpresa();
+  const { data: arlCatalog } = useCatalogo("arl", { onlyActive: true });
+  const { data: sectorCatalog } = useCatalogo("sector_economico", { onlyActive: true });
 
   const [contactos, setContactos] = useState<ContactoEmpresa[]>([
     { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true },
@@ -240,7 +243,7 @@ export default function EmpresaFormPage() {
                     <FormLabel>Sector Económico</FormLabel>
                     <FormControl>
                       <Combobox
-                        options={SECTORES_ECONOMICOS}
+                        options={toSelectOptions(sectorCatalog, field.value)}
                         value={field.value || ""}
                         onValueChange={field.onChange}
                         placeholder="Seleccionar sector..."
@@ -275,7 +278,7 @@ export default function EmpresaFormPage() {
                     <FormLabel>ARL</FormLabel>
                     <FormControl>
                       <Combobox
-                        options={ARL_OPTIONS}
+                        options={toSelectOptions(arlCatalog, field.value)}
                         value={field.value || ""}
                         onValueChange={field.onChange}
                         placeholder="Seleccionar ARL..."

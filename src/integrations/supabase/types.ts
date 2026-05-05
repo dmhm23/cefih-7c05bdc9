@@ -248,6 +248,42 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogo_opciones: {
+        Row: {
+          activo: boolean
+          catalogo: string
+          created_at: string
+          es_base: boolean
+          id: string
+          label: string
+          orden: number
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          activo?: boolean
+          catalogo: string
+          created_at?: string
+          es_base?: boolean
+          id?: string
+          label: string
+          orden?: number
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          activo?: boolean
+          catalogo?: string
+          created_at?: string
+          es_base?: boolean
+          id?: string
+          label?: string
+          orden?: number
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       certificados: {
         Row: {
           autorizado_excepcional: boolean
@@ -710,7 +746,7 @@ export type Database = {
       empresas: {
         Row: {
           activo: boolean
-          arl: Database["public"]["Enums"]["arl_enum"] | null
+          arl: string | null
           arl_otra: string | null
           ciudad: string | null
           created_at: string
@@ -724,16 +760,14 @@ export type Database = {
           observaciones: string | null
           persona_contacto: string
           representante_legal: string | null
-          sector_economico:
-            | Database["public"]["Enums"]["sector_economico"]
-            | null
+          sector_economico: string | null
           sector_economico_otro: string | null
           telefono_contacto: string
           updated_at: string
         }
         Insert: {
           activo?: boolean
-          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          arl?: string | null
           arl_otra?: string | null
           ciudad?: string | null
           created_at?: string
@@ -747,16 +781,14 @@ export type Database = {
           observaciones?: string | null
           persona_contacto?: string
           representante_legal?: string | null
-          sector_economico?:
-            | Database["public"]["Enums"]["sector_economico"]
-            | null
+          sector_economico?: string | null
           sector_economico_otro?: string | null
           telefono_contacto?: string
           updated_at?: string
         }
         Update: {
           activo?: boolean
-          arl?: Database["public"]["Enums"]["arl_enum"] | null
+          arl?: string | null
           arl_otra?: string | null
           ciudad?: string | null
           created_at?: string
@@ -770,9 +802,7 @@ export type Database = {
           observaciones?: string | null
           persona_contacto?: string
           representante_legal?: string | null
-          sector_economico?:
-            | Database["public"]["Enums"]["sector_economico"]
-            | null
+          sector_economico?: string | null
           sector_economico_otro?: string | null
           telefono_contacto?: string
           updated_at?: string

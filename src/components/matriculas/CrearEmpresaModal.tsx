@@ -52,6 +52,8 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
   const { toast } = useToast();
   const { logActivity } = useActivityLogger();
   const createEmpresa = useCreateEmpresa();
+  const { data: arlCatalog } = useCatalogo("arl", { onlyActive: true });
+  const { data: sectorCatalog } = useCatalogo("sector_economico", { onlyActive: true });
 
   const [contactos, setContactos] = useState<ContactoEmpresa[]>([
     { id: uuid(), nombre: "", telefono: "", email: "", esPrincipal: true },
@@ -183,7 +185,7 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
                     <FormLabel>Sector Económico</FormLabel>
                     <FormControl>
                       <Combobox
-                        options={SECTORES_ECONOMICOS}
+                        options={toSelectOptions(sectorCatalog, field.value)}
                         value={field.value || ""}
                         onValueChange={field.onChange}
                         placeholder="Seleccionar sector..."
@@ -206,7 +208,7 @@ export function CrearEmpresaModal({ open, onOpenChange, onEmpresaCreated }: Crea
                     <FormLabel>ARL</FormLabel>
                     <FormControl>
                       <Combobox
-                        options={ARL_OPTIONS}
+                        options={toSelectOptions(arlCatalog, field.value)}
                         value={field.value || ""}
                         onValueChange={field.onChange}
                         placeholder="Seleccionar ARL..."
